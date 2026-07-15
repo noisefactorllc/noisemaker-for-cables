@@ -1,0 +1,35 @@
+{
+  "name": "@noisefactor/noisemaker-cablesgl",
+  "version": "0.1.0",
+  "description": "A WebGL2 bridge for running Noisemaker programs inside Cables GL.",
+  "private": true,
+  "type": "module",
+  "files": [
+    "Ops.Extension.Noisemaker/",
+    "README.md",
+    "docs/architecture.md",
+    "docs/catalog-update.md",
+    "docs/installation.md",
+    "examples/README.md",
+    "examples/noisemaker-program.cables",
+    "parity/catalog-inputs.js",
+    "parity/programs.json",
+    "vendor.lock.json"
+  ],
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "build": "node tools/build.mjs",
+    "vendor:update": "node tools/vendor.mjs update",
+    "vendor:verify": "node tools/vendor.mjs verify",
+    "test:browser": "playwright test",
+    "test:standalone": "node tools/standalone-smoke.mjs",
+    "verify": "npm run vendor:verify && npm test && npm run build && npm run test:browser && npm pack --dry-run"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.61.1",
+    "esbuild": "^0.28.1"
+  }
+}

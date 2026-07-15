@@ -1,0 +1,8 @@
+node_modules/
+playwright-report/
+test-report/
+test-results/
+test/screenshots/
+.build/
+.superpowers/
+docs/superpowers/

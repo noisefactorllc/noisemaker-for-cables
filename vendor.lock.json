@@ -1,0 +1,1280 @@
+{
+  "schemaVersion": 1,
+  "sourceBaseUrl": "https://shaders.noisedeck.app/1/",
+  "generatedAt": "2026-07-14T21:34:16.751Z",
+  "effectCount": 210,
+  "artifacts": [
+    {
+      "bytes": 31846,
+      "path": "effects/classicNoisedeck/bitEffects.js",
+      "sha256": "34a38cd9664d97ad2001fe81d25f42f249adf43efeac4ea288d15a9d0b5122e7",
+      "url": "https://shaders.noisedeck.app/1/effects/classicNoisedeck/bitEffects.js"
+    },
+    {
+      "bytes": 37246,
+      "path": "effects/classicNoisedeck/caustic.js",
+      "sha256": "8396eb57e15d482da1681f0caaedf4a12e18d47ffc92c12e18c1594ed1bb7374",
+      "url": "https://shaders.noisedeck.app/1/effects/classicNoisedeck/caustic.js"
+    },
+    {
+      "bytes": 34305,
+      "path": "effects/classicNoisedeck/cellNoise.js",
+      "sha256": "688ac88802aec29d615ae0120e0c8bffedffaade336a4a783623f5f05cd4db8a",
+      "url": "https://shaders.noisedeck.app/1/effects/classicNoisedeck/cellNoise.js"
+    },
+    {
+      "bytes": 29018,
+      "path": "effects/classicNoisedeck/cellRefract.js",
+      "sha256": "a7ce29deff0e031ca393fd9ad5f886facfc4285b3cad6b74f74bdbc5fbda2343",
+      "url": "https://shaders.noisedeck.app/1/effects/classicNoisedeck/cellRefract.js"
+    },
+    {
+      "bytes": 24311,
+      "path": "effects/classicNoisedeck/coalesce.js",
+      "sha256": "324bef5bf397bbf2e74d37e17fa0104c3fef11f00df11afbeee97ba16b80ad65",
+      "url": "https://shaders.noisedeck.app/1/effects/classicNoisedeck/coalesce.js"
+    },
+    {
+      "bytes": 31044,
+      "path": "effects/classicNoisedeck/colorLab.js",
+      "sha256": "14c1d87143db5d6901a92e4cb4334f17d81accfc3734d76161304f4a07cec3cb",
+      "url": "https://shaders.noisedeck.app/1/effects/classicNoisedeck/colorLab.js"
+    },
+    {
+      "bytes": 15767,
+      "path": "effects/classicNoisedeck/composite.js",
+      "sha256": "b0a1d3fdd13c4204ece689ad1561a1cab1583d3ab62aaf770332dcc8485c2c10",
+      "url": "https://shaders.noisedeck.app/1/effects/classicNoisedeck/composite.js"
+    },
+    {
+      "bytes": 39617,
+      "path": "effects/classicNoisedeck/effects.js",
+      "sha256": "81f837ff24049cf1b7afabd2ba454ed1ce9f26b3756321d662fd4aef7cb049b4",
+      "url": "https://shaders.noisedeck.app/1/effects/classicNoisedeck/effects.js"
+    },
+    {
+      "bytes": 36006,
+      "path": "effects/classicNoisedeck/fractal.js",
+      "sha256": "13fafba7e350163be6d3bfd4234d24ba990a9e751fd707e1440d6ebdb6c9e035",
+      "url": "https://shaders.noisedeck.app/1/effects/classicNoisedeck/fractal.js"
+    },
+    {
+      "bytes": 20880,
+      "path": "effects/classicNoisedeck/glitch.js",
+      "sha256": "59807966168ffe5f370ff71a5f288fbf80d651915f2a6f31e76e8be69e978b78",
+      "url": "https://shaders.noisedeck.app/1/effects/classicNoisedeck/glitch.js"
+    },
+    {
+      "bytes": 54304,
+      "path": "effects/classicNoisedeck/kaleido.js",
+      "sha256": "fbc8e3bbfd80a5447f1f9e6432be909997212996caacd03805d19bbb05d72b55",
+      "url": "https://shaders.noisedeck.app/1/effects/classicNoisedeck/kaleido.js"
+    },
+    {
+      "bytes": 21511,
+      "path": "effects/classicNoisedeck/lensDistortion.js",
+      "sha256": "569c3e6773980b1595aec42b5f8f566c5f0ef0c8682b96e1ef8d695cba68011d",
+      "url": "https://shaders.noisedeck.app/1/effects/classicNoisedeck/lensDistortion.js"
+    },
+    {
+      "bytes": 45438,
+      "path": "effects/classicNoisedeck/moodscape.js",
+      "sha256": "023b8e255004d71747dbbd5204fc33f4ba7760f4976023aa07a003f65c29f440",
+      "url": "https://shaders.noisedeck.app/1/effects/classicNoisedeck/moodscape.js"
+    },
+    {
+      "bytes": 77292,
+      "path": "effects/classicNoisedeck/noise.js",
+      "sha256": "3b25717e4ef607b0862f6b5e0c477305d4eb6ab5859adbf3990e6994d6c48dc4",
+      "url": "https://shaders.noisedeck.app/1/effects/classicNoisedeck/noise.js"
+    },
+    {
+      "bytes": 40837,
+      "path": "effects/classicNoisedeck/noise3d.js",
+      "sha256": "a3a8ccbebed01fb68d7797f294fc1090d6cc2236e37c87e055b946ad2fe98a21",
+      "url": "https://shaders.noisedeck.app/1/effects/classicNoisedeck/noise3d.js"
+    },
+    {
+      "bytes": 18998,
+      "path": "effects/classicNoisedeck/refract.js",
+      "sha256": "a868b76c2075aaa61d47fe23b53096cdc7f4e20c3a4d6fced398be846c1c79f8",
+      "url": "https://shaders.noisedeck.app/1/effects/classicNoisedeck/refract.js"
+    },
+    {
+      "bytes": 51110,
+      "path": "effects/classicNoisedeck/shapeMixer.js",
+      "sha256": "e4996483e7a7bce83a49a56fc1bfb8aad0977a65c8207f260794d9c37b2400f1",
+      "url": "https://shaders.noisedeck.app/1/effects/classicNoisedeck/shapeMixer.js"
+    },
+    {
+      "bytes": 56148,
+      "path": "effects/classicNoisedeck/shapes.js",
+      "sha256": "92b134fd105094ae2ec824d87cfd460ce3a70ce819b2cb0068f914891139da7d",
+      "url": "https://shaders.noisedeck.app/1/effects/classicNoisedeck/shapes.js"
+    },
+    {
+      "bytes": 47120,
+      "path": "effects/classicNoisedeck/shapes3d.js",
+      "sha256": "465cd3df8205904263081ca9e72e786ef89e5d2ad6e617463645d3bcda816d4d",
+      "url": "https://shaders.noisedeck.app/1/effects/classicNoisedeck/shapes3d.js"
+    },
+    {
+      "bytes": 15338,
+      "path": "effects/classicNoisedeck/splat.js",
+      "sha256": "1fd680dbf5048196acfa8cf11538eb4862990ae833b01dac5ec0154fd71f14c5",
+      "url": "https://shaders.noisedeck.app/1/effects/classicNoisedeck/splat.js"
+    },
+    {
+      "bytes": 11623,
+      "path": "effects/filter/adjust.js",
+      "sha256": "b6b4586c72144848a619d521817edef9dacd658727653a65b8c01e8128bb974b",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/adjust.js"
+    },
+    {
+      "bytes": 3953,
+      "path": "effects/filter/bc.js",
+      "sha256": "3339619e0b04480e4d6f03c048e43a3aedc7b59ba390ca58edacdcb0e082fdb9",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/bc.js"
+    },
+    {
+      "bytes": 12372,
+      "path": "effects/filter/bloom.js",
+      "sha256": "34f9c754931ab3e05752010d10a2da5111261eb32babfc35974c85b4b20332ca",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/bloom.js"
+    },
+    {
+      "bytes": 7189,
+      "path": "effects/filter/blur.js",
+      "sha256": "498de5756e3f12606cd7ec0eba13797a1e559aa702522ae86e53ecfd127b09f3",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/blur.js"
+    },
+    {
+      "bytes": 7825,
+      "path": "effects/filter/bulge.js",
+      "sha256": "0b9e6c4a28dbe84224ae42232287f253f724dcff1fe26c11f418b268ccd4f809",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/bulge.js"
+    },
+    {
+      "bytes": 17248,
+      "path": "effects/filter/celShading.js",
+      "sha256": "b3815b0d0adb32c8e299c858f109449b069467bd310f8e328b90cd49cf01bbb8",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/celShading.js"
+    },
+    {
+      "bytes": 3937,
+      "path": "effects/filter/channel.js",
+      "sha256": "5820ce0d6f33cf2f27817773c7fa1871649ddce19c9a694d96824f9d809e4dc1",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/channel.js"
+    },
+    {
+      "bytes": 5703,
+      "path": "effects/filter/chroma.js",
+      "sha256": "4550e19d47c9e51029d81b08f06392450a6304f59a3ca9b972e256ac732778ca",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/chroma.js"
+    },
+    {
+      "bytes": 6489,
+      "path": "effects/filter/chromaticAberration.js",
+      "sha256": "cc142f102bf39979b43f5e369011e6f21c389ae7029d8a8aa830a964ea44670a",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/chromaticAberration.js"
+    },
+    {
+      "bytes": 14942,
+      "path": "effects/filter/chrome.js",
+      "sha256": "519c61e60d9953fd9efb039e97a82bcf5cd367a42ed93e7601491e39dec49e95",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/chrome.js"
+    },
+    {
+      "bytes": 11602,
+      "path": "effects/filter/clouds.js",
+      "sha256": "055788487b2884b93194397ba3a51d760ff2807345000afbdaf9e0d5c833ab73",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/clouds.js"
+    },
+    {
+      "bytes": 7286,
+      "path": "effects/filter/colorReplace.js",
+      "sha256": "f41b6a1a5330072d6eb631d0716f016626e7aaaa5431eec9c0482de91286f008",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/colorReplace.js"
+    },
+    {
+      "bytes": 8416,
+      "path": "effects/filter/colorspace.js",
+      "sha256": "f75e5ce4c8caeb6caff42d6be97842edd5bf3b5eb8e1932a14fda582b44f19eb",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/colorspace.js"
+    },
+    {
+      "bytes": 12930,
+      "path": "effects/filter/convolutionFeedback.js",
+      "sha256": "08efaaa8400450b1afbecf09639f118f368bc46ecd83d1069cfd82b44605bfea",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/convolutionFeedback.js"
+    },
+    {
+      "bytes": 19146,
+      "path": "effects/filter/corrupt.js",
+      "sha256": "82c329522139f5433cf305253ab643f954ed00897926c0a5f94a721e596bf78d",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/corrupt.js"
+    },
+    {
+      "bytes": 20297,
+      "path": "effects/filter/craquelure.js",
+      "sha256": "bccd5d5ddf958df7a69ed8fd1d85376717b98f04c7482c73a106316b7f1ff82b",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/craquelure.js"
+    },
+    {
+      "bytes": 43449,
+      "path": "effects/filter/crt.js",
+      "sha256": "e0cb6d96917c5dd0befef7040088725f125de7f04812db5f38a549d092cfb30b",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/crt.js"
+    },
+    {
+      "bytes": 25689,
+      "path": "effects/filter/degauss.js",
+      "sha256": "58a56bf279d7bdf921dfe830073b9a601f48821539f591db2ab3a2fddd42d290",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/degauss.js"
+    },
+    {
+      "bytes": 4694,
+      "path": "effects/filter/deriv.js",
+      "sha256": "ebf4631012f1ab2b1ff3e17abf7b83992abfcc34be2a6b289d0a64260de20bc1",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/deriv.js"
+    },
+    {
+      "bytes": 5505,
+      "path": "effects/filter/directionalBlur.js",
+      "sha256": "aafb3f9020d5669a3d56b2634a1f41f8c4113c3434a9df870e40f679a7a7a7c2",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/directionalBlur.js"
+    },
+    {
+      "bytes": 45008,
+      "path": "effects/filter/dither.js",
+      "sha256": "3bd06edcf5eef40a61d615ece1c9dd1b331c9dc422dcec438111f0513dd5f81f",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/dither.js"
+    },
+    {
+      "bytes": 18365,
+      "path": "effects/filter/edge.js",
+      "sha256": "04927db662080963a1e868eea34abf4a1c3f05e3a8b74e34518f979143c82aba",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/edge.js"
+    },
+    {
+      "bytes": 14779,
+      "path": "effects/filter/emboss.js",
+      "sha256": "27d81d4cbcb58b3d6087bff6e892d73f2df4261a9e8b67dac26816383958aae8",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/emboss.js"
+    },
+    {
+      "bytes": 35779,
+      "path": "effects/filter/extrude.js",
+      "sha256": "821f896380224bc1d7c6961274a36f3777def6d58a6d28a947766ff6bac29db1",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/extrude.js"
+    },
+    {
+      "bytes": 28640,
+      "path": "effects/filter/feedback.js",
+      "sha256": "d18f98117089a1b363f93405cf18ec9259d70b9c120d3413ded7d2a0ed35b04a",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/feedback.js"
+    },
+    {
+      "bytes": 6348,
+      "path": "effects/filter/fibers.js",
+      "sha256": "ac967b400935ff4f4c9076f468c2f3d522a414e233dcd81190fa78ed696fe996",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/fibers.js"
+    },
+    {
+      "bytes": 7396,
+      "path": "effects/filter/flipMirror.js",
+      "sha256": "0266544dcc45653b236ac8497e1fa46b9506a8e7e135d2469c96bac27a0e912e",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/flipMirror.js"
+    },
+    {
+      "bytes": 11615,
+      "path": "effects/filter/fxaa.js",
+      "sha256": "f3d951f6bc6ab2a1a2ce7378047e95ad1ecf6cbca0e30f6d61af1a54cdb5e76d",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/fxaa.js"
+    },
+    {
+      "bytes": 8761,
+      "path": "effects/filter/glowingEdge.js",
+      "sha256": "ec1623d5859d5e5de3cb9705fdbb0f779ed1c0be05d7c44a308934a8bdc17d6d",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/glowingEdge.js"
+    },
+    {
+      "bytes": 16691,
+      "path": "effects/filter/glyphMap.js",
+      "sha256": "07641ba7baa551bb14845a11ce48e447b05802e791581c02c6e7364b4b3e736c",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/glyphMap.js"
+    },
+    {
+      "bytes": 80893,
+      "path": "effects/filter/grade.js",
+      "sha256": "a729fec18570de22dad5d4bb8671931ae2717337e38e99472a9fa414e2a147f6",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/grade.js"
+    },
+    {
+      "bytes": 21683,
+      "path": "effects/filter/grain.js",
+      "sha256": "23e1f77596a217a381907b3d608fe0c320cad257202f2a63ffdcba79d9bb9c26",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/grain.js"
+    },
+    {
+      "bytes": 14457,
+      "path": "effects/filter/grime.js",
+      "sha256": "3e3ee53326c97ca91967696be442873ac78b0a46fc850ff253c8c65bca416c4d",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/grime.js"
+    },
+    {
+      "bytes": 20921,
+      "path": "effects/filter/halftone.js",
+      "sha256": "673c5dbe3813d878fd22e79b8f57e198444a23c461a5ecacaa10ce291dd7d19e",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/halftone.js"
+    },
+    {
+      "bytes": 24494,
+      "path": "effects/filter/hatch.js",
+      "sha256": "0fc287c6da12ba49efc9c694e5b4be420e92d634a3f071a4eaa0f64d2f3837ef",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/hatch.js"
+    },
+    {
+      "bytes": 9157,
+      "path": "effects/filter/highPass.js",
+      "sha256": "1a5924002264e3ca41c33386ef25309cbf5983a349f4d0f212a86cbfa7aff39b",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/highPass.js"
+    },
+    {
+      "bytes": 31167,
+      "path": "effects/filter/historicPalette.js",
+      "sha256": "d930389a6d2a9805bc29be96237fa87cfce6661b2b9233755e2b8267f91b939e",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/historicPalette.js"
+    },
+    {
+      "bytes": 6895,
+      "path": "effects/filter/hs.js",
+      "sha256": "b417e8f245a0552cb9cb1a3b20265793e4b469ce7614c90be305adc1c64ff195",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/hs.js"
+    },
+    {
+      "bytes": 4257,
+      "path": "effects/filter/invert.js",
+      "sha256": "3089c4cad5b6a7edd5a2438ae0b6b6f9c0509a55f6fa89db175f9b871c9d19b4",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/invert.js"
+    },
+    {
+      "bytes": 9881,
+      "path": "effects/filter/lens.js",
+      "sha256": "d22a240c1d32a2ef8892c5b3fcf84655af94568320333b8b8f575cb8ad840c7a",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/lens.js"
+    },
+    {
+      "bytes": 25266,
+      "path": "effects/filter/lensFlare.js",
+      "sha256": "016b12e1ca247a5b8f5a5de3a7d543a58b77ae91bea455fe19733afc4014485b",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/lensFlare.js"
+    },
+    {
+      "bytes": 12072,
+      "path": "effects/filter/lensWarp.js",
+      "sha256": "d619e3a3b75ba859cdb52e566fe642a046a3945f35f83531b3799371f9a819b7",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/lensWarp.js"
+    },
+    {
+      "bytes": 14034,
+      "path": "effects/filter/lightLeak.js",
+      "sha256": "40cfe2f28115a6de30fae71a955646c90b32672e8be00bf3cd1cd3ae76c8fe7c",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/lightLeak.js"
+    },
+    {
+      "bytes": 16586,
+      "path": "effects/filter/lighting.js",
+      "sha256": "ec48cf56329445fa9866ded055617158d17bd765ac26b8ff6ddac31183da8af8",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/lighting.js"
+    },
+    {
+      "bytes": 22881,
+      "path": "effects/filter/lowPoly.js",
+      "sha256": "45a0f20695a8ba0c1a47c7344e3b899ce293732a20c8c092199619a9a199d20b",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/lowPoly.js"
+    },
+    {
+      "bytes": 10920,
+      "path": "effects/filter/median.js",
+      "sha256": "78d7fa6b0d46de57f5a315c041a53d5bcb8456bfe7b218b328e41277f714720e",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/median.js"
+    },
+    {
+      "bytes": 11074,
+      "path": "effects/filter/morphology.js",
+      "sha256": "94242e9afc6e615d9504084a56817585eeaf553365ca231cc78f09b90f51e667",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/morphology.js"
+    },
+    {
+      "bytes": 27154,
+      "path": "effects/filter/mosaicTiles.js",
+      "sha256": "915a306ca57b522420525178b73d78f7c4118e8d7538502aa6729c5a500b9f2f",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/mosaicTiles.js"
+    },
+    {
+      "bytes": 5750,
+      "path": "effects/filter/motionBlur.js",
+      "sha256": "fa096d4e88010b09e61ead504703a493c906edb392fe4534887eb440d5a54d54",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/motionBlur.js"
+    },
+    {
+      "bytes": 12215,
+      "path": "effects/filter/normalMap.js",
+      "sha256": "5ee7cf4d0095397a2ab316b9590bb20307ba15b7a1c6f9e09d084500e974be7a",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/normalMap.js"
+    },
+    {
+      "bytes": 12060,
+      "path": "effects/filter/normalize.js",
+      "sha256": "627691c5c2b23c6f2b8482da81aecb88173917219e8b55fc16fbfded6d17016c",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/normalize.js"
+    },
+    {
+      "bytes": 13856,
+      "path": "effects/filter/octaveWarp.js",
+      "sha256": "9a89c0b109cd8508fa798635fab71e85a38d6d16fd820015170b1ea01a0c48c6",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/octaveWarp.js"
+    },
+    {
+      "bytes": 29980,
+      "path": "effects/filter/oilPaint.js",
+      "sha256": "4952ae19b57530eb214190cbf428d134bdf52f771af715b14c4c394587c71653",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/oilPaint.js"
+    },
+    {
+      "bytes": 15785,
+      "path": "effects/filter/osd.js",
+      "sha256": "dd433e6744d2a7faf24abbffa12ca4b2927fa57b48af204241de8d775fa393d0",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/osd.js"
+    },
+    {
+      "bytes": 13600,
+      "path": "effects/filter/outline.js",
+      "sha256": "8d325825605d1b27f06f3afe2cac7c4e3fc1e06d63474283513e16a5bd180b57",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/outline.js"
+    },
+    {
+      "bytes": 32025,
+      "path": "effects/filter/palette.js",
+      "sha256": "3c00cf72ad640df1d3b374159a3f87ab14c5ece62f9fca5186da094539e55084",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/palette.js"
+    },
+    {
+      "bytes": 8926,
+      "path": "effects/filter/parallax.js",
+      "sha256": "96ae0915481c0d30ddf9e1026a8dbe9d74772f9d31d778573eb02c464cf410f1",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/parallax.js"
+    },
+    {
+      "bytes": 20570,
+      "path": "effects/filter/patchwork.js",
+      "sha256": "5afcd0f3d6a75737c6eab9a63e2d8e60cc268fa8ba8bb0db0a86d11b1ba5ac84",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/patchwork.js"
+    },
+    {
+      "bytes": 13420,
+      "path": "effects/filter/photocopy.js",
+      "sha256": "62b1d1ad51bf623dafb390a2d51ce63311a8fe12fd3bc6678018ad8c6bd4ed90",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/photocopy.js"
+    },
+    {
+      "bytes": 7614,
+      "path": "effects/filter/pinch.js",
+      "sha256": "f0d9f0ecfd3c5c5734e000efcd811314f89506dbb2e6c350a5b49fb035229399",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/pinch.js"
+    },
+    {
+      "bytes": 23606,
+      "path": "effects/filter/pixelSort.js",
+      "sha256": "3df0fc0d776f616c3b235b03e1d0b2845a8f0761f4b73e176dea6ffd0e1489b8",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/pixelSort.js"
+    },
+    {
+      "bytes": 5319,
+      "path": "effects/filter/pixels.js",
+      "sha256": "059d92b0abb6a613fc8e47f786b7dfbe8f3a7aa3799e150ff38d9f54aabeb456",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/pixels.js"
+    },
+    {
+      "bytes": 16006,
+      "path": "effects/filter/plasticWrap.js",
+      "sha256": "52f1552ef54661b38214c8f6d51a46403546ec8517a91497f544c062c5f926cc",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/plasticWrap.js"
+    },
+    {
+      "bytes": 7449,
+      "path": "effects/filter/polar.js",
+      "sha256": "0e8e9194d74b44908a696e24705a71ef22e0bc0bfe53746d2079e1a341fd4e8d",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/polar.js"
+    },
+    {
+      "bytes": 15085,
+      "path": "effects/filter/pondRipples.js",
+      "sha256": "ca2247b018a4d750a13a2d23b5585767619ee761af2e4116edec1ec24f973fe0",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/pondRipples.js"
+    },
+    {
+      "bytes": 8095,
+      "path": "effects/filter/posterize.js",
+      "sha256": "498798c44f73903e4094860ebf6c02de1965fffe15716dcd74983b7b6fe4f362",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/posterize.js"
+    },
+    {
+      "bytes": 11764,
+      "path": "effects/filter/prismaticAberration.js",
+      "sha256": "5cce2d93c498f77c4cd2e7d93b8c9bfba9f55c40c73fed1147b95ca99ad3106d",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/prismaticAberration.js"
+    },
+    {
+      "bytes": 16781,
+      "path": "effects/filter/reindex.js",
+      "sha256": "ee5fd1c978cf1e39b0b53b6cd908342e95ac0bc5fd559987e850df69e313eb39",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/reindex.js"
+    },
+    {
+      "bytes": 20708,
+      "path": "effects/filter/relief.js",
+      "sha256": "1f8396235a7206acceb13abe671931e2b638f2d540c525dd8fa4592a1ffd4bda",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/relief.js"
+    },
+    {
+      "bytes": 5242,
+      "path": "effects/filter/repeat.js",
+      "sha256": "10e0d464763672793774f4c24d0d654602aa68cf443248e7cee5517bbdf90d80",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/repeat.js"
+    },
+    {
+      "bytes": 6893,
+      "path": "effects/filter/reverb.js",
+      "sha256": "bb39de831f35c717383b18fd5709205bcf37772d90b8ea0fa8792033d4fb2d88",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/reverb.js"
+    },
+    {
+      "bytes": 4645,
+      "path": "effects/filter/ridge.js",
+      "sha256": "c6e0186ae3ca72b2a21a80b8f38a01513c18f1ac399e4e9022302daca6c682a2",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/ridge.js"
+    },
+    {
+      "bytes": 5259,
+      "path": "effects/filter/rotate.js",
+      "sha256": "ca3f9323bebe3a6016b1395e2afb0b8c0dd769cc7e56fb72aa89ce5bb93fb301",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/rotate.js"
+    },
+    {
+      "bytes": 5062,
+      "path": "effects/filter/scale.js",
+      "sha256": "42191b4657eb37d28bea0623148e0e5b110000fee14a575dcfcdecd6ec28112e",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/scale.js"
+    },
+    {
+      "bytes": 28414,
+      "path": "effects/filter/scanlineError.js",
+      "sha256": "e6b391fd9aa2ac72cc47dc9a6acf75093c41c53982d94b729c6d09c0e3d1c03c",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/scanlineError.js"
+    },
+    {
+      "bytes": 15298,
+      "path": "effects/filter/scatter.js",
+      "sha256": "63b03ebf1e988ce94871a7c82ca141983bf2a185c8f14a8b56f36e329924c9f8",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/scatter.js"
+    },
+    {
+      "bytes": 6413,
+      "path": "effects/filter/scratches.js",
+      "sha256": "84a21fe73fb28dda37c7e166336a5d6257a618cb6212a05bf6b98c17c159bcfa",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/scratches.js"
+    },
+    {
+      "bytes": 5160,
+      "path": "effects/filter/scroll.js",
+      "sha256": "8bb6ba6fec3d37565730dc97e5a36a8b88aa916a61d9404459ac2c058f4fd656",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/scroll.js"
+    },
+    {
+      "bytes": 6275,
+      "path": "effects/filter/seamless.js",
+      "sha256": "7d5801b433fe1da686a3d2744de1f0db245e280f7f4ffc9de97552dbd14454ad",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/seamless.js"
+    },
+    {
+      "bytes": 5418,
+      "path": "effects/filter/sharpen.js",
+      "sha256": "de6f3616f69d22b4caf0e37c23077c169f94a90c1c8a7ad9604d90dd367b93e8",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/sharpen.js"
+    },
+    {
+      "bytes": 4536,
+      "path": "effects/filter/simpleAberration.js",
+      "sha256": "1ed5c82ffde235ad342f85ede4ed0c04908ebd940ae960cedde4a4b4260a7b45",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/simpleAberration.js"
+    },
+    {
+      "bytes": 4694,
+      "path": "effects/filter/sine.js",
+      "sha256": "ecb0adda9c0fa88906150fa00ec99cad023ffcdd8a7e2a06f703eb2ae1df4bba",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/sine.js"
+    },
+    {
+      "bytes": 5636,
+      "path": "effects/filter/skew.js",
+      "sha256": "729bba5e564abb28d16d821b1def82bca5a73e42f8f9d90abacb39bacddb1703",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/skew.js"
+    },
+    {
+      "bytes": 22781,
+      "path": "effects/filter/smooth.js",
+      "sha256": "1ba868a5870b86fc659f9514ebe074042b1abc2052e7c21effe6b52b8e3dd017",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/smooth.js"
+    },
+    {
+      "bytes": 3865,
+      "path": "effects/filter/smoothstep.js",
+      "sha256": "380d37d2935d16febbd834d96a6f5560147c216d629eebd0d2c9ac323a9df15e",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/smoothstep.js"
+    },
+    {
+      "bytes": 9393,
+      "path": "effects/filter/snow.js",
+      "sha256": "de9dc602bc95edbcde7d394ebc203e0f5c2f1225a49cc46fe98cbbd682cc53fd",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/snow.js"
+    },
+    {
+      "bytes": 6280,
+      "path": "effects/filter/sobel.js",
+      "sha256": "c92ace6ded9083f956774c5a42adaaa813da28e71ace564a6f8a6d4123ccc8eb",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/sobel.js"
+    },
+    {
+      "bytes": 19718,
+      "path": "effects/filter/spatter.js",
+      "sha256": "359639d8cd535f77b8891f2a3ef8ce5b2f039bc1bc86886382bf37d91aaab1c3",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/spatter.js"
+    },
+    {
+      "bytes": 9721,
+      "path": "effects/filter/spinBlur.js",
+      "sha256": "57e4d3bf21a79dd3722b16ed6ce224d68251c90831ae09ea8e3c2ee01ae2444e",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/spinBlur.js"
+    },
+    {
+      "bytes": 8735,
+      "path": "effects/filter/spiral.js",
+      "sha256": "e0f9def17219461d04ea757a0552728fdc5d177e902aa722ecffe37160fe5ac9",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/spiral.js"
+    },
+    {
+      "bytes": 10970,
+      "path": "effects/filter/spookyTicker.js",
+      "sha256": "a56ebea865a69baad4bedb9e3922850899989cc0414d5fda115b03b1eba69a2b",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/spookyTicker.js"
+    },
+    {
+      "bytes": 15784,
+      "path": "effects/filter/stamp.js",
+      "sha256": "94830ff0f8019f4787e79deecd8f97c4443c97ea59409bf454698426a4b5ec19",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/stamp.js"
+    },
+    {
+      "bytes": 4078,
+      "path": "effects/filter/step.js",
+      "sha256": "a60e417a78d37a6960ba5e93ffc8b8f81b1210f0b56d30e685112f63409ac2b6",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/step.js"
+    },
+    {
+      "bytes": 19484,
+      "path": "effects/filter/stipple.js",
+      "sha256": "e59ecdf746c03479bf6ff399ca028f6c0b2d3abf38dba58b8242004c772dc269",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/stipple.js"
+    },
+    {
+      "bytes": 6557,
+      "path": "effects/filter/strayHair.js",
+      "sha256": "92ec269fa1c0af96bcfec41d573881058234b8d83255084fdee840fa842555ac",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/strayHair.js"
+    },
+    {
+      "bytes": 37138,
+      "path": "effects/filter/strokes.js",
+      "sha256": "f9e1449ba8684321a8161f61ce8b10e481601c090914b18d16d03ea09bc53d2c",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/strokes.js"
+    },
+    {
+      "bytes": 11404,
+      "path": "effects/filter/temporalAberration.js",
+      "sha256": "4ede445a5e0098bbc3a020735fecfaeb0b13c2a7d02385c58907fa0eac6be784",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/temporalAberration.js"
+    },
+    {
+      "bytes": 31982,
+      "path": "effects/filter/tetraColorArray.js",
+      "sha256": "99a13b9ef5bbe8b8b3148f9b599aeead53214d2f6a20d99cf36fd9eec1577489",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/tetraColorArray.js"
+    },
+    {
+      "bytes": 19404,
+      "path": "effects/filter/tetraCosine.js",
+      "sha256": "4ab731ab8752a3f5740abe0b72587fb94baf95b4bc450caf25b38c832e6249d8",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/tetraCosine.js"
+    },
+    {
+      "bytes": 7192,
+      "path": "effects/filter/text.js",
+      "sha256": "f3e084dd2abeaa56af4584269c4fe796a1a4d31f8ab992f31353f687b2757099",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/text.js"
+    },
+    {
+      "bytes": 35484,
+      "path": "effects/filter/texture.js",
+      "sha256": "ac6fc30fcb89f400ce960682bb316fad04297cae54dbbb1db19d60c8c3ae52fc",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/texture.js"
+    },
+    {
+      "bytes": 3550,
+      "path": "effects/filter/threshold.js",
+      "sha256": "cc477ece963c76d558538de63ef4076f0e0f3c918cf13f9a6275ed95ef77d0fc",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/threshold.js"
+    },
+    {
+      "bytes": 11388,
+      "path": "effects/filter/tile.js",
+      "sha256": "748fc4b2155ac684a86f82b46bb28bc5d529e802bfc565a8f1412b8c7ffe7daf",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/tile.js"
+    },
+    {
+      "bytes": 7220,
+      "path": "effects/filter/tint.js",
+      "sha256": "1505adaea9e60ce4e91b20399285b58c5bfd70507a7c1c543e03d3052010f907",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/tint.js"
+    },
+    {
+      "bytes": 4304,
+      "path": "effects/filter/translate.js",
+      "sha256": "1acb102b786ca6e2744cbe9c396e46fbdbf41ed375750885ce925c36a64baef7",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/translate.js"
+    },
+    {
+      "bytes": 9797,
+      "path": "effects/filter/tunnel.js",
+      "sha256": "15c5157722127b7067fc0ad8b43f0b495424d21e0e1cdac7d8025021424c087e",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/tunnel.js"
+    },
+    {
+      "bytes": 8844,
+      "path": "effects/filter/unsharpMask.js",
+      "sha256": "f4bf78f2a63aadee2315b5209a67a793bee8be38cefb5427a0879741eeaabbdb",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/unsharpMask.js"
+    },
+    {
+      "bytes": 7086,
+      "path": "effects/filter/vaseline.js",
+      "sha256": "43393ae10794d9a591d2b36617af8b50456901ca3c6049a5bb767935b8981ddc",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/vaseline.js"
+    },
+    {
+      "bytes": 5247,
+      "path": "effects/filter/vignette.js",
+      "sha256": "5988a2bc7969801631b986ffdaf4a07d1ded6841f4039d6f80120020d8521c2d",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/vignette.js"
+    },
+    {
+      "bytes": 9685,
+      "path": "effects/filter/warp.js",
+      "sha256": "76827cebcebe81122aea923435fa6c7090e7904ee1d535230eccdc3c3e5d07e4",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/warp.js"
+    },
+    {
+      "bytes": 18556,
+      "path": "effects/filter/watercolor.js",
+      "sha256": "34e4938ab45a11ca70bd28084d026b0b37432d1c69a2ba55912659e81f4ead80",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/watercolor.js"
+    },
+    {
+      "bytes": 8015,
+      "path": "effects/filter/waves.js",
+      "sha256": "cbe0d5bfef5032bef9b8aa14a783ab7c85f53df7d24f41636f9c8b415f81da44",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/waves.js"
+    },
+    {
+      "bytes": 10159,
+      "path": "effects/filter/wind.js",
+      "sha256": "4a81992a2cd01c2b80b2b5116108e927c69c1b968c4976c16f289e14bfebb809",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/wind.js"
+    },
+    {
+      "bytes": 9327,
+      "path": "effects/filter/wobble.js",
+      "sha256": "ccfbeb402ee5414f7c47f9e18ff50a99b704bde31ae9c8c3c893824c4729cb04",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/wobble.js"
+    },
+    {
+      "bytes": 13073,
+      "path": "effects/filter/wormhole.js",
+      "sha256": "b825fed9f9281eb370709a916d982d84c6e1f701fa310677b84d5d0d0ad06e9b",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/wormhole.js"
+    },
+    {
+      "bytes": 5290,
+      "path": "effects/filter/zoomBlur.js",
+      "sha256": "8c869c772caf67a20b59e09577c3fb197b8938470499ec4206c13acec5d6b777",
+      "url": "https://shaders.noisedeck.app/1/effects/filter/zoomBlur.js"
+    },
+    {
+      "bytes": 36495,
+      "path": "effects/filter3d/flow3d.js",
+      "sha256": "43e15c083543f0379a01f71845207bcc5e729064602f23fe78582ac1bb098c59",
+      "url": "https://shaders.noisedeck.app/1/effects/filter3d/flow3d.js"
+    },
+    {
+      "bytes": 33002,
+      "path": "effects/filter3d/palette3d.js",
+      "sha256": "64d7aa6defc251fdfd5094fc56cdb278021e296a4a6ec58a9a269bc282486853",
+      "url": "https://shaders.noisedeck.app/1/effects/filter3d/palette3d.js"
+    },
+    {
+      "bytes": 39729,
+      "path": "effects/manifest.json",
+      "sha256": "2cdba2cbc21d3dfa1a806391f2fd72abaa226ecb9228bed41aced8f51da6ad10",
+      "url": "https://shaders.noisedeck.app/1/effects/manifest.json"
+    },
+    {
+      "bytes": 5847,
+      "path": "effects/mixer/alphaMask.js",
+      "sha256": "4f83e08d1f2ab9f7974a06dda38ea6cfcb59edbd6a74a8c590777535717f8e88",
+      "url": "https://shaders.noisedeck.app/1/effects/mixer/alphaMask.js"
+    },
+    {
+      "bytes": 7150,
+      "path": "effects/mixer/applyMode.js",
+      "sha256": "033543c48c86dfacb43d18e290aec79070d4d468dc6b0df9c78266d11334c553",
+      "url": "https://shaders.noisedeck.app/1/effects/mixer/applyMode.js"
+    },
+    {
+      "bytes": 11640,
+      "path": "effects/mixer/blendMode.js",
+      "sha256": "6ca37849d162a11f330609f2fa35e8d8ca7a0cc5c6021ffbbed5a338b25786d4",
+      "url": "https://shaders.noisedeck.app/1/effects/mixer/blendMode.js"
+    },
+    {
+      "bytes": 13110,
+      "path": "effects/mixer/cellSplit.js",
+      "sha256": "171f791c853e970a983333038abd1e9f58e9f5ca1d8c1a633cff6dafbdbaa416",
+      "url": "https://shaders.noisedeck.app/1/effects/mixer/cellSplit.js"
+    },
+    {
+      "bytes": 13391,
+      "path": "effects/mixer/centerMask.js",
+      "sha256": "1a64c0e1fa965497635cd5bfba419ffe0214d8314bbeecf6e09789e5074c2227",
+      "url": "https://shaders.noisedeck.app/1/effects/mixer/centerMask.js"
+    },
+    {
+      "bytes": 5580,
+      "path": "effects/mixer/channelCombine.js",
+      "sha256": "b04f99fbbf14b5f1edd429b62c3f0792e453f11de35569c6fa2a10aaa6b28ecd",
+      "url": "https://shaders.noisedeck.app/1/effects/mixer/channelCombine.js"
+    },
+    {
+      "bytes": 23239,
+      "path": "effects/mixer/distortion.js",
+      "sha256": "5e16ec0cdc840256f3185a0fde78ac7e51fcb72af491494a0cb902da329db886",
+      "url": "https://shaders.noisedeck.app/1/effects/mixer/distortion.js"
+    },
+    {
+      "bytes": 8752,
+      "path": "effects/mixer/focusBlur.js",
+      "sha256": "8f26522ecd3e35302580f2ab0fffedc863e73bc107ba9eef4bbfa81efd1d0215",
+      "url": "https://shaders.noisedeck.app/1/effects/mixer/focusBlur.js"
+    },
+    {
+      "bytes": 13147,
+      "path": "effects/mixer/mashup.js",
+      "sha256": "52279b3b23ef0762930c4b40972be6796baeed7e9dc6fd2175a71ef8c06174af",
+      "url": "https://shaders.noisedeck.app/1/effects/mixer/mashup.js"
+    },
+    {
+      "bytes": 15984,
+      "path": "effects/mixer/patternMix.js",
+      "sha256": "48053cd00a4189bfeb5328ecdf1e51ec8242edf02a4035774cf49e8748ba2ea4",
+      "url": "https://shaders.noisedeck.app/1/effects/mixer/patternMix.js"
+    },
+    {
+      "bytes": 13722,
+      "path": "effects/mixer/shadow.js",
+      "sha256": "0cbd8a586d087500ee77035f8516dbc43d500ac5682be4c227110ac01f641374",
+      "url": "https://shaders.noisedeck.app/1/effects/mixer/shadow.js"
+    },
+    {
+      "bytes": 12575,
+      "path": "effects/mixer/shapeMask.js",
+      "sha256": "66b53017984321b75721b7e1bbd2f71a1f4f607d8aa16a87b88cc67f0d52efa6",
+      "url": "https://shaders.noisedeck.app/1/effects/mixer/shapeMask.js"
+    },
+    {
+      "bytes": 8238,
+      "path": "effects/mixer/split.js",
+      "sha256": "8a27891c356a9352aa12ab749f21b0f35a369309ae853dc67ddc184b426c8e4e",
+      "url": "https://shaders.noisedeck.app/1/effects/mixer/split.js"
+    },
+    {
+      "bytes": 11973,
+      "path": "effects/mixer/thresholdMix.js",
+      "sha256": "fba016ad0cdbbe63bb821a28f77895697641fb11cdf6344f01351cd375aa31e5",
+      "url": "https://shaders.noisedeck.app/1/effects/mixer/thresholdMix.js"
+    },
+    {
+      "bytes": 8328,
+      "path": "effects/mixer/uvRemap.js",
+      "sha256": "15f8bb3b79cdc3f4ff0324a1f8135f68227be415f012e2f0dc913d0e909ac4c3",
+      "url": "https://shaders.noisedeck.app/1/effects/mixer/uvRemap.js"
+    },
+    {
+      "bytes": 14138,
+      "path": "effects/points/attractor.js",
+      "sha256": "f74b07aa5a54fb1eb2e04800683c821de48a6a3b08f1de2164de0ba1de5c3021",
+      "url": "https://shaders.noisedeck.app/1/effects/points/attractor.js"
+    },
+    {
+      "bytes": 16306,
+      "path": "effects/points/buddhabrot.js",
+      "sha256": "d93acf632567134f6be958fc1733c7861db7063f887e2cac01d473b1701cda75",
+      "url": "https://shaders.noisedeck.app/1/effects/points/buddhabrot.js"
+    },
+    {
+      "bytes": 28060,
+      "path": "effects/points/dla.js",
+      "sha256": "77b822cd695ade2ba66b51d00150133d0fb64a81321f2e1494c7cc9119bc83df",
+      "url": "https://shaders.noisedeck.app/1/effects/points/dla.js"
+    },
+    {
+      "bytes": 24887,
+      "path": "effects/points/flock.js",
+      "sha256": "95a80a2021802f861edff66977ac4701a2c3e4a55310461b2636cb5133da84b2",
+      "url": "https://shaders.noisedeck.app/1/effects/points/flock.js"
+    },
+    {
+      "bytes": 16321,
+      "path": "effects/points/flow.js",
+      "sha256": "f51919719fb0cda0f26cc39e1e9383137ef183a870ab8dc86719cd60fdc32f41",
+      "url": "https://shaders.noisedeck.app/1/effects/points/flow.js"
+    },
+    {
+      "bytes": 16943,
+      "path": "effects/points/hydraulic.js",
+      "sha256": "ca4db9e799cd83248feed51f380353dd9b868b479439a1390b3ebdeba88cc8ce",
+      "url": "https://shaders.noisedeck.app/1/effects/points/hydraulic.js"
+    },
+    {
+      "bytes": 20979,
+      "path": "effects/points/lenia.js",
+      "sha256": "66941f7d1108df6e7338df8cf0dce3fadf97f5f51e3a0c48fac765ec082ebfd8",
+      "url": "https://shaders.noisedeck.app/1/effects/points/lenia.js"
+    },
+    {
+      "bytes": 28979,
+      "path": "effects/points/life.js",
+      "sha256": "61bba039718e6ba2f9e3093acb7f61f5830f01a2bb9570d929ab03bef02bec62",
+      "url": "https://shaders.noisedeck.app/1/effects/points/life.js"
+    },
+    {
+      "bytes": 20460,
+      "path": "effects/points/physarum.js",
+      "sha256": "d698ccb938ea7d4a54f84863eb9223166d4e062ec5931647be8c4f973db61e6e",
+      "url": "https://shaders.noisedeck.app/1/effects/points/physarum.js"
+    },
+    {
+      "bytes": 12543,
+      "path": "effects/points/physical.js",
+      "sha256": "1aa0c5d1a5182c3fc7eb6a581f54faa4ea8d2afc94230e4d762009b9f5c00e9c",
+      "url": "https://shaders.noisedeck.app/1/effects/points/physical.js"
+    },
+    {
+      "bytes": 4982,
+      "path": "effects/render/loopBegin.js",
+      "sha256": "bf8665b82a307e27da02ba77679bf58a0355fd727d16c603a55bcd9ea519d137",
+      "url": "https://shaders.noisedeck.app/1/effects/render/loopBegin.js"
+    },
+    {
+      "bytes": 3201,
+      "path": "effects/render/loopEnd.js",
+      "sha256": "11d1d79b44d420d1389bcd71e1d8d10ecb61dc4211d73e02d618d5cc602f3716",
+      "url": "https://shaders.noisedeck.app/1/effects/render/loopEnd.js"
+    },
+    {
+      "bytes": 6350,
+      "path": "effects/render/meshLoader.js",
+      "sha256": "c770a3a98cbe88d53238b677aba37f49eddb8109efb575216f9a206a9f906d00",
+      "url": "https://shaders.noisedeck.app/1/effects/render/meshLoader.js"
+    },
+    {
+      "bytes": 18407,
+      "path": "effects/render/meshRender.js",
+      "sha256": "610e41bb33a24bacf3b78f1784b5bb7f010b76b8a254abf38a0c04a59ebdd085",
+      "url": "https://shaders.noisedeck.app/1/effects/render/meshRender.js"
+    },
+    {
+      "bytes": 28320,
+      "path": "effects/render/pointsBillboardRender.js",
+      "sha256": "ecec6383fd9e73cbb39bdff7fc15a04f2c43a7e3db710759d63683ac3204aefb",
+      "url": "https://shaders.noisedeck.app/1/effects/render/pointsBillboardRender.js"
+    },
+    {
+      "bytes": 15363,
+      "path": "effects/render/pointsEmit.js",
+      "sha256": "28bc8f9e2a6736addb8b035d5160a3f76c313692f346d40b15d3d3bea213fd64",
+      "url": "https://shaders.noisedeck.app/1/effects/render/pointsEmit.js"
+    },
+    {
+      "bytes": 17633,
+      "path": "effects/render/pointsRender.js",
+      "sha256": "f688b01f7b867edd45c16be7ae3678f6729f965e1ddf532406991d968d093b40",
+      "url": "https://shaders.noisedeck.app/1/effects/render/pointsRender.js"
+    },
+    {
+      "bytes": 32247,
+      "path": "effects/render/render3d.js",
+      "sha256": "404d62c4c0d7d7d16719e24c47a3002ab771e6a53bbe6c3034114e022adcad14",
+      "url": "https://shaders.noisedeck.app/1/effects/render/render3d.js"
+    },
+    {
+      "bytes": 32477,
+      "path": "effects/render/renderCubemap3d.js",
+      "sha256": "ef439be2541c9c749e35f49997f624fc3809674128d36672010925e7c296f127",
+      "url": "https://shaders.noisedeck.app/1/effects/render/renderCubemap3d.js"
+    },
+    {
+      "bytes": 13162,
+      "path": "effects/render/renderCubemapSurface.js",
+      "sha256": "a64e11bbf317252b9f865a4a4569746fba00eca0038a08cc3b017a8fbcea1a41",
+      "url": "https://shaders.noisedeck.app/1/effects/render/renderCubemapSurface.js"
+    },
+    {
+      "bytes": 33160,
+      "path": "effects/render/renderLit3d.js",
+      "sha256": "75740bf8ff2cb4f14659f817a03a9928d94ec2b44a4ea78c741b59ea0db5c7d9",
+      "url": "https://shaders.noisedeck.app/1/effects/render/renderLit3d.js"
+    },
+    {
+      "bytes": 12097,
+      "path": "effects/synth/bitwise.js",
+      "sha256": "4c7fba60f8b338ad2b86ef45d700e131b07e92e607073e16dfb99fbd4ef50f7f",
+      "url": "https://shaders.noisedeck.app/1/effects/synth/bitwise.js"
+    },
+    {
+      "bytes": 12187,
+      "path": "effects/synth/cell.js",
+      "sha256": "39d1f670e6db768669303cd92fb7695a2f5ea54f7897ab29c2c66974b13f0c65",
+      "url": "https://shaders.noisedeck.app/1/effects/synth/cell.js"
+    },
+    {
+      "bytes": 47856,
+      "path": "effects/synth/cellularAutomata.js",
+      "sha256": "60c250c1d343fe84d9440075978aee3f78cc79e2fa69286c622bc27e3670ab21",
+      "url": "https://shaders.noisedeck.app/1/effects/synth/cellularAutomata.js"
+    },
+    {
+      "bytes": 19419,
+      "path": "effects/synth/curl.js",
+      "sha256": "30dbe1e43e878115177c4506df64e007b8fba9100a710e62f705c6f85d2cc032",
+      "url": "https://shaders.noisedeck.app/1/effects/synth/curl.js"
+    },
+    {
+      "bytes": 12726,
+      "path": "effects/synth/gabor.js",
+      "sha256": "80c10a8b1d325b283d0c73e0dc71ca3053500614f9818caf3143f4d5265a7718",
+      "url": "https://shaders.noisedeck.app/1/effects/synth/gabor.js"
+    },
+    {
+      "bytes": 17837,
+      "path": "effects/synth/gradient.js",
+      "sha256": "a3bdba0062bd331759b2929ee49545d353dedbe5af1afc28b5a212ac055f1d25",
+      "url": "https://shaders.noisedeck.app/1/effects/synth/gradient.js"
+    },
+    {
+      "bytes": 33490,
+      "path": "effects/synth/julia.js",
+      "sha256": "587eaeac9b89159f4799fe9b0619abd9f3ba39ade99836f1a6a1ac326313cec9",
+      "url": "https://shaders.noisedeck.app/1/effects/synth/julia.js"
+    },
+    {
+      "bytes": 17213,
+      "path": "effects/synth/mandala.js",
+      "sha256": "8d2d9b94c7cbb2e112771b4d9c1fc2fe48d05624d40451b32c0608d7c900de6c",
+      "url": "https://shaders.noisedeck.app/1/effects/synth/mandala.js"
+    },
+    {
+      "bytes": 34928,
+      "path": "effects/synth/mandelbrot.js",
+      "sha256": "94b082cc393eb5adf66b6da06bf9ce3e7b19384624ce7787fde441aa1c047da4",
+      "url": "https://shaders.noisedeck.app/1/effects/synth/mandelbrot.js"
+    },
+    {
+      "bytes": 17501,
+      "path": "effects/synth/media.js",
+      "sha256": "62110a27bbebe06e47a52f6df56f6a032fbec498c38db0fd885c389c4eaf26ea",
+      "url": "https://shaders.noisedeck.app/1/effects/synth/media.js"
+    },
+    {
+      "bytes": 41119,
+      "path": "effects/synth/mnca.js",
+      "sha256": "c631854d5bca3279779018a5f6092fb224b608df3d9ab4c349607814f6bff08a",
+      "url": "https://shaders.noisedeck.app/1/effects/synth/mnca.js"
+    },
+    {
+      "bytes": 15359,
+      "path": "effects/synth/modPattern.js",
+      "sha256": "6b2d2eca6c3c32eda6386e9e34bf566585cd7d54f505536b5c37fef36a7f7240",
+      "url": "https://shaders.noisedeck.app/1/effects/synth/modPattern.js"
+    },
+    {
+      "bytes": 39926,
+      "path": "effects/synth/navierStokes.js",
+      "sha256": "766be1c7910b9de3bab4a9d8a0268c2df0d646db7e885263625f826b2295f96f",
+      "url": "https://shaders.noisedeck.app/1/effects/synth/navierStokes.js"
+    },
+    {
+      "bytes": 27904,
+      "path": "effects/synth/newton.js",
+      "sha256": "5dcdca96e5e8792e102f22bc1b9a55bf988c7e660524197f052e0c156a1463ca",
+      "url": "https://shaders.noisedeck.app/1/effects/synth/newton.js"
+    },
+    {
+      "bytes": 42457,
+      "path": "effects/synth/noise.js",
+      "sha256": "c25d697b25445b69c9575a367e11c93c6a6c507ebb694c4f906b0bb92dcbc280",
+      "url": "https://shaders.noisedeck.app/1/effects/synth/noise.js"
+    },
+    {
+      "bytes": 12131,
+      "path": "effects/synth/osc2d.js",
+      "sha256": "e951db231fbe9caaf504d00ac0f041fd13b2dc6c1acf8d3ac1c889d2c6c33b4b",
+      "url": "https://shaders.noisedeck.app/1/effects/synth/osc2d.js"
+    },
+    {
+      "bytes": 23279,
+      "path": "effects/synth/pattern.js",
+      "sha256": "4d050e78559ac6645c888877c0d23e8fc1acad6e46959cf2f4934d2079bac663",
+      "url": "https://shaders.noisedeck.app/1/effects/synth/pattern.js"
+    },
+    {
+      "bytes": 26280,
+      "path": "effects/synth/perlin.js",
+      "sha256": "6629e72b9be8992401b56f5cff4ed02a6e05ce6b415082730d19ae529c50b401",
+      "url": "https://shaders.noisedeck.app/1/effects/synth/perlin.js"
+    },
+    {
+      "bytes": 7168,
+      "path": "effects/synth/polygon.js",
+      "sha256": "43585ffb3086fa7de08619effb85ecef8339ad953bebf2e5171f7f5261719b5f",
+      "url": "https://shaders.noisedeck.app/1/effects/synth/polygon.js"
+    },
+    {
+      "bytes": 45660,
+      "path": "effects/synth/reactionDiffusion.js",
+      "sha256": "ce1cf556ffa7ee69950c4b55d8c2285fcd9f2bd56010ab6a4d6cfa8c55ccc316",
+      "url": "https://shaders.noisedeck.app/1/effects/synth/reactionDiffusion.js"
+    },
+    {
+      "bytes": 18741,
+      "path": "effects/synth/remap.js",
+      "sha256": "3428ca76b6644e6f5ca6709e3d4cc1862b122dd379f2c4ea5c00a8757781e1f8",
+      "url": "https://shaders.noisedeck.app/1/effects/synth/remap.js"
+    },
+    {
+      "bytes": 7959,
+      "path": "effects/synth/roll.js",
+      "sha256": "4f34049e918f56e706be0ef5845dc4f1f675391f6ffcf86c0349ff667c7cbebc",
+      "url": "https://shaders.noisedeck.app/1/effects/synth/roll.js"
+    },
+    {
+      "bytes": 27261,
+      "path": "effects/synth/sacredGeometry.js",
+      "sha256": "97fd9f9aaaee58e2cc779b14346661eade301da31052ed0914b6b50e994f3d58",
+      "url": "https://shaders.noisedeck.app/1/effects/synth/sacredGeometry.js"
+    },
+    {
+      "bytes": 4939,
+      "path": "effects/synth/scope.js",
+      "sha256": "773065aacf34861ecc0b69ef5db7c1d7d05a01e3bc44149242cbbf0fb3b2aaf6",
+      "url": "https://shaders.noisedeck.app/1/effects/synth/scope.js"
+    },
+    {
+      "bytes": 36712,
+      "path": "effects/synth/shape.js",
+      "sha256": "ade602ae714af4769aa305820142595feec7a0012944392bafb8b5ca62da12d5",
+      "url": "https://shaders.noisedeck.app/1/effects/synth/shape.js"
+    },
+    {
+      "bytes": 2947,
+      "path": "effects/synth/solid.js",
+      "sha256": "2f70dc42877088065e8648a1ed54ea4a1eb9b7448dbcd12122a72a098d342a5f",
+      "url": "https://shaders.noisedeck.app/1/effects/synth/solid.js"
+    },
+    {
+      "bytes": 4902,
+      "path": "effects/synth/spectrum.js",
+      "sha256": "aa41741186d0f3d9488486733bcd63460c4d9bab4a961131868847647003794c",
+      "url": "https://shaders.noisedeck.app/1/effects/synth/spectrum.js"
+    },
+    {
+      "bytes": 23026,
+      "path": "effects/synth/subdivide.js",
+      "sha256": "8be4cba04074b9c2b3ff6cef4d8cf5a62be0abac716b0ab78512d278cc837831",
+      "url": "https://shaders.noisedeck.app/1/effects/synth/subdivide.js"
+    },
+    {
+      "bytes": 16068,
+      "path": "effects/synth/testPattern.js",
+      "sha256": "491d6e56f3ed249578d5662a6c7ca96317adceb825e9476d626d785554bb94e0",
+      "url": "https://shaders.noisedeck.app/1/effects/synth/testPattern.js"
+    },
+    {
+      "bytes": 13635,
+      "path": "effects/synth3d/cell3d.js",
+      "sha256": "d4d0db948523f7143bf62235e0451623315068c9a3a47191280c4745b58ae16b",
+      "url": "https://shaders.noisedeck.app/1/effects/synth3d/cell3d.js"
+    },
+    {
+      "bytes": 22548,
+      "path": "effects/synth3d/cellularAutomata3d.js",
+      "sha256": "eac5251ad8a576501c21af5e51a0243eb4c927ab96e1bff4b76b5b1fbef9af32",
+      "url": "https://shaders.noisedeck.app/1/effects/synth3d/cellularAutomata3d.js"
+    },
+    {
+      "bytes": 27243,
+      "path": "effects/synth3d/flythrough3d.js",
+      "sha256": "75a65ce38434c61ad14ec034e1261b0ac23a3ecb93795f27732e6fb6e86b7306",
+      "url": "https://shaders.noisedeck.app/1/effects/synth3d/flythrough3d.js"
+    },
+    {
+      "bytes": 20887,
+      "path": "effects/synth3d/fractal3d.js",
+      "sha256": "62297acb2ed51ea0d7bd64fc0836fe69550fd8a3da3a0af92bde5aac41275092",
+      "url": "https://shaders.noisedeck.app/1/effects/synth3d/fractal3d.js"
+    },
+    {
+      "bytes": 19648,
+      "path": "effects/synth3d/noise3d.js",
+      "sha256": "d749fdc150a29f6d7591919d7658305f9c3e9c5a3e1e2602897289159426b108",
+      "url": "https://shaders.noisedeck.app/1/effects/synth3d/noise3d.js"
+    },
+    {
+      "bytes": 17984,
+      "path": "effects/synth3d/reactionDiffusion3d.js",
+      "sha256": "e371226756a95d1df32eef456f6178dab0c4f8edbf331f9bc7b5c8a994bbf665",
+      "url": "https://shaders.noisedeck.app/1/effects/synth3d/reactionDiffusion3d.js"
+    },
+    {
+      "bytes": 17610,
+      "path": "effects/synth3d/shape3d.js",
+      "sha256": "921687d65c38593ff3c3e166fc9914c53d6ff8fb0e72737bba8061247f2c2bca",
+      "url": "https://shaders.noisedeck.app/1/effects/synth3d/shape3d.js"
+    },
+    {
+      "bytes": 711810,
+      "path": "noisemaker-shaders-core.esm.js",
+      "sha256": "1cb1b19955939d7b676864d158b23741bf6947b54b17ef8a1f5f57411951b492",
+      "url": "https://shaders.noisedeck.app/1/noisemaker-shaders-core.esm.js"
+    }
+  ]
+}

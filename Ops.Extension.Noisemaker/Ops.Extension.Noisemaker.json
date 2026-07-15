@@ -1,0 +1,7 @@
+{
+  "name": "Ops.Extension.Noisemaker",
+  "summary": "Run complete Noisemaker Polymorphic programs in Cables GL.",
+  "licence": {
+    "name": "MIT"
+  }
+}

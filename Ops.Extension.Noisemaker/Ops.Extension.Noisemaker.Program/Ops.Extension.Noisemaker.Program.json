@@ -1,0 +1,125 @@
+{
+  "id": "8ecda150-2f68-4b46-9247-47b2cd936d62",
+  "authorName": "Noise Factor LLC",
+  "created": 1784052000000,
+  "summary": "Render a complete Noisemaker Polymorphic program to a Cables texture.",
+  "categories": [
+    "Graphics",
+    "Noisemaker"
+  ],
+  "layout": {
+    "portsIn": [
+      {
+        "type": 1,
+        "name": "Render"
+      },
+      {
+        "type": 5,
+        "name": "DSL"
+      },
+      {
+        "type": 2,
+        "name": "Input Texture",
+        "objType": "texture"
+      },
+      {
+        "type": 5,
+        "name": "Size",
+        "values": [
+          "Canvas",
+          "Manual"
+        ]
+      },
+      {
+        "type": 0,
+        "name": "Width",
+        "subType": "integer"
+      },
+      {
+        "type": 0,
+        "name": "Height",
+        "subType": "integer"
+      },
+      {
+        "type": 0,
+        "name": "Time",
+        "subType": "number"
+      },
+      {
+        "type": 1,
+        "name": "Reset"
+      }
+    ],
+    "portsOut": [
+      {
+        "type": 2,
+        "name": "Texture",
+        "objType": "texture"
+      },
+      {
+        "type": 1,
+        "name": "Next"
+      },
+      {
+        "type": 0,
+        "name": "Ready",
+        "subType": "boolean"
+      },
+      {
+        "type": 5,
+        "name": "Error"
+      }
+    ]
+  },
+  "docs": {
+    "ports": [
+      {
+        "name": "Render",
+        "text": "Render one frame and fire Next after the asynchronous frame completes."
+      },
+      {
+        "name": "DSL",
+        "text": "A complete Noisemaker Polymorphic program."
+      },
+      {
+        "name": "Input Texture",
+        "text": "Optional Cables texture used by every media() step."
+      },
+      {
+        "name": "Size",
+        "text": "Use the Cables canvas dimensions or the manual Width and Height."
+      },
+      {
+        "name": "Texture",
+        "text": "Stable Cables-owned texture containing the latest successful frame."
+      },
+      {
+        "name": "Ready",
+        "text": "True when a compiled pipeline is available."
+      },
+      {
+        "name": "Error",
+        "text": "Current load, compile, context, or render error; empty on success."
+      }
+    ]
+  },
+  "changelog": [
+    {
+      "message": "Created the native Noisemaker Program op.",
+      "type": "new op",
+      "author": "Noise Factor LLC",
+      "date": 1784052000000
+    }
+  ],
+  "license": "MIT",
+  "coreLibs": [
+    "cgl"
+  ],
+  "dependencies": [
+    {
+      "src": "./lib_noisemaker-cablesgl.js",
+      "type": "commonjs"
+    }
+  ],
+  "isReleased": false
+}

@@ -1,0 +1,146 @@
+{
+  "name": "noisemaker-program",
+  "description": "Animated Noisemaker Polymorphic output displayed through an ordinary Cables VizTexture op.",
+  "visibility": "private",
+  "dirs": {
+    "ops": [
+      "../Ops.Extension.Noisemaker"
+    ]
+  },
+  "settings": {
+    "licence": "none"
+  },
+  "ops": [
+    {
+      "opId": "f1029550-d877-42da-9b1e-63a5163a0350",
+      "objName": "Ops.Gl.MainLoop_v2",
+      "id": "noisemaker-main-loop",
+      "attribs": {},
+      "uiAttribs": {
+        "subPatch": 0,
+        "translate": {
+          "x": 80,
+          "y": 100
+        }
+      },
+      "portsIn": [
+        {
+          "name": "Active",
+          "value": 1
+        }
+      ],
+      "portsOut": [
+        {
+          "name": "trigger",
+          "links": [
+            {
+              "portIn": "Render",
+              "portOut": "trigger",
+              "objIn": "noisemaker-program-op",
+              "objOut": "noisemaker-main-loop"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "opId": "aac7f721-208f-411a-adb3-79adae2e471a",
+      "objName": "Ops.Anim.Timer_v2",
+      "id": "noisemaker-timer",
+      "attribs": {},
+      "uiAttribs": {
+        "subPatch": 0,
+        "translate": {
+          "x": 80,
+          "y": 320
+        }
+      },
+      "portsIn": [
+        {
+          "name": "Speed",
+          "value": 1
+        },
+        {
+          "name": "Play",
+          "value": 1
+        }
+      ],
+      "portsOut": [
+        {
+          "name": "Time",
+          "links": [
+            {
+              "portIn": "Time",
+              "portOut": "Time",
+              "objIn": "noisemaker-program-op",
+              "objOut": "noisemaker-timer"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "opId": "8ecda150-2f68-4b46-9247-47b2cd936d62",
+      "objName": "Ops.Extension.Noisemaker.Program",
+      "id": "noisemaker-program-op",
+      "attribs": {},
+      "uiAttribs": {
+        "subPatch": 0,
+        "translate": {
+          "x": 420,
+          "y": 100
+        }
+      },
+      "portsIn": [
+        {
+          "name": "DSL",
+          "value": "search synth\n\nnoise(seed: 1, scaleX: 50, scaleY: 50, ridges: true)\n  .write(o0)\n\nrender(o0)"
+        },
+        {
+          "name": "Size",
+          "value": 0
+        },
+        {
+          "name": "Width",
+          "value": 1280
+        },
+        {
+          "name": "Height",
+          "value": 720
+        }
+      ],
+      "portsOut": [
+        {
+          "name": "Texture",
+          "links": [
+            {
+              "portIn": "Texture In",
+              "portOut": "Texture",
+              "objIn": "noisemaker-viz-texture",
+              "objOut": "noisemaker-program-op"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "opId": "4ea2d7b0-ca74-45db-962b-4d1965ac20c0",
+      "objName": "Ops.Ui.VizTexture",
+      "id": "noisemaker-viz-texture",
+      "attribs": {},
+      "uiAttribs": {
+        "subPatch": 0,
+        "translate": {
+          "x": 900,
+          "y": 100
+        }
+      },
+      "portsIn": [
+        {
+          "name": "Show Info",
+          "value": 1
+        }
+      ]
+    }
+  ]
+}
