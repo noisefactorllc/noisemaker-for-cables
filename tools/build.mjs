@@ -44,7 +44,7 @@ async function main() {
   if (output.includes('sourceMappingURL')) throw new Error('Bundle contains a source map reference')
 
   const { size } = await stat(outputPath)
-  console.log(`Built NoisemakerCablesGL (${size} bytes)`)
+  console.log(`Built Noisemaker for Cables (${size} bytes)`)
 }
 
 main().catch((error) => {

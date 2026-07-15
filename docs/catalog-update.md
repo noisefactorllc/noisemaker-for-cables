@@ -1,4 +1,4 @@
-# Updating the pinned catalog
+# Updating the Noisemaker for Cables catalog
 
 The current lock contains 210 effects and 212 total artifacts: the core engine,
 the effect manifest, and one bundle for each effect. Artifact byte sizes and

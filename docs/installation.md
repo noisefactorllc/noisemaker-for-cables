@@ -1,4 +1,7 @@
-# Installation and op contract
+# Installing Noisemaker for Cables
+
+The source package is `@noisefactor/noisemaker-for-cables`. Its installed op
+and bundle identifiers remain stable for compatibility with existing patches.
 
 ## Cables Standalone 0.11.0
 

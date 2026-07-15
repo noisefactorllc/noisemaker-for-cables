@@ -60,7 +60,7 @@ async function walkFiles(root, directory = root) {
 }
 
 test('npm archive is the exact self-contained Cables Standalone distribution', async () => {
-  const temporaryDirectory = await mkdtemp(join(tmpdir(), 'noisemaker-cablesgl-pack-'))
+  const temporaryDirectory = await mkdtemp(join(tmpdir(), 'noisemaker-for-cables-pack-'))
 
   try {
     const packageJson = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8'))

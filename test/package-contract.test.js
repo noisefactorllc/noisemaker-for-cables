@@ -8,7 +8,15 @@ const readProjectFile = (path) => readFile(new URL(`../${path}`, import.meta.url
 test('private package metadata describes the portable Cables distribution', async () => {
   const packageJson = JSON.parse(await readProjectFile('package.json'))
 
-  assert.equal(packageJson.name, '@noisefactor/noisemaker-cablesgl')
+  assert.equal(packageJson.name, '@noisefactor/noisemaker-for-cables')
+  assert.equal(
+    packageJson.description,
+    "Noisemaker for Cables runs Noisemaker's Polymorphic shader engine inside Cables GL.",
+  )
+  assert.deepEqual(packageJson.repository, {
+    type: 'git',
+    url: 'https://github.com/noisefactorllc/noisemaker-for-cables.git',
+  })
   assert.equal(packageJson.private, true)
   assert.equal(packageJson.type, 'module')
   assert.equal(packageJson.exports, undefined)
@@ -62,10 +70,11 @@ test('source facade exposes only the planned bridge APIs', async () => {
   )
 })
 
-test('README identifies the package and its single-op scope', async () => {
+test('README identifies Noisemaker for Cables, its package, and its single-op scope', async () => {
   const readme = await readProjectFile('README.md')
 
-  assert.match(readme, /^# @noisefactor\/noisemaker-cablesgl$/m)
+  assert.match(readme, /^# Noisemaker for Cables$/m)
+  assert.match(readme, /`@noisefactor\/noisemaker-for-cables`/)
   assert.match(readme, /Ops\.Extension\.Noisemaker\.Program/)
 })
 

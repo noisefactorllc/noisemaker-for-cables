@@ -1,4 +1,4 @@
-# Example patch
+# Noisemaker for Cables example patch
 
 Open `noisemaker-program.cables` in Cables Standalone 0.11.0. Its project-local
 op directory points to the sibling `Ops.Extension.Noisemaker` directory, so no

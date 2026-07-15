@@ -1,7 +1,11 @@
 {
-  "name": "@noisefactor/noisemaker-cablesgl",
+  "name": "@noisefactor/noisemaker-for-cables",
   "version": "0.1.0",
-  "description": "A WebGL2 bridge for running Noisemaker programs inside Cables GL.",
+  "description": "Noisemaker for Cables runs Noisemaker's Polymorphic shader engine inside Cables GL.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/noisefactorllc/noisemaker-for-cables.git"
+  },
   "private": true,
   "type": "module",
   "files": [

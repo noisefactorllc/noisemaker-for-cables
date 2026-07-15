@@ -1,6 +1,6 @@
 # Architecture
 
-`noisemaker-cablesgl` is a thin same-context adapter. It bundles the pinned
+Noisemaker for Cables is a thin same-context adapter. It bundles the pinned
 Noisemaker compiler, Pipeline, WebGL2 backend, GLSL, effect registry, and full
 Polymorphic DSL. Cables supplies the existing WebGL2 context and receives a
 stable CGL texture; there is no shader translation, second canvas, or CPU
@@ -36,3 +36,8 @@ The browser bundle is the installed boundary. The small native op wrapper asks
 that facade to create a controller and install the exact Cables port contract.
 All 210 effects are statically imported and registered once through a
 retry-safe readiness gate.
+
+The product and package use the Noisemaker for Cables name. The installed
+`Ops.Extension.Noisemaker.Program` namespace, `NoisemakerCablesGL` browser
+global, and `lib_noisemaker-cablesgl.js` dependency filename remain stable so
+saved Cables patches do not require migration.
