@@ -1,13 +1,16 @@
 /* filter/pondRipples */
-var t=class{constructor(e={}){this.state={},this.uniforms={},e.name&&(this.name=e.name),e.namespace&&(this.namespace=e.namespace),e.func&&(this.func=e.func),e.description&&(this.description=e.description),e.tags&&(this.tags=e.tags),e.globals&&(this.globals=e.globals),e.passes&&(this.passes=e.passes),e.textures&&(this.textures=e.textures),e.outputTex3d&&(this.outputTex3d=e.outputTex3d),e.outputGeo&&(this.outputGeo=e.outputGeo),e.uniformLayout&&(this.uniformLayout=e.uniformLayout),e.uniformLayouts&&(this.uniformLayouts=e.uniformLayouts),e.paramAliases&&(this.paramAliases=e.paramAliases),e.openCategories&&(this.openCategories=e.openCategories),e.defaultProgram&&(this.defaultProgram=e.defaultProgram),e.hidden&&(this.hidden=!0),e.deprecatedBy&&(this.deprecatedBy=e.deprecatedBy),e.onInit&&(this._configOnInit=e.onInit),e.onUpdate&&(this._configOnUpdate=e.onUpdate),e.onDestroy&&(this._configOnDestroy=e.onDestroy),e.asyncInit&&(this._configAsyncInit=e.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(e){return this._configOnUpdate?this._configOnUpdate.call(this,e):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(e){return this._configAsyncInit?this._configAsyncInit.call(this,e):Promise.resolve()}};var n=new t({name:"Pond Ripples",namespace:"filter",func:"pondRipples",tags:["distort","artist"],description:"Concentric ripple distortion around the image center",globals:{amount:{type:"float",default:30,uniform:"amount",min:0,max:100,zero:0,ui:{label:"amount",control:"slider"}},ridges:{type:"int",default:8,uniform:"ridges",min:1,max:20,ui:{label:"ridges",control:"slider"}},style:{type:"int",default:2,define:"STYLE",choices:{aroundCenter:0,outFromCenter:1,pondRipples:2},ui:{label:"style",control:"dropdown"}},wrap:{type:"int",default:0,define:"WRAP",choices:{mirror:0,repeat:1,clamp:2},ui:{label:"wrap",control:"dropdown"}},antialias:{type:"boolean",default:!0,uniform:"antialias",ui:{label:"antialias",control:"checkbox"}}},passes:[{name:"render",program:"pondRipples",inputs:{inputTex:"inputTex"},outputs:{fragColor:"outputTex"}}]});var a={pondRipples:{glsl:`/*
+var t=class{constructor(e={}){this.state={},this.uniforms={},e.name&&(this.name=e.name),e.namespace&&(this.namespace=e.namespace),e.func&&(this.func=e.func),e.description&&(this.description=e.description),e.tags&&(this.tags=e.tags),e.globals&&(this.globals=e.globals),e.passes&&(this.passes=e.passes),e.textures&&(this.textures=e.textures),e.outputTex3d&&(this.outputTex3d=e.outputTex3d),e.outputGeo&&(this.outputGeo=e.outputGeo),e.uniformLayout&&(this.uniformLayout=e.uniformLayout),e.uniformLayouts&&(this.uniformLayouts=e.uniformLayouts),e.paramAliases&&(this.paramAliases=e.paramAliases),e.openCategories&&(this.openCategories=e.openCategories),e.defaultProgram&&(this.defaultProgram=e.defaultProgram),e.hidden&&(this.hidden=!0),e.deprecatedBy&&(this.deprecatedBy=e.deprecatedBy),e.onInit&&(this._configOnInit=e.onInit),e.onUpdate&&(this._configOnUpdate=e.onUpdate),e.onDestroy&&(this._configOnDestroy=e.onDestroy),e.asyncInit&&(this._configAsyncInit=e.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(e){return this._configOnUpdate?this._configOnUpdate.call(this,e):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(e){return this._configAsyncInit?this._configAsyncInit.call(this,e):Promise.resolve()}};var n=new t({name:"Pond Ripples",namespace:"filter",func:"pondRipples",tags:["distort","artist"],description:"Concentric ripple distortion around the image center",globals:{amount:{type:"float",default:30,uniform:"amount",min:0,max:100,zero:0,ui:{label:"amount",control:"slider"}},ridges:{type:"int",default:8,uniform:"ridges",min:1,max:20,ui:{label:"ridges",control:"slider"}},speed:{type:"int",default:0,uniform:"speed",min:-5,max:5,zero:0,ui:{label:"speed",control:"slider"}},style:{type:"int",default:2,define:"STYLE",choices:{aroundCenter:0,outFromCenter:1,pondRipples:2},ui:{label:"style",control:"dropdown"}},wrap:{type:"int",default:0,define:"WRAP",choices:{mirror:0,repeat:1,clamp:2},ui:{label:"wrap",control:"dropdown"}},antialias:{type:"boolean",default:!0,uniform:"antialias",ui:{label:"antialias",control:"checkbox"}}},passes:[{name:"render",program:"pondRipples",inputs:{inputTex:"inputTex"},outputs:{fragColor:"outputTex"}}]});var a={pondRipples:{glsl:`/*
  * Pond Ripples - concentric ring distortion around the fixed image center.
  *
  * r = distance from center (aspect-corrected, tile-aware global UV);
- * phase = r * ridges * 2*PI; w = sin(phase) * amountGain * 0.05 *
+ * phase = r * ridges * 2*PI - time * 2*PI * speed, so integer speed
+ * values shift the phase by whole wave cycles per normalized time loop
+ * (positive speed travels outward, negative inward, 0 is static and
+ * loop-seamless either way); w = sin(phase) * amountGain * 0.05 *
  * (1 - r) is the per-ring wave displacement, damped toward the image
- * edge - and exactly 0 at r=0 (the center pixel) regardless of the
- * damping term, since sin(0)=0, which keeps the polar reconstruction
- * singularity-free.
+ * edge. At speed=0 w is exactly 0 at r=0 (sin(0)=0); with animation
+ * the center-pixel w can be nonzero, and the r>0 direction guard in
+ * main() is what keeps the polar reconstruction singularity-free.
  *
  * aroundCenter (style 0) rotates the sample's angular position by
  * w*2*PI*0.25 with the radius unchanged (tangential swirl).
@@ -47,6 +50,8 @@ uniform vec2 tileOffset;
 uniform vec2 fullResolution;
 uniform float amount;
 uniform int ridges;
+uniform int speed;
+uniform float time;
 uniform bool antialias;
 
 out vec4 fragColor;
@@ -62,7 +67,7 @@ void main() {
     uv.x *= aspectRatio;
 
     float r = length(uv);
-    float phase = r * float(ridges) * 2.0 * PI;
+    float phase = r * float(ridges) * 2.0 * PI - time * 2.0 * PI * float(speed);
     // Clamp the damping term at 0 so corners beyond r=1 (aspect ratios
     // wider/taller than ~1.73:1) don't invert phase and amplify instead
     // of damping.
@@ -98,9 +103,10 @@ void main() {
     rDelta = w * 0.5;
 #endif
 
-    // r>0.0 guard avoids a 0/0 direction at the exact center pixel; w is
-    // always exactly 0 there (see header), so any direction would do,
-    // but this keeps the math NaN-free rather than relying on that.
+    // r>0.0 guard avoids a 0/0 direction at the exact center pixel. With
+    // speed=0, w is exactly 0 there anyway; with animation w can be
+    // nonzero at r=0, and the zero dir pins the center pixel to sample
+    // the center, keeping the reconstruction NaN-free and stable.
     vec2 dir = (r > 0.0) ? uv / r : vec2(0.0);
 
     float rot = rotDelta * 2.0 * PI * 0.25;
@@ -186,9 +192,11 @@ void main() {
 struct Uniforms {
     amount: f32,
     ridges: i32,
+    speed: i32,
     antialias: i32,
     tileOffset: vec2<f32>,
     fullResolution: vec2<f32>,
+    time: f32,
 }
 
 @group(0) @binding(0) var inputSampler: sampler;
@@ -211,7 +219,7 @@ fn main(@builtin(position) pos: vec4<f32>) -> @location(0) vec4<f32> {
     uv.x = uv.x * aspectRatio;
 
     let r = length(uv);
-    let phase = r * f32(uniforms.ridges) * 2.0 * PI;
+    let phase = r * f32(uniforms.ridges) * 2.0 * PI - uniforms.time * 2.0 * PI * f32(uniforms.speed);
     // Clamp the damping term at 0 so corners beyond r=1 (aspect ratios
     // wider/taller than ~1.73:1) don't invert phase and amplify instead
     // of damping.
@@ -303,13 +311,14 @@ Concentric ripple distortion around the image center
 |-----------|------|---------|-------|-------------|
 | amount | float | 30 | 0-100 | Ripple strength; 0 is a no-op and 100 reaches twice the former maximum displacement |
 | ridges | int | 8 | 1-20 | Number of concentric ripple rings from center to edge |
+| speed | int | 0 | -5-5 | Animation speed in wave cycles per loop; positive travels outward, negative inward, 0 is static |
 | style | int | pondRipples | aroundCenter/outFromCenter/pondRipples | Displacement style |
 | wrap | int | mirror | mirror/repeat/clamp | Edge behavior for samples displaced past the image bounds |
 | antialias | boolean | true | on/off | 4x rotated-grid supersampling (disable before palette effects) |
 
 ## Notes
 
-Aspect-corrected polar distortion about the fixed image center (0.5, 0.5). For each pixel, \`r\` is its aspect-corrected distance from center and \`phase = r * ridges * 2*PI\` drives a damped sine wave \`w = sin(phase) * amountGain * 0.05 * (1 - r)\` (the \`(1 - r)\` term fades the ripple out toward the frame edge; \`w\` is exactly 0 at the center regardless of damping, since \`sin(0) = 0\`). The gain follows the original linear response through the default amount of 30, then rises smoothly to 2.0 at amount 100.
+Aspect-corrected polar distortion about the fixed image center (0.5, 0.5). For each pixel, \`r\` is its aspect-corrected distance from center and \`phase = r * ridges * 2*PI - time * 2*PI * speed\` drives a damped sine wave \`w = sin(phase) * amountGain * 0.05 * (1 - r)\` (the \`(1 - r)\` term fades the ripple out toward the frame edge). Because \`speed\` is an integer number of wave cycles per normalized time loop, the animation loops seamlessly; at \`speed = 0\` the phase term vanishes and the effect is static, with \`w\` exactly 0 at the center since \`sin(0) = 0\`. The gain follows the original linear response through the default amount of 30, then rises smoothly to 2.0 at amount 100.
 
 - **aroundCenter** rotates each sample's angular position by \`w * 2*PI*0.25\`, leaving its radius unchanged - a tangential swirl that traces concentric rings.
 - **outFromCenter** adds \`w\` to each sample's radius, leaving its angle unchanged - a radial compression/expansion ripple.
@@ -328,4 +337,4 @@ noise(seed: 1, ridges: true)
 
 render(o0)
 \`\`\`
-`;if(n&&Object.keys(a).length>0){n.shaders||(n.shaders={});for(let[i,e]of Object.entries(a))n.shaders[i]={...e}}n&&o&&(n.help=o);var u="filter/pondRipples",d="filter",m="pondRipples",f=n;export{f as default,u as effectId,m as effectName,o as help,d as namespace};
+`;if(n&&Object.keys(a).length>0){n.shaders||(n.shaders={});for(let[i,e]of Object.entries(a))n.shaders[i]={...e}}n&&o&&(n.help=o);var d="filter/pondRipples",u="filter",m="pondRipples",f=n;export{f as default,d as effectId,m as effectName,o as help,u as namespace};

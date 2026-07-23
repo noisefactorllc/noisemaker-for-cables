@@ -3,8 +3,8 @@
  * Includes: CanvasRenderer + UIController + EffectSelect
  * Copyright (c) 2017-2026 Noise Factor LLC. https://noisefactor.io/
  * SPDX-License-Identifier: MIT
- * Build: 1a29d431
- * Date: 2026-07-14T19:47:07.486Z
+ * Build: d21c0734
+ * Date: 2026-07-22T14:10:14.690Z
  */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
@@ -10175,6 +10175,13 @@ var Pipeline = class {
    */
   initAsyncEffects() {
     if (!this.graph || !this.graph.passes) return;
+    for (const cancel of this._asyncRenders.values()) cancel();
+    this._asyncRenders.clear();
+    if (this._asyncDebounceTimers) {
+      for (const timer of this._asyncDebounceTimers.values()) clearTimeout(timer);
+      this._asyncDebounceTimers.clear();
+    }
+    this._asyncParamCache?.clear();
     const seen = /* @__PURE__ */ new Set();
     for (const pass of this.graph.passes) {
       if (!pass.effectKey || !pass.nodeId || seen.has(pass.nodeId)) continue;
@@ -10200,6 +10207,7 @@ var Pipeline = class {
     for (const [paramName, value] of Object.entries(stepValues)) {
       if (paramName === "alpha" || paramName.startsWith("_")) continue;
       if (value === void 0 || value === null) continue;
+      if (typeof value === "object") continue;
       if (!effectDef.globals?.[paramName]) continue;
       if (cache[paramName] !== value) {
         changed = true;
@@ -11206,6 +11214,10 @@ var Pipeline = class {
       cancel();
     }
     this._asyncRenders.clear();
+    if (this._asyncDebounceTimers) {
+      for (const timer of this._asyncDebounceTimers.values()) clearTimeout(timer);
+      this._asyncDebounceTimers.clear();
+    }
     if (this.backend?.textures) {
       for (const texId of Array.from(this.backend.textures.keys())) {
         this.backend.destroyTexture(texId);
@@ -11883,6 +11895,7 @@ function recompile(pipeline, newSource, options = {}) {
     pipeline.createSurfaces();
     const defaultUniforms = pipeline.collectDefaultUniforms();
     pipeline.recreateTextures(defaultUniforms);
+    pipeline.initAsyncEffects();
     return newGraph;
   } catch (error) {
     console.error("Recompilation failed:", formatError(error));
@@ -13462,6 +13475,9 @@ var CanvasRenderer = class {
             pass.uniforms[uName] = Array.isArray(uValue) ? uValue.slice() : uValue;
           }
         }
+      }
+      if (pass.nodeId) {
+        this._pipeline.checkAsyncRegen?.(pass.nodeId, effectKey, stepParams);
       }
     }
     if (scopedParamChanged && this._pipeline.recreateTextures) {

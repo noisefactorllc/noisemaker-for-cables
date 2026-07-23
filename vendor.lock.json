@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "sourceBaseUrl": "https://shaders.noisedeck.app/1/",
-  "generatedAt": "2026-07-14T21:34:16.751Z",
+  "generatedAt": "2026-07-23T23:03:46.760Z",
   "effectCount": 210,
   "artifacts": [
     {
@@ -509,9 +509,9 @@
       "url": "https://shaders.noisedeck.app/1/effects/filter/polar.js"
     },
     {
-      "bytes": 15085,
+      "bytes": 15967,
       "path": "effects/filter/pondRipples.js",
-      "sha256": "ca2247b018a4d750a13a2d23b5585767619ee761af2e4116edec1ec24f973fe0",
+      "sha256": "f50128f65f45641ef87524a01f3b0da5f3918c061f6e36dfea7fa1754e51af19",
       "url": "https://shaders.noisedeck.app/1/effects/filter/pondRipples.js"
     },
     {
@@ -1271,9 +1271,9 @@
       "url": "https://shaders.noisedeck.app/1/effects/synth3d/shape3d.js"
     },
     {
-      "bytes": 711810,
+      "bytes": 712467,
       "path": "noisemaker-shaders-core.esm.js",
-      "sha256": "1cb1b19955939d7b676864d158b23741bf6947b54b17ef8a1f5f57411951b492",
+      "sha256": "c044778d74f1a195dc90fa3b4a984a726a83f0d6460f60432baaf9ce6d15fe80",
       "url": "https://shaders.noisedeck.app/1/noisemaker-shaders-core.esm.js"
     }
   ]
