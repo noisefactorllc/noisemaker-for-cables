@@ -34,6 +34,7 @@ const expectedArchiveFiles = [
   'Ops.Extension.Noisemaker/Ops.Extension.Noisemaker.Program/Ops.Extension.Noisemaker.Program.md',
   'Ops.Extension.Noisemaker/Ops.Extension.Noisemaker.Program/lib_noisemaker-cablesgl.js',
   'Ops.Extension.Noisemaker/Ops.Extension.Noisemaker.json',
+  'LICENSE',
   'README.md',
   'docs/architecture.md',
   'docs/catalog-update.md',
@@ -73,7 +74,7 @@ test('npm archive is the exact self-contained Cables Standalone distribution', a
     )
     const packResult = JSON.parse(stdout)
     assert.equal(packResult.length, 1)
-    assert.equal(packResult[0].entryCount, 15)
+    assert.equal(packResult[0].entryCount, 16)
     assert.equal(
       packResult[0].files.some((file) => file.path.startsWith('vendor-cache/')),
       false,

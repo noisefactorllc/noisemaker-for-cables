@@ -22,3 +22,11 @@ to load unchanged.
 - [Open the example patch](examples/README.md)
 - [Read the runtime architecture](docs/architecture.md)
 - [Update the pinned effect catalog](docs/catalog-update.md)
+
+## License
+
+Released under the MIT License (see [LICENSE](LICENSE)). Use of the Noisemaker
+and Noise Factor names in derivative products is subject to the
+[Trademark Policy](TRADEMARK.md).
+
+Copyright © 2026 Noise Factor LLC

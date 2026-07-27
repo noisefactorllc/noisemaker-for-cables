@@ -2,6 +2,8 @@
   "name": "@noisefactor/noisemaker-for-cables",
   "version": "0.1.0",
   "description": "Noisemaker for Cables runs Noisemaker's Polymorphic shader engine inside Cables GL.",
+  "author": "Noise Factor LLC <team@noisefactor.io>",
+  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "https://github.com/noisefactorllc/noisemaker-for-cables.git"
