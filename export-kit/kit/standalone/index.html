@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>noisemaker-hero</title>
+    <style>
+        body {
+            margin: 0;
+            background-color: #000;
+            color: #fff;
+            font-family: Helvetica, Arial, sans-serif;
+            overflow: hidden; /* disable scrolling / rubberband effect on mobile */
+            height:100vh;
+        }
+
+        canvas {
+            display: block;
+            position: absolute;
+            outline:0;
+        }
+
+        * {
+            /* disable on touch highlights of html elements, especially on mobile! */
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+    </style>
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1">
+    <meta itemprop="name" content="noisemaker-hero">
+    <meta itemprop="description" content="made with cables">
+    <meta itemprop="image" content="screenshot.png">
+    <meta name="description" content="made with cables"/>
+
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2016%2016%22%3E%3Crect%20width%3D%2216%22%20height%3D%2216%22%20rx%3D%223%22%20fill%3D%22%230e1117%22%2F%3E%3Ccircle%20cx%3D%228%22%20cy%3D%228%22%20r%3D%223.4%22%20fill%3D%22%238aa0c4%22%2F%3E%3C%2Fsvg%3E">
+</head>
+<body>
+    <div>
+        <canvas id="glcanvas" width="100vw" height="100vh" tabindex="1"></canvas>
+
+        
+        <script type="text/javascript" src="js/cables.js"></script>
+<script type="text/javascript" src="js/lib_noisemaker-cablesgl.js"></script>
+    <script type="text/javascript" src="js/ops.js"></script>
+
+        <script type="text/javascript"  src="js/cgl.js"></script>
+
+
+        <script type="text/javascript">
+
+            function showError(errId, errMsg)
+            {
+                // handle critical errors here if needed
+            }
+
+            function patchInitialized(patch)
+            {
+                // You can now access the patch object (patch), register variable watchers and so on
+            }
+
+            function patchFinishedLoading(patch)
+            {
+                // The patch is ready now, all assets have been loaded
+            }
+
+            document.addEventListener("CABLES.jsLoaded", function (event)
+            {
+                CABLES.patch = new CABLES.Patch({
+                patchFile: 'js/program.json',
+                "prefixAssetPath": "assets/",
+                "assetPath": "assets/",
+                "jsPath": "js/",
+                "glCanvasId": "glcanvas",
+                "glCanvasResizeToWindow": true,
+                "onError": showError,
+                "onPatchLoaded": patchInitialized,
+                "onFinishedLoading": patchFinishedLoading,
+                "canvas": {"alpha":true, "premultipliedAlpha":true } // make canvas transparent
+            });
+            });
+
+            // disable rubberband effect on mobile devices
+            document.getElementById('glcanvas').addEventListener('touchmove', (e)=>{ e.preventDefault(); }, false);
+        </script>
+    </div>
+</body>
+</html>

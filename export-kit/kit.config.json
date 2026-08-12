@@ -1,0 +1,46 @@
+{
+  "configVersion": 1,
+  "id": "cables",
+  "series": "0.1",
+  "shaderSource": "runtime",
+  "engineSource": "kit",
+  "shaderDialects": ["glsl"],
+  "pageTemplate": false,
+  "gatedTopLevelDirs": {
+    "extension": "engine",
+    "shaders": "shaders"
+  },
+  "subtrees": [
+    { "from": "Ops.Extension.Noisemaker", "to": "extension" },
+    { "from": "examples/noisemaker-program.cables", "to": "patch/example.cables" }
+  ],
+  "licenses": [
+    { "from": "LICENSE", "to": "LICENSES/noisemaker-for-cables-LICENSE.txt" }
+  ],
+  "requireContains": [
+    { "file": "standalone/index.html", "needle": "program.json" },
+    { "file": "patch-template.json", "needle": "{{NM_DSL_RAW}}" }
+  ],
+  "forbidContains": [
+    { "file": "standalone/index.html", "needle": "noisemaker-hero.json" },
+    { "file": "standalone/index.html", "needle": "demos.noisemaker.app" }
+  ],
+  "shaderLayout": {
+    "root": "shaders"
+  },
+  "inject": {
+    "type": "cables-patch",
+    "pairs": [
+      { "source": "patch-template.json", "target": "standalone/js/program.json" },
+      { "source": "patch/example.cables", "target": "patch/program.cables" }
+    ]
+  },
+  "compat": {
+    "mode": "all"
+  },
+  "engineBytesFrom": ["extension/"],
+  "cablesEngineCopy": {
+    "fromKitPath": "extension/Ops.Extension.Noisemaker.Program/lib_noisemaker-cablesgl.js",
+    "toKitPath": "standalone/js/lib_noisemaker-cablesgl.js"
+  }
+}
