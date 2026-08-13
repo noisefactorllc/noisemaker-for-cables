@@ -403,6 +403,15 @@ export function createProgramController({
     }
   }
 
+  function disposeCandidateResources(candidate) {
+    if (!candidate.pipelineDisposeAttempted) {
+      candidate.pipelineDisposeAttempted = true
+      candidate.pipeline.dispose()
+      return
+    }
+    candidate.backend.destroy()
+  }
+
   async function disposeCandidate(candidate) {
     if (!candidate || candidate.cleanupComplete) return null
     candidate.disposed = true
@@ -421,7 +430,7 @@ export function createProgramController({
       const result = await enqueueGuarded(
         candidate.epoch,
         candidate.backend,
-        () => candidate.pipeline.dispose(),
+        () => disposeCandidateResources(candidate),
       )
       if (result.executed) {
         candidate.cleanupComplete = true
@@ -581,7 +590,7 @@ export function createProgramController({
           previous.disposed = true
           cancelPipelineAsyncWork(previous.pipeline)
           try {
-            previous.pipeline.dispose()
+            disposeCandidateResources(previous)
             previous.cleanupComplete = true
             pendingCleanupCandidates.delete(previous)
           } catch (error) {
@@ -633,6 +642,7 @@ export function createProgramController({
         generation,
         graph,
         pipeline,
+        pipelineDisposeAttempted: false,
         promoted: false,
         size: null,
       }
@@ -928,7 +938,7 @@ export function createProgramController({
         try {
           guardedNow(candidate.backend, () => {
             cancelPipelineAsyncWork(candidate.pipeline)
-            candidate.pipeline.dispose()
+            disposeCandidateResources(candidate)
           })
           candidate.cleanupComplete = true
           pendingCleanupCandidates.delete(candidate)

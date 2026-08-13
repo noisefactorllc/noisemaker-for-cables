@@ -94,6 +94,7 @@ export function createCablesWebGL2BackendClass(BaseBackend) {
       this.textureKinds = new Map()
       this._fullscreenBuffer = null
       this._uniformBlockBuffers = new Set()
+      this._pendingTextureCleanup = new Set()
       this._defaultTextureReleased = false
       this._destroyed = false
     }
@@ -424,12 +425,18 @@ export function createCablesWebGL2BackendClass(BaseBackend) {
     }
 
     destroyTexture(id) {
-      const ownership = this.getTextureOwnership(id)
-      if (ownership === TEXTURE_OWNERSHIP.EXTERNAL || ownership === TEXTURE_OWNERSHIP.DEFAULT) {
-        this._removeNonOwningRecord(id)
-      } else {
-        super.destroyTexture(id)
+      try {
+        const ownership = this.getTextureOwnership(id)
+        if (ownership === TEXTURE_OWNERSHIP.EXTERNAL || ownership === TEXTURE_OWNERSHIP.DEFAULT) {
+          this._removeNonOwningRecord(id)
+        } else {
+          super.destroyTexture(id)
+        }
+      } catch (error) {
+        this._pendingTextureCleanup.add(id)
+        throw error
       }
+      this._pendingTextureCleanup.delete(id)
       this.textureOwnership.delete(id)
       this.textureKinds.delete(id)
     }
@@ -456,6 +463,14 @@ export function createCablesWebGL2BackendClass(BaseBackend) {
 
       const adapterCleanupFailures = []
 
+      for (const id of [...this._pendingTextureCleanup]) {
+        try {
+          this.destroyTexture(id)
+        } catch (error) {
+          adapterCleanupFailures.push(error)
+        }
+      }
+
       if (this._fullscreenBuffer) {
         try {
           gl.deleteBuffer(this._fullscreenBuffer)
@@ -481,6 +496,7 @@ export function createCablesWebGL2BackendClass(BaseBackend) {
       }
 
       super.destroy(options)
+      this._pendingTextureCleanup.clear()
       this.textureOwnership.clear()
       this.textureKinds.clear()
       this.presentedTextureId = undefined

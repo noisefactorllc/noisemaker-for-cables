@@ -15,6 +15,15 @@ const REQUIRED_EXTENSIONS = new Set([
   'OES_texture_float_linear',
 ])
 
+function installTestDomShim(target = globalThis) {
+  target.HTMLElement ||= class {}
+  target.customElements ||= {
+    define() {},
+    get() {},
+    whenDefined: () => Promise.resolve(),
+  }
+}
+
 function deferred() {
   let resolve
   let reject
@@ -259,7 +268,7 @@ function createHarness(options = {}) {
   }
 
   const engine = {
-    Pipeline: FakePipeline,
+    Pipeline: options.PipelineClass ?? FakePipeline,
     async compileProgram(dsl) {
       cpu(`compile:${dsl}`)
       compileCalls.push(dsl)
@@ -281,7 +290,7 @@ function createHarness(options = {}) {
 
   const backendFactory = () => {
     cpu('backend-create')
-    return new FakeBackend()
+    return options.backendFactory?.({ canvas, cgl, gl }) ?? new FakeBackend()
   }
   const createOutputTexture = (spec) => {
     gpu(`output-create:${spec.width}x${spec.height}`)
@@ -929,6 +938,12 @@ test('stale candidate cleanup failures are surfaced, retained, and retried on fi
     harness.events.filter(
       (event) => event === 'gpu:pipeline-dispose:stale cleanup dsl',
     ).length,
+    1,
+  )
+  assert.equal(
+    harness.events.filter(
+      (event) => event === 'gpu:backend-destroy:stale cleanup dsl',
+    ).length,
     2,
   )
 })
@@ -948,6 +963,12 @@ test('failed replaced-candidate cleanup remains retryable after the new candidat
   assert.equal(
     harness.events.filter(
       (event) => event === 'gpu:pipeline-dispose:replaced cleanup dsl',
+    ).length,
+    1,
+  )
+  assert.equal(
+    harness.events.filter(
+      (event) => event === 'gpu:backend-destroy:replaced cleanup dsl',
     ).length,
     2,
   )
@@ -969,6 +990,10 @@ test('final dispose retries only candidate and output resources whose cleanup fa
   assert.equal(second.error, null)
   assert.equal(
     harness.events.filter((event) => event === 'gpu:pipeline-dispose:final retry dsl').length,
+    1,
+  )
+  assert.equal(
+    harness.events.filter((event) => event === 'gpu:backend-destroy:final retry dsl').length,
     2,
   )
   assert.equal(
@@ -979,6 +1004,65 @@ test('final dispose retries only candidate and output resources whose cleanup fa
   const eventCount = harness.events.length
   await harness.controller.dispose()
   assert.equal(harness.events.length, eventCount)
+})
+
+test('final dispose retries a retained backend after terminal core Pipeline disposal fails', async () => {
+  installTestDomShim()
+  const { Pipeline } = await import('../vendor-cache/noisemaker-shaders-core.esm.js')
+  const { CablesWebGL2Backend } = await import(
+    '../src/backend/cables-webgl2-backend.js'
+  )
+  let deleteBufferCount = 0
+  let deleteTextureCount = 0
+  let productionBackend
+  class TerminalCorePipeline extends Pipeline {
+    resize(width, height) {
+      this.backend.textures.set('owned-retry', {
+        format: 'rgba16f',
+        handle: 'owned-retry-handle',
+        height,
+        width,
+      })
+      this.backend.textureOwnership.set('owned-retry', 'owned')
+      this.backend.height = height
+      this.backend.width = width
+      this.height = height
+      this.width = width
+    }
+  }
+  const harness = createHarness({
+    backendFactory({ canvas, cgl, gl }) {
+      gl.deleteBuffer = () => {
+        deleteBufferCount += 1
+        if (deleteBufferCount === 1) throw new Error('transient deleteBuffer failure')
+      }
+      gl.deleteTexture = () => {
+        deleteTextureCount += 1
+        if (deleteTextureCount <= 2) throw new Error('transient deleteTexture failure')
+      }
+      const backend = new CablesWebGL2Backend(cgl, canvas)
+      backend.init = async () => {}
+      backend.compileProgram = async () => {}
+      backend._fullscreenBuffer = { id: 'fullscreen-buffer' }
+      productionBackend = backend
+      return backend
+    },
+    PipelineClass: TerminalCorePipeline,
+  })
+  const configured = await harness.controller.setProgram('terminal cleanup dsl')
+  assert.equal(configured.error, null)
+  assert.equal(configured.ready, true)
+
+  const first = await harness.controller.dispose()
+  assert.equal(first.error?.code, 'ERR_DISPOSAL')
+
+  const second = await harness.controller.dispose()
+  assert.equal(second.error, null)
+  assert.equal(deleteBufferCount, 2)
+  assert.equal(deleteTextureCount, 3)
+  assert.equal(productionBackend._destroyed, true)
+  assert.equal(productionBackend.gl, null)
+  assert.equal(productionBackend.textures.has('owned-retry'), false)
 })
 
 test('state callbacks run outside guards and rejected callback promises never poison controller work', async () => {

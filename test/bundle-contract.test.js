@@ -148,6 +148,34 @@ test('engine facade loads the pinned catalog and compiles with the reference Pol
   assert.match(program.glsl || program.fragment, /void\s+main/)
 })
 
+test('pinned core exposes renderer sinks and bounded WebGL2 frame export', async () => {
+  installTestDomShim()
+  const core = await import('../vendor-cache/noisemaker-shaders-core.esm.js')
+  const { CablesWebGL2Backend } = await import('../src/backend/cables-webgl2-backend.js')
+
+  for (const exportName of ['CanvasSink', 'SinkManager', 'FrameExportQueue']) {
+    assert.equal(typeof core[exportName], 'function', `missing ${exportName} export`)
+  }
+
+  const presented = []
+  const canvasSink = new core.CanvasSink({
+    present(textureId) {
+      presented.push(textureId)
+    },
+  })
+  assert.equal(canvasSink.submit('global_o0', 125), true)
+  assert.deepEqual(presented, ['global_o0'])
+
+  const backend = Object.create(CablesWebGL2Backend.prototype)
+  backend.gl = {}
+  backend.textures = new Map()
+  const queue = backend.createFrameExportQueue({ slots: 2 })
+  assert.equal(queue instanceof core.FrameExportQueue, true)
+  assert.equal(queue.available, false)
+  queue.close({ backendLost: true })
+  assert.equal(queue.adapter, null)
+})
+
 test('browser bundle is self-contained while preserving caller-requested native fetch', async () => {
   const lock = JSON.parse(await readProjectFile('vendor.lock.json'))
   const bundle = await readProjectFile(
@@ -184,6 +212,8 @@ test('browser bundle is self-contained while preserving caller-requested native 
   assert.equal(context.NoisemakerCablesGL.effectMetadata.effectIds.length, lock.effectCount)
   const loaded = await context.NoisemakerCablesGL.loadEngine()
   assert.equal(loaded.catalogInfo.effectCount, lock.effectCount)
+  assert.equal(typeof loaded.Pipeline.prototype.addSink, 'function')
+  assert.equal(typeof loaded.WebGL2Backend.prototype.createFrameExportQueue, 'function')
   assert.equal(typeof context.NoisemakerCablesGL.compileProgram, 'function')
   assert.equal(typeof context.NoisemakerCablesGL.createProgramController, 'function')
   assert.equal(typeof context.NoisemakerCablesGL.inspectCapabilities, 'function')

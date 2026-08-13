@@ -3,8 +3,8 @@
  * Includes: CanvasRenderer + UIController + EffectSelect
  * Copyright (c) 2017-2026 Noise Factor LLC. https://noisefactor.io/
  * SPDX-License-Identifier: MIT
- * Build: d21c0734
- * Date: 2026-07-22T14:10:14.690Z
+ * Build: e1feefa0
+ * Date: 2026-08-11T17:24:31.182Z
  */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
@@ -2078,8 +2078,15 @@ var ALLOWED_STRING_PARAMS = /* @__PURE__ */ new Set([
   // Text content for text overlay effect
   "text.font",
   // Font family for text overlay effect
-  "text.justify"
+  "text.justify",
   // Text justification (left/center/right)
+  // Named cut within the family ("Bold Italic", or "Argon Medium Italic" for
+  // a family bundling several typefaces). Same category as text.font above:
+  // the valid values are whatever the host's installed font bundle provides,
+  // so this cannot be an enum or a choices map. It has to reach the DSL or
+  // the unparser drops it and every recompile reverts the text to the
+  // family's first cut.
+  "text.style"
 ]);
 var stateSurfaces = /* @__PURE__ */ new Set(["time", "frame", "mouse", "resolution", "seed", "a"]);
 var stateValues = /* @__PURE__ */ new Set(["time", "frame", "mouse", "resolution", "seed", "a", "u1", "u2", "u3", "u4", "s1", "s2", "b1", "b2", "a1", "a2", "deltaTime"]);
@@ -5536,6 +5543,14 @@ var Backend = class {
   clearTexture(id) {
   }
   /**
+   * Create a frame export queue when supported by a concrete backend.
+   * @param {object} options
+   * @returns {object|null}
+   */
+  createFrameExportQueue(options) {
+    return null;
+  }
+  /**
    * Get backend name
    * @returns {string}
    */
@@ -5554,6 +5569,185 @@ var Backend = class {
    * @param {object} options
    */
   destroy(options = {}) {
+  }
+};
+
+// shaders/src/runtime/frame-export.js
+function validateAdapter(adapter) {
+  if (!adapter || typeof adapter.createSlot !== "function" || typeof adapter.begin !== "function" || typeof adapter.poll !== "function" || typeof adapter.read !== "function" || typeof adapter.destroySlot !== "function") {
+    throw new TypeError("Frame export adapter must implement createSlot, begin, poll, read, and destroySlot");
+  }
+}
+var FrameExportQueue = class {
+  constructor(adapter, { slots = 3, onError } = {}) {
+    validateAdapter(adapter);
+    if (!Number.isInteger(slots) || slots < 2 || slots > 8) {
+      throw new RangeError("Frame export slots must be an integer from 2 through 8");
+    }
+    this.adapter = adapter;
+    this._onError = onError;
+    this._slots = new Array(slots);
+    for (let i = 0; i < slots; i++) {
+      this._slots[i] = {
+        adapterSlot: null,
+        created: false,
+        pending: false,
+        textureId: null,
+        timestamp: void 0,
+        onFrame: null,
+        context: void 0
+      };
+    }
+    this._configured = false;
+    this._closed = false;
+    this.stats = { accepted: 0, dropped: 0, completed: 0, failed: 0 };
+  }
+  get available() {
+    if (!this._configured || this._closed) return false;
+    for (let i = 0; i < this._slots.length; i++) {
+      if (!this._slots[i].pending) return true;
+    }
+    return false;
+  }
+  configure(descriptor) {
+    if (this._closed) return;
+    const destroyError = this._destroySlots();
+    this._configured = false;
+    if (destroyError) throw destroyError;
+    try {
+      for (let i = 0; i < this._slots.length; i++) {
+        const record = this._slots[i];
+        record.adapterSlot = this.adapter.createSlot(i, descriptor);
+        record.created = true;
+      }
+    } catch (error) {
+      const cleanupError = this._destroySlots();
+      if (cleanupError) this._report(cleanupError);
+      throw error;
+    }
+    this._configured = true;
+  }
+  enqueue(textureId, timestamp, onFrame, context) {
+    if (typeof onFrame !== "function") {
+      throw new TypeError("Frame export callback must be a function");
+    }
+    if (!this._configured || this._closed) {
+      this.stats.dropped++;
+      return false;
+    }
+    let record = null;
+    for (let i = 0; i < this._slots.length; i++) {
+      if (!this._slots[i].pending) {
+        record = this._slots[i];
+        break;
+      }
+    }
+    if (!record) {
+      this.stats.dropped++;
+      return false;
+    }
+    record.pending = true;
+    record.textureId = textureId;
+    record.timestamp = timestamp;
+    record.onFrame = onFrame;
+    record.context = context;
+    try {
+      this.adapter.begin(record.adapterSlot, textureId, timestamp);
+    } catch (error) {
+      this._release(record);
+      this.stats.failed++;
+      this._report(error);
+      return false;
+    }
+    this.stats.accepted++;
+    return true;
+  }
+  poll() {
+    if (!this._configured || this._closed) return;
+    for (let i = 0; i < this._slots.length; i++) {
+      const record = this._slots[i];
+      if (!record.pending) continue;
+      let frame;
+      let timestamp;
+      let onFrame;
+      let context;
+      try {
+        const ready = this.adapter.poll(record.adapterSlot);
+        if (ready === false) continue;
+        if (ready !== true) {
+          throw new TypeError("Frame export adapter poll must return a boolean");
+        }
+        frame = this.adapter.read(record.adapterSlot);
+        timestamp = record.timestamp;
+        onFrame = record.onFrame;
+        context = record.context;
+      } catch (error) {
+        this._release(record);
+        this.stats.failed++;
+        this._report(error);
+        continue;
+      }
+      this._release(record);
+      try {
+        onFrame(frame, timestamp, context);
+        this.stats.completed++;
+      } catch (error) {
+        this.stats.failed++;
+        this._report(error);
+      }
+    }
+  }
+  close(options = {}) {
+    if (this._closed) return;
+    this._closed = true;
+    this._configured = false;
+    let destroyError;
+    if (options.backendLost === true) {
+      this._abandonSlots();
+    } else {
+      destroyError = this._destroySlots();
+    }
+    this.adapter = null;
+    if (destroyError) throw destroyError;
+  }
+  _release(record) {
+    record.pending = false;
+    record.textureId = null;
+    record.timestamp = void 0;
+    record.onFrame = null;
+    record.context = void 0;
+  }
+  _destroySlots() {
+    let firstError2;
+    for (let i = 0; i < this._slots.length; i++) {
+      const record = this._slots[i];
+      if (!record.created) continue;
+      const adapterSlot = record.adapterSlot;
+      record.created = false;
+      record.adapterSlot = null;
+      this._release(record);
+      try {
+        this.adapter.destroySlot(adapterSlot);
+      } catch (error) {
+        if (!firstError2) firstError2 = error;
+      }
+    }
+    return firstError2;
+  }
+  _abandonSlots() {
+    for (let i = 0; i < this._slots.length; i++) {
+      const record = this._slots[i];
+      record.created = false;
+      record.adapterSlot = null;
+      this._release(record);
+    }
+  }
+  _report(error) {
+    if (typeof this._onError !== "function") return;
+    try {
+      this._onError(error);
+    } catch {
+    }
   }
 };
 
@@ -5601,7 +5795,327 @@ fn vs_main(@builtin(vertex_index) vertexIndex: u32) -> VertexOutput {
 var DEFAULT_VERTEX_ENTRY_POINT = "vs_main";
 var DEFAULT_FRAGMENT_ENTRY_POINT = "main";
 
+// shaders/src/runtime/backends/webgl2-frame-export.js
+var ALPHA_MODE = Object.freeze({
+  straight: 0,
+  opaque: 1,
+  premultiplied: 2
+});
+var RESOLVE_FRAGMENT_SHADER = `#version 300 es
+precision highp float;
+precision highp int;
+
+uniform sampler2D u_texture;
+uniform int u_alphaMode;
+out vec4 fragColor;
+
+void main() {
+    ivec2 sourceSize = textureSize(u_texture, 0);
+    ivec2 sourceCoord = ivec2(
+        int(gl_FragCoord.x),
+        sourceSize.y - 1 - int(gl_FragCoord.y)
+    );
+    vec4 color = texelFetch(u_texture, sourceCoord, 0);
+    if (u_alphaMode == 1) {
+        color.a = 1.0;
+    } else if (u_alphaMode == 2) {
+        color.rgb *= color.a;
+    }
+    fragColor = color;
+}
+`;
+function validateDescriptor(descriptor) {
+  if (!descriptor || typeof descriptor !== "object") {
+    throw new TypeError("Frame export descriptor must be an object");
+  }
+  if (!Number.isSafeInteger(descriptor.width) || descriptor.width <= 0) {
+    throw new RangeError("Frame export width must be a positive integer");
+  }
+  if (!Number.isSafeInteger(descriptor.height) || descriptor.height <= 0) {
+    throw new RangeError("Frame export height must be a positive integer");
+  }
+  if (descriptor.format !== "rgba8unorm") {
+    throw new TypeError("WebGL2 frame export format must be 'rgba8unorm'");
+  }
+  if (descriptor.colorSpace !== "srgb" && descriptor.colorSpace !== "display-p3") {
+    throw new TypeError("WebGL2 frame export colorSpace must be 'srgb' or 'display-p3'");
+  }
+  if (!Object.hasOwn(ALPHA_MODE, descriptor.alphaMode)) {
+    throw new TypeError("WebGL2 frame export alphaMode must be 'opaque', 'straight', or 'premultiplied'");
+  }
+  if (!Number.isFinite(descriptor.fps) || descriptor.fps <= 0) {
+    throw new RangeError("Frame export fps must be finite and positive");
+  }
+  const byteLength = descriptor.width * descriptor.height * 4;
+  if (!Number.isSafeInteger(byteLength)) {
+    throw new RangeError("Frame export dimensions are too large");
+  }
+  return byteLength;
+}
+function deleteIfPresent(gl, method, value) {
+  if (value) gl[method](value);
+}
+var WebGL2FrameExportAdapter = class {
+  constructor(backend) {
+    if (!backend?.gl || !(backend.textures instanceof Map)) {
+      throw new TypeError("WebGL2 frame export requires a backend with gl and textures");
+    }
+    this.backend = backend;
+    this.gl = backend.gl;
+    this._program = null;
+    this._slotCount = 0;
+  }
+  createSlot(index, descriptor) {
+    const byteLength = validateDescriptor(descriptor);
+    const gl = this.gl;
+    const slot = {
+      index,
+      width: descriptor.width,
+      height: descriptor.height,
+      alphaMode: ALPHA_MODE[descriptor.alphaMode],
+      texture: null,
+      framebuffer: null,
+      pbo: null,
+      fence: null,
+      ready: false,
+      destroyed: false,
+      registered: false,
+      data: new Uint8Array(byteLength),
+      frame: null
+    };
+    slot.frame = {
+      width: descriptor.width,
+      height: descriptor.height,
+      rowStride: descriptor.width * 4,
+      data: slot.data
+    };
+    try {
+      this._ensureProgram();
+      slot.texture = gl.createTexture();
+      if (!slot.texture) throw new Error("Failed to create WebGL2 frame export resolve texture");
+      gl.bindTexture(gl.TEXTURE_2D, slot.texture);
+      gl.texImage2D(
+        gl.TEXTURE_2D,
+        0,
+        gl.RGBA8,
+        slot.width,
+        slot.height,
+        0,
+        gl.RGBA,
+        gl.UNSIGNED_BYTE,
+        null
+      );
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      slot.framebuffer = gl.createFramebuffer();
+      if (!slot.framebuffer) throw new Error("Failed to create WebGL2 frame export framebuffer");
+      gl.bindFramebuffer(gl.FRAMEBUFFER, slot.framebuffer);
+      gl.framebufferTexture2D(
+        gl.FRAMEBUFFER,
+        gl.COLOR_ATTACHMENT0,
+        gl.TEXTURE_2D,
+        slot.texture,
+        0
+      );
+      if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE) {
+        throw new Error("WebGL2 frame export framebuffer is incomplete");
+      }
+      slot.pbo = gl.createBuffer();
+      if (!slot.pbo) throw new Error("Failed to create WebGL2 frame export pixel pack buffer");
+      gl.bindBuffer(gl.PIXEL_PACK_BUFFER, slot.pbo);
+      gl.bufferData(gl.PIXEL_PACK_BUFFER, byteLength, gl.STREAM_READ);
+      slot.registered = true;
+      this._slotCount++;
+      return slot;
+    } catch (error) {
+      this._destroyResources(slot);
+      if (this._slotCount === 0) this._destroyProgram();
+      throw error;
+    } finally {
+      gl.bindBuffer(gl.PIXEL_PACK_BUFFER, null);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+      gl.bindTexture(gl.TEXTURE_2D, null);
+    }
+  }
+  begin(slot, textureId) {
+    this._assertUsableSlot(slot);
+    if (slot.fence) throw new Error("WebGL2 frame export slot is already pending");
+    const source = this.backend.textures.get(textureId);
+    if (!source?.handle) {
+      throw new Error(`WebGL2 frame export texture ${String(textureId)} not found`);
+    }
+    if (source.width !== slot.width || source.height !== slot.height) {
+      throw new Error(
+        `WebGL2 frame export source extent ${String(source.width)}x${String(source.height)} does not match configured extent ${slot.width}x${slot.height}`
+      );
+    }
+    if (!this.backend.fullscreenVAO) {
+      throw new Error("WebGL2 frame export fullscreen geometry is unavailable");
+    }
+    const gl = this.gl;
+    slot.ready = false;
+    try {
+      gl.bindFramebuffer(gl.FRAMEBUFFER, slot.framebuffer);
+      gl.viewport(0, 0, slot.width, slot.height);
+      gl.disable(gl.BLEND);
+      gl.disable(gl.DEPTH_TEST);
+      gl.disable(gl.SCISSOR_TEST);
+      gl.disable(gl.CULL_FACE);
+      gl.useProgram(this._program.handle);
+      gl.activeTexture(gl.TEXTURE0);
+      gl.bindTexture(gl.TEXTURE_2D, source.handle);
+      gl.uniform1i(this._program.textureLocation, 0);
+      gl.uniform1i(this._program.alphaModeLocation, slot.alphaMode);
+      gl.bindVertexArray(this.backend.fullscreenVAO);
+      gl.drawArrays(gl.TRIANGLES, 0, FULLSCREEN_TRIANGLE_VERTEX_COUNT);
+      gl.bindBuffer(gl.PIXEL_PACK_BUFFER, slot.pbo);
+      gl.readPixels(0, 0, slot.width, slot.height, gl.RGBA, gl.UNSIGNED_BYTE, 0);
+      slot.fence = gl.fenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE, 0);
+      if (!slot.fence) throw new Error("Failed to create WebGL2 frame export fence");
+      gl.flush();
+      this._resetState();
+    } catch (error) {
+      this._deleteFence(slot);
+      try {
+        this._resetState();
+      } catch {
+      }
+      throw error;
+    }
+  }
+  poll(slot) {
+    this._assertUsableSlot(slot);
+    if (!slot.fence) throw new Error("WebGL2 frame export slot has no pending fence");
+    if (slot.ready) return true;
+    const gl = this.gl;
+    let status;
+    try {
+      status = gl.clientWaitSync(slot.fence, 0, 0);
+    } catch (error) {
+      this._deleteFence(slot);
+      throw error;
+    }
+    if (status === gl.TIMEOUT_EXPIRED) return false;
+    if (status === gl.ALREADY_SIGNALED || status === gl.CONDITION_SATISFIED) {
+      slot.ready = true;
+      return true;
+    }
+    this._deleteFence(slot);
+    if (status === gl.WAIT_FAILED) {
+      throw new Error("WebGL2 frame export fence wait failed");
+    }
+    throw new Error(`Unexpected WebGL2 frame export fence status: ${String(status)}`);
+  }
+  read(slot) {
+    this._assertUsableSlot(slot);
+    if (!slot.fence || !slot.ready) {
+      throw new Error("WebGL2 frame export slot is not ready after a signaled poll");
+    }
+    const gl = this.gl;
+    try {
+      gl.bindBuffer(gl.PIXEL_PACK_BUFFER, slot.pbo);
+      gl.getBufferSubData(gl.PIXEL_PACK_BUFFER, 0, slot.data);
+      return slot.frame;
+    } finally {
+      gl.bindBuffer(gl.PIXEL_PACK_BUFFER, null);
+      this._deleteFence(slot);
+    }
+  }
+  destroySlot(slot) {
+    if (!slot || slot.destroyed) return;
+    slot.destroyed = true;
+    this._destroyResources(slot);
+    if (slot.registered) {
+      slot.registered = false;
+      this._slotCount--;
+    }
+    if (this._slotCount === 0) this._destroyProgram();
+  }
+  _assertUsableSlot(slot) {
+    if (!slot || slot.destroyed || !slot.registered) {
+      throw new Error("WebGL2 frame export slot is not usable");
+    }
+  }
+  _compileShader(type, source) {
+    const gl = this.gl;
+    const shader = gl.createShader(type);
+    if (!shader) throw new Error("Failed to create WebGL2 frame export shader");
+    gl.shaderSource(shader, source);
+    gl.compileShader(shader);
+    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+      const message = gl.getShaderInfoLog(shader) || "unknown compile error";
+      gl.deleteShader(shader);
+      throw new Error(`Failed to compile WebGL2 frame export shader: ${message}`);
+    }
+    return shader;
+  }
+  _ensureProgram() {
+    if (this._program) return;
+    const gl = this.gl;
+    let vertexShader = null;
+    let fragmentShader = null;
+    let handle = null;
+    try {
+      vertexShader = this._compileShader(gl.VERTEX_SHADER, DEFAULT_VERTEX_SHADER);
+      fragmentShader = this._compileShader(gl.FRAGMENT_SHADER, RESOLVE_FRAGMENT_SHADER);
+      handle = gl.createProgram();
+      if (!handle) throw new Error("Failed to create WebGL2 frame export program");
+      gl.attachShader(handle, vertexShader);
+      gl.attachShader(handle, fragmentShader);
+      gl.bindAttribLocation(handle, 0, "a_position");
+      gl.linkProgram(handle);
+      if (!gl.getProgramParameter(handle, gl.LINK_STATUS)) {
+        const message = gl.getProgramInfoLog(handle) || "unknown link error";
+        throw new Error(`Failed to link WebGL2 frame export program: ${message}`);
+      }
+      this._program = {
+        handle,
+        textureLocation: gl.getUniformLocation(handle, "u_texture"),
+        alphaModeLocation: gl.getUniformLocation(handle, "u_alphaMode")
+      };
+    } catch (error) {
+      deleteIfPresent(gl, "deleteProgram", handle);
+      throw error;
+    } finally {
+      deleteIfPresent(gl, "deleteShader", vertexShader);
+      deleteIfPresent(gl, "deleteShader", fragmentShader);
+    }
+  }
+  _resetState() {
+    const gl = this.gl;
+    gl.bindBuffer(gl.PIXEL_PACK_BUFFER, null);
+    gl.bindVertexArray(null);
+    gl.bindTexture(gl.TEXTURE_2D, null);
+    gl.useProgram(null);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  }
+  _deleteFence(slot) {
+    if (slot.fence) {
+      this.gl.deleteSync(slot.fence);
+      slot.fence = null;
+    }
+    slot.ready = false;
+  }
+  _destroyResources(slot) {
+    this._deleteFence(slot);
+    deleteIfPresent(this.gl, "deleteBuffer", slot.pbo);
+    deleteIfPresent(this.gl, "deleteFramebuffer", slot.framebuffer);
+    deleteIfPresent(this.gl, "deleteTexture", slot.texture);
+    slot.pbo = null;
+    slot.framebuffer = null;
+    slot.texture = null;
+  }
+  _destroyProgram() {
+    if (!this._program) return;
+    this.gl.deleteProgram(this._program.handle);
+    this._program = null;
+  }
+};
+
 // shaders/src/runtime/backends/webgl2.js
+var GL_ERROR_CHECK_FRAMES = 3;
 var WebGL2Backend = class _WebGL2Backend extends Backend {
   constructor(context, canvas) {
     super(context);
@@ -5613,6 +6127,8 @@ var WebGL2Backend = class _WebGL2Backend extends Backend {
     this.fullscreenVAO = null;
     this.presentProgram = null;
     this.maxTextureUnits = 16;
+    this.glErrorCheckFrames = 0;
+    this._glCheckThisFrame = false;
     this._vec2Buf = new Float32Array(2);
     this._vec3Buf = new Float32Array(3);
     this._vec4Buf = new Float32Array(4);
@@ -5621,6 +6137,9 @@ var WebGL2Backend = class _WebGL2Backend extends Backend {
     this._packedUniformBuffer = new ArrayBuffer(512);
     this._packedUniformView = new DataView(this._packedUniformBuffer);
     this._packedUniformBytes = new Uint8Array(this._packedUniformBuffer);
+  }
+  createFrameExportQueue(options = {}) {
+    return new FrameExportQueue(new WebGL2FrameExportAdapter(this), options);
   }
   /**
    * Detect if running on a mobile device.
@@ -5778,6 +6297,8 @@ var WebGL2Backend = class _WebGL2Backend extends Backend {
     if (spec.usage && spec.usage.includes("render")) {
       this.createFBO(id, texture);
     }
+    this.glErrorCheckFrames = GL_ERROR_CHECK_FRAMES;
+    this._glCheckThisFrame = true;
     return texture;
   }
   createFBO(id, texture) {
@@ -6257,6 +6778,8 @@ var WebGL2Backend = class _WebGL2Backend extends Backend {
       attributes
     };
     this.programs.set(id, compiledProgram);
+    this.glErrorCheckFrames = GL_ERROR_CHECK_FRAMES;
+    this._glCheckThisFrame = true;
     return compiledProgram;
   }
   compileShader(type, source) {
@@ -6362,8 +6885,11 @@ var WebGL2Backend = class _WebGL2Backend extends Backend {
   }
   executePass(pass, state) {
     const gl = this.gl;
-    let maxErrorDrain = 100;
-    while (gl.getError() !== gl.NO_ERROR && maxErrorDrain-- > 0) {
+    const checkGLErrors = this._glCheckThisFrame;
+    if (checkGLErrors) {
+      let maxErrorDrain = 100;
+      while (gl.getError() !== gl.NO_ERROR && maxErrorDrain-- > 0) {
+      }
     }
     const needsConversion = pass.storageTextures || pass.outputs && pass.outputs.outputBuffer;
     const effectivePass = needsConversion ? this.convertComputeToRender(pass) : pass;
@@ -6570,13 +7096,15 @@ var WebGL2Backend = class _WebGL2Backend extends Backend {
       gl.drawArrays(gl.TRIANGLES, 0, FULLSCREEN_TRIANGLE_VERTEX_COUNT);
       gl.bindVertexArray(null);
     }
-    let error = gl.getError();
-    let maxErrorLog = 100;
-    while (error !== gl.NO_ERROR && maxErrorLog-- > 0) {
-      const outputId2 = effectivePass.outputs?.color || Object.values(effectivePass.outputs || {})[0] || "unknown";
-      const inputIds = effectivePass.inputs ? Object.entries(effectivePass.inputs).map(([k, v]) => `${k}=${v}`).join(", ") : "none";
-      console.error(`WebGL Error ${error} in pass ${effectivePass.id} (effect: ${effectivePass.effectKey || "unknown"}, program: ${effectivePass.program}, output: ${outputId2}, inputs: ${inputIds})`);
-      error = gl.getError();
+    if (checkGLErrors) {
+      let error = gl.getError();
+      let maxErrorLog = 100;
+      while (error !== gl.NO_ERROR && maxErrorLog-- > 0) {
+        const outputId2 = effectivePass.outputs?.color || Object.values(effectivePass.outputs || {})[0] || "unknown";
+        const inputIds = effectivePass.inputs ? Object.entries(effectivePass.inputs).map(([k, v]) => `${k}=${v}`).join(", ") : "none";
+        console.error(`WebGL Error ${error} in pass ${effectivePass.id} (effect: ${effectivePass.effectKey || "unknown"}, program: ${effectivePass.program}, output: ${outputId2}, inputs: ${inputIds})`);
+        error = gl.getError();
+      }
     }
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     gl.useProgram(null);
@@ -6835,10 +7363,14 @@ var WebGL2Backend = class _WebGL2Backend extends Backend {
   beginFrame() {
     const gl = this.gl;
     gl.clearColor(0, 0, 0, 0);
+    this._glCheckThisFrame = this.glErrorCheckFrames > 0;
   }
   endFrame() {
     const gl = this.gl;
     gl.flush();
+    if (this.glErrorCheckFrames > 0) {
+      this.glErrorCheckFrames--;
+    }
   }
   present(textureId) {
     const gl = this.gl;
@@ -6857,9 +7389,11 @@ var WebGL2Backend = class _WebGL2Backend extends Backend {
     gl.uniform1i(this.presentProgram.uniforms.texture, 0);
     gl.bindVertexArray(this.fullscreenVAO);
     gl.drawArrays(gl.TRIANGLES, 0, FULLSCREEN_TRIANGLE_VERTEX_COUNT);
-    const error = gl.getError();
-    if (error !== gl.NO_ERROR) {
-      console.error(`WebGL Error in present: ${error}`);
+    if (this._glCheckThisFrame) {
+      const error = gl.getError();
+      if (error !== gl.NO_ERROR) {
+        console.error(`WebGL Error in present: ${error}`);
+      }
     }
     gl.bindVertexArray(null);
     gl.useProgram(null);
@@ -6997,6 +7531,410 @@ var WebGL2Backend = class _WebGL2Backend extends Backend {
   }
 };
 
+// shaders/src/runtime/backends/webgpu-frame-export.js
+var ALPHA_MODES = Object.freeze([
+  "straight",
+  "opaque",
+  "premultiplied"
+]);
+var RESOLVE_SHADER = `
+@group(0) @binding(0) var sourceTexture: texture_2d<f32>;
+
+struct VertexOutput {
+    @builtin(position) position: vec4<f32>,
+}
+
+@vertex
+fn vs_main(@builtin(vertex_index) vertexIndex: u32) -> VertexOutput {
+    let positions = array<vec2<f32>, 3>(
+        vec2<f32>(-1.0, -1.0),
+        vec2<f32>(3.0, -1.0),
+        vec2<f32>(-1.0, 3.0)
+    );
+    var output: VertexOutput;
+    output.position = vec4<f32>(positions[vertexIndex], 0.0, 1.0);
+    return output;
+}
+
+fn loadColor(position: vec4<f32>) -> vec4<f32> {
+    let sourceCoord = vec2<i32>(i32(position.x), i32(position.y));
+    return textureLoad(sourceTexture, sourceCoord, 0);
+}
+
+@fragment
+fn straight_main(input: VertexOutput) -> @location(0) vec4<f32> {
+    return loadColor(input.position);
+}
+
+@fragment
+fn opaque_main(input: VertexOutput) -> @location(0) vec4<f32> {
+    let color = loadColor(input.position);
+    return vec4<f32>(color.rgb, 1.0);
+}
+
+@fragment
+fn premultiplied_main(input: VertexOutput) -> @location(0) vec4<f32> {
+    let color = loadColor(input.position);
+    return vec4<f32>(color.rgb * color.a, color.a);
+}
+`;
+function checkedProduct(left, right, message) {
+  const value = left * right;
+  if (!Number.isSafeInteger(value)) throw new RangeError(message);
+  return value;
+}
+function validateDescriptor2(descriptor) {
+  if (!descriptor || typeof descriptor !== "object") {
+    throw new TypeError("Frame export descriptor must be an object");
+  }
+  if (!Number.isSafeInteger(descriptor.width) || descriptor.width <= 0) {
+    throw new RangeError("Frame export width must be a positive integer");
+  }
+  if (!Number.isSafeInteger(descriptor.height) || descriptor.height <= 0) {
+    throw new RangeError("Frame export height must be a positive integer");
+  }
+  if (descriptor.format !== "rgba8unorm") {
+    throw new TypeError("WebGPU frame export format must be 'rgba8unorm'");
+  }
+  if (descriptor.colorSpace !== "srgb" && descriptor.colorSpace !== "display-p3") {
+    throw new TypeError("WebGPU frame export colorSpace must be 'srgb' or 'display-p3'");
+  }
+  if (!ALPHA_MODES.includes(descriptor.alphaMode)) {
+    throw new TypeError("WebGPU frame export alphaMode must be 'opaque', 'straight', or 'premultiplied'");
+  }
+  if (!Number.isFinite(descriptor.fps) || descriptor.fps <= 0) {
+    throw new RangeError("Frame export fps must be finite and positive");
+  }
+  const rowStride = checkedProduct(
+    descriptor.width,
+    4,
+    "Frame export dimensions are too large"
+  );
+  const alignedRows = Math.ceil(rowStride / 256);
+  const bytesPerRow = checkedProduct(
+    alignedRows,
+    256,
+    "Frame export aligned row size is too large"
+  );
+  const bufferSize = checkedProduct(
+    bytesPerRow,
+    descriptor.height,
+    "Frame export dimensions are too large"
+  );
+  const packedSize = checkedProduct(
+    rowStride,
+    descriptor.height,
+    "Frame export dimensions are too large"
+  );
+  return { rowStride, bytesPerRow, bufferSize, packedSize };
+}
+function firstError(current, error) {
+  return current || error;
+}
+var WebGPUFrameExportAdapter = class {
+  constructor(backend, gpuConstants = globalThis) {
+    if (!backend?.device || !backend?.queue || !(backend.textures instanceof Map)) {
+      throw new TypeError("WebGPU frame export requires a backend with device, queue, and textures");
+    }
+    this.backend = backend;
+    this.device = backend.device;
+    this.queue = backend.queue;
+    this.gpuConstants = gpuConstants;
+    this._shared = null;
+    this._bindGroups = /* @__PURE__ */ new WeakMap();
+    this._slotCount = 0;
+  }
+  createSlot(index, descriptor) {
+    const layout = validateDescriptor2(descriptor);
+    const constants = this._getConstants();
+    const data = new Uint8Array(layout.packedSize);
+    const slot = {
+      index,
+      width: descriptor.width,
+      height: descriptor.height,
+      alphaMode: descriptor.alphaMode,
+      rowStride: layout.rowStride,
+      bytesPerRow: layout.bytesPerRow,
+      bufferSize: layout.bufferSize,
+      data,
+      frame: {
+        width: descriptor.width,
+        height: descriptor.height,
+        rowStride: layout.rowStride,
+        data
+      },
+      resolveTexture: null,
+      resolveView: null,
+      buffer: null,
+      state: "idle",
+      error: null,
+      mapPromise: null,
+      generation: 0,
+      destroyed: false,
+      registered: false
+    };
+    try {
+      this._ensureShared(constants);
+      slot.resolveTexture = this.device.createTexture({
+        size: {
+          width: slot.width,
+          height: slot.height,
+          depthOrArrayLayers: 1
+        },
+        format: "rgba8unorm",
+        usage: constants.GPUTextureUsage.RENDER_ATTACHMENT | constants.GPUTextureUsage.COPY_SRC
+      });
+      if (!slot.resolveTexture) {
+        throw new Error("Failed to create WebGPU frame export resolve texture");
+      }
+      slot.resolveView = slot.resolveTexture.createView();
+      if (!slot.resolveView) {
+        throw new Error("Failed to create WebGPU frame export resolve texture view");
+      }
+      slot.buffer = this.device.createBuffer({
+        size: slot.bufferSize,
+        usage: constants.GPUBufferUsage.COPY_DST | constants.GPUBufferUsage.MAP_READ
+      });
+      if (!slot.buffer) {
+        throw new Error("Failed to create WebGPU frame export staging buffer");
+      }
+      slot.registered = true;
+      this._slotCount++;
+      return slot;
+    } catch (error) {
+      try {
+        slot.buffer?.destroy();
+      } catch {
+      }
+      try {
+        slot.resolveTexture?.destroy();
+      } catch {
+      }
+      if (this._slotCount === 0) this._destroyShared();
+      throw error;
+    }
+  }
+  begin(slot, textureId) {
+    this._assertUsableSlot(slot);
+    if (slot.state !== "idle") {
+      throw new Error("WebGPU frame export slot already has a pending map");
+    }
+    const source = this.backend.textures.get(textureId);
+    if (!source?.handle || !source?.view) {
+      throw new Error(`WebGPU frame export texture ${String(textureId)} not found`);
+    }
+    if (source.width !== slot.width || source.height !== slot.height) {
+      throw new Error(
+        `WebGPU frame export source extent ${String(source.width)}x${String(source.height)} does not match configured extent ${slot.width}x${slot.height}`
+      );
+    }
+    if ((typeof source.handle !== "object" || source.handle === null) && typeof source.handle !== "function") {
+      throw new TypeError("WebGPU frame export source texture identity must be an object");
+    }
+    const bindGroup = this._getBindGroup(source);
+    const encoder = this.device.createCommandEncoder();
+    const renderPass = encoder.beginRenderPass({
+      colorAttachments: [{
+        view: slot.resolveView,
+        clearValue: { r: 0, g: 0, b: 0, a: 0 },
+        loadOp: "clear",
+        storeOp: "store"
+      }]
+    });
+    renderPass.setPipeline(this._shared.pipelines[slot.alphaMode]);
+    renderPass.setBindGroup(0, bindGroup);
+    renderPass.draw(3, 1, 0, 0);
+    renderPass.end();
+    encoder.copyTextureToBuffer(
+      { texture: slot.resolveTexture },
+      {
+        buffer: slot.buffer,
+        bytesPerRow: slot.bytesPerRow,
+        rowsPerImage: slot.height
+      },
+      {
+        width: slot.width,
+        height: slot.height,
+        depthOrArrayLayers: 1
+      }
+    );
+    const commandBuffer = encoder.finish();
+    this.queue.submit([commandBuffer]);
+    const token = ++slot.generation;
+    slot.state = "pending";
+    slot.error = null;
+    let mapPromise;
+    try {
+      mapPromise = slot.buffer.mapAsync(this._getConstants().GPUMapMode.READ);
+      if (!mapPromise || typeof mapPromise.then !== "function") {
+        throw new TypeError("WebGPU frame export mapAsync must return a promise");
+      }
+      slot.mapPromise = mapPromise;
+      mapPromise.then(
+        () => {
+          if (slot.destroyed || slot.generation !== token || slot.state !== "pending") return;
+          slot.mapPromise = null;
+          slot.state = "ready";
+        },
+        (error) => {
+          if (slot.destroyed || slot.generation !== token || slot.state !== "pending") return;
+          slot.mapPromise = null;
+          slot.error = error instanceof Error ? error : new Error(String(error));
+          slot.state = "failed";
+        }
+      );
+    } catch (error) {
+      slot.generation++;
+      slot.state = "idle";
+      slot.error = null;
+      slot.mapPromise = null;
+      throw error;
+    }
+  }
+  poll(slot) {
+    this._assertUsableSlot(slot);
+    if (slot.state === "pending") return false;
+    if (slot.state === "ready") return true;
+    if (slot.state === "failed") {
+      const error = slot.error || new Error("WebGPU frame export mapping failed");
+      slot.error = null;
+      slot.mapPromise = null;
+      slot.state = "idle";
+      throw error;
+    }
+    throw new Error("WebGPU frame export slot has no pending map");
+  }
+  read(slot) {
+    this._assertUsableSlot(slot);
+    if (slot.state !== "ready") {
+      throw new Error("WebGPU frame export slot is not ready after a completed map");
+    }
+    try {
+      const mappedRange = slot.buffer.getMappedRange();
+      const source = new Uint8Array(mappedRange);
+      if (slot.bytesPerRow === slot.rowStride) {
+        slot.data.set(source);
+      } else {
+        for (let row = 1; row < slot.height; row++) {
+          const sourceOffset = row * slot.bytesPerRow;
+          const destinationOffset = row * slot.rowStride;
+          source.copyWithin(
+            destinationOffset,
+            sourceOffset,
+            sourceOffset + slot.rowStride
+          );
+        }
+        slot.data.set(source.subarray(0, slot.data.length));
+      }
+      return slot.frame;
+    } finally {
+      try {
+        slot.buffer.unmap();
+      } finally {
+        slot.generation++;
+        slot.mapPromise = null;
+        slot.error = null;
+        slot.state = "idle";
+      }
+    }
+  }
+  destroySlot(slot) {
+    if (!slot || slot.destroyed) return;
+    slot.destroyed = true;
+    slot.generation++;
+    const previousState = slot.state;
+    slot.state = "destroyed";
+    slot.error = null;
+    slot.mapPromise = null;
+    let error = null;
+    if (previousState === "pending" || previousState === "ready") {
+      try {
+        slot.buffer?.unmap();
+      } catch (unmapError) {
+        error = firstError(error, unmapError);
+      }
+    }
+    try {
+      slot.resolveTexture?.destroy();
+    } catch (textureError) {
+      error = firstError(error, textureError);
+    }
+    try {
+      slot.buffer?.destroy();
+    } catch (bufferError) {
+      error = firstError(error, bufferError);
+    }
+    if (slot.registered) {
+      slot.registered = false;
+      this._slotCount--;
+    }
+    if (this._slotCount === 0) this._destroyShared();
+    if (error) throw error;
+  }
+  _assertUsableSlot(slot) {
+    if (!slot || slot.destroyed || !slot.registered) {
+      throw new Error("WebGPU frame export slot is not usable");
+    }
+  }
+  _getConstants() {
+    const constants = this.gpuConstants;
+    if (!constants?.GPUTextureUsage || !constants?.GPUBufferUsage || !constants?.GPUMapMode || !constants?.GPUShaderStage) {
+      throw new Error("WebGPU frame export constants are unavailable");
+    }
+    return constants;
+  }
+  _ensureShared(constants) {
+    if (this._shared) return;
+    const bindGroupLayout = this.device.createBindGroupLayout({
+      entries: [{
+        binding: 0,
+        visibility: constants.GPUShaderStage.FRAGMENT,
+        texture: {
+          sampleType: "unfilterable-float",
+          viewDimension: "2d",
+          multisampled: false
+        }
+      }]
+    });
+    const shaderModule = this.device.createShaderModule({ code: RESOLVE_SHADER });
+    const pipelineLayout = this.device.createPipelineLayout({
+      bindGroupLayouts: [bindGroupLayout]
+    });
+    const pipelines = {};
+    for (const alphaMode of ALPHA_MODES) {
+      pipelines[alphaMode] = this.device.createRenderPipeline({
+        layout: pipelineLayout,
+        vertex: {
+          module: shaderModule,
+          entryPoint: "vs_main"
+        },
+        fragment: {
+          module: shaderModule,
+          entryPoint: `${alphaMode}_main`,
+          targets: [{ format: "rgba8unorm" }]
+        },
+        primitive: { topology: "triangle-list" }
+      });
+    }
+    this._shared = { bindGroupLayout, shaderModule, pipelineLayout, pipelines };
+  }
+  _getBindGroup(source) {
+    let bindGroup = this._bindGroups.get(source.handle);
+    if (!bindGroup) {
+      bindGroup = this.device.createBindGroup({
+        layout: this._shared.bindGroupLayout,
+        entries: [{ binding: 0, resource: source.view }]
+      });
+      this._bindGroups.set(source.handle, bindGroup);
+    }
+    return bindGroup;
+  }
+  _destroyShared() {
+    this._shared = null;
+    this._bindGroups = /* @__PURE__ */ new WeakMap();
+  }
+};
+
 // shaders/src/runtime/backends/webgpu.js
 function float16ToFloat32(h) {
   const sign = h >> 15 & 1;
@@ -7045,6 +7983,13 @@ var WebGPUBackend = class _WebGPUBackend extends Backend {
     this.device.addEventListener("uncapturederror", (event) => {
       console.error("WebGPU uncaptured error:", event.error?.message || event.error);
     });
+  }
+  createFrameExportQueue(options = {}) {
+    const { gpuConstants = globalThis, ...queueOptions } = options;
+    return new FrameExportQueue(
+      new WebGPUFrameExportAdapter(this, gpuConstants),
+      queueOptions
+    );
   }
   /**
    * Parse a global texture reference and extract the surface name.
@@ -7348,8 +8293,16 @@ var WebGPUBackend = class _WebGPUBackend extends Backend {
    * @param {HTMLVideoElement|HTMLImageElement|HTMLCanvasElement|ImageBitmap} source - Media source
    * @param {object} [options] - Update options
    * @param {boolean} [options.flipY=true] - Whether to flip the Y axis
+   * @returns {{ width: number, height: number }} Source dimensions
+   *
+   * Must stay synchronous to match WebGL2Backend and the documented
+   * CanvasRenderer contract: callers read `.width`/`.height` off the return
+   * value to publish the source's intrinsic size (e.g. synth/media's
+   * imageSize uniform). Declaring this `async` returned a Promise instead,
+   * so those reads silently yielded undefined on WebGPU. Every write below
+   * is a queue submission, so there is nothing to await.
    */
-  async updateTextureFromSource(id, source, options = {}) {
+  updateTextureFromSource(id, source, options = {}) {
     let tex = this.textures.get(id);
     let width, height;
     if (source instanceof HTMLVideoElement) {
@@ -9860,6 +10813,196 @@ var WebGPUBackend = class _WebGPUBackend extends Backend {
   }
 };
 
+// shaders/src/runtime/sink.js
+var EMPTY_DESCRIPTOR = Object.freeze({});
+function normalizeDescriptor(descriptor) {
+  return descriptor === void 0 ? EMPTY_DESCRIPTOR : descriptor;
+}
+function validateSink(sink) {
+  if (!sink || typeof sink.configure !== "function" || typeof sink.submit !== "function" || typeof sink.close !== "function") {
+    throw new TypeError("Sink must implement configure, submit, and close");
+  }
+}
+var CanvasSink = class {
+  constructor(backend) {
+    this.backend = backend;
+    this.descriptor = EMPTY_DESCRIPTOR;
+    this.closed = false;
+  }
+  configure(descriptor) {
+    this.descriptor = normalizeDescriptor(descriptor);
+  }
+  submit(textureId, time) {
+    this.backend.present(textureId);
+    return true;
+  }
+  close() {
+    if (this.closed) return;
+    this.closed = true;
+  }
+};
+var SinkManager = class {
+  constructor({ onError } = {}) {
+    this._onError = onError;
+    this._registrations = [];
+    this._registrationsBySink = /* @__PURE__ */ new Map();
+    this._stats = /* @__PURE__ */ new Map();
+    this._descriptor = EMPTY_DESCRIPTOR;
+    this._configured = false;
+    this._closed = false;
+    this._iterationDepth = 0;
+    this._hasTombstones = false;
+  }
+  get stats() {
+    return this._stats;
+  }
+  add(sink) {
+    if (this._closed) {
+      throw new Error("SinkManager is closed");
+    }
+    validateSink(sink);
+    if (this._registrationsBySink.has(sink)) {
+      throw new Error("Sink is already registered");
+    }
+    if (this._configured) {
+      sink.configure(this._descriptor);
+    }
+    const registration = {
+      sink,
+      stats: { accepted: 0, dropped: 0, failed: 0 },
+      active: true
+    };
+    this._registrations.push(registration);
+    this._registrationsBySink.set(sink, registration);
+    this._stats.set(sink, registration.stats);
+    let removed = false;
+    return () => {
+      if (removed) return;
+      removed = true;
+      this._removeRegistration(registration);
+    };
+  }
+  remove(sink) {
+    this._removeRegistration(this._registrationsBySink.get(sink));
+  }
+  _removeRegistration(registration) {
+    if (!registration || !registration.active) return;
+    const sink = registration.sink;
+    registration.active = false;
+    this._hasTombstones = true;
+    if (this._registrationsBySink.get(sink) === registration) {
+      this._registrationsBySink.delete(sink);
+      this._stats.delete(sink);
+    }
+    registration.sink = null;
+    try {
+      sink.close();
+    } finally {
+      if (this._iterationDepth === 0) {
+        this._compactRegistrations();
+      }
+    }
+  }
+  _compactRegistrations() {
+    if (!this._hasTombstones) return;
+    let writeIndex = 0;
+    for (let readIndex = 0; readIndex < this._registrations.length; readIndex++) {
+      const registration = this._registrations[readIndex];
+      if (registration.active) {
+        this._registrations[writeIndex] = registration;
+        writeIndex++;
+      }
+    }
+    this._registrations.length = writeIndex;
+    this._hasTombstones = false;
+  }
+  configure(descriptor) {
+    if (this._closed) return;
+    this._descriptor = normalizeDescriptor(descriptor);
+    this._configured = true;
+    this._iterationDepth++;
+    try {
+      for (let i = 0; i < this._registrations.length; i++) {
+        const registration = this._registrations[i];
+        if (!registration.active) continue;
+        const sink = registration.sink;
+        try {
+          sink.configure(this._descriptor);
+        } catch (error) {
+          registration.stats.failed++;
+          if (typeof this._onError === "function") {
+            try {
+              this._onError(error, sink);
+            } catch {
+            }
+          }
+        }
+      }
+    } finally {
+      this._iterationDepth--;
+      if (this._iterationDepth === 0) {
+        this._compactRegistrations();
+      }
+    }
+  }
+  submit(textureId, timestamp) {
+    if (this._closed) return;
+    this._iterationDepth++;
+    try {
+      for (let i = 0; i < this._registrations.length; i++) {
+        const registration = this._registrations[i];
+        if (!registration.active) continue;
+        const sink = registration.sink;
+        let result;
+        try {
+          result = sink.submit(textureId, timestamp);
+        } catch (error) {
+          registration.stats.failed++;
+          if (typeof this._onError === "function") {
+            try {
+              this._onError(error, sink);
+            } catch {
+            }
+          }
+          continue;
+        }
+        if (result === true) {
+          registration.stats.accepted++;
+        } else if (result === false) {
+          registration.stats.dropped++;
+        }
+      }
+    } finally {
+      this._iterationDepth--;
+      if (this._iterationDepth === 0) {
+        this._compactRegistrations();
+      }
+    }
+  }
+  close(options) {
+    if (this._closed) return;
+    this._closed = true;
+    let firstError2;
+    for (let i = 0; i < this._registrations.length; i++) {
+      const registration = this._registrations[i];
+      if (!registration.active) continue;
+      const sink = registration.sink;
+      registration.active = false;
+      registration.sink = null;
+      try {
+        sink.close(options);
+      } catch (error) {
+        if (!firstError2) firstError2 = error;
+      }
+    }
+    this._registrations.length = 0;
+    this._registrationsBySink.clear();
+    this._stats.clear();
+    this._hasTombstones = false;
+    if (firstError2) throw firstError2;
+  }
+};
+
 // shaders/src/renderer/cubeCamera.js
 var CUBE_FACES = [
   { name: "px", forward: [1, 0, 0], up: [0, -1, 0] },
@@ -10030,6 +11173,19 @@ var Pipeline = class {
   constructor(graph, backend) {
     this.graph = graph;
     this.backend = backend;
+    this.sinkManager = new SinkManager();
+    this._sinkDescriptor = {
+      width: 0,
+      height: 0,
+      format: "rgba8unorm",
+      colorSpace: "srgb",
+      alphaMode: "premultiplied",
+      fps: 60
+    };
+    if (typeof backend?.present === "function") {
+      this.sinkManager.add(new CanvasSink(backend));
+    }
+    this._disposed = false;
     this.frameIndex = 0;
     this.lastTime = 0;
     this.surfaces = /* @__PURE__ */ new Map();
@@ -10066,6 +11222,14 @@ var Pipeline = class {
       // AudioState instance
     };
     this._asyncRenders = /* @__PURE__ */ new Map();
+  }
+  /**
+   * Register an output sink for the selected render surface.
+   * @param {{configure: Function, submit: Function, close: Function}} sink
+   * @returns {() => void} Idempotent sink removal function
+   */
+  addSink(sink) {
+    return this.sinkManager.add(sink);
   }
   /**
    * Set the MIDI state for midi() function resolution.
@@ -10164,6 +11328,9 @@ var Pipeline = class {
   resize(width, height) {
     this.width = width;
     this.height = height;
+    this._sinkDescriptor.width = width;
+    this._sinkDescriptor.height = height;
+    this.sinkManager.configure(this._sinkDescriptor);
     this.createSurfaces();
     const defaultUniforms = this.collectDefaultUniforms();
     this.recreateTextures(defaultUniforms);
@@ -10817,7 +11984,7 @@ var Pipeline = class {
    * Skips rendering if compilation is in progress to avoid race conditions
    * where passes reference programs that haven't been compiled yet.
    */
-  render(time = 0) {
+  render(time = 0, presentationTimestamp) {
     if (this.isCompiling) {
       return;
     }
@@ -10868,9 +12035,12 @@ var Pipeline = class {
     const renderSurfaceName = this.graph?.renderSurface;
     if (renderSurfaceName) {
       const renderSurface = this.surfaces.get(renderSurfaceName);
-      if (renderSurface && this.backend.present) {
+      if (renderSurface) {
         const presentId = this.frameReadTextures?.get(renderSurfaceName) ?? renderSurface.read;
-        this.backend.present(presentId);
+        if (presentationTimestamp === void 0) {
+          presentationTimestamp = typeof performance !== "undefined" && typeof performance.now === "function" ? performance.now() : Date.now();
+        }
+        this.sinkManager.submit(presentId, presentationTimestamp);
       }
     }
     this.swapBuffers();
@@ -11207,29 +12377,61 @@ var Pipeline = class {
     }
   }
   /**
-   * Dispose of all pipeline resources
+   * Dispose of all pipeline resources.
+   * @param {object} [options]
+   * @param {boolean} [options.loseContext=false] - Ask the backend to lose its context after cleanup
+   * @param {boolean} [options.backendLost=false] - Skip unsafe GPU cleanup when the backend is already lost
    */
-  dispose() {
+  dispose(options = {}) {
+    if (this._disposed) return;
+    this._disposed = true;
+    const { loseContext = false, backendLost = false } = options;
+    let firstError2;
+    const captureError = (error) => {
+      if (!firstError2) firstError2 = error;
+    };
     for (const cancel of this._asyncRenders.values()) {
-      cancel();
+      try {
+        cancel();
+      } catch (error) {
+        captureError(error);
+      }
     }
     this._asyncRenders.clear();
     if (this._asyncDebounceTimers) {
       for (const timer of this._asyncDebounceTimers.values()) clearTimeout(timer);
       this._asyncDebounceTimers.clear();
     }
-    if (this.backend?.textures) {
-      for (const texId of Array.from(this.backend.textures.keys())) {
-        this.backend.destroyTexture(texId);
+    try {
+      this.sinkManager.close(backendLost ? { backendLost: true } : void 0);
+    } catch (error) {
+      captureError(error);
+    }
+    if (!backendLost) {
+      if (this.backend?.textures) {
+        for (const texId of Array.from(this.backend.textures.keys())) {
+          try {
+            this.backend.destroyTexture(texId);
+          } catch (error) {
+            captureError(error);
+          }
+        }
+      }
+      if (this.backend && typeof this.backend.destroy === "function") {
+        try {
+          this.backend.destroy({ skipTextures: true, loseContext });
+        } catch (error) {
+          captureError(error);
+        }
       }
     }
     this.surfaces.clear();
-    if (this.backend && typeof this.backend.destroy === "function") {
-      this.backend.destroy({ skipTextures: true });
-    }
     this.graph = null;
     this.frameReadTextures = null;
+    this.frameWriteTextures = null;
     this.globalUniforms = {};
+    this.backend = null;
+    if (firstError2) throw firstError2;
   }
 };
 async function createPipeline(graph, options = {}) {
@@ -12066,6 +13268,8 @@ var CanvasRenderer = class {
     this._boundRenderLoop = this._renderLoop.bind(this);
     this._isContextLost = false;
     this._wasRunningBeforeContextLoss = false;
+    this._lifecycleGeneration = 0;
+    this._lastBackendInvalidationGeneration = -1;
     this._setupCanvasObserver();
     this._setupContextLossHandlers();
   }
@@ -12143,24 +13347,39 @@ var CanvasRenderer = class {
     };
     this._boundContextRestored = async () => {
       console.log("[Canvas] WebGL context restored, rebuilding pipeline...");
+      const restorationGeneration = this._advanceLifecycle({ backendLost: true });
+      const deadPipeline = this._pipeline;
       this._pipeline = null;
       this._uniformBindings = /* @__PURE__ */ new Map();
+      try {
+        deadPipeline?.dispose?.({ backendLost: true });
+      } catch (err) {
+        console.warn("Failed to dispose context-lost pipeline", err);
+      }
       this._isContextLost = false;
       if (this._currentDsl) {
         try {
-          await this.compile(this._currentDsl);
+          const restoredPipeline = await this.compile(this._currentDsl);
+          if (!this._isLifecycleCurrent(restorationGeneration) || !restoredPipeline || this._pipeline !== restoredPipeline) {
+            return;
+          }
           await this._reuploadCachedMeshes();
+          if (!this._isLifecycleCurrent(restorationGeneration) || this._pipeline !== restoredPipeline) {
+            return;
+          }
           if (this._wasRunningBeforeContextLoss) {
             this.start();
           }
           console.log("[Canvas] Pipeline rebuilt successfully after context restore");
         } catch (err) {
+          if (!this._isLifecycleCurrent(restorationGeneration)) return;
           console.error(`[Canvas] Failed to rebuild pipeline after context restore: ${err.detail || err.message || JSON.stringify(err)}`);
           if (this._onError) {
             this._onError(err);
           }
         }
       }
+      if (!this._isLifecycleCurrent(restorationGeneration)) return;
       if (this._onContextRestored) {
         this._onContextRestored();
       }
@@ -12195,6 +13414,37 @@ var CanvasRenderer = class {
   /** @returns {object|null} Current pipeline object */
   get pipeline() {
     return this._pipeline;
+  }
+  /**
+   * Register an output sink on the active compiled pipeline.
+   * The returned removal function is scoped to that concrete pipeline.
+   * @param {{configure: Function, submit: Function, close: Function}} sink
+   * @returns {() => void}
+   */
+  addSink(sink) {
+    if (!this._pipeline) {
+      throw new Error("CanvasRenderer has no active pipeline; compile before adding a sink");
+    }
+    if (typeof this._pipeline.addSink !== "function") {
+      throw new Error("Active Noisemaker pipeline does not support output sinks");
+    }
+    return this._pipeline.addSink(sink);
+  }
+  /**
+   * Create an asynchronous frame-export queue for the active backend.
+   * Returns null when the concrete backend does not support frame export.
+   * @param {object} [options]
+   * @returns {object|null}
+   */
+  createFrameExportQueue(options = {}) {
+    if (!this._pipeline) {
+      throw new Error("CanvasRenderer has no active pipeline; compile before creating a frame export queue");
+    }
+    const backend = this._pipeline.backend;
+    if (typeof backend?.createFrameExportQueue !== "function") {
+      return null;
+    }
+    return backend.createFrameExportQueue(options);
   }
   /** @returns {number} Total frames rendered */
   get frameCount() {
@@ -12511,6 +13761,28 @@ var CanvasRenderer = class {
   // =========================================================================
   // Pipeline Lifecycle
   // =========================================================================
+  /** @private Invalidate pending lifecycle work and record unsafe backend generations. */
+  _advanceLifecycle({ backendLost = false } = {}) {
+    this._lifecycleGeneration = (this._lifecycleGeneration ?? 0) + 1;
+    if (backendLost) {
+      this._lastBackendInvalidationGeneration = this._lifecycleGeneration;
+    }
+    return this._lifecycleGeneration;
+  }
+  /** @private */
+  _isLifecycleCurrent(generation) {
+    return (this._lifecycleGeneration ?? 0) === generation;
+  }
+  /** @private Dispose a runtime result that completed after its lifecycle was invalidated. */
+  _disposeStalePipeline(pipeline, generation) {
+    if (!pipeline || pipeline === this._pipeline) return;
+    const backendLost = (this._lastBackendInvalidationGeneration ?? -1) > generation;
+    try {
+      pipeline.dispose?.(backendLost ? { backendLost: true } : {});
+    } catch (err) {
+      console.warn("Failed to dispose stale pipeline", err);
+    }
+  }
   /**
    * Reset the canvas element (for backend switching)
    */
@@ -12536,6 +13808,7 @@ var CanvasRenderer = class {
    */
   async dispose(options = {}) {
     const { loseContext = false, resetCanvas = false } = options;
+    this._advanceLifecycle({ backendLost: loseContext || resetCanvas });
     if (!this._pipeline) {
       if (resetCanvas) {
         this.resetCanvas();
@@ -12546,13 +13819,17 @@ var CanvasRenderer = class {
     this._pipeline = null;
     this._uniformBindings = /* @__PURE__ */ new Map();
     try {
-      oldPipeline.backend?.destroy?.({ loseContext });
+      oldPipeline.dispose({ loseContext });
     } catch (err) {
-      console.warn("Failed to destroy pipeline backend", err);
+      console.warn("Failed to dispose pipeline", err);
     }
     if (resetCanvas) {
       this.resetCanvas();
     }
+  }
+  /** @private Create a fresh runtime pipeline. */
+  _createRuntime(dsl, options) {
+    return createRuntime(dsl, options);
   }
   /**
    * Compile DSL and create pipeline
@@ -12563,15 +13840,27 @@ var CanvasRenderer = class {
    */
   async compile(dsl, options = {}) {
     const shaderOverrides = options.shaderOverrides;
+    const lifecycleGeneration = this._lifecycleGeneration ?? 0;
     this._currentDsl = dsl;
     if (!this._pipeline) {
-      this._pipeline = await createRuntime(dsl, {
-        canvas: this._canvas,
-        width: this._width,
-        height: this._height,
-        preferWebGPU: this._preferWebGPU,
-        shaderOverrides
-      });
+      let initialPipeline;
+      try {
+        initialPipeline = await this._createRuntime(dsl, {
+          canvas: this._canvas,
+          width: this._width,
+          height: this._height,
+          preferWebGPU: this._preferWebGPU,
+          shaderOverrides
+        });
+      } catch (err) {
+        if (!this._isLifecycleCurrent(lifecycleGeneration)) return null;
+        throw err;
+      }
+      if (!this._isLifecycleCurrent(lifecycleGeneration) || this._pipeline) {
+        this._disposeStalePipeline(initialPipeline, lifecycleGeneration);
+        return null;
+      }
+      this._pipeline = initialPipeline;
       if (this._midiState) {
         this._pipeline.setMidiState(this._midiState);
       }
@@ -12579,42 +13868,55 @@ var CanvasRenderer = class {
         this._pipeline.setAudioState(this._audioState);
       }
     } else {
-      this._pipeline.isCompiling = true;
+      const compilationPipeline = this._pipeline;
+      compilationPipeline.isCompiling = true;
       try {
-        const newGraph = recompile(this._pipeline, dsl, { shaderOverrides });
+        const newGraph = recompile(compilationPipeline, dsl, { shaderOverrides });
         if (!newGraph) {
-          this._pipeline.isCompiling = false;
-          const previousPipeline = this._pipeline;
-          this._pipeline = await createRuntime(dsl, {
+          compilationPipeline.isCompiling = false;
+          const previousPipeline = compilationPipeline;
+          const replacementPipeline = await this._createRuntime(dsl, {
             canvas: this._canvas,
             width: this._width,
             height: this._height,
             preferWebGPU: this._preferWebGPU,
             shaderOverrides
           });
+          if (!this._isLifecycleCurrent(lifecycleGeneration) || this._pipeline !== previousPipeline) {
+            this._disposeStalePipeline(replacementPipeline, lifecycleGeneration);
+            return null;
+          }
+          this._pipeline = replacementPipeline;
           try {
-            previousPipeline?.backend?.destroy?.();
+            previousPipeline?.dispose?.();
           } catch (err) {
-            console.warn("Failed to release previous pipeline backend", err);
+            console.warn("Failed to dispose previous pipeline", err);
           }
         } else {
-          await this._pipeline.compilePrograms();
+          await compilationPipeline.compilePrograms();
+          if (!this._isLifecycleCurrent(lifecycleGeneration) || this._pipeline !== compilationPipeline) {
+            return null;
+          }
         }
       } catch (err) {
-        if (this._pipeline) {
-          this._pipeline.isCompiling = false;
-        }
+        compilationPipeline.isCompiling = false;
+        if (!this._isLifecycleCurrent(lifecycleGeneration)) return null;
         throw err;
       }
     }
+    const compiledPipeline = this._pipeline;
+    if (!this._isLifecycleCurrent(lifecycleGeneration) || !compiledPipeline) return null;
     this._frameCount = 0;
     this._uniformBindings = /* @__PURE__ */ new Map();
     await this._reuploadCachedMeshes();
+    if (!this._isLifecycleCurrent(lifecycleGeneration) || this._pipeline !== compiledPipeline) {
+      return null;
+    }
     if (this._wasRunningBeforeContextLoss && !this._isRunning && !this._isContextLost) {
       this._wasRunningBeforeContextLoss = false;
       this.start();
     }
-    return this._pipeline;
+    return compiledPipeline;
   }
   /**
    * Re-upload cached mesh data to the current backend.
@@ -19400,12 +20702,14 @@ export {
   BUILTIN_NAMESPACE,
   Backend,
   CanvasRenderer,
+  CanvasSink,
   ControlFactory,
   DEFAULT_CATEGORY,
   Effect,
   EffectSelect,
   Emitter,
   ExternalInputManager,
+  FrameExportQueue,
   IO_FUNCTIONS,
   MidiChannelState,
   MidiInputManager,
@@ -19414,6 +20718,7 @@ export {
   PHASE,
   Pipeline,
   ProgramState,
+  SinkManager,
   TAG_DEFINITIONS,
   ToggleSwitch,
   UIController,
