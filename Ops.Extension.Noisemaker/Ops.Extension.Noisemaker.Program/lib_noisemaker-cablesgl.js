@@ -3,8 +3,8 @@
  * Includes: CanvasRenderer + UIController + EffectSelect
  * Copyright (c) 2017-2026 Noise Factor LLC. https://noisefactor.io/
  * SPDX-License-Identifier: MIT
- * Build: e1feefa0
- * Date: 2026-08-11T17:24:31.182Z
+ * Build: 1ee891a2
+ * Date: 2026-08-18T23:59:38.995Z
  */
 var NoisemakerCablesGL=(()=>{var ui=Object.defineProperty;var $1=Object.getOwnPropertyDescriptor;var K1=Object.getOwnPropertyNames;var Z1=Object.prototype.hasOwnProperty;var h=(e,t,o)=>()=>{if(o)throw o[0];try{return e&&(t=e(e=0)),t}catch(r){throw o=[r],r}};var di=(e,t)=>{for(var o in t)ui(e,o,{get:t[o],enumerable:!0})},J1=(e,t,o,r)=>{if(t&&typeof t=="object"||typeof t=="function")for(let a of K1(t))!Z1.call(e,a)&&a!==o&&ui(e,a,{get:()=>t[a],enumerable:!(r=$1(t,a))||r.enumerable});return e};var Q1=e=>J1(ui({},"__esModule",{value:!0}),e);function as(e){let t=[],o=[],r=[],a=[],i=[],s=[],n=e.split(`
 `);for(let d of n){let p=d.trim();if(p.length===0||p.startsWith("#"))continue;let c=p.split(/\s+/);switch(c[0]){case"v":{let b=parseFloat(c[1])||0,O=parseFloat(c[2])||0,R=parseFloat(c[3])||0;t.push([b,O,R]);break}case"vn":{let b=parseFloat(c[1])||0,O=parseFloat(c[2])||0,R=parseFloat(c[3])||0;o.push([b,O,R]);break}case"vt":{let b=parseFloat(c[1])||0,O=parseFloat(c[2])||0;r.push([b,O]);break}case"f":{let b=[];for(let O=1;O<c.length;O++){let R=c[O].split("/"),w=parseInt(R[0],10)-1,B=R[1]?parseInt(R[1],10)-1:-1,N=R[2]?parseInt(R[2],10)-1:-1;b.push({vIdx:w,vtIdx:B,vnIdx:N})}for(let O=1;O<b.length-1;O++){let R=b[0],w=b[O],B=b[O+1];l(R),l(B),l(w)}break}}}function l(d){d.vIdx>=0&&d.vIdx<t.length?a.push(...t[d.vIdx]):a.push(0,0,0),d.vnIdx>=0&&d.vnIdx<o.length?i.push(...o[d.vnIdx]):i.push(0,0,1),d.vtIdx>=0&&d.vtIdx<r.length?s.push(...r[d.vtIdx]):s.push(0,0)}let u=a.length/3;return o.length===0&&u>0&&Pb(a,i),{positions:new Float32Array(a),normals:new Float32Array(i),uvs:new Float32Array(s),vertexCount:u}}function Pb(e,t){let o=e.length/3,r=o/3,a=new Float32Array(r*3);for(let n=0;n<r;n++){let l=n*9,u=l+3,d=l+6,p=e[l],c=e[l+1],m=e[l+2],b=e[u],O=e[u+1],R=e[u+2],w=e[d],B=e[d+1],N=e[d+2],Q=b-p,L=O-c,P=R-m,ne=w-p,M=B-c,$=N-m,v=L*$-P*M,g=P*ne-Q*$,U=Q*M-L*ne,W=Math.sqrt(v*v+g*g+U*U);W>1e-4?(v/=W,g/=W,U/=W):(v=0,g=0,U=1),a[n*3]=v,a[n*3+1]=g,a[n*3+2]=U}let i=new Map,s=n=>Math.round(n*1e4)/1e4;for(let n=0;n<o;n++){let l=e[n*3],u=e[n*3+1],d=e[n*3+2],p=`${s(l)},${s(u)},${s(d)}`,c=Math.floor(n/3),m=a[c*3],b=a[c*3+1],O=a[c*3+2];i.has(p)||i.set(p,{nx:0,ny:0,nz:0,count:0});let R=i.get(p);R.nx+=m,R.ny+=b,R.nz+=O,R.count++}for(let n of i.values()){let l=Math.sqrt(n.nx*n.nx+n.ny*n.ny+n.nz*n.nz);l>1e-4?(n.nx/=l,n.ny/=l,n.nz/=l):(n.nx=0,n.ny=0,n.nz=1)}for(let n=0;n<o;n++){let l=e[n*3],u=e[n*3+1],d=e[n*3+2],p=`${s(l)},${s(u)},${s(d)}`,c=i.get(p);t[n*3]=c.nx,t[n*3+1]=c.ny,t[n*3+2]=c.nz}}async function Eb(e){let t=await fetch(e);if(!t.ok)throw new Error(`Failed to load OBJ: ${t.status} ${t.statusText}`);let o=await t.text();return as(o)}function kb(e,t,o,r,a){let i=r*a,s=e.length/3;s>i&&console.warn(`[OBJ] Mesh has ${s} vertices, but texture can only hold ${i}. Truncating.`);let n=Math.min(s,i),l=r*a,u=new Float32Array(l*4),d=new Float32Array(l*4),p=new Float32Array(l*4);for(let c=0;c<n;c++){let m=c*4,b=c*3,O=c*2;u[m]=e[b],u[m+1]=e[b+1],u[m+2]=e[b+2],u[m+3]=1,d[m]=t[b],d[m+1]=t[b+1],d[m+2]=t[b+2],d[m+3]=0,p[m]=o[O],p[m+1]=o[O+1],p[m+2]=0,p[m+3]=0}for(let c=n;c<l;c++){let m=c*4;u[m+3]=0}return{positionData:u,normalData:d,uvData:p,vertexCount:n}}function Fb(e){let t=[],o=0,r=1,a=1;function i(u,d,p,c){t.push({type:u,lexeme:d,line:p,col:c})}let s=u=>u>="0"&&u<="9",n=u=>u>="a"&&u<="z"||u>="A"&&u<="Z",l=Lb;for(;o<e.length;){let u=e[o];if(u===" "||u==="	"||u==="\r"){o++,a++;continue}if(u===`
@@ -426,7 +426,7 @@ float periodicFunction(float p) {
 }
 
 // Noisemaker value noise - MIT License
-// https://github.com/noisedeck/noisemaker/blob/master/noisemaker/value.py
+// https://github.com/noisefactorllc/noisemaker/blob/main/noisemaker/value.py
 vec3 randomFromLatticeWithOffset(vec2 st, float xFreq, float yFreq, float s, ivec2 offset) {
     vec2 lattice = vec2(st.x * xFreq, st.y * yFreq);
     vec2 baseFloor = floor(lattice);
@@ -4833,7 +4833,7 @@ void main() {
     } else if (colorMode == 3) {
         // oklab
         // magic values from py-noisemaker - MIT License
-        // https://github.com/noisedeck/noisemaker/blob/master/noisemaker/generators.py
+        // https://github.com/noisefactorllc/noisemaker/blob/main/noisemaker/generators.py
         color.g = color.g * -.509 + .276;
         color.b = color.b * -.509 + .198;
 
@@ -8118,7 +8118,7 @@ float periodicFunction(float p) {
 }
 
 // Noisemaker value noise - MIT License
-// https://github.com/noisedeck/noisemaker/blob/master/noisemaker/value.py
+// https://github.com/noisefactorllc/noisemaker/blob/main/noisemaker/value.py
 int positiveModulo(int value, int modulus) {
     if (modulus == 0) {
         return 0;
@@ -11375,7 +11375,7 @@ float periodicFunction(float p) {
 }
 
 // Noisemaker value noise - MIT License
-// https://github.com/noisedeck/noisemaker/blob/master/noisemaker/value.py
+// https://github.com/noisefactorllc/noisemaker/blob/main/noisemaker/value.py
 int positiveModulo(int value, int modulus) {
     if (modulus == 0) {
         return 0;
@@ -15271,7 +15271,7 @@ float simplexValue(vec2 st, float freq, float s, float blend) {
 // end simplex
 
 // Noisemaker value noise - MIT License
-// https://github.com/noisedeck/noisemaker/blob/master/noisemaker/value.py
+// https://github.com/noisefactorllc/noisemaker/blob/main/noisemaker/value.py
 int positiveModulo(int value, int modulus) {
     if (modulus == 0) {
         return 0;
@@ -16248,7 +16248,7 @@ float periodicFunction(float p) {
 }
 
 // Noisemaker value noise - MIT License
-// https://github.com/noisedeck/noisemaker/blob/master/noisemaker/value.py
+// https://github.com/noisefactorllc/noisemaker/blob/main/noisemaker/value.py
 int positiveModulo(int value, int modulus) {
     if (modulus == 0) {
         return 0;
@@ -43256,7 +43256,7 @@ const PI : f32 = 3.141592653589793;
 
 @group(0) @binding(0) var inputTex : texture_2d<f32>;  // sorted
 @group(0) @binding(1) var input_sampler : sampler;
-@group(0) @binding(2) var original_texture : texture_2d<f32>;  // original
+@group(0) @binding(2) var originalTex : texture_2d<f32>;  // original
 @group(0) @binding(3) var original_sampler : sampler;
 @group(0) @binding(4) var<uniform> resolution : vec2<f32>;
 @group(0) @binding(5) var<uniform> angled : f32;
@@ -43287,7 +43287,7 @@ struct VertexOutput {
 fn main(input : VertexOutput) -> @location(0) vec4<f32> {
     let texSize : vec2<f32> = vec2<f32>(textureDimensions(inputTex));
     let center : vec2<f32> = texSize * 0.5;
-    let pixelCoord : vec2<f32> = input.uv * resolution - center;
+    let pixelCoord : vec2<f32> = input.position.xy - center;
     
     let angle : f32 = angled;
     let rad : f32 = angle * PI / 180.0;
@@ -43301,7 +43301,7 @@ fn main(input : VertexOutput) -> @location(0) vec4<f32> {
     
     srcCoord = srcCoord + center;
     
-    let originalColor : vec4<f32> = textureSample(original_texture, original_sampler, input.uv);
+    let originalColor : vec4<f32> = textureSample(originalTex, original_sampler, input.position.xy / resolution);
     
     let wrappedUV : vec2<f32> = applyWrap(srcCoord, texSize);
     let sortedColor : vec4<f32> = textureSample(inputTex, input_sampler, wrappedUV);
@@ -43362,9 +43362,10 @@ void main() {
     // Output: normalized brightest x, max luminance
     fragColor = vec4(float(brightestX) / float(width - 1), maxLum, 0.0, 1.0);
 }
-`,wgsl:`// GPGPU Pass 2: Find brightest pixel x-coordinate per row
+`,wgsl:`// GPGPU Pass 2: Find brightest pixel x-coordinate per row (optimized)
 // Input: luminance texture (R = luminance)
 // Output: R = brightest x (normalized), G = max luminance, B = 0, A = 1
+// Uses sparse sampling for O(1) approximate result
 
 @group(0) @binding(0) var lumTex : texture_2d<f32>;
 
@@ -43380,15 +43381,17 @@ fn main(input : VertexOutput) -> @location(0) vec4<f32> {
     let y : i32 = coord.y;
     let width : i32 = size.x;
     
-    // Find brightest pixel in this row
+    // Use sparse sampling to find approximate brightest pixel
+    const NUM_SAMPLES : i32 = 32;
     var maxLum : f32 = -1.0;
     var brightestX : i32 = 0;
     
-    for (var i : i32 = 0; i < width; i = i + 1) {
-        let lum : f32 = textureLoad(lumTex, vec2<i32>(i, y), 0).r;
+    for (var s : i32 = 0; s < NUM_SAMPLES; s = s + 1) {
+        let sampleX : i32 = (s * width) / NUM_SAMPLES;
+        let lum : f32 = textureLoad(lumTex, vec2<i32>(sampleX, y), 0).r;
         if (lum > maxLum) {
             maxLum = lum;
-            brightestX = i;
+            brightestX = sampleX;
         }
     }
     
@@ -43680,7 +43683,7 @@ struct VertexOutput {
 fn main(input : VertexOutput) -> @location(0) vec4<f32> {
     let texSize : vec2<f32> = vec2<f32>(textureDimensions(inputTex));
     let center : vec2<f32> = texSize * 0.5;
-    let pixelCoord : vec2<f32> = input.uv * resolution - center;
+    let pixelCoord : vec2<f32> = input.position.xy - center;
     
     var angle : f32 = angled;
     // Handle animation if needed
@@ -54092,7 +54095,7 @@ noise(seed: 1, ridges: true)
 
 render(o0)
 \`\`\`
-`;if(er&&Object.keys(Vm).length>0){er.shaders||(er.shaders={});for(let[e,t]of Object.entries(Vm))er.shaders[e]={...t}}er&&Hm&&(er.help=Hm);Wm=er});var RS,IS,Se,DS,tr,Xm,Ym,$m,Km=h(()=>{RS=Object.defineProperty,IS=(e,t,o)=>t in e?RS(e,t,{enumerable:!0,configurable:!0,writable:!0,value:o}):e[t]=o,Se=(e,t,o)=>IS(e,typeof t!="symbol"?t+"":t,o),DS=class{constructor(e={}){this.state={},this.uniforms={},e.name&&(this.name=e.name),e.namespace&&(this.namespace=e.namespace),e.func&&(this.func=e.func),e.description&&(this.description=e.description),e.tags&&(this.tags=e.tags),e.globals&&(this.globals=e.globals),e.passes&&(this.passes=e.passes),e.textures&&(this.textures=e.textures),e.outputTex3d&&(this.outputTex3d=e.outputTex3d),e.outputGeo&&(this.outputGeo=e.outputGeo),e.uniformLayout&&(this.uniformLayout=e.uniformLayout),e.uniformLayouts&&(this.uniformLayouts=e.uniformLayouts),e.paramAliases&&(this.paramAliases=e.paramAliases),e.openCategories&&(this.openCategories=e.openCategories),e.defaultProgram&&(this.defaultProgram=e.defaultProgram),e.hidden&&(this.hidden=!0),e.deprecatedBy&&(this.deprecatedBy=e.deprecatedBy),e.onInit&&(this._configOnInit=e.onInit),e.onUpdate&&(this._configOnUpdate=e.onUpdate),e.onDestroy&&(this._configOnDestroy=e.onDestroy),e.asyncInit&&(this._configAsyncInit=e.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(e){return this._configOnUpdate?this._configOnUpdate.call(this,e):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(e){return this._configAsyncInit?this._configAsyncInit.call(this,e):Promise.resolve()}},tr=class extends DS{constructor(){super(...arguments),Se(this,"id","text"),Se(this,"name","Text"),Se(this,"namespace","filter"),Se(this,"func","text"),Se(this,"description","Overlay text onto the image"),Se(this,"tags",["text"]),Se(this,"externalTexture","textTex"),Se(this,"globals",{text:{type:"string",default:"Hello World",ui:{label:"text",multiline:!0,category:"general"}},font:{type:"string",default:"Nunito",choices:{nunito:"Nunito",sansSerif:"sans-serif",serif:"serif",monospace:"monospace",cursive:"cursive",fantasy:"fantasy"},ui:{label:"font",control:"dropdown",category:"general"}},size:{type:"float",default:.1,min:.01,max:1,step:.01,ui:{label:"size",control:"slider",category:"transform"}},posX:{type:"float",default:.5,min:0,max:1,step:.01,ui:{label:"pos x",control:"slider",category:"transform"}},posY:{type:"float",default:.5,min:0,max:1,step:.01,ui:{label:"pos y",control:"slider",category:"transform"}},rotation:{type:"float",default:0,min:-180,max:180,step:1,ui:{label:"rotation",control:"slider",category:"transform"}},color:{type:"color",default:"#ffffff",ui:{label:"color",control:"color",category:"general"}},matteColor:{type:"color",default:"#000000",uniform:"matteColor",ui:{label:"matte color",control:"color",category:"background"}},matteOpacity:{type:"float",default:0,min:0,max:1,step:.01,uniform:"matteOpacity",ui:{label:"matte opacity",control:"slider",category:"background"}},justify:{type:"string",default:"center",choices:{left:"left",center:"center",right:"right"},ui:{label:"justify",control:"dropdown",category:"general"}}}),Se(this,"defaultProgram",`search filter, synth
+`;if(er&&Object.keys(Vm).length>0){er.shaders||(er.shaders={});for(let[e,t]of Object.entries(Vm))er.shaders[e]={...t}}er&&Hm&&(er.help=Hm);Wm=er});var RS,IS,Se,DS,tr,Xm,Ym,$m,Km=h(()=>{RS=Object.defineProperty,IS=(e,t,o)=>t in e?RS(e,t,{enumerable:!0,configurable:!0,writable:!0,value:o}):e[t]=o,Se=(e,t,o)=>IS(e,typeof t!="symbol"?t+"":t,o),DS=class{constructor(e={}){this.state={},this.uniforms={},e.name&&(this.name=e.name),e.namespace&&(this.namespace=e.namespace),e.func&&(this.func=e.func),e.description&&(this.description=e.description),e.tags&&(this.tags=e.tags),e.globals&&(this.globals=e.globals),e.passes&&(this.passes=e.passes),e.textures&&(this.textures=e.textures),e.outputTex3d&&(this.outputTex3d=e.outputTex3d),e.outputGeo&&(this.outputGeo=e.outputGeo),e.uniformLayout&&(this.uniformLayout=e.uniformLayout),e.uniformLayouts&&(this.uniformLayouts=e.uniformLayouts),e.paramAliases&&(this.paramAliases=e.paramAliases),e.openCategories&&(this.openCategories=e.openCategories),e.defaultProgram&&(this.defaultProgram=e.defaultProgram),e.hidden&&(this.hidden=!0),e.deprecatedBy&&(this.deprecatedBy=e.deprecatedBy),e.onInit&&(this._configOnInit=e.onInit),e.onUpdate&&(this._configOnUpdate=e.onUpdate),e.onDestroy&&(this._configOnDestroy=e.onDestroy),e.asyncInit&&(this._configAsyncInit=e.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(e){return this._configOnUpdate?this._configOnUpdate.call(this,e):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(e){return this._configAsyncInit?this._configAsyncInit.call(this,e):Promise.resolve()}},tr=class extends DS{constructor(){super(...arguments),Se(this,"id","text"),Se(this,"name","Text"),Se(this,"namespace","filter"),Se(this,"func","text"),Se(this,"description","Overlay text onto the image"),Se(this,"tags",["text"]),Se(this,"externalTexture","textTex"),Se(this,"globals",{text:{type:"string",default:"Hello World",ui:{label:"text",multiline:!0,category:"general"}},font:{type:"string",default:"Nunito",choices:{nunito:"Nunito",sansSerif:"sans-serif",serif:"serif",monospace:"monospace",cursive:"cursive",fantasy:"fantasy"},ui:{label:"font",control:"dropdown",category:"general"}},size:{type:"float",default:.1,min:.01,max:1,step:.01,ui:{label:"size",control:"slider",category:"transform"}},posX:{type:"float",default:.5,min:0,max:1,step:.01,ui:{label:"pos x",control:"slider",category:"transform"}},posY:{type:"float",default:.5,min:0,max:1,step:.01,ui:{label:"pos y",control:"slider",category:"transform"}},rotation:{type:"float",default:0,min:-180,max:180,step:1,ui:{label:"rotation",control:"slider",category:"transform"}},color:{type:"color",default:"#ffffff",ui:{label:"color",control:"color",category:"general"}},matteColor:{type:"color",default:"#000000",uniform:"matteColor",ui:{label:"matte color",control:"color",category:"background"}},matteOpacity:{type:"float",default:0,min:0,max:1,step:.01,uniform:"matteOpacity",ui:{label:"matte opacity",control:"slider",category:"background"}},justify:{type:"string",default:"center",choices:{left:"left",center:"center",right:"right"},ui:{label:"justify",control:"dropdown",category:"general"}},style:{type:"string",default:"",ui:{label:"style",hidden:!0,category:"general"}}}),Se(this,"defaultProgram",`search filter, synth
 
 perlin(scale: 100)
   .text()
@@ -54120,7 +54123,19 @@ void main() {
     vec2 st = globalCoord / fullResolution;
 
     vec4 inputColor = texture(inputTex, gl_FragCoord.xy / vec2(textureSize(inputTex, 0)));
-    vec4 text = texture(textTex, gl_FragCoord.xy / vec2(textureSize(textTex, 0)));
+
+    // The text canvas is authored to cover the whole output, so sample it in
+    // normalized output space (\`st\`) rather than in textTex's own texel space.
+    // Dividing by textureSize(textTex) pinned the overlay to a 1:1 texel patch
+    // in the corner whenever the canvas size lagged the render size, and made
+    // every tile of a large-format export repeat the text.
+    //
+    // Untiled, \`st\` is gl_FragCoord.xy / resolution, which is what the WGSL
+    // variant computes from textureDimensions(inputTex) — so the two agree.
+    // Tiled, this places the text once across the whole image rather than once
+    // per tile; the host still rasterizes the canvas at tile size, so its scale
+    // is approximate there. WGSL has no tile uniforms and still repeats.
+    vec4 text = texture(textTex, st);
 
     // Text presence from canvas alpha
     float textPresence = text.a;

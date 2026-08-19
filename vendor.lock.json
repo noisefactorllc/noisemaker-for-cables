@@ -1,13 +1,13 @@
 {
   "schemaVersion": 1,
   "sourceBaseUrl": "https://shaders.noisedeck.app/1/",
-  "generatedAt": "2026-08-13T21:59:42.028Z",
+  "generatedAt": "2026-08-19T03:31:50.909Z",
   "effectCount": 210,
   "artifacts": [
     {
-      "bytes": 31846,
+      "bytes": 31849,
       "path": "effects/classicNoisedeck/bitEffects.js",
-      "sha256": "34a38cd9664d97ad2001fe81d25f42f249adf43efeac4ea288d15a9d0b5122e7",
+      "sha256": "bd22841669166faaf2dbe8fa0d4b208ddc9d4ce48cfef5d2b9f8d773ff448e58",
       "url": "https://shaders.noisedeck.app/1/effects/classicNoisedeck/bitEffects.js"
     },
     {
@@ -35,9 +35,9 @@
       "url": "https://shaders.noisedeck.app/1/effects/classicNoisedeck/coalesce.js"
     },
     {
-      "bytes": 31044,
+      "bytes": 31047,
       "path": "effects/classicNoisedeck/colorLab.js",
-      "sha256": "14c1d87143db5d6901a92e4cb4334f17d81accfc3734d76161304f4a07cec3cb",
+      "sha256": "087bb122143cc9a3666f68bf432773a1e5eb5bed4c94ed6b308d0746bfa58d69",
       "url": "https://shaders.noisedeck.app/1/effects/classicNoisedeck/colorLab.js"
     },
     {
@@ -65,9 +65,9 @@
       "url": "https://shaders.noisedeck.app/1/effects/classicNoisedeck/glitch.js"
     },
     {
-      "bytes": 54304,
+      "bytes": 54307,
       "path": "effects/classicNoisedeck/kaleido.js",
-      "sha256": "fbc8e3bbfd80a5447f1f9e6432be909997212996caacd03805d19bbb05d72b55",
+      "sha256": "c5fa3290f42fdfd43500bb685ddb617c7e153ce86598bb063090b9d7acc60841",
       "url": "https://shaders.noisedeck.app/1/effects/classicNoisedeck/kaleido.js"
     },
     {
@@ -83,9 +83,9 @@
       "url": "https://shaders.noisedeck.app/1/effects/classicNoisedeck/moodscape.js"
     },
     {
-      "bytes": 77292,
+      "bytes": 77295,
       "path": "effects/classicNoisedeck/noise.js",
-      "sha256": "3b25717e4ef607b0862f6b5e0c477305d4eb6ab5859adbf3990e6994d6c48dc4",
+      "sha256": "3aac1296a28e9a5bfdf773bf7e1d8b6975c3ccc0363237d7292b23353025262e",
       "url": "https://shaders.noisedeck.app/1/effects/classicNoisedeck/noise.js"
     },
     {
@@ -101,15 +101,15 @@
       "url": "https://shaders.noisedeck.app/1/effects/classicNoisedeck/refract.js"
     },
     {
-      "bytes": 51110,
+      "bytes": 51113,
       "path": "effects/classicNoisedeck/shapeMixer.js",
-      "sha256": "e4996483e7a7bce83a49a56fc1bfb8aad0977a65c8207f260794d9c37b2400f1",
+      "sha256": "8592e3bd6cc0f461871eaa0e2da3617db01a0a945cde443c543e2ed460c0dd18",
       "url": "https://shaders.noisedeck.app/1/effects/classicNoisedeck/shapeMixer.js"
     },
     {
-      "bytes": 56148,
+      "bytes": 56151,
       "path": "effects/classicNoisedeck/shapes.js",
-      "sha256": "92b134fd105094ae2ec824d87cfd460ce3a70ce819b2cb0068f914891139da7d",
+      "sha256": "f290047d40bc9c916ce3c32edc282b7dc2696bf879b60aa17f95694087e80431",
       "url": "https://shaders.noisedeck.app/1/effects/classicNoisedeck/shapes.js"
     },
     {
@@ -485,9 +485,9 @@
       "url": "https://shaders.noisedeck.app/1/effects/filter/pinch.js"
     },
     {
-      "bytes": 23606,
+      "bytes": 23804,
       "path": "effects/filter/pixelSort.js",
-      "sha256": "3df0fc0d776f616c3b235b03e1d0b2845a8f0761f4b73e176dea6ffd0e1489b8",
+      "sha256": "812713f11c6571bfffb31a06d57a17bdfb7a00e1bf7054b8da619899571ef572",
       "url": "https://shaders.noisedeck.app/1/effects/filter/pixelSort.js"
     },
     {
@@ -719,9 +719,9 @@
       "url": "https://shaders.noisedeck.app/1/effects/filter/tetraCosine.js"
     },
     {
-      "bytes": 7192,
+      "bytes": 8011,
       "path": "effects/filter/text.js",
-      "sha256": "f3e084dd2abeaa56af4584269c4fe796a1a4d31f8ab992f31353f687b2757099",
+      "sha256": "cb7331dd9a045939dc36b52a188188f28bbceab3b55eb6bd8c37372d79a3746f",
       "url": "https://shaders.noisedeck.app/1/effects/filter/text.js"
     },
     {
@@ -1273,7 +1273,7 @@
     {
       "bytes": 755547,
       "path": "noisemaker-shaders-core.esm.js",
-      "sha256": "166963debca24dba64adc6cb686f305ea219bb88d0f924716c60bde80ffb866e",
+      "sha256": "6d7a02c32070cd3071701ef8a6468790a81b8b8c742c1fdaf14951ad5a04aef7",
       "url": "https://shaders.noisedeck.app/1/noisemaker-shaders-core.esm.js"
     }
   ]

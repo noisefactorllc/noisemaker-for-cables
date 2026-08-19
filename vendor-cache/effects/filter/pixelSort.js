@@ -165,7 +165,7 @@ const PI : f32 = 3.141592653589793;
 
 @group(0) @binding(0) var inputTex : texture_2d<f32>;  // sorted
 @group(0) @binding(1) var input_sampler : sampler;
-@group(0) @binding(2) var original_texture : texture_2d<f32>;  // original
+@group(0) @binding(2) var originalTex : texture_2d<f32>;  // original
 @group(0) @binding(3) var original_sampler : sampler;
 @group(0) @binding(4) var<uniform> resolution : vec2<f32>;
 @group(0) @binding(5) var<uniform> angled : f32;
@@ -196,7 +196,7 @@ struct VertexOutput {
 fn main(input : VertexOutput) -> @location(0) vec4<f32> {
     let texSize : vec2<f32> = vec2<f32>(textureDimensions(inputTex));
     let center : vec2<f32> = texSize * 0.5;
-    let pixelCoord : vec2<f32> = input.uv * resolution - center;
+    let pixelCoord : vec2<f32> = input.position.xy - center;
     
     let angle : f32 = angled;
     let rad : f32 = angle * PI / 180.0;
@@ -210,7 +210,7 @@ fn main(input : VertexOutput) -> @location(0) vec4<f32> {
     
     srcCoord = srcCoord + center;
     
-    let originalColor : vec4<f32> = textureSample(original_texture, original_sampler, input.uv);
+    let originalColor : vec4<f32> = textureSample(originalTex, original_sampler, input.position.xy / resolution);
     
     let wrappedUV : vec2<f32> = applyWrap(srcCoord, texSize);
     let sortedColor : vec4<f32> = textureSample(inputTex, input_sampler, wrappedUV);
@@ -271,9 +271,10 @@ void main() {
     // Output: normalized brightest x, max luminance
     fragColor = vec4(float(brightestX) / float(width - 1), maxLum, 0.0, 1.0);
 }
-`,wgsl:`// GPGPU Pass 2: Find brightest pixel x-coordinate per row
+`,wgsl:`// GPGPU Pass 2: Find brightest pixel x-coordinate per row (optimized)
 // Input: luminance texture (R = luminance)
 // Output: R = brightest x (normalized), G = max luminance, B = 0, A = 1
+// Uses sparse sampling for O(1) approximate result
 
 @group(0) @binding(0) var lumTex : texture_2d<f32>;
 
@@ -289,15 +290,17 @@ fn main(input : VertexOutput) -> @location(0) vec4<f32> {
     let y : i32 = coord.y;
     let width : i32 = size.x;
     
-    // Find brightest pixel in this row
+    // Use sparse sampling to find approximate brightest pixel
+    const NUM_SAMPLES : i32 = 32;
     var maxLum : f32 = -1.0;
     var brightestX : i32 = 0;
     
-    for (var i : i32 = 0; i < width; i = i + 1) {
-        let lum : f32 = textureLoad(lumTex, vec2<i32>(i, y), 0).r;
+    for (var s : i32 = 0; s < NUM_SAMPLES; s = s + 1) {
+        let sampleX : i32 = (s * width) / NUM_SAMPLES;
+        let lum : f32 = textureLoad(lumTex, vec2<i32>(sampleX, y), 0).r;
         if (lum > maxLum) {
             maxLum = lum;
-            brightestX = i;
+            brightestX = sampleX;
         }
     }
     
@@ -589,7 +592,7 @@ struct VertexOutput {
 fn main(input : VertexOutput) -> @location(0) vec4<f32> {
     let texSize : vec2<f32> = vec2<f32>(textureDimensions(inputTex));
     let center : vec2<f32> = texSize * 0.5;
-    let pixelCoord : vec2<f32> = input.uv * resolution - center;
+    let pixelCoord : vec2<f32> = input.position.xy - center;
     
     var angle : f32 = angled;
     // Handle animation if needed
@@ -639,4 +642,4 @@ noise(seed: 1, ridges: true)
 
 render(o0)
 \`\`\`
-`;if(e&&Object.keys(i).length>0){e.shaders||(e.shaders={});for(let[r,n]of Object.entries(i))e.shaders[r]={...n}}e&&o&&(e.help=o);var p="filter/pixelSort",c="filter",d="pixelSort",f=e;export{f as default,p as effectId,d as effectName,o as help,c as namespace};
+`;if(e&&Object.keys(i).length>0){e.shaders||(e.shaders={});for(let[r,n]of Object.entries(i))e.shaders[r]={...n}}e&&o&&(e.help=o);var u="filter/pixelSort",c="filter",d="pixelSort",f=e;export{f as default,u as effectId,d as effectName,o as help,c as namespace};
