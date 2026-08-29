@@ -3,8 +3,8 @@
  * Includes: CanvasRenderer + UIController + EffectSelect
  * Copyright (c) 2017-2026 Noise Factor LLC. https://noisefactor.io/
  * SPDX-License-Identifier: MIT
- * Build: 1ee891a2
- * Date: 2026-08-18T23:59:38.995Z
+ * Build: c767e481
+ * Date: 2026-08-27T16:44:21.218Z
  */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
@@ -5460,6 +5460,7 @@ var Backend = class {
       colorBufferFloat: true,
       maxDrawBuffers: 8,
       maxTextureSize: 4096,
+      maxColorBytesPerSample: 64,
       maxStateSize: 2048
       // Default max particle state texture size
     };
@@ -6193,6 +6194,7 @@ var WebGL2Backend = class _WebGL2Backend extends Backend {
     this.maxTextureUnits = gl.getParameter(gl.MAX_TEXTURE_IMAGE_UNITS);
     const maxDrawBuffers = gl.getParameter(gl.MAX_DRAW_BUFFERS);
     const maxTextureSize = gl.getParameter(gl.MAX_TEXTURE_SIZE);
+    const maxColorBytesPerSample = colorBufferFloat ? this.probeColorBytesPerSample() : void 0;
     this.capabilities = {
       isMobile,
       floatBlend,
@@ -6200,6 +6202,7 @@ var WebGL2Backend = class _WebGL2Backend extends Backend {
       colorBufferFloat,
       maxDrawBuffers,
       maxTextureSize,
+      maxColorBytesPerSample,
       // Cap particle state texture size on mobile to prevent OOM
       // 512x512 = 262k particles, uses ~48MB for state textures
       maxStateSize: isMobile ? 512 : 2048
@@ -6209,6 +6212,55 @@ var WebGL2Backend = class _WebGL2Backend extends Backend {
     this.presentProgram = this.createPresentProgram();
     this.defaultTexture = this.createDefaultTexture();
     return Promise.resolve();
+  }
+  /**
+   * Empirically measure the color-attachment byte budget by binding tiny
+   * MRT framebuffers from the largest known budget down and returning the
+   * first combination the driver reports complete. Returns 16 when even
+   * the 32-byte combination is unsupported.
+   * @returns {number} Usable color-attachment bytes per sample
+   */
+  probeColorBytesPerSample() {
+    const gl = this.gl;
+    const combos = [
+      [64, ["rgba32f", "rgba32f", "rgba32f", "rgba32f"]],
+      [48, ["rgba32f", "rgba32f", "rgba32f"]],
+      [40, ["rgba32f", "rgba32f", "rgba16f"]],
+      [32, ["rgba32f", "rgba16f", "rgba16f"]]
+    ];
+    const maxDrawBuffers = gl.getParameter(gl.MAX_DRAW_BUFFERS);
+    let budget = 16;
+    const fbo = gl.createFramebuffer();
+    gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+    for (const [bytes, formats] of combos) {
+      if (formats.length > maxDrawBuffers) continue;
+      const textures = [];
+      const buffers = [];
+      for (let i = 0; i < formats.length; i++) {
+        const texture = gl.createTexture();
+        gl.bindTexture(gl.TEXTURE_2D, texture);
+        const glFormat = this.resolveFormat(formats[i]);
+        gl.texImage2D(gl.TEXTURE_2D, 0, glFormat.internalFormat, 2, 2, 0, glFormat.format, glFormat.type, null);
+        gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0 + i, gl.TEXTURE_2D, texture, 0);
+        textures.push(texture);
+        buffers.push(gl.COLOR_ATTACHMENT0 + i);
+      }
+      gl.drawBuffers(buffers);
+      const complete = gl.checkFramebufferStatus(gl.FRAMEBUFFER) === gl.FRAMEBUFFER_COMPLETE;
+      for (let i = 0; i < formats.length; i++) {
+        gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0 + i, gl.TEXTURE_2D, null, 0);
+      }
+      for (const texture of textures) gl.deleteTexture(texture);
+      if (complete) {
+        budget = bytes;
+        break;
+      }
+    }
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.deleteFramebuffer(fbo);
+    while (gl.getError() !== gl.NO_ERROR) {
+    }
+    return budget;
   }
   createDefaultTexture() {
     const gl = this.gl;
@@ -8038,6 +8090,9 @@ var WebGPUBackend = class _WebGPUBackend extends Backend {
       maxDrawBuffers: 8,
       // WebGPU supports many color attachments
       maxTextureSize: this.device.limits.maxTextureDimension2D || 8192,
+      // Color-attachment byte budget for MRT passes — the device limit
+      // is authoritative here (default 32 unless raised at requestDevice)
+      maxColorBytesPerSample: this.device.limits.maxColorAttachmentBytesPerSample || 32,
       // Cap particle state texture size on mobile to prevent OOM
       maxStateSize: isMobile ? 512 : 2048
     };
@@ -11250,7 +11305,7 @@ var Pipeline = class {
   /**
    * Get device capabilities from the backend.
    * Useful for UI to show/hide options or adjust defaults.
-   * @returns {{isMobile: boolean, floatBlend: boolean, floatLinear: boolean, colorBufferFloat: boolean, maxDrawBuffers: number, maxTextureSize: number, maxStateSize: number}}
+   * @returns {{isMobile: boolean, floatBlend: boolean, floatLinear: boolean, colorBufferFloat: boolean, maxDrawBuffers: number, maxTextureSize: number, maxColorBytesPerSample: number, maxStateSize: number}}
    */
   getCapabilities() {
     return this.backend?.capabilities || {
@@ -11260,6 +11315,7 @@ var Pipeline = class {
       colorBufferFloat: true,
       maxDrawBuffers: 8,
       maxTextureSize: 4096,
+      maxColorBytesPerSample: 64,
       maxStateSize: 2048
     };
   }
@@ -11453,7 +11509,118 @@ var Pipeline = class {
     }
     return null;
   }
+  /**
+   * Check if a uniform name belongs to the volumeSize family
+   * (unscoped, chain-scoped, or node-scoped).
+   * @param {string} name - Uniform name
+   * @returns {boolean}
+   */
+  isVolumeSizeUniform(name) {
+    return name === "volumeSize" || name.startsWith("volumeSize_chain_") || name.startsWith("volumeSize_node_");
+  }
+  /**
+   * Clamp a volumeSize value so the volume atlas (volumeSize × volumeSize²)
+   * fits the device's maximum texture size, snapping down power-of-two so
+   * the clamped size matches the effects' own size choices. Mobile WebKit
+   * caps WebGL2 MAX_TEXTURE_SIZE at 8192, where volumeSize 128 demands a
+   * 128×16384 atlas: the allocation fails, the volume samples as zeros,
+   * and 3D renders degrade to a flat gray "solid cube". No-op when the
+   * backend reports no maxTextureSize (headless stubs) or the atlas fits.
+   * @param {number} value - Requested volume size
+   * @returns {number} A volume size whose atlas fits the device
+   */
+  clampVolumeSize(value) {
+    const maxTextureSize = this.backend?.capabilities?.maxTextureSize;
+    if (typeof value !== "number" || !maxTextureSize || value * value <= maxTextureSize) {
+      return value;
+    }
+    let clamped = 16;
+    while (clamped * 2 * (clamped * 2) <= maxTextureSize && clamped * 2 < value) {
+      clamped *= 2;
+    }
+    if (!this._warnedVolumeClamps) this._warnedVolumeClamps = /* @__PURE__ */ new Set();
+    const warnKey = `${value}->${clamped}`;
+    if (!this._warnedVolumeClamps.has(warnKey)) {
+      this._warnedVolumeClamps.add(warnKey);
+      console.warn(`[Pipeline] Capping volumeSize from ${value} to ${clamped}: the ${value}x${value * value} volume atlas exceeds this device's max texture size (${maxTextureSize})`);
+    }
+    return clamped;
+  }
+  /**
+   * Clamp every volumeSize-family uniform baked into the graph's passes
+   * (expander output) to the device limit. Runs from createSurfaces() so
+   * cold init, resize, and hot recompile all pass through it before any
+   * atlas is sized. Automation configs are left alone.
+   */
+  clampGraphVolumeSizes() {
+    if (!this.graph || !this.graph.passes) return;
+    for (const pass of this.graph.passes) {
+      if (!pass.uniforms) continue;
+      for (const key of Object.keys(pass.uniforms)) {
+        if (!this.isVolumeSizeUniform(key)) continue;
+        const value = pass.uniforms[key];
+        if (typeof value !== "number") continue;
+        const clamped = this.clampVolumeSize(value);
+        if (clamped !== value) {
+          pass.uniforms[key] = clamped;
+        }
+      }
+    }
+  }
+  /**
+   * Byte cost per sample of a color attachment format, for the MRT
+   * attachment budget. Unlisted formats (including defaulted rgba16f
+   * surfaces) cost 8.
+   * @param {string|undefined} format - Texture format name
+   * @returns {number} Bytes per sample
+   */
+  mrtFormatBytes(format) {
+    switch (format) {
+      case "rgba32f":
+      case "rgba32float":
+        return 16;
+      case "rgba8":
+      case "rgba8unorm":
+        return 4;
+      default:
+        return 8;
+    }
+  }
+  /**
+   * Demote trailing rgba32f attachments of over-budget MRT passes to
+   * rgba16f so the framebuffer stays within the device's color-attachment
+   * byte budget. Apple GPUs enforce Metal's 32-bytes-per-sample rule on
+   * WebGL2 framebuffers (FRAMEBUFFER_UNSUPPORTED past it, measured on
+   * iOS 26.5), where pointsEmit's xyz+vel+rgba MRT (16+16+4 = 36 bytes)
+   * fails every frame. Demoting from the last attachment backward keeps
+   * the highest-precision-need attachments (agent positions) intact.
+   * No-op when the backend reports no maxColorBytesPerSample or every
+   * group already fits.
+   */
+  applyMrtFormatBudget() {
+    const budget = this.backend?.capabilities?.maxColorBytesPerSample;
+    if (!budget || !this.graph || !this.graph.passes || !this.graph.textures) return;
+    for (const pass of this.graph.passes) {
+      if (!pass.outputs) continue;
+      const texIds = Object.values(pass.outputs);
+      if (texIds.length <= 1) continue;
+      const entries = texIds.map((texId) => ({ texId, spec: this.graph.textures.get(texId) }));
+      let total = entries.reduce((sum, entry) => sum + this.mrtFormatBytes(entry.spec?.format), 0);
+      if (total <= budget) continue;
+      for (let i = entries.length - 1; i >= 0 && total > budget; i--) {
+        const spec = entries[i].spec;
+        if (!spec) continue;
+        if (spec.format === "rgba32f" || spec.format === "rgba32float") {
+          console.warn(`[Pipeline] Demoting MRT attachment ${entries[i].texId} from ${spec.format} to rgba16f: pass ${pass.id} needs ${total} bytes/sample, device allows ${budget}`);
+          spec.format = "rgba16f";
+          total -= 8;
+        }
+      }
+    }
+  }
   createSurfaces() {
+    this.clampGraphVolumeSizes();
+    this.applyMrtFormatBudget();
     const surfaceNames = /* @__PURE__ */ new Set(["o0", "o1", "o2", "o3", "o4", "o5", "o6", "o7"]);
     const geoBufferNames = /* @__PURE__ */ new Set(["geo0", "geo1", "geo2", "geo3", "geo4", "geo5", "geo6", "geo7"]);
     const volumeNames = /* @__PURE__ */ new Set(["vol0", "vol1", "vol2", "vol3", "vol4", "vol5", "vol6", "vol7"]);
@@ -11818,6 +11985,9 @@ var Pipeline = class {
         value = maxStateSize;
       }
     }
+    if (this.isVolumeSizeUniform(name) && typeof value === "number") {
+      value = this.clampVolumeSize(value);
+    }
     const oldValue = this.globalUniforms[name];
     this.globalUniforms[name] = value;
     if (name === "palette" && typeof value === "number") {
@@ -11883,7 +12053,17 @@ var Pipeline = class {
    */
   broadcastChainScopedParam(sourcePass, uniformName, scopedName) {
     if (!this.graph || !this.graph.passes || !sourcePass.uniforms) return;
-    const value = sourcePass.uniforms[uniformName];
+    let value = sourcePass.uniforms[uniformName];
+    if (uniformName === "volumeSize" && typeof value === "number") {
+      const clamped = this.clampVolumeSize(value);
+      if (clamped !== value) {
+        value = clamped;
+        sourcePass.uniforms[uniformName] = clamped;
+        if (scopedName in sourcePass.uniforms) {
+          sourcePass.uniforms[scopedName] = clamped;
+        }
+      }
+    }
     for (const otherPass of this.graph.passes) {
       if (otherPass === sourcePass || !otherPass.uniforms) continue;
       if (!(scopedName in otherPass.uniforms)) continue;
@@ -13547,7 +13727,7 @@ var CanvasRenderer = class {
   /**
    * Get device capabilities from the current pipeline.
    * Returns default capabilities if no pipeline is active.
-   * @returns {{isMobile: boolean, floatBlend: boolean, floatLinear: boolean, colorBufferFloat: boolean, maxDrawBuffers: number, maxTextureSize: number, maxStateSize: number}}
+   * @returns {{isMobile: boolean, floatBlend: boolean, floatLinear: boolean, colorBufferFloat: boolean, maxDrawBuffers: number, maxTextureSize: number, maxColorBytesPerSample: number, maxStateSize: number}}
    */
   get capabilities() {
     return this._pipeline?.getCapabilities() || {
@@ -13557,6 +13737,7 @@ var CanvasRenderer = class {
       colorBufferFloat: true,
       maxDrawBuffers: 8,
       maxTextureSize: 4096,
+      maxColorBytesPerSample: 64,
       maxStateSize: 2048
     };
   }
