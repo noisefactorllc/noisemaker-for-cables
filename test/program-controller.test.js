@@ -468,6 +468,94 @@ test('only the newest asynchronous generation promotes and stale initialized can
   assert.equal(harness.events.includes('gpu:output-copy:1:surface:old dsl:0'), false)
 })
 
+test('a backend returned after generation supersession is destroyed guarded', async () => {
+  const staleBackendReady = deferred()
+  let backendCalls = 0
+  let staleDestroyCalls = 0
+  let harness
+  const staleBackend = {
+    maxTextureUnits: 3,
+    destroy() {
+      assert.ok(harness.guardDepth() > 0, 'stale backend cleanup must be guarded')
+      staleDestroyCalls += 1
+    },
+  }
+  harness = createHarness({
+    backendFactory() {
+      backendCalls += 1
+      return backendCalls === 1 ? staleBackendReady.promise : undefined
+    },
+  })
+
+  const staleBuild = harness.controller.setProgram('stale backend dsl')
+  await waitImmediate()
+  assert.equal(backendCalls, 1)
+
+  await harness.controller.setProgram('winning backend dsl')
+  staleBackendReady.resolve(staleBackend)
+  await staleBuild
+
+  assert.equal(staleDestroyCalls, 1)
+  assert.deepEqual(
+    harness.pipelines.map((pipeline) => pipeline.graph.dsl),
+    ['winning backend dsl'],
+  )
+})
+
+test('a backend returned after controller disposal is destroyed and remains retryable', async () => {
+  const backendReady = deferred()
+  let destroyCalls = 0
+  let harness
+  const lateBackend = {
+    maxTextureUnits: 3,
+    destroy() {
+      assert.ok(harness.guardDepth() > 0, 'late backend cleanup must be guarded')
+      destroyCalls += 1
+      if (destroyCalls === 1) throw new Error('late backend cleanup failed')
+    },
+  }
+  harness = createHarness({ backendFactory: () => backendReady.promise })
+
+  const build = harness.controller.setProgram('late disposed backend dsl')
+  await waitImmediate()
+  await harness.controller.dispose()
+  backendReady.resolve(lateBackend)
+  await build
+
+  assert.equal(destroyCalls, 1)
+  assert.equal(harness.controller.getState().error?.code, 'ERR_DISPOSAL')
+  await harness.controller.dispose()
+  assert.equal(destroyCalls, 2)
+  assert.equal(harness.controller.getState().error, null)
+})
+
+test('a backend rejected by Pipeline construction is destroyed guarded', async () => {
+  let destroyCalls = 0
+  let harness
+  const rejectedBackend = {
+    maxTextureUnits: 3,
+    destroy() {
+      assert.ok(harness.guardDepth() > 0, 'rejected backend cleanup must be guarded')
+      destroyCalls += 1
+    },
+  }
+  class RejectingPipeline {
+    constructor() {
+      throw new Error('Pipeline construction failed')
+    }
+  }
+  harness = createHarness({
+    backendFactory: () => rejectedBackend,
+    PipelineClass: RejectingPipeline,
+  })
+
+  const state = await harness.controller.setProgram('rejected backend dsl')
+
+  assert.equal(state.error?.code, 'ERR_PIPELINE_INITIALIZE')
+  assert.equal(state.error?.phase, 'initialize')
+  assert.equal(destroyCalls, 1)
+})
+
 test('a failed edit retains the last-good pipeline and stable output texture', async () => {
   const harness = createHarness({ compileFailureDsl: 'invalid dsl' })
   await harness.controller.setProgram('valid dsl')

@@ -438,7 +438,7 @@ export function createProgramController({
   }
 
   function disposeCandidateResources(candidate) {
-    if (!candidate.pipelineDisposeAttempted) {
+    if (candidate.pipeline && !candidate.pipelineDisposeAttempted) {
       candidate.pipelineDisposeAttempted = true
       candidate.pipeline.dispose()
       return
@@ -456,15 +456,14 @@ export function createProgramController({
       pendingCleanupCandidates.delete(candidate)
       return null
     }
-    if (state.lifecycle !== 'active') {
-      pendingCleanupCandidates.add(candidate)
-      return null
-    }
     try {
       const result = await enqueueGuarded(
         candidate.epoch,
         candidate.backend,
         () => disposeCandidateResources(candidate),
+        () => state.contextEpoch === candidate.epoch &&
+          state.lifecycle !== 'context-lost' &&
+          !candidate.cleanupComplete,
       )
       if (result.executed) {
         candidate.cleanupComplete = true
@@ -480,10 +479,13 @@ export function createProgramController({
   function publishCandidateCleanupFailure(candidate, error) {
     if (
       !error ||
-      state.lifecycle !== 'active' ||
-      state.contextEpoch !== candidate.epoch
+      state.contextEpoch !== candidate.epoch ||
+      state.lifecycle === 'context-lost'
     ) return
-    publish({ error, ready: Boolean(activeCandidate) && !recoveryRequired })
+    publish({
+      error,
+      ready: state.lifecycle === 'active' && Boolean(activeCandidate) && !recoveryRequired,
+    })
   }
 
   function handleDelayedMutationFailure(candidate, error) {
@@ -664,8 +666,6 @@ export function createProgramController({
       phase = 'initialize'
       publish({ build: 'initializing' })
       const backend = await createBackend({ canvas: targetCanvas, cgl, engine, gl })
-      if (!isCurrent(generation, epoch)) return snapshot()
-      const pipeline = new engine.Pipeline(graph, backend)
       candidate = {
         backend,
         capabilityReport,
@@ -675,13 +675,18 @@ export function createProgramController({
         epoch,
         generation,
         graph,
-        pipeline,
+        pipeline: null,
         pipelineDisposeAttempted: false,
         promoted: false,
         size: null,
       }
       inFlightCandidates.add(candidate)
-      attachInputStates(pipeline)
+      if (!isCurrent(generation, epoch)) {
+        publishCandidateCleanupFailure(candidate, await disposeCandidate(candidate))
+        return snapshot()
+      }
+      candidate.pipeline = new engine.Pipeline(graph, backend)
+      attachInputStates(candidate.pipeline)
 
       if (!await initializeCandidate(candidate, requestedSize)) {
         publishCandidateCleanupFailure(candidate, await disposeCandidate(candidate))
