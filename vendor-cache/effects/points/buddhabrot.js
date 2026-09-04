@@ -464,6 +464,7 @@ Buddhabrot fractal via progressive orbit accumulation \u2014 agents test random 
 
 | Parameter | Type | Default | Range | Description |
 |-----------|------|---------|-------|-------------|
+| stateSize | int | 512 | - | Particle state texture size (no UI control) |
 | mode | int | standard | anti/standard | Standard or anti-buddhabrot |
 | maxIter | int | 200 | 20\u20132000 | Max orbit iterations |
 | minIter | int | 1 | 1\u20131000 | Min orbit iterations |

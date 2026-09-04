@@ -629,7 +629,7 @@ Pixel sorting glitch effect
 | angled | float | 0 | -180-180 | Angle |
 | darkest | boolean | false | - | Darkest First |
 | wrap | int | 0 (mirror) | mirror, repeat, clamp | Edge wrapping mode |
-| input mix | float | 1.0 | 0-1 | Input opacity |
+| alpha | float | 1.0 | 0-1 | Input opacity |
 
 ## Usage
 

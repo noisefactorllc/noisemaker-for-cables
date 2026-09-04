@@ -176,6 +176,55 @@ test('pinned core exposes renderer sinks and bounded WebGL2 frame export', async
   assert.equal(queue.adapter, null)
 })
 
+test('pinned core supports device-qualified MIDI and audio automation', async () => {
+  installTestDomShim()
+  const core = await import('../vendor-cache/noisemaker-shaders-core.esm.js')
+  const { compileProgram } = await import('../src/runtime/engine.js')
+
+  const midi = new core.MidiState()
+  midi.handleMessage(
+    new Uint8Array([0x90, 60, 96]),
+    { id: 'controller-a', name: 'Launch Control XL' },
+  )
+  midi.handleMessage(
+    new Uint8Array([0x90, 72, 112]),
+    { id: 'controller-b', name: 'Launch Control XL' },
+  )
+  assert.equal(midi.getChannel(1).key, 72)
+  assert.equal(midi.getPortState({ id: 'controller-a' }).getChannel(1).key, 60)
+  assert.equal(midi.getPortState({ name: 'Launch Control XL' }), null)
+
+  const audio = new core.AudioState()
+  audio.registerDevice({ id: 'interface-b', name: 'Interface', channelCount: 2 })
+  audio.setChannelValues('interface-b', 2, { low: 0.25, raw: -0.5 })
+  const channel = audio.getDeviceChannelState({
+    id: 'interface-b',
+    name: 'Interface',
+    channel: 2,
+  })
+  assert.equal(channel.low, 0.25)
+  assert.equal(channel.raw, -0.5)
+  assert.equal(channel.rawReady, true)
+
+  const graph = await compileProgram(`search synth
+noise(
+  scaleX: audio(band: audioBand.raw, channel: 2, name: "Interface", id: "interface-b"),
+  scaleY: midi(channel: 1, name: "Launch Control XL", id: "controller-a")
+).write(o0)
+render(o0)`)
+  const requirements = new core.Pipeline(graph, null).getAudioInputRequirements()
+  assert.deepEqual(requirements, {
+    needsLegacy: false,
+    needsLegacyRaw: false,
+    selected: [{
+      id: 'interface-b',
+      name: 'Interface',
+      channel: 2,
+      needsRaw: true,
+    }],
+  })
+})
+
 test('browser bundle is self-contained while preserving caller-requested native fetch', async () => {
   const lock = JSON.parse(await readProjectFile('vendor.lock.json'))
   const bundle = await readProjectFile(
@@ -213,6 +262,7 @@ test('browser bundle is self-contained while preserving caller-requested native 
   const loaded = await context.NoisemakerCablesGL.loadEngine()
   assert.equal(loaded.catalogInfo.effectCount, lock.effectCount)
   assert.equal(typeof loaded.Pipeline.prototype.addSink, 'function')
+  assert.equal(typeof loaded.Pipeline.prototype.getAudioInputRequirements, 'function')
   assert.equal(typeof loaded.WebGL2Backend.prototype.createFrameExportQueue, 'function')
   assert.equal(typeof context.NoisemakerCablesGL.compileProgram, 'function')
   assert.equal(typeof context.NoisemakerCablesGL.createProgramController, 'function')

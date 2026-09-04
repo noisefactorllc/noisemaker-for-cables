@@ -3,8 +3,8 @@
  * Includes: CanvasRenderer + UIController + EffectSelect
  * Copyright (c) 2017-2026 Noise Factor LLC. https://noisefactor.io/
  * SPDX-License-Identifier: MIT
- * Build: c767e481
- * Date: 2026-08-27T16:44:21.218Z
+ * Build: 4f0b2448
+ * Date: 2026-09-04T03:37:43.573Z
  */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
@@ -975,6 +975,16 @@ function parse(tokens) {
     const args = Array.isArray(call.args) ? call.args : [];
     const kwargs = call.kwargs || {};
     const paramOrder = ["channel", "mode", "min", "max", "sensitivity"];
+    const keywordOnlyParams = ["name", "id"];
+    const validParams = [...paramOrder, ...keywordOnlyParams];
+    if (args.length > paramOrder.length) {
+      throw new SyntaxError(`midi() name and id are keyword-only at line ${nameToken.line} col ${nameToken.col}`);
+    }
+    for (const key of Object.keys(kwargs)) {
+      if (!validParams.includes(key)) {
+        throw new SyntaxError(`midi() unknown parameter '${key}' at line ${nameToken.line} col ${nameToken.col}. Valid: ${validParams.join(", ")}`);
+      }
+    }
     const defaults = {
       mode: { type: "Member", path: ["midiMode", "velocity"] },
       min: { type: "Number", value: 0 },
@@ -982,18 +992,36 @@ function parse(tokens) {
       sensitivity: { type: "Number", value: 1 }
     };
     const resolved = {};
+    let posCursor = 0;
     for (let i = 0; i < paramOrder.length; i++) {
       const paramName = paramOrder[i];
       if (kwargs[paramName] !== void 0) {
         resolved[paramName] = kwargs[paramName];
-      } else if (i < args.length) {
-        resolved[paramName] = args[i];
+      } else if (posCursor < args.length) {
+        resolved[paramName] = args[posCursor];
+        posCursor++;
       } else if (defaults[paramName] !== void 0) {
         resolved[paramName] = defaults[paramName];
       }
     }
+    if (posCursor < args.length) {
+      throw new SyntaxError(`midi() has an excess positional argument at line ${nameToken.line} col ${nameToken.col}`);
+    }
     if (!resolved.channel) {
       throw new SyntaxError(`midi() requires 'channel' argument at line ${nameToken.line} col ${nameToken.col}`);
+    }
+    if (kwargs.id !== void 0 && kwargs.name === void 0) {
+      throw new SyntaxError(`midi() 'id' requires readable 'name' at line ${nameToken.line} col ${nameToken.col}`);
+    }
+    for (const paramName of keywordOnlyParams) {
+      const value = kwargs[paramName];
+      if (value === void 0) continue;
+      if (value.type !== "String") {
+        throw new SyntaxError(`midi() '${paramName}' requires a quoted string at line ${nameToken.line} col ${nameToken.col}`);
+      }
+      if (value.value.length === 0) {
+        throw new SyntaxError(`midi() '${paramName}' must not be empty at line ${nameToken.line} col ${nameToken.col}`);
+      }
     }
     return {
       type: "Midi",
@@ -1002,6 +1030,8 @@ function parse(tokens) {
       min: resolved.min,
       max: resolved.max,
       sensitivity: resolved.sensitivity,
+      name: kwargs.name,
+      id: kwargs.id,
       loc: { line: nameToken.line, col: nameToken.col }
     };
   }
@@ -1009,29 +1039,63 @@ function parse(tokens) {
     const args = Array.isArray(call.args) ? call.args : [];
     const kwargs = call.kwargs || {};
     const paramOrder = ["band", "min", "max"];
+    const keywordOnlyParams = ["channel", "name", "id"];
+    const validParams = [...paramOrder, ...keywordOnlyParams];
+    if (args.length > paramOrder.length) {
+      throw new SyntaxError(`audio() channel, name and id are keyword-only at line ${nameToken.line} col ${nameToken.col}`);
+    }
+    for (const key of Object.keys(kwargs)) {
+      if (!validParams.includes(key)) {
+        throw new SyntaxError(`audio() unknown parameter '${key}' at line ${nameToken.line} col ${nameToken.col}. Valid: ${validParams.join(", ")}`);
+      }
+    }
     const defaults = {
       min: { type: "Number", value: 0 },
       max: { type: "Number", value: 1 }
     };
     const resolved = {};
+    let posCursor = 0;
     for (let i = 0; i < paramOrder.length; i++) {
       const paramName = paramOrder[i];
       if (kwargs[paramName] !== void 0) {
         resolved[paramName] = kwargs[paramName];
-      } else if (i < args.length) {
-        resolved[paramName] = args[i];
+      } else if (posCursor < args.length) {
+        resolved[paramName] = args[posCursor];
+        posCursor++;
       } else if (defaults[paramName] !== void 0) {
         resolved[paramName] = defaults[paramName];
       }
     }
+    if (posCursor < args.length) {
+      throw new SyntaxError(`audio() has an excess positional argument at line ${nameToken.line} col ${nameToken.col}`);
+    }
     if (!resolved.band) {
       throw new SyntaxError(`audio() requires 'band' argument at line ${nameToken.line} col ${nameToken.col}`);
+    }
+    if (kwargs.id !== void 0 && kwargs.name === void 0) {
+      throw new SyntaxError(`audio() 'id' requires readable 'name' at line ${nameToken.line} col ${nameToken.col}`);
+    }
+    if (kwargs.channel === void 0 !== (kwargs.name === void 0)) {
+      throw new SyntaxError(`audio() selected device requires both 'name' and 'channel' at line ${nameToken.line} col ${nameToken.col}`);
+    }
+    for (const paramName of ["name", "id"]) {
+      const value = kwargs[paramName];
+      if (value === void 0) continue;
+      if (value.type !== "String") {
+        throw new SyntaxError(`audio() '${paramName}' requires a quoted string at line ${nameToken.line} col ${nameToken.col}`);
+      }
+      if (value.value.length === 0) {
+        throw new SyntaxError(`audio() '${paramName}' must not be empty at line ${nameToken.line} col ${nameToken.col}`);
+      }
     }
     return {
       type: "Audio",
       band: resolved.band,
       min: resolved.min,
       max: resolved.max,
+      channel: kwargs.channel,
+      name: kwargs.name,
+      id: kwargs.id,
       loc: { line: nameToken.line, col: nameToken.col }
     };
   }
@@ -1503,30 +1567,28 @@ function parse(tokens) {
     const args = [];
     const kwargs = {};
     let keyword = false;
+    let positional = false;
+    const allowMixed = nameToken.lexeme === "midi" || nameToken.lexeme === "audio";
     if (peek().type !== "RPAREN") {
-      if (peek().type === "IDENT" && tokens[current + 1]?.type === "COLON") {
-        keyword = true;
-        parseKwarg(kwargs);
-        while (peek().type === "COMMA") {
-          advance();
-          if (peek().type === "RPAREN") break;
-          if (!(peek().type === "IDENT" && tokens[current + 1]?.type === "COLON")) {
+      while (true) {
+        if (peek().type === "IDENT" && tokens[current + 1]?.type === "COLON") {
+          if (positional && !allowMixed) {
             const t = peek();
             throw new SyntaxError(`Cannot mix positional and keyword arguments at line ${t.line} col ${t.col}`);
           }
+          keyword = true;
           parseKwarg(kwargs);
-        }
-      } else {
-        args.push(parseArg());
-        while (peek().type === "COMMA") {
-          advance();
-          if (peek().type === "RPAREN") break;
-          if (peek().type === "IDENT" && tokens[current + 1]?.type === "COLON") {
+        } else {
+          if (keyword && !allowMixed) {
             const t = peek();
             throw new SyntaxError(`Cannot mix positional and keyword arguments at line ${t.line} col ${t.col}`);
           }
+          positional = true;
           args.push(parseArg());
         }
+        if (peek().type !== "COMMA") break;
+        advance();
+        if (peek().type === "RPAREN") break;
       }
     }
     expect("RPAREN", "Expect ')'");
@@ -1946,8 +2008,10 @@ var audioBandEnum = {
   // Mid frequency band (~200-2000Hz)
   high: { type: "Number", value: 2 },
   // High frequency band (~2000Hz+)
-  vol: { type: "Number", value: 3 }
+  vol: { type: "Number", value: 3 },
   // Overall volume (average)
+  raw: { type: "Number", value: 4 }
+  // Bipolar time-domain/DC signal (-1 to 1)
 };
 var stdEnums = {
   channel: {
@@ -2072,6 +2136,40 @@ function checkEffectAlias(opName) {
   return `effect '${oldName}' is deprecated, use '${newName}' instead. Aliases will be removed on ${ALIAS_EOL_DATE}.`;
 }
 
+// shaders/src/lang/stringLiterals.js
+function decodeJsonStringLiteralContent(raw) {
+  try {
+    return JSON.parse(`"${raw}"`);
+  } catch {
+    let decoded = "";
+    for (let i = 0; i < raw.length; i++) {
+      if (raw[i] !== "\\" || i + 1 >= raw.length) {
+        decoded += raw[i];
+        continue;
+      }
+      const next = raw[++i];
+      const escapes = {
+        "'": "'",
+        '"': '"',
+        "\\": "\\",
+        n: "\n",
+        r: "\r",
+        t: "	",
+        b: "\b",
+        f: "\f",
+        v: "\v",
+        0: "\0"
+      };
+      if (Object.prototype.hasOwnProperty.call(escapes, next)) {
+        decoded += escapes[next];
+      } else {
+        decoded += `\\${next}`;
+      }
+    }
+    return decoded;
+  }
+}
+
 // shaders/src/lang/validator.js
 var ALLOWED_STRING_PARAMS = /* @__PURE__ */ new Set([
   "text.text",
@@ -2086,7 +2184,16 @@ var ALLOWED_STRING_PARAMS = /* @__PURE__ */ new Set([
   // so this cannot be an enum or a choices map. It has to reach the DSL or
   // the unparser drops it and every recompile reverts the text to the
   // family's first cut.
-  "text.style"
+  "text.style",
+  // MIDI input identity mirrors the Web MIDI MIDIPort surface. These are
+  // descriptor fields rather than effect parameters, but remain here so
+  // every accepted free-form string has one auditable allowlist.
+  "midi.name",
+  "midi.id",
+  // Audio input identity mirrors MediaDeviceInfo. As with MIDI, these are
+  // descriptor fields and the only audio strings permitted through the DSL.
+  "audio.name",
+  "audio.id"
 ]);
 var stateSurfaces = /* @__PURE__ */ new Set(["time", "frame", "mouse", "resolution", "seed", "a"]);
 var stateValues = /* @__PURE__ */ new Set(["time", "frame", "mouse", "resolution", "seed", "a", "u1", "u2", "u3", "u4", "s1", "s2", "b1", "b2", "a1", "a2", "deltaTime"]);
@@ -3105,6 +3212,8 @@ function validate(ast) {
                 } else if (resolved && resolved.type === "Number") {
                   modeValue = resolved.value;
                 }
+              } else if (modeNode && modeNode.type === "Number" && Number.isInteger(modeNode.value) && modeNode.value >= 0 && modeNode.value <= 4) {
+                modeValue = modeNode.value;
               }
               const resolveMidiParam = (param) => {
                 if (!param) return void 0;
@@ -3117,6 +3226,23 @@ function validate(ast) {
                 }
                 return void 0;
               };
+              const resolveMidiStringParam = (param, paramName) => {
+                if (!param) return void 0;
+                const allowlistKey = `midi.${paramName}`;
+                if (!ALLOWED_STRING_PARAMS.has(allowlistKey)) {
+                  pushDiag("S001", param, `String parameter '${allowlistKey}' is not allowlisted`);
+                  return void 0;
+                }
+                if (param.type !== "String") {
+                  pushDiag("S001", param, `midi() ${paramName} requires a quoted string`);
+                  return void 0;
+                }
+                if (param.value.length === 0) {
+                  pushDiag("S001", param, `midi() ${paramName} must not be empty`);
+                  return void 0;
+                }
+                return decodeJsonStringLiteralContent(param.value);
+              };
               value = {
                 type: "Midi",
                 channel: resolveMidiParam(node.channel) ?? 1,
@@ -3124,6 +3250,8 @@ function validate(ast) {
                 min: Math.max(0, Math.min(1, resolveMidiParam(node.min) ?? 0)),
                 max: Math.max(0, Math.min(1, resolveMidiParam(node.max) ?? 1)),
                 sensitivity: resolveMidiParam(node.sensitivity) ?? 1,
+                name: resolveMidiStringParam(node.name, "name"),
+                id: resolveMidiStringParam(node.id, "id"),
                 // Keep original AST for unparsing
                 _ast: node,
                 // Preserve variable reference marker for unparser round-trip
@@ -3131,8 +3259,10 @@ function validate(ast) {
               };
             } else if (node && node.type === "Audio") {
               const bandNode = node.band;
-              let bandValue = 0;
-              if (bandNode && bandNode.type === "Member") {
+              let bandValue;
+              if (bandNode && bandNode.type === "Number") {
+                bandValue = bandNode.value;
+              } else if (bandNode && bandNode.type === "Member") {
                 const resolved = resolveEnum(bandNode.path);
                 if (typeof resolved === "number") {
                   bandValue = resolved;
@@ -3147,22 +3277,100 @@ function validate(ast) {
                   bandValue = resolved.value;
                 }
               }
-              const resolveAudioParam = (param) => {
+              const validBand = Number.isInteger(bandValue) && bandValue >= 0 && bandValue <= 4;
+              if (!validBand) {
+                if (bandNode?.type === "String") {
+                  pushDiag(
+                    "S001",
+                    bandNode,
+                    "String literal not allowed for audio() band; strings are only valid for audio.name and audio.id"
+                  );
+                } else {
+                  pushDiag(
+                    "S002",
+                    bandNode,
+                    `audio() band must resolve to an integer from 0 to 4 (got ${bandValue})`
+                  );
+                }
+              }
+              const resolveAudioNumber = (param, paramName) => {
                 if (!param) return void 0;
                 if (param.type === "Number") return param.value;
-                if (param.type === "Boolean") return param.value ? 1 : 0;
-                if (param.type === "Member") {
-                  const r = resolveEnum(param.path);
-                  if (typeof r === "number") return r;
-                  if (r && r.type === "Number") return r.value;
+                if (param.type === "String") {
+                  pushDiag(
+                    "S001",
+                    param,
+                    `String literal not allowed for audio() ${paramName}; strings are only valid for audio.name and audio.id`
+                  );
+                } else {
+                  pushDiag("S002", param, `audio() ${paramName} must be a number`);
                 }
                 return void 0;
               };
+              const resolveAudioStringParam = (param, paramName) => {
+                if (!param) return void 0;
+                const allowlistKey = `audio.${paramName}`;
+                if (!ALLOWED_STRING_PARAMS.has(allowlistKey)) {
+                  pushDiag("S001", param, `String parameter '${allowlistKey}' is not allowlisted`);
+                  return void 0;
+                }
+                if (param.type !== "String") {
+                  pushDiag("S001", param, `audio() ${paramName} requires a quoted string`);
+                  return void 0;
+                }
+                if (param.value.length === 0) {
+                  pushDiag("S001", param, `audio() ${paramName} must not be empty`);
+                  return void 0;
+                }
+                return decodeJsonStringLiteralContent(param.value);
+              };
+              const minValue = resolveAudioNumber(node.min, "min");
+              const maxValue = resolveAudioNumber(node.max, "max");
+              const validMin = node.min === void 0 || minValue !== void 0;
+              const validMax = node.max === void 0 || maxValue !== void 0;
+              let channelValue;
+              let validChannel = true;
+              if (node.channel !== void 0) {
+                if (node.channel.type === "Number") {
+                  channelValue = node.channel.value;
+                  validChannel = Number.isInteger(channelValue) && channelValue >= 1;
+                  if (!validChannel) {
+                    pushDiag(
+                      "S002",
+                      node.channel,
+                      `audio() channel must be a positive integer (got ${channelValue})`
+                    );
+                  }
+                } else {
+                  validChannel = false;
+                  if (node.channel.type === "String") {
+                    pushDiag(
+                      "S001",
+                      node.channel,
+                      "String literal not allowed for audio() channel; strings are only valid for audio.name and audio.id"
+                    );
+                  } else {
+                    pushDiag(
+                      "S002",
+                      node.channel,
+                      "audio() channel must be a positive integer"
+                    );
+                  }
+                }
+              }
+              const nameValue = resolveAudioStringParam(node.name, "name");
+              const idValue = resolveAudioStringParam(node.id, "id");
+              const validName = node.name === void 0 || nameValue !== void 0;
+              const validId = node.id === void 0 || idValue !== void 0;
               value = {
                 type: "Audio",
-                band: bandValue,
-                min: Math.max(0, Math.min(1, resolveAudioParam(node.min) ?? 0)),
-                max: Math.max(0, Math.min(1, resolveAudioParam(node.max) ?? 1)),
+                band: validBand ? bandValue : void 0,
+                min: Math.max(0, Math.min(1, minValue ?? 0)),
+                max: Math.max(0, Math.min(1, maxValue ?? 1)),
+                channel: validChannel ? channelValue : void 0,
+                name: nameValue,
+                id: idValue,
+                _invalid: !(validBand && validMin && validMax && validChannel && validName && validId),
                 // Keep original AST for unparsing
                 _ast: node,
                 // Preserve variable reference marker for unparser round-trip
@@ -3355,7 +3563,7 @@ function validate(ast) {
 // shaders/src/lang/unparser.js
 var oscKindNames = ["sine", "tri", "saw", "sawInv", "square", "noise1d", "noise2d"];
 var midiModeNames = ["noteChange", "gateNote", "gateVelocity", "triggerNote", "velocity"];
-var audioBandNames = ["low", "mid", "high", "vol"];
+var audioBandNames = ["low", "mid", "high", "vol", "raw"];
 function formatOscillator(osc) {
   const typeName = oscKindNames[osc.oscType] || "sine";
   const parts = [`type: oscKind.${typeName}`];
@@ -3391,9 +3599,18 @@ function formatMidi(midi) {
   if (midi.sensitivity !== 1) {
     parts.push(`sensitivity: ${midi.sensitivity}`);
   }
+  if (typeof midi.name === "string" && midi.name.length > 0) {
+    parts.push(`name: ${JSON.stringify(midi.name)}`);
+  }
+  if (typeof midi.id === "string" && midi.id.length > 0) {
+    parts.push(`id: ${JSON.stringify(midi.id)}`);
+  }
   return `midi(${parts.join(", ")})`;
 }
 function formatAudio(audio) {
+  if (audio._invalid && audio._ast?.type === "Audio") {
+    return formatLetExpr(audio._ast);
+  }
   const bandName = audioBandNames[audio.band] || "low";
   const parts = [`band: audioBand.${bandName}`];
   if (audio.min !== 0) {
@@ -3401,6 +3618,15 @@ function formatAudio(audio) {
   }
   if (audio.max !== 1) {
     parts.push(`max: ${audio.max}`);
+  }
+  if (Number.isInteger(audio.channel) && audio.channel >= 1) {
+    parts.push(`channel: ${audio.channel}`);
+  }
+  if (typeof audio.name === "string" && audio.name.length > 0) {
+    parts.push(`name: ${JSON.stringify(audio.name)}`);
+  }
+  if (typeof audio.id === "string" && audio.id.length > 0) {
+    parts.push(`id: ${JSON.stringify(audio.id)}`);
   }
   return `audio(${parts.join(", ")})`;
 }
@@ -3664,18 +3890,27 @@ function formatValue(value, spec, options = {}, sourceForm) {
     }
     if (value.type === "Audio") {
       const bandPath = value.band;
-      let bandName = "low";
+      let bandStr = "audioBand.low";
       if (bandPath && bandPath.type === "Member" && bandPath.path) {
-        bandName = bandPath.path[bandPath.path.length - 1];
+        bandStr = `audioBand.${bandPath.path[bandPath.path.length - 1]}`;
       } else if (bandPath && bandPath.type === "Ident") {
-        bandName = bandPath.name;
+        bandStr = bandPath.name;
+      } else if (bandPath && bandPath.type === "Number") {
+        bandStr = String(bandPath.value);
       }
-      const parts = [`band: audioBand.${bandName}`];
+      const parts = [`band: ${bandStr}`];
       if (value.min && value.min.type === "Number" && value.min.value !== 0) {
         parts.push(`min: ${value.min.value}`);
       }
       if (value.max && value.max.type === "Number" && value.max.value !== 1) {
         parts.push(`max: ${value.max.value}`);
+      }
+      if (value.channel?.type === "Number") parts.push(`channel: ${value.channel.value}`);
+      if (value.name?.type === "String") {
+        parts.push(`name: ${JSON.stringify(decodeJsonStringLiteralContent(value.name.value))}`);
+      }
+      if (value.id?.type === "String") {
+        parts.push(`id: ${JSON.stringify(decodeJsonStringLiteralContent(value.id.value))}`);
       }
       return `audio(${parts.join(", ")})`;
     }
@@ -3822,6 +4057,8 @@ function formatLetExpr(expr, options = {}) {
         if (name !== "velocity") modeStr = `midiMode.${name}`;
       } else if (expr.mode?.type === "Ident") {
         modeStr = expr.mode.name;
+      } else if (expr.mode?.type === "Number" && expr.mode.value !== 4) {
+        modeStr = String(expr.mode.value);
       }
       if (modeStr) parts.push(`mode: ${modeStr}`);
       const pushMidiField = (name, node, def) => {
@@ -3831,19 +4068,33 @@ function formatLetExpr(expr, options = {}) {
       pushMidiField("min", expr.min, 0);
       pushMidiField("max", expr.max, 1);
       pushMidiField("sensitivity", expr.sensitivity, 1);
+      if (expr.name?.type === "String") {
+        parts.push(`name: ${JSON.stringify(decodeJsonStringLiteralContent(expr.name.value))}`);
+      }
+      if (expr.id?.type === "String") {
+        parts.push(`id: ${JSON.stringify(decodeJsonStringLiteralContent(expr.id.value))}`);
+      }
       return `midi(${parts.join(", ")})`;
     }
     case "Audio": {
-      let bandStr = "audioBand.low";
-      if (expr.band?.type === "Member" && expr.band.path) {
-        bandStr = `audioBand.${expr.band.path[expr.band.path.length - 1]}`;
-      } else if (expr.band?.type === "Ident") {
-        bandStr = expr.band.name;
-      }
+      const formatAudioField = (node) => node?.type === "String" ? JSON.stringify(decodeJsonStringLiteralContent(node.value)) : formatLetExpr(node, options);
+      const bandStr = expr.band ? formatAudioField(expr.band) : "audioBand.low";
       const parts = [`band: ${bandStr}`];
-      const minVal = numVal(expr.min), maxVal = numVal(expr.max);
-      if (minVal !== void 0 && minVal !== 0) parts.push(`min: ${minVal}`);
-      if (maxVal !== void 0 && maxVal !== 1) parts.push(`max: ${maxVal}`);
+      const pushAudioField = (name, node, defaultValue) => {
+        if (!node) return;
+        const numeric = numVal(node);
+        if (numeric !== void 0 && numeric === defaultValue) return;
+        parts.push(`${name}: ${formatAudioField(node)}`);
+      };
+      pushAudioField("min", expr.min, 0);
+      pushAudioField("max", expr.max, 1);
+      pushAudioField("channel", expr.channel, void 0);
+      if (expr.name?.type === "String") {
+        parts.push(`name: ${formatAudioField(expr.name)}`);
+      }
+      if (expr.id?.type === "String") {
+        parts.push(`id: ${formatAudioField(expr.id)}`);
+      }
       return `audio(${parts.join(", ")})`;
     }
     case "Call":
@@ -11202,23 +11453,32 @@ function evaluateMidi(config, midiState, currentTime) {
   return min + normalized * (max - min);
 }
 function evaluateAudio(config, audioState) {
+  if (config._invalid) return config.min;
   if (!audioState) return config.min;
   const { band, min, max } = config;
+  const hasDeviceSelector = !!(config.name || config.id || config.channel !== void 0);
+  const selectedState = hasDeviceSelector ? audioState.getDeviceChannelState?.(config) : audioState;
+  if (!selectedState) return min;
   let rawValue = 0;
   switch (band) {
     case 0:
-      rawValue = audioState.low;
+      rawValue = selectedState.low;
       break;
     case 1:
-      rawValue = audioState.mid;
+      rawValue = selectedState.mid;
       break;
     case 2:
-      rawValue = audioState.high;
+      rawValue = selectedState.high;
+      break;
+    case 4:
+      if (selectedState.rawReady !== true) return min;
+      rawValue = (Math.max(-1, Math.min(1, selectedState.raw || 0)) + 1) * 0.5;
       break;
     case 3:
-    // vol
+      rawValue = selectedState.vol;
+      break;
     default:
-      rawValue = audioState.vol;
+      rawValue = 0;
       break;
   }
   rawValue = Math.max(0, Math.min(1, rawValue));
@@ -11492,6 +11752,62 @@ var Pipeline = class {
       }
     }
     return uniforms;
+  }
+  /**
+   * Describe the browser audio captures required by the compiled graph.
+   * Hosts use this runtime view so inline and multiline DSL forms behave the
+   * same as let-bound automation sources.
+   *
+   * @returns {{needsLegacy: boolean, needsLegacyRaw: boolean, selected: Array<{id: string|null, name: string, channel: number, needsRaw: boolean}>}}
+   */
+  getAudioInputRequirements() {
+    let needsLegacy = false;
+    let needsLegacyRaw = false;
+    const selected = [];
+    const selectedKeys = /* @__PURE__ */ new Set();
+    const visited = /* @__PURE__ */ new Set();
+    const visit = (value) => {
+      if (!value || typeof value !== "object" || visited.has(value)) return;
+      visited.add(value);
+      if (value.type === "Audio" || value._ast?.type === "Audio") {
+        const source = value._ast?.type === "Audio" ? value._ast : value;
+        const hasSelectorIntent = value.name !== void 0 || value.id !== void 0 || value.channel !== void 0 || source.name !== void 0 || source.id !== void 0 || source.channel !== void 0;
+        const hasValidBand = value._invalid !== true && Number.isInteger(value.band) && value.band >= 0 && value.band <= 4;
+        if (!hasValidBand) return;
+        if (typeof value.name === "string" && value.name.length > 0 && Number.isInteger(value.channel) && value.channel >= 1) {
+          const requirement = {
+            id: typeof value.id === "string" && value.id.length > 0 ? value.id : null,
+            name: value.name,
+            channel: value.channel,
+            needsRaw: value.band === 4
+          };
+          const key = JSON.stringify([requirement.id, requirement.name, requirement.channel]);
+          if (selectedKeys.has(key)) {
+            const existing = selected.find((candidate) => candidate.id === requirement.id && candidate.name === requirement.name && candidate.channel === requirement.channel);
+            if (existing && requirement.needsRaw) existing.needsRaw = true;
+          } else {
+            selectedKeys.add(key);
+            selected.push(requirement);
+          }
+        } else if (!hasSelectorIntent) {
+          needsLegacy = true;
+          if (value.band === 4) needsLegacyRaw = true;
+        }
+        return;
+      }
+      if (Array.isArray(value)) {
+        for (const item of value) visit(item);
+        return;
+      }
+      if (ArrayBuffer.isView(value)) return;
+      for (const item of Object.values(value)) visit(item);
+    };
+    for (const pass of this.graph?.passes || []) {
+      const effectDef = pass.effectKey ? getEffect(pass.effectKey) : null;
+      if (effectDef?.tags?.includes("audio")) needsLegacy = true;
+      visit(pass.uniforms);
+    }
+    return { needsLegacy, needsLegacyRaw, selected };
   }
   /**
    * Create global output surfaces (o0, o1, o2, o3, o4, o5, o6, o7)
@@ -12299,7 +12615,8 @@ var Pipeline = class {
     if (value.type === "Oscillator" || value._ast?.type === "Oscillator") {
       pct = evaluateOscillator(value, time);
     } else if (value.type === "Midi" || value._ast?.type === "Midi") {
-      pct = evaluateMidi(value, this.externalState.midi, Date.now());
+      const midiState = this.externalState.midi?.getPortState ? this.externalState.midi.getPortState(value) : this.externalState.midi;
+      pct = evaluateMidi(value, midiState, Date.now());
     } else if (value.type === "Audio" || value._ast?.type === "Audio") {
       pct = evaluateAudio(value, this.externalState.audio);
     } else {
@@ -12702,14 +13019,91 @@ var MidiChannelState = class {
     this.keys.fill(0);
   }
 };
-var MidiState = class {
-  constructor() {
+var MidiState = class _MidiState {
+  constructor({ portRegistry = true } = {}) {
     this.channels = {};
     for (let i = 1; i <= 16; i++) {
       this.channels[i] = new MidiChannelState();
     }
     this.clockCount = 0;
     this.noteGrid = new Float32Array(128 * 16 * 4);
+    this._ports = portRegistry ? /* @__PURE__ */ new Map() : null;
+    this._portsByName = portRegistry ? /* @__PURE__ */ new Map() : null;
+  }
+  /**
+   * Register or reconnect one Web MIDI input port.
+   * @param {{id: string, name: string}} port
+   * @returns {MidiState|null} Isolated state for this port
+   */
+  registerPort(port) {
+    if (!this._ports || !port || typeof port.id !== "string" || !port.id) return null;
+    const name = typeof port.name === "string" ? port.name : "";
+    let entry = this._ports.get(port.id);
+    let topologyChanged = false;
+    if (!entry) {
+      entry = {
+        id: port.id,
+        name,
+        connected: true,
+        state: new _MidiState({ portRegistry: false })
+      };
+      this._ports.set(port.id, entry);
+      topologyChanged = true;
+    } else {
+      topologyChanged = entry.name !== name || !entry.connected;
+      entry.name = name;
+      entry.connected = true;
+    }
+    if (topologyChanged) this._rebuildPortNameIndex();
+    return entry.state;
+  }
+  /**
+   * Mark one Web MIDI port unavailable without losing its identity record.
+   * @param {string} id
+   */
+  disconnectPort(id) {
+    const entry = this._ports?.get(id);
+    if (!entry) return;
+    entry.connected = false;
+    entry.state.reset();
+    this._rebuildPortNameIndex();
+  }
+  /**
+   * Resolve the MIDI state selected by a compiled midi() descriptor.
+   * An id is authoritative; a name-only selector must match exactly once.
+   * @param {{name?: string, id?: string}} selector
+   * @returns {MidiState|null}
+   */
+  getPortState(selector = {}) {
+    if (!selector.name && !selector.id) return this;
+    if (selector.id) {
+      const entry = this._ports?.get(selector.id);
+      return entry?.connected ? entry.state : null;
+    }
+    return this._portsByName?.get(selector.name) ?? null;
+  }
+  _rebuildPortNameIndex() {
+    if (!this._ports || !this._portsByName) return;
+    this._portsByName.clear();
+    for (const entry of this._ports.values()) {
+      if (!entry.connected || !entry.name) continue;
+      if (this._portsByName.has(entry.name)) {
+        this._portsByName.set(entry.name, null);
+      } else {
+        this._portsByName.set(entry.name, entry.state);
+      }
+    }
+  }
+  /**
+   * Return structured port identity and connection state for host UIs.
+   * @returns {Array<{id: string, name: string, connected: boolean}>}
+   */
+  getPorts() {
+    return [...this._ports?.values() || []].map(({ id, name, connected }) => ({
+      id,
+      name,
+      connected
+    }));
   }
   /**
    * Get the state for a specific MIDI channel.
@@ -12725,9 +13119,13 @@ var MidiState = class {
    * Process a raw MIDI message.
    * Parses the status byte and routes to appropriate channel.
    * @param {Uint8Array} data - Raw MIDI message data [status, key, velocity]
+   * @param {{id: string, name: string}} [port] - Originating Web MIDI port
    */
-  handleMessage(data) {
+  handleMessage(data, port) {
     if (!data || data.length < 1) return;
+    if (port && this._ports) {
+      this.registerPort(port)?.handleMessage(data);
+    }
     const status = data[0];
     if (status === 248) {
       this.clockCount++;
@@ -12771,6 +13169,9 @@ var MidiState = class {
     }
     this.clockCount = 0;
     this.noteGrid.fill(0);
+    if (this._ports) {
+      for (const entry of this._ports.values()) entry.state.reset();
+    }
   }
 };
 function _avgBins(buf, from, to) {
@@ -12780,12 +13181,14 @@ function _avgBins(buf, from, to) {
   for (let i = from; i < end; i++) sum += buf[i];
   return sum / (end - from) / 255;
 }
-var AudioState = class {
-  constructor() {
+var AudioState = class _AudioState {
+  constructor({ deviceRegistry = true } = {}) {
     this.low = 0;
     this.mid = 0;
     this.high = 0;
     this.vol = 0;
+    this.raw = 0;
+    this.rawReady = false;
     this.fft = new Float32Array(16);
     this.spectrum = new Float32Array(128);
     this.waveform = new Float32Array(128);
@@ -12795,7 +13198,10 @@ var AudioState = class {
       mid: [],
       high: []
     };
+    this._frequencyData = null;
     this._maxBufferLength = 5;
+    this._devices = deviceRegistry ? /* @__PURE__ */ new Map() : null;
+    this._devicesByName = deviceRegistry ? /* @__PURE__ */ new Map() : null;
   }
   /**
    * Update audio state from a Web Audio AnalyserNode.
@@ -12807,7 +13213,10 @@ var AudioState = class {
   updateFromAnalyser(analyser, smoothing = 5) {
     if (!analyser) return;
     this._maxBufferLength = Math.max(1, Math.min(10, smoothing));
-    const buf = new Uint8Array(analyser.frequencyBinCount);
+    if (!this._frequencyData || this._frequencyData.length !== analyser.frequencyBinCount) {
+      this._frequencyData = new Uint8Array(analyser.frequencyBinCount);
+    }
+    const buf = this._frequencyData;
     analyser.getByteFrequencyData(buf);
     const rawLow = _avgBins(buf, 1, 2);
     const rawMid = _avgBins(buf, 2, 12);
@@ -12837,6 +13246,132 @@ var AudioState = class {
     this.mid = Math.max(0, Math.min(1, mid));
     this.high = Math.max(0, Math.min(1, high));
     this.vol = (this.low + this.mid + this.high) / 3;
+  }
+  /**
+   * Store one signed time-domain control value.
+   * @param {number} value - Bipolar input sample mean (-1 to 1)
+   */
+  setRaw(value) {
+    this.raw = Number.isFinite(value) ? Math.max(-1, Math.min(1, value)) : 0;
+    this.rawReady = true;
+  }
+  /** Mark raw input unavailable without representing it as a real zero sample. */
+  setRawUnavailable() {
+    this.raw = 0;
+    this.rawReady = false;
+  }
+  /**
+   * Register or reconnect one browser audio input device.
+   * @param {{id: string, name: string, channelCount: number}} device
+   * @returns {object|null}
+   */
+  registerDevice(device) {
+    if (!this._devices || !device || typeof device.id !== "string" || !device.id) return null;
+    const name = typeof device.name === "string" ? device.name : "";
+    const channelCount = Number.isInteger(device.channelCount) && device.channelCount >= 1 ? device.channelCount : 1;
+    let entry = this._devices.get(device.id);
+    let topologyChanged = false;
+    if (!entry) {
+      entry = {
+        id: device.id,
+        name,
+        connected: true,
+        channelCount,
+        channels: /* @__PURE__ */ new Map()
+      };
+      this._devices.set(device.id, entry);
+      topologyChanged = true;
+    } else {
+      topologyChanged = entry.name !== name || !entry.connected || entry.channelCount !== channelCount;
+      entry.name = name;
+      entry.connected = true;
+      entry.channelCount = channelCount;
+    }
+    for (let channel = 1; channel <= channelCount; channel++) {
+      if (!entry.channels.has(channel)) {
+        entry.channels.set(channel, new _AudioState({ deviceRegistry: false }));
+      }
+    }
+    for (const [channel, state] of entry.channels) {
+      if (channel > channelCount) {
+        state.reset();
+        entry.channels.delete(channel);
+      }
+    }
+    if (topologyChanged) this._rebuildDeviceNameIndex();
+    return entry;
+  }
+  /**
+   * Update analyzed values for one selected device channel.
+   * @param {string} id
+   * @param {number} channel - One-based channel number
+   * @param {{low?: number, mid?: number, high?: number, vol?: number, raw?: number}} values
+   * @returns {boolean}
+   */
+  setChannelValues(id, channel, values = {}) {
+    const entry = this._devices?.get(id);
+    const state = entry?.connected ? entry.channels.get(channel) : null;
+    if (!state) return false;
+    for (const key of ["low", "mid", "high", "vol"]) {
+      if (Number.isFinite(values[key])) {
+        state[key] = Math.max(0, Math.min(1, values[key]));
+      }
+    }
+    if (Number.isFinite(values.raw)) state.setRaw(values.raw);
+    return true;
+  }
+  /** Mark raw samples unavailable for every channel on one device. */
+  setDeviceRawUnavailable(id) {
+    const entry = this._devices?.get(id);
+    if (!entry) return;
+    for (const state of entry.channels.values()) state.setRawUnavailable();
+  }
+  /**
+   * Resolve a selected device and one-based channel. Exact id is
+   * authoritative; a name-only selector must match one connected device.
+   * @param {{name?: string, id?: string, channel?: number}} selector
+   * @returns {AudioState|null}
+   */
+  getDeviceChannelState(selector = {}) {
+    if (!selector.name && !selector.id && selector.channel === void 0) return this;
+    if (!Number.isInteger(selector.channel) || selector.channel < 1) return null;
+    let entry;
+    if (selector.id) {
+      entry = this._devices?.get(selector.id);
+    } else if (selector.name) {
+      entry = this._devicesByName?.get(selector.name);
+    }
+    if (!entry?.connected) return null;
+    return entry.channels.get(selector.channel) || null;
+  }
+  /** Mark one audio device unavailable while retaining its identity. */
+  disconnectDevice(id) {
+    const entry = this._devices?.get(id);
+    if (!entry) return;
+    entry.connected = false;
+    for (const state of entry.channels.values()) state.reset();
+    this._rebuildDeviceNameIndex();
+  }
+  _rebuildDeviceNameIndex() {
+    if (!this._devices || !this._devicesByName) return;
+    this._devicesByName.clear();
+    for (const entry of this._devices.values()) {
+      if (!entry.connected || !entry.name) continue;
+      if (this._devicesByName.has(entry.name)) {
+        this._devicesByName.set(entry.name, null);
+      } else {
+        this._devicesByName.set(entry.name, entry);
+      }
+    }
+  }
+  /** Return structured device identity, connection state, and channel count. */
+  getDevices() {
+    return [...this._devices?.values() || []].map(({ id, name, connected, channelCount }) => ({
+      id,
+      name,
+      connected,
+      channelCount
+    }));
   }
   /**
    * Set spectrum data from raw FFT frequency bytes.
@@ -12878,12 +13413,19 @@ var AudioState = class {
     this.mid = 0;
     this.high = 0;
     this.vol = 0;
+    this.raw = 0;
+    this.rawReady = false;
     this.fft.fill(0);
     this.spectrum.fill(0);
     this.waveform.fill(0.5);
     this._smoothingBuffers.low = [];
     this._smoothingBuffers.mid = [];
     this._smoothingBuffers.high = [];
+    if (this._devices) {
+      for (const entry of this._devices.values()) {
+        for (const state of entry.channels.values()) state.reset();
+      }
+    }
   }
 };
 var MidiInputManager = class _MidiInputManager {
@@ -12893,6 +13435,11 @@ var MidiInputManager = class _MidiInputManager {
     this._midiAccess = null;
     this._enabled = false;
     this._onStatusChange = null;
+    this._onPortsChange = null;
+    this._status = { state: "idle", message: "", deviceCount: 0 };
+    this._enablePromise = null;
+    this._generation = 0;
+    this._portOperationTokens = /* @__PURE__ */ new Map();
   }
   /**
    * Check if Web MIDI API is available
@@ -12905,36 +13452,80 @@ var MidiInputManager = class _MidiInputManager {
    * Enable MIDI input
    * @returns {Promise<boolean>} Whether MIDI was successfully enabled
    */
-  async enable() {
-    if (this._enabled) return true;
+  enable() {
+    if (this._enabled) return Promise.resolve(true);
+    if (this._enablePromise) return this._enablePromise;
+    const generation = ++this._generation;
+    const operation = this._enable(generation);
+    let wrapped;
+    wrapped = operation.finally(() => {
+      if (this._enablePromise === wrapped) {
+        this._enablePromise = null;
+      }
+    });
+    this._enablePromise = wrapped;
+    return wrapped;
+  }
+  async _enable(generation) {
     if (!_MidiInputManager.isSupported()) {
       console.warn("Web MIDI API not supported");
-      this._notifyStatus("MIDI not supported");
+      this._notifyStatus("MIDI not supported", { state: "unsupported", deviceCount: 0 });
       return false;
     }
     try {
-      this._midiAccess = await navigator.requestMIDIAccess();
-      this._midiState = this._renderer.setMidiState();
+      const midiAccess = await navigator.requestMIDIAccess();
+      if (generation !== this._generation) return false;
+      this._midiAccess = midiAccess;
+      const midiState = this._renderer.setMidiState();
+      this._midiState = midiState;
+      let openFailures = 0;
       for (const input of this._midiAccess.inputs.values()) {
-        this._connectInput(input);
+        if (!await this._connectInput(input, generation, midiState)) openFailures++;
+        if (generation !== this._generation) return false;
       }
-      this._midiAccess.onstatechange = (event) => {
+      this._notifyPortsChange();
+      this._midiAccess.onstatechange = async (event) => {
+        if (generation !== this._generation) return;
         if (event.port.type === "input") {
           if (event.port.state === "connected") {
-            this._connectInput(event.port);
-            this._notifyStatus(`MIDI connected: ${event.port.name}`);
+            const opened = await this._connectInput(event.port, generation, midiState);
+            if (generation !== this._generation) return;
+            if (opened) {
+              this._notifyStatus(`MIDI connected: ${event.port.name}`, {
+                state: "connected",
+                deviceCount: this._midiAccess.inputs.size,
+                port: { id: event.port.id, name: event.port.name || "" }
+              });
+            }
           } else {
-            this._notifyStatus(`MIDI disconnected: ${event.port.name}`);
+            this._invalidatePortOperation(event.port.id);
+            event.port.onmidimessage = null;
+            this._midiState?.disconnectPort(event.port.id);
+            this._notifyStatus(`MIDI disconnected: ${event.port.name}`, {
+              state: "disconnected",
+              deviceCount: this._midiAccess.inputs.size,
+              port: { id: event.port.id, name: event.port.name || "" }
+            });
           }
+          this._notifyPortsChange();
         }
       };
+      if (generation !== this._generation) return false;
       this._enabled = true;
       const inputCount = this._midiAccess.inputs.size;
-      this._notifyStatus(`MIDI enabled (${inputCount} device${inputCount !== 1 ? "s" : ""})`);
+      if (openFailures === 0) {
+        this._notifyStatus(`MIDI enabled (${inputCount} device${inputCount !== 1 ? "s" : ""})`, {
+          state: "enabled",
+          deviceCount: inputCount
+        });
+      }
       return true;
     } catch (err) {
-      console.error("MIDI access denied:", err);
-      this._notifyStatus("MIDI access denied");
+      if (generation !== this._generation) return false;
+      const denied = err?.name === "NotAllowedError" || err?.name === "SecurityError";
+      const message = denied ? "MIDI access denied" : "MIDI access failed";
+      console.error(`${message}:`, err);
+      this._notifyStatus(message, { state: denied ? "denied" : "error", deviceCount: 0 });
       return false;
     }
   }
@@ -12942,15 +13533,19 @@ var MidiInputManager = class _MidiInputManager {
    * Disable MIDI input
    */
   disable() {
-    if (!this._enabled) return;
+    this._generation++;
+    this._enablePromise = null;
+    this._portOperationTokens.clear();
     if (this._midiAccess) {
       for (const input of this._midiAccess.inputs.values()) {
         input.onmidimessage = null;
+        this._midiState?.disconnectPort(input.id);
       }
       this._midiAccess.onstatechange = null;
     }
     this._enabled = false;
-    this._notifyStatus("MIDI disabled");
+    this._notifyPortsChange();
+    this._notifyStatus("MIDI disabled", { state: "disabled", deviceCount: 0 });
   }
   /**
    * Toggle MIDI input
@@ -12978,17 +13573,67 @@ var MidiInputManager = class _MidiInputManager {
   onStatusChange(callback) {
     this._onStatusChange = callback;
   }
-  _connectInput(input) {
-    input.onmidimessage = (event) => this._handleMidiMessage(event);
-    if (input.connection !== "open") input.open();
+  /**
+   * Set structured MIDI port inventory callback.
+   * @param {function(Array<{id: string, name: string, connected: boolean}>)} callback
+   */
+  onPortsChange(callback) {
+    this._onPortsChange = callback;
   }
-  _handleMidiMessage(event) {
+  /**
+   * Return every port encountered by this manager, including disconnected
+   * entries retained so host UIs can keep selected devices visible.
+   */
+  getPorts() {
+    return this._midiState?.getPorts() || [];
+  }
+  /**
+   * Return the latest structured MIDI access or connection status.
+   */
+  getStatus() {
+    return { ...this._status };
+  }
+  async _connectInput(input, generation = this._generation, midiState = this._midiState) {
+    const port = { id: input.id, name: input.name || "" };
+    const operationToken = (this._portOperationTokens.get(input.id) || 0) + 1;
+    this._portOperationTokens.set(input.id, operationToken);
+    try {
+      if (input.connection !== "open") await input.open();
+      const currentInput = this._midiAccess?.inputs?.get(input.id);
+      if (generation !== this._generation || this._portOperationTokens.get(input.id) !== operationToken || currentInput !== input || input.state === "disconnected") return false;
+      midiState?.registerPort(port);
+      input.onmidimessage = (event) => this._handleMidiMessage(event, port);
+      return true;
+    } catch (err) {
+      if (generation !== this._generation || this._portOperationTokens.get(input.id) !== operationToken) return false;
+      input.onmidimessage = null;
+      midiState?.disconnectPort(input.id);
+      this._notifyStatus(`MIDI device failed to open: ${port.name}`, {
+        state: "error",
+        deviceCount: this.getPorts().filter((candidate) => candidate.connected).length,
+        port,
+        error: err?.message || String(err)
+      });
+      return false;
+    }
+  }
+  _invalidatePortOperation(id) {
+    if (!id) return;
+    this._portOperationTokens.set(id, (this._portOperationTokens.get(id) || 0) + 1);
+  }
+  _handleMidiMessage(event, port) {
     if (!this._midiState) return;
-    this._midiState.handleMessage(event.data);
+    this._midiState.handleMessage(event.data, port);
   }
-  _notifyStatus(message) {
+  _notifyStatus(message, detail = {}) {
+    this._status = { ...detail, message };
     if (this._onStatusChange) {
-      this._onStatusChange(message);
+      this._onStatusChange(message, this.getStatus());
+    }
+  }
+  _notifyPortsChange() {
+    if (this._onPortsChange) {
+      this._onPortsChange(this.getPorts());
     }
   }
 };
@@ -13081,6 +13726,7 @@ var AudioInputManager = class _AudioInputManager {
       this._audioState.mid = 0;
       this._audioState.high = 0;
       this._audioState.vol = 0;
+      this._audioState.raw = 0;
       this._audioState.spectrum.fill(0);
       this._audioState.waveform.fill(0.5);
     }
