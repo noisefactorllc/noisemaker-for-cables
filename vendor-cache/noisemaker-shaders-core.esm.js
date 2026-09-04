@@ -3,8 +3,8 @@
  * Includes: CanvasRenderer + UIController + EffectSelect
  * Copyright (c) 2017-2026 Noise Factor LLC. https://noisefactor.io/
  * SPDX-License-Identifier: MIT
- * Build: 4f0b2448
- * Date: 2026-09-04T03:37:43.573Z
+ * Build: 691eea16
+ * Date: 2026-09-04T05:32:53.531Z
  */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
@@ -2200,6 +2200,12 @@ var stateValues = /* @__PURE__ */ new Set(["time", "frame", "mouse", "resolution
 var STARTER_OPS = /* @__PURE__ */ new Set();
 var SURFACE_PASSTHROUGH_CALLS = /* @__PURE__ */ new Set(["read"]);
 var validatorHooks = {};
+var AUTOMATION_FIELDS = {
+  Oscillator: ["oscType", "min", "max", "speed", "offset", "seed"],
+  Midi: ["channel", "mode", "min", "max", "sensitivity", "name", "id"],
+  Audio: ["band", "min", "max", "channel", "name", "id"]
+};
+var MAX_AUTOMATION_DEPTH = 8;
 function registerValidatorHook(name, hook) {
   if (typeof name === "string" && typeof hook === "function") {
     validatorHooks[name] = hook;
@@ -2419,22 +2425,42 @@ function validate(ast) {
     const starter = getStarterInfo(node);
     return !!(starter && starter.index === 0);
   }
-  function substitute(node) {
+  const reportedAutomationCycles = /* @__PURE__ */ new Set();
+  function substitute(node, resolving = []) {
     if (!node) return node;
+    if (node.type === "Ident" && resolving.includes(node.name)) {
+      const cycleStart = resolving.indexOf(node.name);
+      const cycle = [...resolving.slice(cycleStart), node.name];
+      const cycleKey = cycle.join(" -> ");
+      if (!reportedAutomationCycles.has(cycleKey)) {
+        reportedAutomationCycles.add(cycleKey);
+        pushDiag("S001", node, `Automation cycle detected: ${cycleKey}`);
+      }
+      return { type: "Number", value: 0, _automationInvalid: true };
+    }
     if (node.type === "Ident" && symbols.has(node.name)) {
-      const result2 = substitute(clone(symbols.get(node.name)));
+      const result2 = substitute(clone(symbols.get(node.name)), [...resolving, node.name]);
       if (result2 && typeof result2 === "object") {
         result2._varRef = node.name;
       }
       return result2;
     }
+    if (AUTOMATION_FIELDS[node.type]) {
+      const mapped = { ...node };
+      for (const field of AUTOMATION_FIELDS[node.type]) {
+        if (node[field] !== void 0) {
+          mapped[field] = substitute(node[field], resolving);
+        }
+      }
+      return mapped;
+    }
     if (node.type === "Chain") {
       const mapped = node.chain.map((c) => {
-        const mappedArgs = c.args.map((a) => substitute(a));
+        const mappedArgs = c.args.map((a) => substitute(a, resolving));
         let mappedCall = { type: "Call", name: c.name, args: mappedArgs };
         if (c.kwargs) {
           const kw = {};
-          for (const [k, v] of Object.entries(c.kwargs)) kw[k] = substitute(v);
+          for (const [k, v] of Object.entries(c.kwargs)) kw[k] = substitute(v, resolving);
           mappedCall.kwargs = kw;
         }
         return resolveCall(mappedCall);
@@ -2442,11 +2468,11 @@ function validate(ast) {
       return { type: "Chain", chain: mapped };
     }
     if (node.type === "Call") {
-      const mappedArgs = node.args.map((a) => substitute(a));
+      const mappedArgs = node.args.map((a) => substitute(a, resolving));
       let mappedCall = { type: "Call", name: node.name, args: mappedArgs };
       if (node.kwargs) {
         const kw = {};
-        for (const [k, v] of Object.entries(node.kwargs)) kw[k] = substitute(v);
+        for (const [k, v] of Object.entries(node.kwargs)) kw[k] = substitute(v, resolving);
         mappedCall.kwargs = kw;
       }
       return resolveCall(mappedCall);
@@ -2455,7 +2481,7 @@ function validate(ast) {
   }
   if (Array.isArray(ast.vars)) {
     for (const v of ast.vars) {
-      const expr = substitute(clone(v.expr));
+      const expr = substitute(clone(v.expr), [v.name]);
       if (expr && isStarterChain(expr)) {
         const head = firstChainCall(expr);
         if (head) pushDiag("S006", head);
@@ -2496,6 +2522,295 @@ function validate(ast) {
       if (resolved !== void 0) return resolved;
     }
     return expr;
+  }
+  function resolveAutomationEnum(node, enumName, fallback, validValues, descriptorName, fieldName) {
+    let resolved;
+    if (node?.type === "Number") {
+      resolved = node.value;
+    } else if (node?.type === "Member") {
+      resolved = resolveEnum(node.path);
+    } else if (node?.type === "Ident") {
+      resolved = resolveEnum([enumName, node.name]);
+    }
+    if (resolved && resolved.type === "Number") resolved = resolved.value;
+    if (typeof resolved === "number" && validValues.has(resolved)) return resolved;
+    if (node?.type === "String") {
+      pushDiag(
+        "S001",
+        node,
+        `String literal not allowed for ${descriptorName}() ${fieldName}`
+      );
+    } else {
+      const message = descriptorName === "audio" && fieldName === "band" ? `audio() band must resolve to an integer from 0 to 4 (got ${resolved})` : `${descriptorName}() ${fieldName} must resolve to a supported enum value`;
+      pushDiag("S002", node, message);
+    }
+    return fallback;
+  }
+  function resolveAutomationString(node, descriptorName, fieldName) {
+    if (!node) return void 0;
+    const allowlistKey = `${descriptorName}.${fieldName}`;
+    if (!ALLOWED_STRING_PARAMS.has(allowlistKey)) {
+      pushDiag("S001", node, `String parameter '${allowlistKey}' is not allowlisted`);
+      return void 0;
+    }
+    if (node.type !== "String") {
+      pushDiag("S001", node, `${descriptorName}() ${fieldName} requires a quoted string`);
+      return void 0;
+    }
+    if (node.value.length === 0) {
+      pushDiag("S001", node, `${descriptorName}() ${fieldName} must not be empty`);
+      return void 0;
+    }
+    return decodeJsonStringLiteralContent(node.value);
+  }
+  function resolveAutomationNumber(node, descriptorName, fieldName, fallback, options = {}, depth = 0) {
+    if (!node) return fallback;
+    const reject = (code, message) => {
+      options.onInvalid?.();
+      pushDiag(code, node, message);
+      return fallback;
+    };
+    let value;
+    if (node.type === "Number") {
+      value = node.value;
+    } else if (options.allowBoolean && node.type === "Boolean") {
+      value = node.value ? 1 : 0;
+    } else if (node.type === "Member" && options.allowMember !== false) {
+      const resolved = resolveEnum(node.path);
+      value = resolved && resolved.type === "Number" ? resolved.value : resolved;
+    } else if (AUTOMATION_FIELDS[node.type] && options.allowAutomation) {
+      const compiled = compileAutomationDescriptor(node, depth + 1);
+      if (compiled?._invalid) options.onInvalid?.();
+      return compiled;
+    } else if (node.type === "String") {
+      return reject("S001", `String literal not allowed for ${descriptorName}() ${fieldName}`);
+    } else if (node.type === "Ident") {
+      return reject(
+        "S003",
+        `Undefined automation source '${node.name}' for ${descriptorName}() ${fieldName}`
+      );
+    } else {
+      return reject(
+        "S002",
+        `${descriptorName}() ${fieldName} must be a number${options.allowAutomation ? " or automation source" : ""}`
+      );
+    }
+    if (typeof value !== "number" || !Number.isFinite(value)) {
+      return reject("S002", `${descriptorName}() ${fieldName} must resolve to a finite number`);
+    }
+    if (options.integer && !Number.isInteger(value)) {
+      return reject("S002", `${descriptorName}() ${fieldName} must be an integer`);
+    }
+    if (options.min !== void 0 && value < options.min) {
+      return reject(
+        "S002",
+        `${descriptorName}() ${fieldName} must be at least ${options.min} (got ${value})`
+      );
+    }
+    if (options.max !== void 0 && value > options.max) {
+      return reject(
+        "S002",
+        `${descriptorName}() ${fieldName} must be at most ${options.max} (got ${value})`
+      );
+    }
+    if (options.clamp01) return Math.max(0, Math.min(1, value));
+    return value;
+  }
+  function compileAutomationDescriptor(node, depth = 0) {
+    if (depth > MAX_AUTOMATION_DEPTH) {
+      pushDiag(
+        "S001",
+        node,
+        `Automation nesting exceeds the maximum depth of ${MAX_AUTOMATION_DEPTH}`
+      );
+      return 0;
+    }
+    if (node.type === "Oscillator") {
+      const value = {
+        type: "Oscillator",
+        oscType: resolveAutomationEnum(
+          node.oscType,
+          "oscKind",
+          0,
+          /* @__PURE__ */ new Set([0, 1, 2, 3, 4, 5]),
+          "osc",
+          "type"
+        ),
+        min: resolveAutomationNumber(
+          node.min,
+          "osc",
+          "min",
+          0,
+          { allowBoolean: true, allowAutomation: true, clamp01: true },
+          depth
+        ),
+        max: resolveAutomationNumber(
+          node.max,
+          "osc",
+          "max",
+          1,
+          { allowBoolean: true, allowAutomation: true, clamp01: true },
+          depth
+        ),
+        speed: resolveAutomationNumber(
+          node.speed,
+          "osc",
+          "speed",
+          1,
+          { allowBoolean: true, allowAutomation: true },
+          depth
+        ),
+        offset: resolveAutomationNumber(
+          node.offset,
+          "osc",
+          "offset",
+          0,
+          { allowBoolean: true, allowAutomation: true },
+          depth
+        ),
+        seed: resolveAutomationNumber(
+          node.seed,
+          "osc",
+          "seed",
+          1,
+          { allowBoolean: true, allowAutomation: true },
+          depth
+        ),
+        _ast: node,
+        ...node._varRef && { _varRef: node._varRef }
+      };
+      return value;
+    }
+    if (node.type === "Midi") {
+      return {
+        type: "Midi",
+        channel: resolveAutomationNumber(
+          node.channel,
+          "midi",
+          "channel",
+          1,
+          { allowBoolean: true },
+          depth
+        ),
+        mode: resolveAutomationEnum(
+          node.mode,
+          "midiMode",
+          4,
+          /* @__PURE__ */ new Set([0, 1, 2, 3, 4]),
+          "midi",
+          "mode"
+        ),
+        min: resolveAutomationNumber(
+          node.min,
+          "midi",
+          "min",
+          0,
+          { allowBoolean: true, allowAutomation: true, clamp01: true },
+          depth
+        ),
+        max: resolveAutomationNumber(
+          node.max,
+          "midi",
+          "max",
+          1,
+          { allowBoolean: true, allowAutomation: true, clamp01: true },
+          depth
+        ),
+        sensitivity: resolveAutomationNumber(
+          node.sensitivity,
+          "midi",
+          "sensitivity",
+          1,
+          { allowBoolean: true, allowAutomation: true },
+          depth
+        ),
+        name: resolveAutomationString(node.name, "midi", "name"),
+        id: resolveAutomationString(node.id, "midi", "id"),
+        _ast: node,
+        ...node._varRef && { _varRef: node._varRef }
+      };
+    }
+    if (node.type === "Audio") {
+      const band = resolveAutomationEnum(
+        node.band,
+        "audioBand",
+        void 0,
+        /* @__PURE__ */ new Set([0, 1, 2, 3, 4]),
+        "audio",
+        "band"
+      );
+      let validMin = true;
+      let validMax = true;
+      const min = resolveAutomationNumber(
+        node.min,
+        "audio",
+        "min",
+        0,
+        {
+          allowAutomation: true,
+          allowMember: false,
+          clamp01: true,
+          onInvalid: () => {
+            validMin = false;
+          }
+        },
+        depth
+      );
+      const max = resolveAutomationNumber(
+        node.max,
+        "audio",
+        "max",
+        1,
+        {
+          allowAutomation: true,
+          allowMember: false,
+          clamp01: true,
+          onInvalid: () => {
+            validMax = false;
+          }
+        },
+        depth
+      );
+      let channel;
+      let validChannel = true;
+      if (node.channel !== void 0) {
+        if (node.channel.type === "Number" && Number.isInteger(node.channel.value) && node.channel.value >= 1) {
+          channel = node.channel.value;
+        } else {
+          validChannel = false;
+          if (node.channel.type === "String") {
+            pushDiag(
+              "S001",
+              node.channel,
+              "String literal not allowed for audio() channel"
+            );
+          } else {
+            pushDiag(
+              "S002",
+              node.channel,
+              `audio() channel must be a positive integer (got ${node.channel.value ?? node.channel.name ?? node.channel.type})`
+            );
+          }
+        }
+      }
+      const name = resolveAutomationString(node.name, "audio", "name");
+      const id = resolveAutomationString(node.id, "audio", "id");
+      const validName = node.name === void 0 || name !== void 0;
+      const validId = node.id === void 0 || id !== void 0;
+      return {
+        type: "Audio",
+        band,
+        min,
+        max,
+        channel,
+        name,
+        id,
+        _invalid: band === void 0 || !validMin || !validMax || !validName || !validId || !validChannel,
+        _ast: node,
+        ...node._varRef && { _varRef: node._varRef }
+      };
+    }
+    return 0;
   }
   function evalCondition(node) {
     const expr = evalExpr(node);
@@ -3154,228 +3469,11 @@ function validate(ast) {
                 value = def.default;
               }
             } else if (node && node.type === "Oscillator") {
-              const oscTypeNode = node.oscType;
-              let oscTypeValue = 0;
-              if (oscTypeNode && oscTypeNode.type === "Member") {
-                const resolved = resolveEnum(oscTypeNode.path);
-                if (typeof resolved === "number") {
-                  oscTypeValue = resolved;
-                } else if (resolved && resolved.type === "Number") {
-                  oscTypeValue = resolved.value;
-                }
-              } else if (oscTypeNode && oscTypeNode.type === "Ident") {
-                const resolved = resolveEnum(["oscKind", oscTypeNode.name]);
-                if (typeof resolved === "number") {
-                  oscTypeValue = resolved;
-                } else if (resolved && resolved.type === "Number") {
-                  oscTypeValue = resolved.value;
-                }
-              }
-              const resolveOscParam = (param) => {
-                if (!param) return void 0;
-                if (param.type === "Number") return param.value;
-                if (param.type === "Boolean") return param.value ? 1 : 0;
-                if (param.type === "Member") {
-                  const r = resolveEnum(param.path);
-                  if (typeof r === "number") return r;
-                  if (r && r.type === "Number") return r.value;
-                }
-                return void 0;
-              };
-              value = {
-                type: "Oscillator",
-                oscType: oscTypeValue,
-                min: Math.max(0, Math.min(1, resolveOscParam(node.min) ?? 0)),
-                max: Math.max(0, Math.min(1, resolveOscParam(node.max) ?? 1)),
-                speed: resolveOscParam(node.speed) ?? 1,
-                offset: resolveOscParam(node.offset) ?? 0,
-                seed: resolveOscParam(node.seed) ?? 1,
-                // Keep original AST for unparsing
-                _ast: node,
-                // Preserve variable reference marker for unparser round-trip
-                ...node._varRef && { _varRef: node._varRef }
-              };
+              value = compileAutomationDescriptor(node);
             } else if (node && node.type === "Midi") {
-              const modeNode = node.mode;
-              let modeValue = 4;
-              if (modeNode && modeNode.type === "Member") {
-                const resolved = resolveEnum(modeNode.path);
-                if (typeof resolved === "number") {
-                  modeValue = resolved;
-                } else if (resolved && resolved.type === "Number") {
-                  modeValue = resolved.value;
-                }
-              } else if (modeNode && modeNode.type === "Ident") {
-                const resolved = resolveEnum(["midiMode", modeNode.name]);
-                if (typeof resolved === "number") {
-                  modeValue = resolved;
-                } else if (resolved && resolved.type === "Number") {
-                  modeValue = resolved.value;
-                }
-              } else if (modeNode && modeNode.type === "Number" && Number.isInteger(modeNode.value) && modeNode.value >= 0 && modeNode.value <= 4) {
-                modeValue = modeNode.value;
-              }
-              const resolveMidiParam = (param) => {
-                if (!param) return void 0;
-                if (param.type === "Number") return param.value;
-                if (param.type === "Boolean") return param.value ? 1 : 0;
-                if (param.type === "Member") {
-                  const r = resolveEnum(param.path);
-                  if (typeof r === "number") return r;
-                  if (r && r.type === "Number") return r.value;
-                }
-                return void 0;
-              };
-              const resolveMidiStringParam = (param, paramName) => {
-                if (!param) return void 0;
-                const allowlistKey = `midi.${paramName}`;
-                if (!ALLOWED_STRING_PARAMS.has(allowlistKey)) {
-                  pushDiag("S001", param, `String parameter '${allowlistKey}' is not allowlisted`);
-                  return void 0;
-                }
-                if (param.type !== "String") {
-                  pushDiag("S001", param, `midi() ${paramName} requires a quoted string`);
-                  return void 0;
-                }
-                if (param.value.length === 0) {
-                  pushDiag("S001", param, `midi() ${paramName} must not be empty`);
-                  return void 0;
-                }
-                return decodeJsonStringLiteralContent(param.value);
-              };
-              value = {
-                type: "Midi",
-                channel: resolveMidiParam(node.channel) ?? 1,
-                mode: modeValue,
-                min: Math.max(0, Math.min(1, resolveMidiParam(node.min) ?? 0)),
-                max: Math.max(0, Math.min(1, resolveMidiParam(node.max) ?? 1)),
-                sensitivity: resolveMidiParam(node.sensitivity) ?? 1,
-                name: resolveMidiStringParam(node.name, "name"),
-                id: resolveMidiStringParam(node.id, "id"),
-                // Keep original AST for unparsing
-                _ast: node,
-                // Preserve variable reference marker for unparser round-trip
-                ...node._varRef && { _varRef: node._varRef }
-              };
+              value = compileAutomationDescriptor(node);
             } else if (node && node.type === "Audio") {
-              const bandNode = node.band;
-              let bandValue;
-              if (bandNode && bandNode.type === "Number") {
-                bandValue = bandNode.value;
-              } else if (bandNode && bandNode.type === "Member") {
-                const resolved = resolveEnum(bandNode.path);
-                if (typeof resolved === "number") {
-                  bandValue = resolved;
-                } else if (resolved && resolved.type === "Number") {
-                  bandValue = resolved.value;
-                }
-              } else if (bandNode && bandNode.type === "Ident") {
-                const resolved = resolveEnum(["audioBand", bandNode.name]);
-                if (typeof resolved === "number") {
-                  bandValue = resolved;
-                } else if (resolved && resolved.type === "Number") {
-                  bandValue = resolved.value;
-                }
-              }
-              const validBand = Number.isInteger(bandValue) && bandValue >= 0 && bandValue <= 4;
-              if (!validBand) {
-                if (bandNode?.type === "String") {
-                  pushDiag(
-                    "S001",
-                    bandNode,
-                    "String literal not allowed for audio() band; strings are only valid for audio.name and audio.id"
-                  );
-                } else {
-                  pushDiag(
-                    "S002",
-                    bandNode,
-                    `audio() band must resolve to an integer from 0 to 4 (got ${bandValue})`
-                  );
-                }
-              }
-              const resolveAudioNumber = (param, paramName) => {
-                if (!param) return void 0;
-                if (param.type === "Number") return param.value;
-                if (param.type === "String") {
-                  pushDiag(
-                    "S001",
-                    param,
-                    `String literal not allowed for audio() ${paramName}; strings are only valid for audio.name and audio.id`
-                  );
-                } else {
-                  pushDiag("S002", param, `audio() ${paramName} must be a number`);
-                }
-                return void 0;
-              };
-              const resolveAudioStringParam = (param, paramName) => {
-                if (!param) return void 0;
-                const allowlistKey = `audio.${paramName}`;
-                if (!ALLOWED_STRING_PARAMS.has(allowlistKey)) {
-                  pushDiag("S001", param, `String parameter '${allowlistKey}' is not allowlisted`);
-                  return void 0;
-                }
-                if (param.type !== "String") {
-                  pushDiag("S001", param, `audio() ${paramName} requires a quoted string`);
-                  return void 0;
-                }
-                if (param.value.length === 0) {
-                  pushDiag("S001", param, `audio() ${paramName} must not be empty`);
-                  return void 0;
-                }
-                return decodeJsonStringLiteralContent(param.value);
-              };
-              const minValue = resolveAudioNumber(node.min, "min");
-              const maxValue = resolveAudioNumber(node.max, "max");
-              const validMin = node.min === void 0 || minValue !== void 0;
-              const validMax = node.max === void 0 || maxValue !== void 0;
-              let channelValue;
-              let validChannel = true;
-              if (node.channel !== void 0) {
-                if (node.channel.type === "Number") {
-                  channelValue = node.channel.value;
-                  validChannel = Number.isInteger(channelValue) && channelValue >= 1;
-                  if (!validChannel) {
-                    pushDiag(
-                      "S002",
-                      node.channel,
-                      `audio() channel must be a positive integer (got ${channelValue})`
-                    );
-                  }
-                } else {
-                  validChannel = false;
-                  if (node.channel.type === "String") {
-                    pushDiag(
-                      "S001",
-                      node.channel,
-                      "String literal not allowed for audio() channel; strings are only valid for audio.name and audio.id"
-                    );
-                  } else {
-                    pushDiag(
-                      "S002",
-                      node.channel,
-                      "audio() channel must be a positive integer"
-                    );
-                  }
-                }
-              }
-              const nameValue = resolveAudioStringParam(node.name, "name");
-              const idValue = resolveAudioStringParam(node.id, "id");
-              const validName = node.name === void 0 || nameValue !== void 0;
-              const validId = node.id === void 0 || idValue !== void 0;
-              value = {
-                type: "Audio",
-                band: validBand ? bandValue : void 0,
-                min: Math.max(0, Math.min(1, minValue ?? 0)),
-                max: Math.max(0, Math.min(1, maxValue ?? 1)),
-                channel: validChannel ? channelValue : void 0,
-                name: nameValue,
-                id: idValue,
-                _invalid: !(validBand && validMin && validMax && validChannel && validName && validId),
-                // Keep original AST for unparsing
-                _ast: node,
-                // Preserve variable reference marker for unparser round-trip
-                ...node._varRef && { _varRef: node._varRef }
-              };
+              value = compileAutomationDescriptor(node);
             } else if (node && node.type === "Member") {
               const cur = resolveEnum(node.path);
               if (typeof cur === "number") {
@@ -3565,6 +3663,9 @@ var oscKindNames = ["sine", "tri", "saw", "sawInv", "square", "noise1d", "noise2
 var midiModeNames = ["noteChange", "gateNote", "gateVelocity", "triggerNote", "velocity"];
 var audioBandNames = ["low", "mid", "high", "vol", "raw"];
 function formatOscillator(osc) {
+  if (osc._ast?.type === "Oscillator") {
+    return formatLetExpr(osc._ast);
+  }
   const typeName = oscKindNames[osc.oscType] || "sine";
   const parts = [`type: oscKind.${typeName}`];
   if (osc.min !== 0) {
@@ -3585,6 +3686,9 @@ function formatOscillator(osc) {
   return `osc(${parts.join(", ")})`;
 }
 function formatMidi(midi) {
+  if (midi._ast?.type === "Midi") {
+    return formatLetExpr(midi._ast);
+  }
   const parts = [`channel: ${midi.channel}`];
   const modeName = midiModeNames[midi.mode] || "velocity";
   if (modeName !== "velocity") {
@@ -3608,7 +3712,7 @@ function formatMidi(midi) {
   return `midi(${parts.join(", ")})`;
 }
 function formatAudio(audio) {
-  if (audio._invalid && audio._ast?.type === "Audio") {
+  if (audio._ast?.type === "Audio") {
     return formatLetExpr(audio._ast);
   }
   const bandName = audioBandNames[audio.band] || "low";
@@ -4016,6 +4120,7 @@ function unparseChain(chain, options = {}) {
 }
 function formatLetExpr(expr, options = {}) {
   if (!expr) return "null";
+  if (expr._varRef) return expr._varRef;
   const numVal = (node) => node && node.type === "Number" ? node.value : void 0;
   switch (expr.type) {
     case "Number":
@@ -4034,11 +4139,15 @@ function formatLetExpr(expr, options = {}) {
         typeStr = `oscKind.${expr.oscType.path[expr.oscType.path.length - 1]}`;
       } else if (expr.oscType?.type === "Ident") {
         typeStr = expr.oscType.name;
+      } else if (expr.oscType?.type === "Number" && Number.isInteger(expr.oscType.value) && expr.oscType.value >= 0 && expr.oscType.value <= 5) {
+        typeStr = `oscKind.${oscKindNames[expr.oscType.value]}`;
       }
       const parts = [`type: ${typeStr}`];
       const pushIfNonDefault = (name, node, def) => {
+        if (!node) return;
         const v = numVal(node);
-        if (v !== void 0 && v !== def) parts.push(`${name}: ${v}`);
+        if (v !== void 0 && v === def) return;
+        parts.push(`${name}: ${formatLetExpr(node, options)}`);
       };
       pushIfNonDefault("min", expr.min, 0);
       pushIfNonDefault("max", expr.max, 1);
@@ -4049,8 +4158,7 @@ function formatLetExpr(expr, options = {}) {
     }
     case "Midi": {
       const parts = [];
-      const ch = numVal(expr.channel);
-      if (ch !== void 0) parts.push(`channel: ${ch}`);
+      if (expr.channel) parts.push(`channel: ${formatLetExpr(expr.channel, options)}`);
       let modeStr = null;
       if (expr.mode?.type === "Member" && expr.mode.path) {
         const name = expr.mode.path[expr.mode.path.length - 1];
@@ -4062,8 +4170,10 @@ function formatLetExpr(expr, options = {}) {
       }
       if (modeStr) parts.push(`mode: ${modeStr}`);
       const pushMidiField = (name, node, def) => {
+        if (!node) return;
         const v = numVal(node);
-        if (v !== void 0 && v !== def) parts.push(`${name}: ${v}`);
+        if (v !== void 0 && v === def) return;
+        parts.push(`${name}: ${formatLetExpr(node, options)}`);
       };
       pushMidiField("min", expr.min, 0);
       pushMidiField("max", expr.max, 1);
@@ -11383,9 +11493,293 @@ function oscNoise(t, seed) {
   const n2 = noise2D(loopX + seed * 2, loopY + seed * 2, seed);
   return (n1 + n2) / 2;
 }
-function evaluateOscillator(osc, normalizedTime) {
-  const { oscType, min, max, speed, offset, seed } = osc;
-  const t = normalizedTime * speed + offset;
+var AUTOMATION_FIELD_RANGES = {
+  unit: { min: 0, max: 1 },
+  oscillatorSpeed: { min: -20, max: 20 },
+  oscillatorOffset: { min: -1, max: 1 },
+  oscillatorSeed: { min: 1, max: 9999 },
+  midiSensitivity: { min: 0, max: 10 }
+};
+var MAX_AUTOMATION_DEPTH2 = 8;
+var INTEGRATION_NODES = [
+  -0.9894009349916499,
+  -0.9445750230732326,
+  -0.8656312023878318,
+  -0.755404408355003,
+  -0.6178762444026438,
+  -0.4580167776572274,
+  -0.2816035507792589,
+  -0.0950125098376374,
+  0.0950125098376374,
+  0.2816035507792589,
+  0.4580167776572274,
+  0.6178762444026438,
+  0.755404408355003,
+  0.8656312023878318,
+  0.9445750230732326,
+  0.9894009349916499
+];
+var INTEGRATION_WEIGHTS = [
+  0.0271524594117541,
+  0.0622535239386479,
+  0.0951585116824928,
+  0.1246289712555339,
+  0.1495959888165767,
+  0.1691565193950025,
+  0.1826034150449236,
+  0.1894506104550685,
+  0.1894506104550685,
+  0.1826034150449236,
+  0.1691565193950025,
+  0.1495959888165767,
+  0.1246289712555339,
+  0.0951585116824928,
+  0.0622535239386479,
+  0.0271524594117541
+];
+var INTEGRATION_RULES = [
+  { nodes: INTEGRATION_NODES, weights: INTEGRATION_WEIGHTS },
+  {
+    nodes: [
+      -0.9602898564975363,
+      -0.7966664774136267,
+      -0.525532409916329,
+      -0.1834346424956498,
+      0.1834346424956498,
+      0.525532409916329,
+      0.7966664774136267,
+      0.9602898564975363
+    ],
+    weights: [
+      0.1012285362903763,
+      0.2223810344533745,
+      0.3137066458778873,
+      0.362683783378362,
+      0.362683783378362,
+      0.3137066458778873,
+      0.2223810344533745,
+      0.1012285362903763
+    ]
+  },
+  {
+    nodes: [-0.8611363115940526, -0.3399810435848563, 0.3399810435848563, 0.8611363115940526],
+    weights: [0.3478548451374538, 0.6521451548625461, 0.6521451548625461, 0.3478548451374538]
+  },
+  {
+    nodes: [-0.5773502691896257, 0.5773502691896257],
+    weights: [1, 1]
+  }
+];
+function isAutomationValue(value) {
+  return value && typeof value === "object" && (value.type === "Oscillator" || value.type === "Midi" || value.type === "Audio" || value._ast?.type === "Oscillator" || value._ast?.type === "Midi" || value._ast?.type === "Audio");
+}
+function scaleAutomationValue(value, range) {
+  if (!range || !Number.isFinite(range.min) || !Number.isFinite(range.max)) return value;
+  return range.min + value * (range.max - range.min);
+}
+function resolveAutomationField(value, normalizedTime, range, externalState, depth, stack, fallback, context) {
+  if (isAutomationValue(value)) {
+    return evaluateAutomation(value, normalizedTime, range, externalState, depth + 1, stack, context);
+  }
+  return Number.isFinite(value) ? value : fallback;
+}
+function hasDynamicAutomationFields(config) {
+  const fields = config.type === "Midi" || config._ast?.type === "Midi" ? ["min", "max", "sensitivity"] : ["min", "max"];
+  return fields.some((field) => isAutomationValue(config[field]));
+}
+function oscPrimitive(type, x) {
+  const whole = Math.floor(x);
+  const fraction = x - whole;
+  switch (type) {
+    case 0:
+      return x * 0.5 - Math.sin(x * TAU2) / (2 * TAU2);
+    case 1: {
+      const partial = fraction < 0.5 ? fraction * fraction : 2 * fraction - fraction * fraction - 0.5;
+      return whole * 0.5 + partial;
+    }
+    case 2:
+      return whole * 0.5 + fraction * fraction * 0.5;
+    case 3:
+      return x - (whole * 0.5 + fraction * fraction * 0.5);
+    case 4:
+      return whole * 0.5 + Math.max(0, fraction - 0.5);
+    default:
+      return null;
+  }
+}
+function canIntegrateOscillatorExactly(config) {
+  return config.oscType >= 0 && config.oscType <= 4 && [config.min, config.max, config.speed, config.offset, config.seed].every(Number.isFinite);
+}
+function integrateSimpleOscillator(config, normalizedTime) {
+  const { oscType, min, max, speed, offset } = config;
+  if (speed === 0) {
+    return evaluateOscillator(config, 0, null, 0, /* @__PURE__ */ new Set()) * normalizedTime;
+  }
+  const start = oscPrimitive(oscType, offset);
+  const end = oscPrimitive(oscType, offset + speed * normalizedTime);
+  const rawIntegral = (end - start) / speed;
+  return min * normalizedTime + (max - min) * rawIntegral;
+}
+function integrateAutomation(config, normalizedTime, range, externalState, depth, stack, context) {
+  let integral;
+  if ((config.type === "Oscillator" || config._ast?.type === "Oscillator") && canIntegrateOscillatorExactly(config)) {
+    integral = integrateSimpleOscillator(config, normalizedTime);
+  } else if ((config.type === "Midi" || config.type === "Audio" || config._ast?.type === "Midi" || config._ast?.type === "Audio") && !hasDynamicAutomationFields(config)) {
+    integral = evaluateAutomation(
+      config,
+      normalizedTime,
+      null,
+      externalState,
+      depth + 1,
+      stack,
+      context
+    ) * normalizedTime;
+  } else {
+    const rule = INTEGRATION_RULES[Math.min(depth, INTEGRATION_RULES.length - 1)];
+    const midpoint = normalizedTime * 0.5;
+    const halfWidth = normalizedTime * 0.5;
+    let sum = 0;
+    for (let i = 0; i < rule.nodes.length; i++) {
+      const sampleTime = midpoint + halfWidth * rule.nodes[i];
+      sum += rule.weights[i] * evaluateAutomation(
+        config,
+        sampleTime,
+        null,
+        externalState,
+        depth + 1,
+        stack,
+        context
+      );
+    }
+    integral = halfWidth * sum;
+  }
+  if (!range || !Number.isFinite(range.min) || !Number.isFinite(range.max)) return integral;
+  return range.min * normalizedTime + integral * (range.max - range.min);
+}
+function evaluateAutomation(config, normalizedTime, range, externalState, depth = 0, stack = /* @__PURE__ */ new Set(), context = { wallTime: Date.now() }) {
+  if (!isAutomationValue(config) || depth > MAX_AUTOMATION_DEPTH2 || stack.has(config)) {
+    return scaleAutomationValue(0, range);
+  }
+  stack.add(config);
+  let value;
+  try {
+    if (config.type === "Oscillator" || config._ast?.type === "Oscillator") {
+      value = evaluateOscillator(config, normalizedTime, externalState, depth, stack, context);
+    } else if (config.type === "Midi" || config._ast?.type === "Midi") {
+      const midiState = externalState?.midi?.getPortState ? externalState.midi.getPortState(config) : externalState?.midi;
+      const min = resolveAutomationField(
+        config.min,
+        normalizedTime,
+        AUTOMATION_FIELD_RANGES.unit,
+        externalState,
+        depth,
+        stack,
+        0,
+        context
+      );
+      const max = resolveAutomationField(
+        config.max,
+        normalizedTime,
+        AUTOMATION_FIELD_RANGES.unit,
+        externalState,
+        depth,
+        stack,
+        1,
+        context
+      );
+      const sensitivity = resolveAutomationField(
+        config.sensitivity,
+        normalizedTime,
+        AUTOMATION_FIELD_RANGES.midiSensitivity,
+        externalState,
+        depth,
+        stack,
+        1,
+        context
+      );
+      value = evaluateMidi(config, midiState, context.wallTime, min, max, sensitivity);
+    } else if (config._invalid) {
+      value = Number.isFinite(config.min) ? config.min : 0;
+    } else {
+      const min = resolveAutomationField(
+        config.min,
+        normalizedTime,
+        AUTOMATION_FIELD_RANGES.unit,
+        externalState,
+        depth,
+        stack,
+        0,
+        context
+      );
+      const max = resolveAutomationField(
+        config.max,
+        normalizedTime,
+        AUTOMATION_FIELD_RANGES.unit,
+        externalState,
+        depth,
+        stack,
+        1,
+        context
+      );
+      value = evaluateAudio(config, externalState?.audio, min, max);
+    }
+  } finally {
+    stack.delete(config);
+  }
+  return scaleAutomationValue(value, range);
+}
+function evaluateOscillator(osc, normalizedTime, externalState, depth = 0, stack = /* @__PURE__ */ new Set(), context) {
+  const { oscType } = osc;
+  const min = resolveAutomationField(
+    osc.min,
+    normalizedTime,
+    AUTOMATION_FIELD_RANGES.unit,
+    externalState,
+    depth,
+    stack,
+    0,
+    context
+  );
+  const max = resolveAutomationField(
+    osc.max,
+    normalizedTime,
+    AUTOMATION_FIELD_RANGES.unit,
+    externalState,
+    depth,
+    stack,
+    1,
+    context
+  );
+  const offset = resolveAutomationField(
+    osc.offset,
+    normalizedTime,
+    AUTOMATION_FIELD_RANGES.oscillatorOffset,
+    externalState,
+    depth,
+    stack,
+    0,
+    context
+  );
+  const seed = resolveAutomationField(
+    osc.seed,
+    normalizedTime,
+    AUTOMATION_FIELD_RANGES.oscillatorSeed,
+    externalState,
+    depth,
+    stack,
+    1,
+    context
+  );
+  const phase = isAutomationValue(osc.speed) ? integrateAutomation(
+    osc.speed,
+    normalizedTime,
+    AUTOMATION_FIELD_RANGES.oscillatorSpeed,
+    externalState,
+    depth,
+    stack,
+    context
+  ) : normalizedTime * (Number.isFinite(osc.speed) ? osc.speed : 1);
+  const t = phase + offset;
   let value;
   switch (oscType) {
     case 0:
@@ -11411,10 +11805,10 @@ function evaluateOscillator(osc, normalizedTime) {
   }
   return min + value * (max - min);
 }
-function evaluateMidi(config, midiState, currentTime) {
-  if (!midiState) return config.min;
+function evaluateMidi(config, midiState, currentTime, min = config.min, max = config.max, sensitivity = config.sensitivity) {
+  if (!midiState) return min;
   const channel = midiState.getChannel(config.channel);
-  const { mode, min, max, sensitivity } = config;
+  const { mode } = config;
   let rawValue = 0;
   switch (mode) {
     case 0:
@@ -11452,10 +11846,10 @@ function evaluateMidi(config, midiState, currentTime) {
   const normalized = rawValue / 127;
   return min + normalized * (max - min);
 }
-function evaluateAudio(config, audioState) {
-  if (config._invalid) return config.min;
-  if (!audioState) return config.min;
-  const { band, min, max } = config;
+function evaluateAudio(config, audioState, min = config.min, max = config.max) {
+  if (config._invalid) return min;
+  if (!audioState) return min;
+  const { band } = config;
   const hasDeviceSelector = !!(config.name || config.id || config.channel !== void 0);
   const selectedState = hasDeviceSelector ? audioState.getDeviceChannelState?.(config) : audioState;
   if (!selectedState) return min;
@@ -11774,6 +12168,8 @@ var Pipeline = class {
         const hasSelectorIntent = value.name !== void 0 || value.id !== void 0 || value.channel !== void 0 || source.name !== void 0 || source.id !== void 0 || source.channel !== void 0;
         const hasValidBand = value._invalid !== true && Number.isInteger(value.band) && value.band >= 0 && value.band <= 4;
         if (!hasValidBand) return;
+        visit(value.min);
+        visit(value.max);
         if (typeof value.name === "string" && value.name.length > 0 && Number.isInteger(value.channel) && value.channel >= 1) {
           const requirement = {
             id: typeof value.id === "string" && value.id.length > 0 ? value.id : null,
@@ -12221,7 +12617,7 @@ var Pipeline = class {
    * @returns {boolean} True if this is an automation config
    */
   isAutomationConfig(value) {
-    return value && typeof value === "object" && (value.type === "Oscillator" || value.type === "Midi" || value.type === "Audio" || value._ast?.type === "Oscillator" || value._ast?.type === "Midi" || value._ast?.type === "Audio");
+    return isAutomationValue(value);
   }
   /**
    * Set tile region for tiled large-resolution rendering.
@@ -12610,22 +13006,8 @@ var Pipeline = class {
    * @returns {any} The resolved value
    */
   resolveUniformValue(value, time, paramSpec) {
-    if (!value || typeof value !== "object") return value;
-    let pct;
-    if (value.type === "Oscillator" || value._ast?.type === "Oscillator") {
-      pct = evaluateOscillator(value, time);
-    } else if (value.type === "Midi" || value._ast?.type === "Midi") {
-      const midiState = this.externalState.midi?.getPortState ? this.externalState.midi.getPortState(value) : this.externalState.midi;
-      pct = evaluateMidi(value, midiState, Date.now());
-    } else if (value.type === "Audio" || value._ast?.type === "Audio") {
-      pct = evaluateAudio(value, this.externalState.audio);
-    } else {
-      return value;
-    }
-    if (paramSpec) {
-      return paramSpec.min + pct * (paramSpec.max - paramSpec.min);
-    }
-    return pct;
+    if (!isAutomationValue(value)) return value;
+    return evaluateAutomation(value, time, paramSpec, this.externalState);
   }
   /**
    * Resolve all oscillators in pass uniforms for the current frame.

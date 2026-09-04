@@ -227,6 +227,46 @@ render(o0)`)
   })
 })
 
+test('pinned core preserves and evaluates nested automation sources', async () => {
+  installTestDomShim()
+  const runtime = await import('../src/runtime/engine.js')
+
+  const graph = await runtime.compileProgram(`search synth
+let rate = osc(type: oscKind.sine)
+let carrier = osc(type: oscKind.saw, speed: rate)
+let inner = audio(
+  band: audioBand.raw,
+  channel: 2,
+  name: "Inner Interface",
+  id: "inner-id"
+)
+let outer = audio(
+  band: audioBand.low,
+  min: inner,
+  channel: 1,
+  name: "Outer Interface",
+  id: "outer-id"
+)
+noise(scaleX: carrier, scaleY: outer).write(o0)
+render(o0)`)
+  const pipeline = new runtime.Pipeline(graph, null)
+  const uniforms = graph.passes[0].uniforms
+
+  assert.equal(uniforms.scaleX.speed.type, 'Oscillator')
+  assert.equal(uniforms.scaleX.speed._varRef, 'rate')
+  assert.equal(uniforms.scaleY.min.type, 'Audio')
+  assert.equal(uniforms.scaleY.min._varRef, 'inner')
+  assert.deepEqual(
+    pipeline.getAudioInputRequirements().selected.map(({ id }) => id).sort(),
+    ['inner-id', 'outer-id'],
+  )
+
+  const expectedQuarter = ((-20 / (Math.PI * 2)) % 1 + 1) % 1
+  assert.ok(
+    Math.abs(pipeline.resolveUniformValue(uniforms.scaleX, 0.25) - expectedQuarter) < 1e-9,
+  )
+})
+
 test('browser bundle is self-contained while preserving caller-requested native fetch', async () => {
   const lock = JSON.parse(await readProjectFile('vendor.lock.json'))
   const bundle = await readProjectFile(
@@ -274,6 +314,14 @@ test('browser bundle is self-contained while preserving caller-requested native 
   assert.equal(typeof context.NoisemakerCablesGL.installProgramOp, 'function')
   assert.equal(typeof context.NoisemakerCablesGL.MidiState, 'function')
   assert.equal(typeof context.NoisemakerCablesGL.AudioState, 'function')
+
+  const nestedGraph = await context.NoisemakerCablesGL.compileProgram(`search synth
+let rate = osc(type: oscKind.sine)
+let carrier = osc(type: oscKind.saw, speed: rate)
+noise(scaleX: carrier).write(o0)
+render(o0)`)
+  assert.equal(nestedGraph.passes[0].uniforms.scaleX.speed.type, 'Oscillator')
+  assert.equal(nestedGraph.passes[0].uniforms.scaleX.speed._varRef, 'rate')
 
   const extensionNames = new Set([
     'EXT_color_buffer_float',
