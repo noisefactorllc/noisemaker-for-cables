@@ -55,6 +55,8 @@ export function installProgramOp(op, env = {}) {
   const renderIn = op.inTrigger('Render', { display: 'button' })
   const dslIn = op.inStringEditor('DSL', DEFAULT_PROGRAM_DSL, 'javascript')
   const inputTextureIn = op.inTexture('Input Texture', null)
+  const midiStateIn = op.inObject('MIDI State', null, 'noisemaker-midi-state')
+  const audioStateIn = op.inObject('Audio State', null, 'noisemaker-audio-state')
   const sizeIn = op.inSwitch('Size', ['Canvas', 'Manual'], 'Canvas', true)
   const widthIn = op.inValueInt('Width', DEFAULT_MANUAL_WIDTH)
   const heightIn = op.inValueInt('Height', DEFAULT_MANUAL_HEIGHT)
@@ -278,6 +280,14 @@ export function installProgramOp(op, env = {}) {
     if (disposed || !controller) return
     handlePromise(() => controller.setInputTexture(inputTextureIn.get() ?? null))
   }
+  midiStateIn.onChange = () => {
+    if (disposed || !controller) return
+    handlePromise(() => controller.setMidiState(midiStateIn.get() ?? null))
+  }
+  audioStateIn.onChange = () => {
+    if (disposed || !controller) return
+    handlePromise(() => controller.setAudioState(audioStateIn.get() ?? null))
+  }
 
   renderIn.onTriggered = () => {
     if (disposed || !controller) return
@@ -328,10 +338,12 @@ export function installProgramOp(op, env = {}) {
     }
     controller = createProgramController({
       CGL,
+      audioState: audioStateIn.get() ?? null,
       capabilityInspector,
       cgl,
       createOutputTexture: env.createOutputTexture ?? createCGLTextureFactory(CGL, cgl),
       engineLoader,
+      midiState: midiStateIn.get() ?? null,
       onStateChange: publishState,
     })
     publishState(controller.getState?.() ?? {})
@@ -351,10 +363,12 @@ export function installProgramOp(op, env = {}) {
   return {
     controller,
     ports: {
+      audioStateIn,
       dslIn,
       errorOut,
       heightIn,
       inputTextureIn,
+      midiStateIn,
       nextOut,
       readyOut,
       renderIn,

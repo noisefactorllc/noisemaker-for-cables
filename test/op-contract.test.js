@@ -54,9 +54,17 @@ function createControllerHarness(initialState = {}) {
       calls.push(['reset'])
       return Promise.resolve(state)
     },
+    setAudioState(audioState) {
+      calls.push(['audio-state', audioState])
+      return state
+    },
     setInputTexture(texture) {
       calls.push(['input', texture])
       return Promise.resolve(state)
+    },
+    setMidiState(midiState) {
+      calls.push(['midi-state', midiState])
+      return state
     },
     setState(nextState) {
       state = { ...state, ...nextState }
@@ -124,6 +132,8 @@ test('installer creates the exact native port contract and one visible initial c
     'Render',
     'DSL',
     'Input Texture',
+    'MIDI State',
+    'Audio State',
     'Size',
     'Width',
     'Height',
@@ -142,6 +152,10 @@ test('installer creates the exact native port contract and one visible initial c
   assert.match(DEFAULT_PROGRAM_DSL, /\.write\(o0\)/)
   assert.match(DEFAULT_PROGRAM_DSL, /render\(o0\)/)
   assert.equal(op.input('DSL').uiAttribs.editorSyntax, 'javascript')
+  assert.equal(op.input('MIDI State').kind, 'object')
+  assert.equal(op.input('MIDI State').objType, 'noisemaker-midi-state')
+  assert.equal(op.input('Audio State').kind, 'object')
+  assert.equal(op.input('Audio State').objType, 'noisemaker-audio-state')
   assert.deepEqual(op.input('Size').choices, ['Canvas', 'Manual'])
   assert.equal(op.input('Size').get(), 'Canvas')
   assert.equal(op.input('Width').get(), 1280)
@@ -154,6 +168,8 @@ test('installer creates the exact native port contract and one visible initial c
   assert.equal(typeof controllerOptions.engineLoader, 'function')
   assert.equal(typeof controllerOptions.onStateChange, 'function')
   assert.equal(typeof controllerOptions.createOutputTexture, 'function')
+  assert.equal(controllerOptions.midiState, null)
+  assert.equal(controllerOptions.audioState, null)
 
   const output = controllerOptions.createOutputTexture({
     height: 18,
@@ -215,14 +231,21 @@ test('synchronous compile-affecting changes coalesce and non-compile ports wire 
   assert.equal(op.input('Height').uiAttribs.greyout, false)
 
   const inputTexture = { tex: 'host-texture' }
+  const midiState = { id: 'midi-state' }
+  const audioState = { id: 'audio-state' }
   op.input('Input Texture').set(inputTexture)
+  op.input('MIDI State').set(midiState)
+  op.input('Audio State').set(audioState)
   assert.equal(op.input('Reset').fire(), undefined)
   await flushPromises()
 
   assert.deepEqual(controller.calls.slice(2), [
     ['input', inputTexture],
+    ['midi-state', midiState],
+    ['audio-state', audioState],
     ['reset'],
   ])
+  assert.equal(scheduler.pendingCount, 0)
 })
 
 test('each configuration snapshots the current linked texture before compiling', async () => {
@@ -772,7 +795,8 @@ test('native wrapper, namespace metadata, op metadata, and docs are distribution
   }])
   assert.ok(Array.isArray(metadata.changelog) && metadata.changelog.length > 0)
   assert.deepEqual(metadata.layout.portsIn.map((port) => port.name), [
-    'Render', 'DSL', 'Input Texture', 'Size', 'Width', 'Height', 'Time', 'Reset',
+    'Render', 'DSL', 'Input Texture', 'MIDI State', 'Audio State',
+    'Size', 'Width', 'Height', 'Time', 'Reset',
   ])
   assert.deepEqual(metadata.layout.portsOut.map((port) => port.name), [
     'Texture', 'Next', 'Ready', 'Error',

@@ -23,6 +23,16 @@
         "objType": "texture"
       },
       {
+        "type": 2,
+        "name": "MIDI State",
+        "objType": "noisemaker-midi-state"
+      },
+      {
+        "type": 2,
+        "name": "Audio State",
+        "objType": "noisemaker-audio-state"
+      },
+      {
         "type": 5,
         "name": "Size",
         "values": [
@@ -84,6 +94,14 @@
       {
         "name": "Input Texture",
         "text": "Optional Cables texture used by every media() step."
+      },
+      {
+        "name": "MIDI State",
+        "text": "Optional Noisemaker MidiState used by midi() automation, including device selectors."
+      },
+      {
+        "name": "Audio State",
+        "text": "Optional Noisemaker AudioState used by audio() automation, including device and channel selectors."
       },
       {
         "name": "Size",

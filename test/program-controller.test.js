@@ -218,6 +218,16 @@ function createHarness(options = {}) {
       return this.graph.programs.get(pass.program)
     }
 
+    setMidiState(midiState) {
+      cpu(`midi-state:${this.graph.dsl}`)
+      this.midiState = midiState
+    }
+
+    setAudioState(audioState) {
+      cpu(`audio-state:${this.graph.dsl}`)
+      this.audioState = audioState
+    }
+
     resize(width, height) {
       gpu(`resize:${this.graph.dsl}:${width}x${height}`)
       this.backend.width = width
@@ -380,6 +390,7 @@ function createHarness(options = {}) {
 
   controller = createProgramController({
     CGL,
+    audioState: options.audioState,
     backendFactory,
     bindInputTexture,
     capabilityInspector: options.capabilityInspector,
@@ -388,6 +399,7 @@ function createHarness(options = {}) {
     createOutputTexture,
     destroyOutputTexture,
     engineLoader,
+    midiState: options.midiState,
     onStateChange,
     outputCopierFactory,
     prepareGLState,
@@ -590,6 +602,48 @@ test('context loss performs no GL work and restoration rebuilds last-good DSL be
   assert.notEqual(restored.texture, null)
   assert.deepEqual(restored.activeSize, { height: 96, width: 96 })
   assert.equal(harness.compileCalls.at(-1), 'last good dsl')
+})
+
+test('external input states persist across active, in-flight, and restored pipelines', async () => {
+  const initialMidiState = { id: 'midi-initial' }
+  const initialAudioState = { id: 'audio-initial' }
+  const nextMidiState = { id: 'midi-next' }
+  const nextAudioState = { id: 'audio-next' }
+  const initDeferred = new Map([['second dsl', deferred()]])
+  const harness = createHarness({
+    audioState: initialAudioState,
+    initDeferred,
+    midiState: initialMidiState,
+  })
+
+  await harness.controller.setProgram('first dsl')
+  assert.equal(harness.pipelines[0].midiState, initialMidiState)
+  assert.equal(harness.pipelines[0].audioState, initialAudioState)
+
+  const building = harness.controller.setProgram('second dsl')
+  await waitImmediate()
+  assert.equal(harness.pipelines.length, 2)
+
+  harness.controller.setMidiState(nextMidiState)
+  harness.controller.setAudioState(nextAudioState)
+  assert.equal(harness.pipelines[0].midiState, nextMidiState)
+  assert.equal(harness.pipelines[0].audioState, nextAudioState)
+  assert.equal(harness.pipelines[1].midiState, nextMidiState)
+  assert.equal(harness.pipelines[1].audioState, nextAudioState)
+
+  initDeferred.get('second dsl').resolve()
+  await building
+  harness.controller.handleContextLost()
+  await harness.controller.handleContextRestored()
+
+  const restored = harness.pipelines.at(-1)
+  assert.equal(restored.midiState, nextMidiState)
+  assert.equal(restored.audioState, nextAudioState)
+
+  harness.controller.setMidiState(null)
+  harness.controller.setAudioState(null)
+  assert.equal(restored.midiState, null)
+  assert.equal(restored.audioState, null)
 })
 
 test('restoration rebuilds last-good state and then replays the newest DSL edited while context-lost', async () => {

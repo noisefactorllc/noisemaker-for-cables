@@ -178,10 +178,12 @@ test('pinned core exposes renderer sinks and bounded WebGL2 frame export', async
 
 test('pinned core supports device-qualified MIDI and audio automation', async () => {
   installTestDomShim()
-  const core = await import('../vendor-cache/noisemaker-shaders-core.esm.js')
-  const { compileProgram } = await import('../src/runtime/engine.js')
+  const runtime = await import('../src/runtime/engine.js')
+  const loaded = await runtime.loadEngine()
+  assert.equal(loaded.MidiState, runtime.MidiState)
+  assert.equal(loaded.AudioState, runtime.AudioState)
 
-  const midi = new core.MidiState()
+  const midi = new runtime.MidiState()
   midi.handleMessage(
     new Uint8Array([0x90, 60, 96]),
     { id: 'controller-a', name: 'Launch Control XL' },
@@ -194,7 +196,7 @@ test('pinned core supports device-qualified MIDI and audio automation', async ()
   assert.equal(midi.getPortState({ id: 'controller-a' }).getChannel(1).key, 60)
   assert.equal(midi.getPortState({ name: 'Launch Control XL' }), null)
 
-  const audio = new core.AudioState()
+  const audio = new runtime.AudioState()
   audio.registerDevice({ id: 'interface-b', name: 'Interface', channelCount: 2 })
   audio.setChannelValues('interface-b', 2, { low: 0.25, raw: -0.5 })
   const channel = audio.getDeviceChannelState({
@@ -206,13 +208,13 @@ test('pinned core supports device-qualified MIDI and audio automation', async ()
   assert.equal(channel.raw, -0.5)
   assert.equal(channel.rawReady, true)
 
-  const graph = await compileProgram(`search synth
+  const graph = await runtime.compileProgram(`search synth
 noise(
   scaleX: audio(band: audioBand.raw, channel: 2, name: "Interface", id: "interface-b"),
   scaleY: midi(channel: 1, name: "Launch Control XL", id: "controller-a")
 ).write(o0)
 render(o0)`)
-  const requirements = new core.Pipeline(graph, null).getAudioInputRequirements()
+  const requirements = new loaded.Pipeline(graph, null).getAudioInputRequirements()
   assert.deepEqual(requirements, {
     needsLegacy: false,
     needsLegacyRaw: false,
@@ -263,11 +265,15 @@ test('browser bundle is self-contained while preserving caller-requested native 
   assert.equal(loaded.catalogInfo.effectCount, lock.effectCount)
   assert.equal(typeof loaded.Pipeline.prototype.addSink, 'function')
   assert.equal(typeof loaded.Pipeline.prototype.getAudioInputRequirements, 'function')
+  assert.equal(typeof loaded.MidiState, 'function')
+  assert.equal(typeof loaded.AudioState, 'function')
   assert.equal(typeof loaded.WebGL2Backend.prototype.createFrameExportQueue, 'function')
   assert.equal(typeof context.NoisemakerCablesGL.compileProgram, 'function')
   assert.equal(typeof context.NoisemakerCablesGL.createProgramController, 'function')
   assert.equal(typeof context.NoisemakerCablesGL.inspectCapabilities, 'function')
   assert.equal(typeof context.NoisemakerCablesGL.installProgramOp, 'function')
+  assert.equal(typeof context.NoisemakerCablesGL.MidiState, 'function')
+  assert.equal(typeof context.NoisemakerCablesGL.AudioState, 'function')
 
   const extensionNames = new Set([
     'EXT_color_buffer_float',

@@ -239,6 +239,7 @@ async function defaultBackendFactory(options) {
 
 export function createProgramController({
   CGL = globalThis.CGL,
+  audioState = null,
   backendFactory,
   bindInputTexture = bindExternalTexture,
   capabilityInspector = inspectCapabilities,
@@ -247,6 +248,7 @@ export function createProgramController({
   createOutputTexture,
   destroyOutputTexture = destroyCGLTexture,
   engineLoader = defaultEngineLoader,
+  midiState = null,
   onStateChange,
   outputCopierFactory = createOutputCopier,
   prepareGLState = prepareNoisemakerGLState,
@@ -273,6 +275,12 @@ export function createProgramController({
     throw new TypeError('prepareGLState must be a function')
   }
   if (typeof stateGuard !== 'function') throw new TypeError('stateGuard must be a function')
+  if (audioState !== null && typeof audioState !== 'object') {
+    throw new TypeError('audioState must be an object or null')
+  }
+  if (midiState !== null && typeof midiState !== 'object') {
+    throw new TypeError('midiState must be an object or null')
+  }
 
   const gl = cgl.gl
   const targetCanvas = canvas ?? cgl.canvas ?? gl.canvas
@@ -298,7 +306,9 @@ export function createProgramController({
   }
 
   let activeCandidate = null
+  let currentAudioState = audioState
   let currentInputTexture = null
+  let currentMidiState = midiState
   let desiredChangedWhileContextLost = false
   let disposalPromise = null
   let gpuTail = Promise.resolve()
@@ -374,6 +384,30 @@ export function createProgramController({
   function isCurrentCandidate(candidate) {
     return !candidate.disposed &&
       isCurrent(candidate.generation, candidate.epoch)
+  }
+
+  function attachInputStates(pipeline) {
+    pipeline.setMidiState(currentMidiState)
+    pipeline.setAudioState(currentAudioState)
+  }
+
+  function setExternalInputState(kind, value) {
+    if (state.lifecycle === 'disposed') return snapshot()
+    const normalized = value ?? null
+    if (normalized !== null && typeof normalized !== 'object') {
+      throw new TypeError(`${kind}State must be an object or null`)
+    }
+    if (kind === 'midi') currentMidiState = normalized
+    else currentAudioState = normalized
+
+    const candidates = new Set(inFlightCandidates)
+    if (activeCandidate) candidates.add(activeCandidate)
+    for (const candidate of candidates) {
+      if (candidate.disposed) continue
+      if (kind === 'midi') candidate.pipeline.setMidiState(normalized)
+      else candidate.pipeline.setAudioState(normalized)
+    }
+    return snapshot()
   }
 
   function ensureOutputCopier() {
@@ -647,6 +681,7 @@ export function createProgramController({
         size: null,
       }
       inFlightCandidates.add(candidate)
+      attachInputStates(pipeline)
 
       if (!await initializeCandidate(candidate, requestedSize)) {
         publishCandidateCleanupFailure(candidate, await disposeCandidate(candidate))
@@ -987,7 +1022,9 @@ export function createProgramController({
     handleContextRestored,
     render,
     reset: rebuildActiveProgram,
+    setAudioState: (value) => setExternalInputState('audio', value),
     setInputTexture,
+    setMidiState: (value) => setExternalInputState('midi', value),
     setProgram: (dsl) => configure({ dsl }),
     setSize: (size) => configure({ size }),
   }

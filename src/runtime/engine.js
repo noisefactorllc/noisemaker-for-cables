@@ -1,4 +1,6 @@
 import {
+  AudioState,
+  MidiState,
   Pipeline,
   WebGL2Backend,
   compileGraph,
@@ -34,6 +36,8 @@ export async function compileProgram(dsl, options) {
 }
 
 const loadedEngine = Object.freeze({
+  AudioState,
+  MidiState,
   Pipeline,
   WebGL2Backend,
   catalogInfo,
@@ -45,4 +49,4 @@ export async function loadEngine() {
   return loadedEngine
 }
 
-export { Pipeline, WebGL2Backend }
+export { AudioState, MidiState, Pipeline, WebGL2Backend }

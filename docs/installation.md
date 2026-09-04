@@ -34,6 +34,10 @@ reset, and delete/recreate, and writes its ignored evidence under
 - **DSL** is a complete multiline Polymorphic program.
 - **Input Texture** supplies the same optional CGL texture to every `media()`
   step without CPU transfer.
+- **MIDI State** accepts an externally managed `NoisemakerCablesGL.MidiState`
+  object for `midi()` automation and device selection.
+- **Audio State** accepts an externally managed `NoisemakerCablesGL.AudioState`
+  object for `audio()` automation, device/channel selection, and raw samples.
 - **Size** chooses **Canvas** or **Manual** dimensions.
 - **Width** and **Height** apply in Manual mode and are clamped to GPU limits.
 - **Time** is passed unchanged to the Noisemaker pipeline.
@@ -90,3 +94,8 @@ block, and 8 uniform-buffer bindings. Unsupported capabilities fail before
 Version 1 targets Cables CGL/WebGL2 and Standalone 0.11.0. Cables CGP/WebGPU,
 generated one-op-per-effect authoring nodes, multiple independent media input
 ports, and a second offscreen rendering context are not included.
+
+The Program op does not request browser MIDI or microphone permissions. A host
+or companion Cables op owns capture, updates the linked state object, and may
+replace or disconnect it at any time. Linked state survives program rebuilds,
+reset, and WebGL context restoration.

@@ -135,6 +135,11 @@ export function createFakeCablesOp({ canvasHeight = 360, canvasWidth = 640 } = {
     addPort('input', 'string-editor', name, defaultValue)
   op.inTexture = (name, defaultValue = null) =>
     addPort('input', 'texture', name, defaultValue)
+  op.inObject = (name, defaultValue = null, objType) => {
+    const port = addPort('input', 'object', name, defaultValue)
+    port.objType = objType
+    return port
+  }
   op.inSwitch = (name, choices, defaultValue) =>
     addPort('input', 'switch', name, defaultValue, choices)
   op.inValueInt = (name, defaultValue = 0) =>

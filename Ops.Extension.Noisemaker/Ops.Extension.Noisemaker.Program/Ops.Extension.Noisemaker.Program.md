@@ -16,6 +16,12 @@ The optional **Input Texture** is bound without copying to every `media()` step
 in the program. Disconnecting or replacing it never deletes the Cables-owned
 input texture.
 
+Connect externally managed `NoisemakerCablesGL.MidiState` and
+`NoisemakerCablesGL.AudioState` objects to **MIDI State** and **Audio State** to
+drive `midi()` and `audio()` automation. The producer owns capture and browser
+permissions; the Program op preserves the linked objects across rebuilds,
+reset, and WebGL context restoration.
+
 The default DSL produces a deterministic noise image. A complete program names
 its output and render surface, for example:
 
