@@ -24,9 +24,9 @@ Tested with Cables Standalone 0.11.0.
 
 1. Open `patch/program.cables`.
 2. Add the `extension/` folder from this export as a project op directory (Settings, then op
-   directories), and reload the patch.
-3. `Ops.Extension.Noisemaker.Program` comes up with your program in its **DSL** port, and the
-   preview starts once **Ready** goes true.
+   directories). Reload the patch.
+3. `Ops.Extension.Noisemaker.Program` opens with your program in its **DSL** port.
+   The preview starts once **Ready** is true.
 
 Step 2 is not optional. The op is not published to the cables op registry, so a patch that cannot
 see `extension/` opens with the Noisemaker op missing.
@@ -58,24 +58,27 @@ This export targets Noisemaker `{{NM_ENGINE_VERSION}}`. That version governs the
 under `shaders/` and the build recorded in `noisedeck-export.json`.
 
 What actually renders the patch is `lib_noisemaker-cablesgl.js`, the engine bundle inside the op. It
-carries no version marker of its own; it is pinned by the revision this kit was built from, recorded
-as `kitSha` in `noisedeck-export.json`. So the two can differ by a build, and the patch may not
+carries no version marker of its own. The revision used to build this kit pins the bundle.
+`kitSha` in `noisedeck-export.json` records that revision. So the two can differ by a build, and the patch may not
 match the app pixel for pixel. Both are pinned deliberately: whichever way they sit today, the
 export keeps rendering the same way after the engine moves on.
 
 ## Editing the program
 
-In the editor the program is the Program op's **DSL** port. Edits recompile as you type, and
-compilation is transactional: an invalid program fills the **Error** port and leaves the last good
-pipeline rendering, so the canvas never goes black while you work.
+In the editor, the program is the Program op's **DSL** port. Edits recompile as you type.
+Compilation is transactional: an invalid program fills the **Error** port and leaves the last good pipeline rendering.
+The canvas never goes black while you work.
 
 In the player the program is `standalone/js/program.json`. Find the op whose `objName` is
 `Ops.Extension.Noisemaker.Program` and edit the `DSL` entry of its `portsIn` array.
 
-The other ports worth knowing: **Render** takes a per-frame trigger, **Time** takes a clock,
-**Size** switches between the cables canvas and manual **Width** and **Height**, **Input Texture**
-feeds one cables texture to every `media()` step in your program, and **Reset** clears feedback and
-simulation state.
+The other ports are:
+
+- **Render** takes a per-frame trigger.
+- **Time** takes a clock.
+- **Size** switches between the cables canvas and manual **Width** and **Height**.
+- **Input Texture** feeds one cables texture to every `media()` step in your program.
+- **Reset** clears feedback and simulation state.
 
 ## Effects used by this program
 
@@ -90,6 +93,6 @@ cables CGP (WebGPU) is not a target of this op.
 
 ## License
 
-The Noisemaker engine and the cables op are MIT licensed; see `LICENSES/`. `standalone/LICENCE` is
+The Noisemaker engine and the cables op are MIT licensed. See `LICENSES/`. `standalone/LICENCE` is
 the cables player's own license, shipped with the runtime it covers. Your program and the imagery it
 renders are yours.
