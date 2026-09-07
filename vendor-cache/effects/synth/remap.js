@@ -1,8 +1,8 @@
 /* synth/remap */
-var l=class{constructor(e={}){this.state={},this.uniforms={},e.name&&(this.name=e.name),e.namespace&&(this.namespace=e.namespace),e.func&&(this.func=e.func),e.description&&(this.description=e.description),e.tags&&(this.tags=e.tags),e.globals&&(this.globals=e.globals),e.passes&&(this.passes=e.passes),e.textures&&(this.textures=e.textures),e.outputTex3d&&(this.outputTex3d=e.outputTex3d),e.outputGeo&&(this.outputGeo=e.outputGeo),e.uniformLayout&&(this.uniformLayout=e.uniformLayout),e.uniformLayouts&&(this.uniformLayouts=e.uniformLayouts),e.paramAliases&&(this.paramAliases=e.paramAliases),e.openCategories&&(this.openCategories=e.openCategories),e.defaultProgram&&(this.defaultProgram=e.defaultProgram),e.hidden&&(this.hidden=!0),e.deprecatedBy&&(this.deprecatedBy=e.deprecatedBy),e.onInit&&(this._configOnInit=e.onInit),e.onUpdate&&(this._configOnUpdate=e.onUpdate),e.onDestroy&&(this._configOnDestroy=e.onDestroy),e.asyncInit&&(this._configAsyncInit=e.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(e){return this._configOnUpdate?this._configOnUpdate.call(this,e):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(e){return this._configAsyncInit?this._configAsyncInit.call(this,e):Promise.resolve()}};var s=8,i=64,d=(()=>{let n={bgColor:{slot:0,components:"xyz"},bgAlpha:{slot:0,components:"w"},zoneCount:{slot:1,components:"x"},smoothEdge:{slot:1,components:"y"},time:{slot:1,components:"w"},resolution:{slot:10+s*(i/2),components:"xy"}};for(let e=0;e<s;e++){let a=2+e;n[`zone${e}_count`]={slot:a,components:"x"},n[`zone${e}_active`]={slot:a,components:"y"},n[`zone${e}_alpha`]={slot:a,components:"w"};for(let t=0;t<i/2;t++){let o=10+e*(i/2)+t;n[`zone${e}_v${t}`]={slot:o,components:"xyzw"}}}return n})(),c=(()=>{let n={};for(let e=0;e<s;e++)n[`zone${e}_tex`]=`zone${e}_tex`;return n})(),r=new l({name:"Remap",namespace:"synth",func:"remap",tags:["geometric","blend"],description:"Polygon zones routed to engine surfaces (companion to the Remap zone-editor app)",openCategories:["general"],uniformLayout:d,globals:{zoneCount:{type:"int",default:0,uniform:"zoneCount",min:0,max:s,step:1,ui:{label:"zone count",control:"slider"}},bgColor:{type:"color",default:[0,0,0],uniform:"bgColor",ui:{label:"background",control:"color"}},bgAlpha:{type:"float",default:1,uniform:"bgAlpha",min:0,max:1,ui:{label:"background alpha",control:"slider"}},smoothEdge:{type:"float",default:.04,uniform:"smoothEdge",min:0,max:1,step:.01,ui:{label:"edge smoothing",control:"slider"}},...f()},defaultProgram:`search synth
+var l=class{constructor(e={}){this.state={},this.uniforms={},e.name&&(this.name=e.name),e.namespace&&(this.namespace=e.namespace),e.func&&(this.func=e.func),e.description&&(this.description=e.description),e.tags&&(this.tags=e.tags),e.globals&&(this.globals=e.globals),e.passes&&(this.passes=e.passes),e.textures&&(this.textures=e.textures),e.outputTex3d&&(this.outputTex3d=e.outputTex3d),e.outputGeo&&(this.outputGeo=e.outputGeo),e.uniformLayout&&(this.uniformLayout=e.uniformLayout),e.uniformLayouts&&(this.uniformLayouts=e.uniformLayouts),e.paramAliases&&(this.paramAliases=e.paramAliases),e.openCategories&&(this.openCategories=e.openCategories),e.defaultProgram&&(this.defaultProgram=e.defaultProgram),e.hidden&&(this.hidden=!0),e.deprecatedBy&&(this.deprecatedBy=e.deprecatedBy),e.onInit&&(this._configOnInit=e.onInit),e.onUpdate&&(this._configOnUpdate=e.onUpdate),e.onDestroy&&(this._configOnDestroy=e.onDestroy),e.asyncInit&&(this._configAsyncInit=e.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(e){return this._configOnUpdate?this._configOnUpdate.call(this,e):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(e){return this._configAsyncInit?this._configAsyncInit.call(this,e):Promise.resolve()}};var s=8,a=64,d=(()=>{let n={bgColor:{slot:0,components:"xyz"},bgAlpha:{slot:0,components:"w"},zoneCount:{slot:1,components:"x"},smoothEdge:{slot:1,components:"y"},time:{slot:1,components:"w"},resolution:{slot:10+s*(a/2),components:"xy"}};for(let e=0;e<s;e++){let i=2+e;n[`zone${e}_count`]={slot:i,components:"x"},n[`zone${e}_active`]={slot:i,components:"y"},n[`zone${e}_alpha`]={slot:i,components:"w"};for(let t=0;t<a/2;t++){let o=10+e*(a/2)+t;n[`zone${e}_v${t}`]={slot:o,components:"xyzw"}}}return n})(),p=(()=>{let n={};for(let e=0;e<s;e++)n[`zone${e}_tex`]=`zone${e}_tex`;return n})(),r=new l({name:"Remap",namespace:"synth",func:"remap",tags:["geometric","blend"],description:"Polygon zones routed to engine surfaces (companion to the Remap zone-editor app)",openCategories:["general"],uniformLayout:d,globals:{zoneCount:{type:"int",default:0,uniform:"zoneCount",min:0,max:s,step:1,ui:{label:"zone count",control:"slider"}},bgColor:{type:"color",default:[0,0,0],uniform:"bgColor",ui:{label:"background",control:"color"}},bgAlpha:{type:"float",default:1,uniform:"bgAlpha",min:0,max:1,ui:{label:"background alpha",control:"slider"}},smoothEdge:{type:"float",default:.04,uniform:"smoothEdge",min:0,max:1,step:.01,ui:{label:"edge smoothing",control:"slider"}},...f()},defaultProgram:`search synth
 
 remap(bgColor: #336699, bgAlpha: 1)
-  .write(o0)`,passes:[{name:"render",program:"remap",inputs:c,outputs:{fragColor:"outputTex"}}]});function f(){let n={};for(let e=0;e<s;e++){let a={enabledBy:{param:"zoneCount",gt:e}},t=`zone ${e+1}`;n[`zone${e}_tex`]={type:"surface",default:"none",colorModeUniform:`zone${e}_active`,ui:{label:`zone ${e+1} source`,category:t,...a}},n[`zone${e}_count`]={type:"int",default:0,uniform:`zone${e}_count`,min:0,max:i,ui:{label:"vertices",control:"slider",hidden:!0,category:t,...a}},n[`zone${e}_alpha`]={type:"float",default:1,uniform:`zone${e}_alpha`,min:0,max:1,ui:{label:"alpha",control:"slider",category:t,...a}};for(let o=0;o<i/2;o++)n[`zone${e}_v${o}`]={type:"vec4",default:[0,0,0,0],uniform:`zone${e}_v${o}`,ui:{label:`verts ${o*2}\u2013${o*2+1}`,control:"slider",hidden:!0,category:t}}}return n}var u={remap:{glsl:`/**
+  .write(o0)`,passes:[{name:"render",program:"remap",inputs:p,outputs:{fragColor:"outputTex"}}]});function f(){let n={};for(let e=0;e<s;e++){let i={enabledBy:{param:"zoneCount",gt:e}},t=`zone ${e+1}`;n[`zone${e}_tex`]={type:"surface",default:"none",colorModeUniform:`zone${e}_active`,ui:{label:`zone ${e+1} source`,category:t,...i}},n[`zone${e}_count`]={type:"int",default:0,uniform:`zone${e}_count`,min:0,max:a,ui:{label:"vertices",control:"slider",hidden:!0,category:t,...i}},n[`zone${e}_alpha`]={type:"float",default:1,uniform:`zone${e}_alpha`,min:0,max:1,ui:{label:"alpha",control:"slider",category:t,...i}};for(let o=0;o<a/2;o++)n[`zone${e}_v${o}`]={type:"vec4",default:[0,0,0,0],uniform:`zone${e}_v${o}`,ui:{label:`verts ${o*2}\u2013${o*2+1}`,control:"slider",hidden:!0,format:"vector",category:t}}}return n}var u={remap:{glsl:`/**
  * Remap - GLSL fragment shader
  *
  * For each pixel, walks active zones (vertexCount >= 3 and source wired)
@@ -312,25 +312,25 @@ fn fragmentMain(@builtin(position) fragCoord: vec4<f32>) -> @location(0) vec4<f3
 
     return result;
 }
-`}},p=`# synth/remap
+`}},c=`# synth/remap
 
-Polygon-zone router that pairs with the Remap zone-editor app.
+Polygon-zone router with live canvas editing in Noisedeck.
 
 ## Overview
 
 Each pixel is tested against up to eight polygon zones. The first zone that contains the pixel decides which engine surface is sampled. Pixels outside every active zone \u2014 and pixels in zones whose source isn't wired \u2014 show the background color. Each zone has its own alpha and an edge smoothing factor blends adjacent zones smoothly.
 
-This effect is the rendering counterpart to the [Remap web app](https://remap.noisedeck.app), which produces a portable JSON describing the zones. Apply the parameters via \`applyStepParameterValues\`, then wire each zone's source surface in DSL with \`zoneN_tex: read(oN)\`.
+In Noisedeck, edit zones directly over the live canvas from the Remap effect. Existing \`.remap.json\` maps can be imported, and the effect exports the same portable version 1 format.
 
 ## Workflow
 
-1. Open the [Remap app](https://remap.noisedeck.app) and paint your zones on the canvas.
-2. From the Export view's **Effect params** tab, copy the parameter object.
-3. In Noisemaker, drop a \`synth/remap\` effect into your composition.
-4. In your DSL, wire each zone's source: \`remap(zone0_tex: read(o0), zone2_tex: read(o5), ...).write(o7)\`.
-5. Apply the polygon parameters via the renderer: \`applyStepParameterValues({ step_N: params })\`.
+1. Add Remap to your Noisedeck composition and choose **edit zones**.
+2. Choose **add zone**, then click points on the live canvas. Click the first point or press Enter to finish; Escape cancels an unfinished shape.
+3. Assign each zone a source using its source control. The mapped image updates as you drag vertices. Click an edge midpoint to insert a vertex; right-click a vertex to remove it.
+4. Set zone names, outline colors, and opacity in the effect controls.
+5. Choose **export remap config** to save the portable map, or **import remap config** to load an existing map.
 
-The shape parameters (\`zoneN_count\`, \`zoneN_vP\`) are hidden from the UI because they're meant to be loaded as a batch from the Remap app, not edited by hand. The visible controls are background, alpha, smoothing, and per-zone alpha.
+The canvas editor manages the hidden shape parameters (\`zoneN_count\`, \`zoneN_vP\`). Runtime integrations can still apply these parameters through \`applyStepParameterValues({ step_N: params })\` and wire source surfaces in DSL with \`zoneN_tex: read(oN)\`. Existing maps and hexadecimal vertex literals remain valid.
 
 ## Parameters
 
@@ -344,12 +344,12 @@ The shape parameters (\`zoneN_count\`, \`zoneN_vP\`) are hidden from the UI beca
 For each zone:
 - **Zone N source** (\`zoneN_tex\`): the engine surface to sample. Wire in DSL with \`zoneN_tex: read(oN)\`. When unwired (default \`"none"\`), the zone is skipped.
 - **Alpha**: per-zone opacity.
-- **Vertices** (hidden): vertex count, populated by the loader.
-- **verts P\u2013P+1** (hidden): packed \`vec4\` holding two vertices, populated by the loader.
+- **Vertices** (hidden): vertex count, managed by canvas editing or map import.
+- **verts P\u2013P+1** (hidden): packed \`vec4\` holding two vertices, managed by canvas editing or map import.
 
 ## Coordinate space
 
-Vertices are normalized: \`(0, 0)\` is top-left and \`(1, 1)\` is bottom-right. The GLSL backend flips the y axis internally so a polygon defined by the Remap app draws in the same orientation it was painted on either backend.
+Vertices are normalized: \`(0, 0)\` is top-left and \`(1, 1)\` is bottom-right. The GLSL backend flips the y axis internally so polygons match the canvas editor's orientation on either backend.
 
 ## Limits
 
@@ -380,4 +380,4 @@ remap()
 
 render(o0)
 \`\`\`
-`;if(r&&Object.keys(u).length>0){r.shaders||(r.shaders={});for(let[n,e]of Object.entries(u))r.shaders[n]={...e}}r&&p&&(r.help=p);var z="synth/remap",v="synth",y="remap",_=r;export{_ as default,z as effectId,y as effectName,p as help,v as namespace};
+`;if(r&&Object.keys(u).length>0){r.shaders||(r.shaders={});for(let[n,e]of Object.entries(u))r.shaders[n]={...e}}r&&c&&(r.help=c);var x="synth/remap",z="synth",y="remap",_=r;export{_ as default,x as effectId,y as effectName,c as help,z as namespace};
