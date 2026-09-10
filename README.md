@@ -5,6 +5,10 @@
 
 # Noisemaker for Cables
 
+> This package supports the "Export Shader Pipeline" feature in Noisedeck.app. The
+> feature runs shader compositions on other platforms. Noise Factor derives this package
+> from the upstream Noisemaker Engine project and tests it for pixel-level parity.
+
 `@noisefactor/noisemaker-for-cables` brings Noisemaker's Polymorphic shader
 engine and complete effect catalog to Cables GL without a second rendering
 context or CPU readback.
