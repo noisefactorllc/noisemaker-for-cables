@@ -3,8 +3,8 @@
  * Includes: CanvasRenderer + UIController + EffectSelect
  * Copyright (c) 2017-2026 Noise Factor LLC. https://noisefactor.io/
  * SPDX-License-Identifier: MIT
- * Build: 246ff57f
- * Date: 2026-09-06T23:49:24.383Z
+ * Build: cfc921aa
+ * Date: 2026-09-14T14:13:35.873Z
  */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
@@ -3593,7 +3593,7 @@ function validate(ast) {
               }
             } else if (node && node.type === "Ident" && stateValues.has(node.name)) {
               const key = node.name;
-              value = { fn: (state) => state[key], min: def.min, max: def.max };
+              value = { fn: (state) => state[key], min: def.min, max: def.max, _ast: node };
             } else if (node && node.type === "Ident" && def.enum) {
               const prefix = normalizeMemberPath(def.enum);
               const path = prefix ? prefix.concat([node.name]) : [node.name];
@@ -3865,6 +3865,9 @@ function formatLosslessNumber(value) {
   return `${sign}${digits.slice(0, decimalIndex)}.${digits.slice(decimalIndex)}`;
 }
 function formatValue(value, spec, options = {}, sourceForm) {
+  if (value?.kind === "temp" && options.formatTemp) {
+    return options.formatTemp(value.index);
+  }
   const { customFormatter, enums = {} } = typeof options === "function" ? { customFormatter: options } : options;
   if (customFormatter) {
     const custom = customFormatter(value, spec);
@@ -3885,6 +3888,9 @@ function formatValue(value, spec, options = {}, sourceForm) {
   }
   if (value && typeof value === "object" && value._varRef) {
     return value._varRef;
+  }
+  if (value?._ast?.type === "Ident") {
+    return value._ast.name;
   }
   if (typeof value === "boolean") {
     return value ? "true" : "false";
@@ -4358,7 +4364,7 @@ function unparse(compiled, overrides = {}, options = {}) {
   const lines = [];
   const getEffectDef = options.getEffectDef || null;
   const searchNamespaces = compiled.searchNamespaces || [];
-  if (searchNamespaces.length > 0) {
+  if (searchNamespaces.length > 0 && !options.omitSearchDirective) {
     lines.push(`search ${searchNamespaces.join(", ")}`);
     lines.push("");
   }
@@ -4419,6 +4425,48 @@ function unparse(compiled, overrides = {}, options = {}) {
     };
     const plan = plans[planIndex];
     if (!plan.chain || plan.chain.length === 0) continue;
+    const stepsByTemp = new Map(plan.chain.map((step, index) => [step.temp, {
+      step,
+      override: overrides[globalStepIndex + index] || {}
+    }]));
+    const collectDependencies = (index, collected) => {
+      if (collected.has(index)) return;
+      const entry = stepsByTemp.get(index);
+      if (!entry) return;
+      collected.add(index);
+      if (entry.step.from !== null && entry.step.from !== void 0) {
+        collectDependencies(entry.step.from, collected);
+      }
+      for (const value of Object.values({ ...entry.step.args, ...entry.override })) {
+        if (value?.kind === "temp") collectDependencies(value.index, collected);
+      }
+    };
+    const inlineTemps = /* @__PURE__ */ new Set();
+    for (const { step, override } of stepsByTemp.values()) {
+      for (const value of [...Object.values(step.args || {}), ...Object.values(override)]) {
+        if (value?.kind === "temp") collectDependencies(value.index, inlineTemps);
+      }
+    }
+    const inlineCode = /* @__PURE__ */ new Map();
+    const planOptions = { ...options, formatTemp: (index) => {
+      if (!inlineCode.has(index)) {
+        const dependencies = /* @__PURE__ */ new Set();
+        collectDependencies(index, dependencies);
+        const chain = [];
+        const nestedOverrides = {};
+        for (const [temp, entry] of stepsByTemp) {
+          if (!dependencies.has(temp)) continue;
+          nestedOverrides[chain.length] = entry.override;
+          chain.push(entry.step);
+        }
+        inlineCode.set(index, unparse(
+          { searchNamespaces, plans: [{ chain }] },
+          nestedOverrides,
+          { ...options, multilineKwargs: false, omitSearchDirective: true }
+        ));
+      }
+      return inlineCode.get(index);
+    } };
     if (plan.leadingComments && plan.leadingComments.length > 0) {
       for (const comment of plan.leadingComments) {
         lines.push(comment);
@@ -4428,6 +4476,10 @@ function unparse(compiled, overrides = {}, options = {}) {
     let currentChain = [];
     let inSubchain = false;
     for (const step of plan.chain) {
+      if (inlineTemps.has(step.temp)) {
+        globalStepIndex++;
+        continue;
+      }
       const makeChainElement = (code) => {
         const elem = { code };
         if (step.leadingComments && step.leadingComments.length > 0) {
@@ -4540,7 +4592,7 @@ function unparse(compiled, overrides = {}, options = {}) {
         for (const [key, value] of Object.entries(step.args)) {
           if (key === "from" || key === "temp") continue;
           if (key === "_skip" && value !== true) continue;
-          if (value && typeof value === "object" && value.kind) {
+          if (value && typeof value === "object" && value.kind && value.kind !== "temp") {
             call.kwargs[key] = value.name;
           } else {
             call.kwargs[key] = value;
@@ -4560,7 +4612,7 @@ function unparse(compiled, overrides = {}, options = {}) {
         }
       }
       const callIndent = currentChain.length === 0 ? 0 : inSubchain ? 4 : 2;
-      let callCode = unparseCall(call, { ...options, specs, indent: callIndent });
+      let callCode = unparseCall(call, { ...planOptions, specs, indent: callIndent });
       if (isFromOverride && fromNamespace) {
         callCode = `from(${fromNamespace}, ${callCode})`;
       }
@@ -5161,6 +5213,9 @@ function expand(compilationResult, options = {}) {
   const programs = {};
   const textureSpecs = {};
   const textureMap = /* @__PURE__ */ new Map();
+  const writtenVolumes = /* @__PURE__ */ new Map();
+  const readVolumes = /* @__PURE__ */ new Map();
+  const exportedTextures = /* @__PURE__ */ new Map();
   let lastWrittenSurface = null;
   const resolveEnum = (path) => {
     const parts = path.split(".");
@@ -5185,6 +5240,7 @@ function expand(compilationResult, options = {}) {
     let currentParticlePipelineId = null;
     const pipelineUniforms = {};
     const chainScopeId = `chain_${compilationResult.plans.indexOf(plan)}`;
+    const volumeSizeParam = `volumeSize_${chainScopeId}`;
     for (const step of plan.chain) {
       if (step.builtin && step.op === "_read") {
         const tex = step.args?.tex;
@@ -5211,6 +5267,12 @@ function expand(compilationResult, options = {}) {
           } else {
             currentInputGeo = geo.name || geo;
           }
+        }
+        const volume = writtenVolumes.get(currentInput3d);
+        if (currentInput3d) {
+          readVolumes.set(volumeSizeParam, { surface: currentInput3d, writer: volume });
+          pipelineUniforms.volumeSize = volume?.value ?? 64;
+          pipelineUniforms[volumeSizeParam] = pipelineUniforms.volumeSize;
         }
         const nodeId2 = `node_${step.temp}`;
         if (currentInput3d) textureMap.set(`${nodeId2}_out3d`, currentInput3d);
@@ -5251,6 +5313,13 @@ function expand(compilationResult, options = {}) {
         const nodeId2 = `node_${step.temp}`;
         if (tex3d && tex3d.name !== "none" && currentInput3d) {
           const targetVol = `global_${tex3d.name}`;
+          exportedTextures.set(targetVol, currentInput3d);
+          if (textureSpecs[currentInput3d]) {
+            textureSpecs[targetVol] = { ...textureSpecs[currentInput3d] };
+          }
+          if (pipelineUniforms.volumeSize !== void 0) {
+            writtenVolumes.set(targetVol, { param: volumeSizeParam, value: pipelineUniforms.volumeSize });
+          }
           if (currentInput3d !== targetVol) {
             const blitPass = {
               id: `${nodeId2}_write3d_vol_blit`,
@@ -5268,6 +5337,10 @@ function expand(compilationResult, options = {}) {
         }
         if (geo && geo.name !== "none" && currentInputGeo) {
           const targetGeo = `global_${geo.name}`;
+          exportedTextures.set(targetGeo, currentInputGeo);
+          if (textureSpecs[currentInputGeo]) {
+            textureSpecs[targetGeo] = { ...textureSpecs[currentInputGeo] };
+          }
           if (currentInputGeo !== targetGeo) {
             const geoBlitPass = {
               id: `${nodeId2}_write3d_geo_blit`,
@@ -5392,7 +5465,8 @@ function expand(compilationResult, options = {}) {
             const scopeDimSpec = (dimSpec) => {
               if (typeof dimSpec === "object" && dimSpec.param !== void 0) {
                 const originalParam = dimSpec.param;
-                const scopedParam = `${originalParam}_${scopeSuffix}`;
+                const dimensionScope = originalParam === "stateSize" && currentParticlePipelineId && !texName.startsWith("global_") ? currentParticlePipelineId : scopeSuffix;
+                const scopedParam = originalParam === "volumeSize" ? volumeSizeParam : `${originalParam}_${dimensionScope}`;
                 scopedParamMap.set(originalParam, scopedParam);
                 return {
                   ...dimSpec,
@@ -5491,10 +5565,27 @@ function expand(compilationResult, options = {}) {
         }
       }
       const effectPasses = effectDef.passes || [];
+      const conditionalUniforms = /* @__PURE__ */ new Set();
+      for (const passDef of effectPasses) {
+        for (const condition of [...passDef.conditions?.runIf || [], ...passDef.conditions?.skipIf || []]) {
+          conditionalUniforms.add(condition.uniform);
+        }
+      }
       for (let i = 0; i < effectPasses.length; i++) {
         const passDef = effectPasses[i];
         const passId = `${nodeId}_pass_${i}`;
-        const programName = `${nodeId}_${passDef.program}${programDefineSuffix}`;
+        let programName = `${nodeId}_${passDef.program}${programDefineSuffix}`;
+        if (passDef.defines) {
+          const baseProgram = programs[programName];
+          const passDefineSuffix = Object.entries(passDef.defines).sort(([a], [b]) => a.localeCompare(b)).map(([key, value]) => `__${key}_${value}`).join("");
+          programName += passDefineSuffix;
+          if (baseProgram && !programs[programName]) {
+            programs[programName] = {
+              ...baseProgram,
+              defines: { ...compileTimeDefines, ...passDef.defines }
+            };
+          }
+        }
         const pass = {
           id: passId,
           program: programName,
@@ -5509,6 +5600,7 @@ function expand(compilationResult, options = {}) {
           repeat: passDef.repeat,
           // Number of iterations per frame
           blend: passDef.blend,
+          conditions: passDef.conditions,
           workgroups: passDef.workgroups,
           storageBuffers: passDef.storageBuffers,
           storageTextures: passDef.storageTextures,
@@ -5550,6 +5642,12 @@ function expand(compilationResult, options = {}) {
                 min: def.min ?? 0,
                 max: def.max ?? 100
               };
+            } else if (def.type === "int" && def.choices && conditionalUniforms.has(uniformName)) {
+              pass.uniformSpecs[uniformName] = { type: "int" };
+              if (Number.isFinite(def.min) && Number.isFinite(def.max)) {
+                pass.uniformSpecs[uniformName].min = def.min;
+                pass.uniformSpecs[uniformName].max = def.max;
+              }
             }
           }
         }
@@ -5590,6 +5688,10 @@ function expand(compilationResult, options = {}) {
         }
         if (passDef.uniforms) {
           for (const [uniformName, globalRef] of Object.entries(passDef.uniforms)) {
+            if (typeof globalRef === "number") {
+              pass.uniforms[uniformName] = globalRef;
+              continue;
+            }
             if (pipelineUniforms[uniformName] !== void 0) {
               pass.uniforms[uniformName] = pipelineUniforms[uniformName];
             } else if (pipelineUniforms[globalRef] !== void 0) {
@@ -5868,6 +5970,44 @@ function expand(compilationResult, options = {}) {
         };
         passes.push(blitPass);
       }
+    }
+  }
+  const resolveVolume = (param, visited = /* @__PURE__ */ new Set()) => {
+    if (visited.has(param)) return null;
+    visited.add(param);
+    const read = readVolumes.get(param);
+    const writer = read?.writer || writtenVolumes.get(read?.surface);
+    if (!writer || writer.param === param) return null;
+    return resolveVolume(writer.param, visited) || writer;
+  };
+  const resolvedVolumes = /* @__PURE__ */ new Map();
+  for (const param of readVolumes.keys()) {
+    const source = resolveVolume(param);
+    if (source) resolvedVolumes.set(param, source);
+  }
+  const resolveExport = (id, visited = /* @__PURE__ */ new Set()) => {
+    if (visited.has(id)) return textureSpecs[id];
+    visited.add(id);
+    const source = exportedTextures.get(id);
+    if (!source || source === id) return textureSpecs[id];
+    const spec = resolveExport(source, visited);
+    if (spec) textureSpecs[id] = { ...spec };
+    return textureSpecs[id];
+  };
+  for (const id of exportedTextures.keys()) resolveExport(id);
+  for (const spec of Object.values(textureSpecs)) {
+    for (const axis of ["width", "height", "depth"]) {
+      const source = resolvedVolumes.get(spec[axis]?.param);
+      if (source) spec[axis] = { ...spec[axis], param: source.param };
+    }
+  }
+  for (const pass of passes) {
+    for (const [param, source] of resolvedVolumes) {
+      if (!(param in pass.uniforms)) continue;
+      delete pass.uniforms[param];
+      pass.uniforms[source.param] = source.value;
+      pass.uniforms.volumeSize = source.value;
+      if (pass.scopedParams?.volumeSize === param) pass.scopedParams.volumeSize = source.param;
     }
   }
   let renderSurface;
@@ -7293,7 +7433,7 @@ var WebGL2Backend = class _WebGL2Backend extends Backend {
       throw new Error(`Shader source missing for program '${id}'. You may need to regenerate the shader manifest.`);
     }
     const source = this.injectDefines(rawSource, spec.defines || {});
-    const vsSource = spec.vertex || DEFAULT_VERTEX_SHADER;
+    const vsSource = spec.vertex && Object.keys(spec.defines || {}).length ? this.injectDefines(spec.vertex, spec.defines) : spec.vertex || DEFAULT_VERTEX_SHADER;
     const usingDefaultVertex = !spec.vertex;
     const vertShader = this.compileShader(gl.VERTEX_SHADER, vsSource);
     const fragShader = this.compileShader(gl.FRAGMENT_SHADER, source);
@@ -10954,10 +11094,11 @@ var WebGPUBackend = class _WebGPUBackend extends Backend {
     if (!this.context) return;
     const tex = this.textures.get(textureId);
     if (!tex) return;
-    const pipeline = this.getBlitPipeline();
-    const bindGroup = this.createBlitBindGroup(tex);
-    const commandEncoder = this.device.createCommandEncoder();
     const canvasTexture = this.context.getCurrentTexture();
+    const exactPixels = tex.width === canvasTexture.width && tex.height === canvasTexture.height;
+    const pipeline = this.getBlitPipeline();
+    const bindGroup = this.createBlitBindGroup(tex, exactPixels);
+    const commandEncoder = this.device.createCommandEncoder();
     const canvasView = canvasTexture.createView();
     const renderPass = commandEncoder.beginRenderPass({
       colorAttachments: [{
@@ -10999,7 +11140,9 @@ var WebGPUBackend = class _WebGPUBackend extends Backend {
     this.activeUniformBuffers = [];
     if (this.context?.unconfigure) {
       try {
-        this.context.unconfigure();
+        if (!this.context.getConfiguration || this.context.getConfiguration()?.device === this.device) {
+          this.context.unconfigure();
+        }
       } catch (err) {
         console.warn("Failed to unconfigure WebGPU canvas context", err);
       }
@@ -11068,9 +11211,9 @@ var WebGPUBackend = class _WebGPUBackend extends Backend {
   /**
    * Create a bind group for blitting a texture to the canvas
    */
-  createBlitBindGroup(tex) {
+  createBlitBindGroup(tex, exactPixels = false) {
     const pipeline = this.getBlitPipeline();
-    const sampler = this.samplers.get("default");
+    const sampler = this.samplers.get(exactPixels ? "nearest" : "default");
     return this.device.createBindGroup({
       layout: pipeline.getBindGroupLayout(0),
       entries: [
@@ -12504,9 +12647,32 @@ var Pipeline = class {
   createSurfaces() {
     this.clampGraphVolumeSizes();
     this.applyMrtFormatBudget();
-    const surfaceNames = /* @__PURE__ */ new Set(["o0", "o1", "o2", "o3", "o4", "o5", "o6", "o7"]);
-    const geoBufferNames = /* @__PURE__ */ new Set(["geo0", "geo1", "geo2", "geo3", "geo4", "geo5", "geo6", "geo7"]);
-    const volumeNames = /* @__PURE__ */ new Set(["vol0", "vol1", "vol2", "vol3", "vol4", "vol5", "vol6", "vol7"]);
+    const surfaceNames = /* @__PURE__ */ new Set([
+      "o0",
+      "o1",
+      "o2",
+      "o3",
+      "o4",
+      "o5",
+      "o6",
+      "o7",
+      "geo0",
+      "geo1",
+      "geo2",
+      "geo3",
+      "geo4",
+      "geo5",
+      "geo6",
+      "geo7",
+      "vol0",
+      "vol1",
+      "vol2",
+      "vol3",
+      "vol4",
+      "vol5",
+      "vol6",
+      "vol7"
+    ]);
     const meshNames = /* @__PURE__ */ new Set(["mesh0", "mesh1", "mesh2", "mesh3", "mesh4", "mesh5", "mesh6", "mesh7"]);
     const defaultUniforms = this.collectDefaultUniforms();
     const meshTexturePattern = /^mesh\d+_(positions|normals|uvs)$/;
@@ -12545,8 +12711,9 @@ var Pipeline = class {
       }
     }
     for (const name of surfaceNames) {
-      let surfaceWidth = this.width;
-      let surfaceHeight = this.height;
+      const isVolume = /^vol[0-7]$/.test(name);
+      let surfaceWidth = isVolume ? 64 : this.width;
+      let surfaceHeight = isVolume ? 4096 : this.height;
       let surfaceFormat = "rgba16f";
       const underscoreId = `global_${name}`;
       let texSpec = this.graph?.textures?.get?.(underscoreId);
@@ -12574,64 +12741,6 @@ var Pipeline = class {
         width: surfaceWidth,
         height: surfaceHeight,
         format: surfaceFormat,
-        usage: ["render", "sample", "copySrc", "copyDst", "storage"]
-      });
-      this.surfaces.set(name, {
-        read: `global_${name}_read`,
-        write: `global_${name}_write`,
-        currentFrame: 0
-      });
-    }
-    for (const name of geoBufferNames) {
-      const oldSurface = this.surfaces.get(name);
-      if (oldSurface) {
-        const existingTex = this.backend.textures?.get?.(oldSurface.read);
-        if (existingTex && existingTex.width === this.width && existingTex.height === this.height) {
-          continue;
-        }
-        this.backend.destroyTexture(`global_${name}_read`);
-        this.backend.destroyTexture(`global_${name}_write`);
-      }
-      this.backend.createTexture(`global_${name}_read`, {
-        width: this.width,
-        height: this.height,
-        format: "rgba16f",
-        usage: ["render", "sample", "copySrc", "copyDst", "storage"]
-      });
-      this.backend.createTexture(`global_${name}_write`, {
-        width: this.width,
-        height: this.height,
-        format: "rgba16f",
-        usage: ["render", "sample", "copySrc", "copyDst", "storage"]
-      });
-      this.surfaces.set(name, {
-        read: `global_${name}_read`,
-        write: `global_${name}_write`,
-        currentFrame: 0
-      });
-    }
-    const volumeSliceSize = 64;
-    const volumeAtlasHeight = volumeSliceSize * volumeSliceSize;
-    for (const name of volumeNames) {
-      const oldSurface = this.surfaces.get(name);
-      if (oldSurface) {
-        const existingTex = this.backend.textures?.get?.(oldSurface.read);
-        if (existingTex && existingTex.width === volumeSliceSize && existingTex.height === volumeAtlasHeight) {
-          continue;
-        }
-        this.backend.destroyTexture(`global_${name}_read`);
-        this.backend.destroyTexture(`global_${name}_write`);
-      }
-      this.backend.createTexture(`global_${name}_read`, {
-        width: volumeSliceSize,
-        height: volumeAtlasHeight,
-        format: "rgba16f",
-        usage: ["render", "sample", "copySrc", "copyDst", "storage"]
-      });
-      this.backend.createTexture(`global_${name}_write`, {
-        width: volumeSliceSize,
-        height: volumeAtlasHeight,
-        format: "rgba16f",
         usage: ["render", "sample", "copySrc", "copyDst", "storage"]
       });
       this.surfaces.set(name, {
@@ -12710,18 +12819,7 @@ var Pipeline = class {
       const width = this.resolveDimension(spec.width, this.width, uniforms);
       const height = this.resolveDimension(spec.height, this.height, uniforms);
       if (isGlobalSurface) {
-        let surfaceName = null;
-        if (texId.startsWith("global_")) {
-          for (const name of this.surfaces.keys()) {
-            if (texId.includes(name) || texId.endsWith(name)) {
-              surfaceName = name;
-              break;
-            }
-          }
-        } else if (texId.startsWith("global")) {
-          const suffix = texId.slice(6);
-          surfaceName = suffix.charAt(0).toLowerCase() + suffix.slice(1);
-        }
+        const surfaceName = this.parseGlobalName(texId);
         if (!surfaceName || !this.surfaces.has(surfaceName)) {
           continue;
         }
@@ -13069,10 +13167,10 @@ var Pipeline = class {
       try {
         for (let i = 0; i < this.graph.passes.length; i++) {
           const originalPass = this.graph.passes[i];
-          if (this.shouldSkipPass(originalPass)) {
+          const pass = this.resolvePassUniforms(originalPass, time);
+          if (this.shouldSkipPass(pass)) {
             continue;
           }
-          const pass = this.resolvePassUniforms(originalPass, time);
           const repeatCount = this.resolveRepeatCount(pass);
           for (let iter = 0; iter < repeatCount; iter++) {
             try {
@@ -13178,7 +13276,8 @@ var Pipeline = class {
    */
   resolveUniformValue(value, time, paramSpec) {
     if (!isAutomationValue(value)) return value;
-    return evaluateAutomation(value, time, paramSpec, this.externalState);
+    const resolved = evaluateAutomation(value, time, paramSpec, this.externalState);
+    return paramSpec?.type === "int" ? Math.round(resolved) : resolved;
   }
   /**
    * Resolve all oscillators in pass uniforms for the current frame.
@@ -13235,7 +13334,7 @@ var Pipeline = class {
     const { skipIf, runIf } = pass.conditions;
     if (skipIf) {
       for (const condition of skipIf) {
-        const value = this.globalUniforms[condition.uniform] ?? pass.uniforms?.[condition.uniform];
+        const value = pass.uniforms?.[condition.uniform] ?? this.globalUniforms[condition.uniform];
         if (value === condition.equals) {
           return true;
         }
@@ -13244,7 +13343,7 @@ var Pipeline = class {
     if (runIf) {
       let shouldRun = true;
       for (const condition of runIf) {
-        const value = this.globalUniforms[condition.uniform] ?? pass.uniforms?.[condition.uniform];
+        const value = pass.uniforms?.[condition.uniform] ?? this.globalUniforms[condition.uniform];
         if (value !== condition.equals) {
           shouldRun = false;
           break;
@@ -14898,8 +14997,8 @@ function isAutomationControlled(value) {
   const type = value.type || value._ast?.type;
   return type === "Oscillator" || type === "Midi" || type === "Audio";
 }
-var KNOWN_3D_GENERATORS = ["noise3d", "cell3d", "shape3d", "fractal3d", "flythrough3d", "cellularAutomata3d", "reactionDiffusion3d"];
-var KNOWN_3D_PROCESSORS = ["flow3d", "palette3d", "render3d", "renderLit3d", "renderCubemap3d", "renderCubemapSurface"];
+var KNOWN_3D_GENERATORS = ["noise3d", "cell3d", "shape3d", "fractal3d", "flythrough3d", "cellularAutomata3d", "reactionDiffusion3d", "heightmap3d"];
+var KNOWN_3D_PROCESSORS = ["flow3d", "palette3d", "render3d", "renderLit3d", "renderCubemap3d", "renderCubemapSurface", "renderLandscape3d"];
 function cloneParamValue(value) {
   if (Array.isArray(value)) {
     return value.slice();
@@ -15626,6 +15725,18 @@ var CanvasRenderer = class {
    * @returns {Promise<object>} The created pipeline
    */
   async compile(dsl, options = {}) {
+    const generation = this._lifecycleGeneration ?? 0;
+    const run = () => this._isLifecycleCurrent(generation) ? this._compile(dsl, options) : null;
+    const pending = this._compileQueue ? this._compileQueue.then(run, run) : run();
+    this._compileQueue = pending;
+    const clear = () => {
+      if (this._compileQueue === pending) this._compileQueue = null;
+    };
+    pending.then(clear, clear);
+    return pending;
+  }
+  /** @private Compile after earlier requests for this canvas have settled. */
+  async _compile(dsl, options = {}) {
     const shaderOverrides = options.shaderOverrides;
     const lifecycleGeneration = this._lifecycleGeneration ?? 0;
     this._currentDsl = dsl;
@@ -20802,12 +20913,18 @@ render(o0)`;
   async _recompilePipeline() {
     const dsl = this.getDsl();
     if (!dsl) return;
+    const request = this._recompileRequest = /* @__PURE__ */ Symbol();
     try {
       await this._renderer.compile(dsl, {
         shaderOverrides: this._shaderOverrides
       });
+      if (this._recompileRequest !== request) return;
+      if (!this.checkStructureAndApplyState(dsl)) {
+        this.loadDslAndCreateControls(dsl);
+      }
       this.showStatus("pipeline updated", "success");
     } catch (err) {
+      if (this._recompileRequest !== request) return;
       console.error("Pipeline compilation failed:", this.formatCompilationError(err));
       this.showStatus("compilation error: " + this.formatCompilationError(err), "error");
     }
@@ -21231,7 +21348,10 @@ render(o0)`;
       { value: "o7", label: "o7" }
     ];
     let currentSurface = spec.default || "o1";
-    if (value && typeof value === "object" && value.name) {
+    if (value?.kind === "temp") {
+      currentSurface = value;
+      surfaces.unshift({ value, label: "inline" });
+    } else if (value && typeof value === "object" && value.name) {
       currentSurface = value.name;
     } else if (typeof value === "string") {
       const match = value.match(/read\(([^)]+)\)|^(o[0-7])$/);
@@ -21247,9 +21367,10 @@ render(o0)`;
       className: "hf-input"
     });
     const select = handle.element;
+    const surfaceValue = (val) => val?.kind === "temp" || val === "none" ? val : `read(${val})`;
     select.addEventListener("change", async () => {
       const val = handle.getValue();
-      this._programState.setValue(effectKey, key, val === "none" ? "none" : `read(${val})`);
+      this._programState.setValue(effectKey, key, surfaceValue(val));
       this._updateDslFromEffectParams();
       await this._recompilePipeline();
       this._updateDependentControls();
@@ -21259,11 +21380,16 @@ render(o0)`;
       element: select,
       getValue: () => {
         const val = handle.getValue();
-        return val === "none" ? "none" : `read(${val})`;
+        return surfaceValue(val);
       },
       setValue: (v) => {
         let surfaceId = v;
-        if (typeof v === "object" && v.name) {
+        if (v?.kind === "temp") {
+          const inline = surfaces.findIndex((choice) => choice.value?.kind === "temp");
+          if (inline >= 0) surfaces[inline] = { value: v, label: "inline" };
+          else surfaces.unshift({ value: v, label: "inline" });
+          handle.setChoices?.(surfaces);
+        } else if (v && typeof v === "object" && v.name) {
           surfaceId = v.name;
         } else if (typeof v === "string") {
           const match = v.match(/read\(([^)]+)\)|^(o[0-7])$/);
@@ -21468,6 +21594,8 @@ render(o0)`;
       const params = this._programState.getStepValues(effectKey);
       if (!params) continue;
       const isEnabled = this._evaluateEnableCondition(enabledBy, params);
+      element.inert = !isEnabled;
+      element.setAttribute("aria-disabled", String(!isEnabled));
       if (isEnabled) {
         element.classList.remove("disabled");
       } else {

@@ -262,8 +262,16 @@ export function createCablesWebGL2BackendClass(BaseBackend) {
         )
       }
       const source = this.injectDefines(rawSource, spec.defines || {})
-      const vertexSource = spec.vertex || DEFAULT_VERTEX_SHADER
       const usingDefaultVertex = !spec.vertex
+      // A custom vertex shader (points/billboard deposit draws) needs the same compile-time
+      // defines as the fragment when they share a program's defines (e.g. pointsRender /
+      // pointsBillboardRender's per-viewMode deposit variants, reference 0ed489ec: both stages
+      // declare `const int viewMode = VIEW_MODE;`-style constants). Only inject when there's a
+      // custom vertex source to inject into — the shared DEFAULT_VERTEX_SHADER never references
+      // an effect's defines and injectDefines() would otherwise double-prepend a #version line.
+      const vertexSource = spec.vertex
+        ? this.injectDefines(spec.vertex, spec.defines || {})
+        : DEFAULT_VERTEX_SHADER
       let vertexShader = null
       let fragmentShader = null
       let program = null

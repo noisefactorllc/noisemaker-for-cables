@@ -207,8 +207,8 @@ try {
     }
   })
   assert.deepEqual(facade, {
-    effectCount: 210,
-    effectIds: 210,
+    effectCount: 213,
+    effectIds: 213,
     issues: [],
     packageVersion: '0.1.0',
     supported: true,

@@ -3,7 +3,7 @@ var n=class{constructor(e={}){this.state={},this.uniforms={},e.name&&(this.name=
 
 noise(ridges: true, colorMode: mono)
 .tint(color: #ff0000, alpha: 0.5, mode: overlay)
-.write(o0)`,passes:[{name:"main",program:"colorize",inputs:{inputTex:"inputTex"},outputs:{color:"outputTex"}}]});var o={colorize:{glsl:`#version 300 es
+.write(o0)`,passes:[{name:"main",program:"colorize",inputs:{inputTex:"inputTex"},outputs:{color:"outputTex"}}]});var a={colorize:{glsl:`#version 300 es
 precision highp float;
 
 uniform vec2 tileOffset;
@@ -53,7 +53,7 @@ void main() {
   vec2 globalCoord = gl_FragCoord.xy + tileOffset;
   vec2 st = gl_FragCoord.xy / vec2(max(textureSize(inputTex, 0), ivec2(1)));
   vec4 base = texture(inputTex, st);
-  vec3 base_rgb = clamp(base.rgb, 0.0, 1.0);
+  vec3 base_rgb = base.a > 0.0 ? clamp(base.rgb / base.a, 0.0, 1.0) : vec3(0.0);
 
   int m = int(mode);
   vec3 tinted;
@@ -71,7 +71,7 @@ void main() {
   }
 
   vec3 rgb = mix(base_rgb, tinted, alpha);
-  fragColor = vec4(rgb, base.a);
+  fragColor = vec4(rgb * base.a, base.a);
 }
 `,wgsl:`// WGSL version \u2013 WebGPU
 @group(0) @binding(0) var samp: sampler;
@@ -120,7 +120,10 @@ fn main(@builtin(position) position: vec4<f32>) -> @location(0) vec4<f32> {
   let size = max(textureDimensions(inputTex, 0), vec2<u32>(1, 1));
   let st = position.xy / vec2<f32>(size);
   let base = textureSampleLevel(inputTex, samp, st, 0.0);
-  let base_rgb = clamp(base.rgb, vec3<f32>(0.0), vec3<f32>(1.0));
+  var base_rgb = vec3<f32>(0.0);
+  if (base.a > 0.0) {
+      base_rgb = clamp(base.rgb / base.a, vec3<f32>(0.0), vec3<f32>(1.0));
+  }
 
   let m = i32(mode);
   var tinted: vec3<f32>;
@@ -138,9 +141,9 @@ fn main(@builtin(position) position: vec4<f32>) -> @location(0) vec4<f32> {
   }
 
   let rgb = mix(base_rgb, tinted, vec3<f32>(alpha));
-  return vec4<f32>(rgb, base.a);
+  return vec4<f32>(rgb * base.a, base.a);
 }
-`}},a=`# tint
+`}},o=`# tint
 
 Colorize input texture with a color overlay
 
@@ -169,4 +172,4 @@ noise(seed: 1, ridges: true)
 
 render(o0)
 \`\`\`
-`;if(t&&Object.keys(o).length>0){t.shaders||(t.shaders={});for(let[r,e]of Object.entries(o))t.shaders[r]={...e}}t&&a&&(t.help=a);var c="filter/tint",f="filter",m="tint",h=t;export{h as default,c as effectId,m as effectName,a as help,f as namespace};
+`;if(t&&Object.keys(a).length>0){t.shaders||(t.shaders={});for(let[r,e]of Object.entries(a))t.shaders[r]={...e}}t&&o&&(t.help=o);var c="filter/tint",f="filter",m="tint",h=t;export{h as default,c as effectId,m as effectName,o as help,f as namespace};

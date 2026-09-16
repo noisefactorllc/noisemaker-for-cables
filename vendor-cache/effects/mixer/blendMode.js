@@ -123,28 +123,25 @@ void main() {
     vec4 color1 = texture(inputTex, gl_FragCoord.xy / vec2(textureSize(inputTex, 0)));
     vec4 color2 = texture(tex, gl_FragCoord.xy / vec2(textureSize(tex, 0)));
 
-    vec4 middle = applyBlendMode(color1, color2, mode);
-
     float amt = map(mixAmt, -100.0, 100.0, 0.0, 1.0);
-    vec4 color;
-    if (amt < 0.5) {
-        float factor = amt * 2.0;
-        color = mix(color1, middle, factor);
-    } else {
-        float factor = (amt - 0.5) * 2.0;
-        color = mix(middle, color2, factor);
+
+    // The normal mixer axis is source opacity. Other modes reach the full
+    // blend at the midpoint, then transition to normal source-over at +100.
+    float opacity = mode == 8 ? amt : min(amt * 2.0, 1.0);
+    float sourceAlpha = color2.a * opacity;
+    vec3 source = color2.rgb * opacity;
+    if (mode != 8) {
+        // Surfaces are premultiplied. Blend functions operate on straight RGB
+        // only where both inputs cover the pixel; uncovered source stays intact.
+        vec4 baseColor = vec4(color1.a > 0.0 ? color1.rgb / color1.a : vec3(0.0), 1.0);
+        vec4 sourceColor = vec4(color2.a > 0.0 ? color2.rgb / color2.a : vec3(0.0), 1.0);
+        vec3 blended = applyBlendMode(baseColor, sourceColor, mode).rgb;
+        blended = mix(blended, sourceColor.rgb, max(amt * 2.0 - 1.0, 0.0));
+        source = source * (1.0 - color1.a) + blended * sourceAlpha * color1.a;
     }
 
-    // Porter-Duff "over" alpha compositing:
-    // blend at full strength where top is opaque, preserve base where top is transparent.
-    // amt is already applied above in the mixer branch that selected \`color\` on the
-    // color1 <-> middle <-> color2 axis, so it must NOT be folded into the PD factor
-    // here \u2014 doing so applies amt a second time and halves the blend at the midpoint.
-    color.rgb = mix(color1.rgb, color.rgb, color2.a);
-    // Output alpha: top + base * (1 - top), scaled by mix amount
-    color.a = color2.a * amt + color1.a * (1.0 - color2.a * amt);
-
-    fragColor = color;
+    fragColor = vec4(source + color1.rgb * (1.0 - sourceAlpha),
+        sourceAlpha + color1.a * (1.0 - sourceAlpha));
 }
 `,wgsl:`@group(0) @binding(0) var samp : sampler;
 @group(0) @binding(1) var inputTex : texture_2d<f32>;
@@ -264,31 +261,27 @@ fn main(@builtin(position) position: vec4<f32>) -> @location(0) vec4<f32> {
     let color1 = textureSample(inputTex, samp, st);
     let color2 = textureSample(tex, samp, st);
 
-    let middle = applyBlendMode(color1, color2, mode);
-
     let amt = map_range(mixAmt, -100.0, 100.0, 0.0, 1.0);
-    var color: vec4<f32>;
-    if (amt < 0.5) {
-        let factor = amt * 2.0;
-        color = mix(color1, middle, factor);
-    } else {
-        let factor = (amt - 0.5) * 2.0;
-        color = mix(middle, color2, factor);
+
+    // The normal mixer axis is source opacity. Other modes reach the full
+    // blend at the midpoint, then transition to normal source-over at +100.
+    let opacity = select(min(amt * 2.0, 1.0), amt, mode == 8);
+    let sourceAlpha = color2.a * opacity;
+    var source = color2.rgb * opacity;
+    if (mode != 8) {
+        // Surfaces are premultiplied. Blend functions operate on straight RGB
+        // only where both inputs cover the pixel; uncovered source stays intact.
+        var baseColor = vec4<f32>(0.0, 0.0, 0.0, 1.0);
+        var sourceColor = vec4<f32>(0.0, 0.0, 0.0, 1.0);
+        if (color1.a > 0.0) { baseColor = vec4<f32>(color1.rgb / color1.a, 1.0); }
+        if (color2.a > 0.0) { sourceColor = vec4<f32>(color2.rgb / color2.a, 1.0); }
+        var blended = applyBlendMode(baseColor, sourceColor, mode).rgb;
+        blended = mix(blended, sourceColor.rgb, max(amt * 2.0 - 1.0, 0.0));
+        source = source * (1.0 - color1.a) + blended * sourceAlpha * color1.a;
     }
 
-    // Porter-Duff "over" alpha compositing:
-    // blend at full strength where top is opaque, preserve base where top is transparent.
-    // amt is already applied above in the mixer branch that selected \`color\` on the
-    // color1 <-> middle <-> color2 axis, so it must NOT be folded into the PD factor
-    // for RGB here \u2014 doing so applies amt a second time and halves the blend at the
-    // midpoint. The alpha output still scales with amt so fading out the layer
-    // fades out the composite alpha.
-    let alphaFactor = color2.a * amt;
-    color = vec4<f32>(
-        mix(color1.rgb, color.rgb, color2.a),
-        alphaFactor + color1.a * (1.0 - alphaFactor)
-    );
-    return color;
+    return vec4<f32>(source + color1.rgb * (1.0 - sourceAlpha),
+        sourceAlpha + color1.a * (1.0 - sourceAlpha));
 }
 `}},l=`# blendMode
 
@@ -316,4 +309,4 @@ noise(seed: 2, ridges: true)
 
 render(o1)
 \`\`\`
-`;if(e&&Object.keys(t).length>0){e.shaders||(e.shaders={});for(let[r,n]of Object.entries(t))e.shaders[r]={...n}}e&&l&&(e.help=l);var d="mixer/blendMode",u="mixer",f="blendMode",m=e;export{m as default,d as effectId,f as effectName,l as help,u as namespace};
+`;if(e&&Object.keys(t).length>0){e.shaders||(e.shaders={});for(let[r,n]of Object.entries(t))e.shaders[r]={...n}}e&&l&&(e.help=l);var u="mixer/blendMode",d="mixer",f="blendMode",m=e;export{m as default,u as effectId,f as effectName,l as help,d as namespace};

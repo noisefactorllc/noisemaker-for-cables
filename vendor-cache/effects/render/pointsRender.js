@@ -1,5 +1,5 @@
 /* render/pointsRender */
-var n=class{constructor(t={}){this.state={},this.uniforms={},t.name&&(this.name=t.name),t.namespace&&(this.namespace=t.namespace),t.func&&(this.func=t.func),t.description&&(this.description=t.description),t.tags&&(this.tags=t.tags),t.globals&&(this.globals=t.globals),t.passes&&(this.passes=t.passes),t.textures&&(this.textures=t.textures),t.outputTex3d&&(this.outputTex3d=t.outputTex3d),t.outputGeo&&(this.outputGeo=t.outputGeo),t.uniformLayout&&(this.uniformLayout=t.uniformLayout),t.uniformLayouts&&(this.uniformLayouts=t.uniformLayouts),t.paramAliases&&(this.paramAliases=t.paramAliases),t.openCategories&&(this.openCategories=t.openCategories),t.defaultProgram&&(this.defaultProgram=t.defaultProgram),t.hidden&&(this.hidden=!0),t.deprecatedBy&&(this.deprecatedBy=t.deprecatedBy),t.onInit&&(this._configOnInit=t.onInit),t.onUpdate&&(this._configOnUpdate=t.onUpdate),t.onDestroy&&(this._configOnDestroy=t.onDestroy),t.asyncInit&&(this._configAsyncInit=t.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(t){return this._configOnUpdate?this._configOnUpdate.call(this,t):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(t){return this._configAsyncInit?this._configAsyncInit.call(this,t):Promise.resolve()}};var e=new n({name:"Points Render",namespace:"render",func:"pointsRender",tags:["agents"],description:"Blend agent trails with input for particle systems",textures:{global_points_trail:{width:"100%",height:"100%",format:"rgba16f"}},globals:{density:{type:"float",default:50,min:0,max:100,uniform:"density",ui:{label:"density",control:"slider",category:"visual"}},intensity:{type:"float",default:75,min:0,max:100,uniform:"intensity",ui:{label:"trail intensity",control:"slider",category:"visual"}},inputIntensity:{type:"float",default:10.15,min:0,max:100,uniform:"inputIntensity",ui:{label:"input mix",control:"slider",category:"visual"}},viewMode:{type:"int",default:0,uniform:"viewMode",choices:{flat:0,ortho:1},ui:{label:"view",control:"dropdown",category:"view"}},rotateX:{type:"float",default:.3,uniform:"rotateX",min:0,max:6.283185,step:.01,ui:{label:"rotate x",control:"slider",category:"view",enabledBy:"viewMode"}},rotateY:{type:"float",default:0,uniform:"rotateY",min:0,max:6.283185,step:.01,ui:{label:"rotate y",control:"slider",category:"view",enabledBy:"viewMode"}},rotateZ:{type:"float",default:0,uniform:"rotateZ",min:0,max:6.283185,step:.01,ui:{label:"rotate z",control:"slider",category:"view",enabledBy:"viewMode"}},viewScale:{type:"float",default:.8,uniform:"viewScale",min:.1,max:10,step:.01,ui:{label:"zoom",control:"slider",category:"view",enabledBy:"viewMode"}},posX:{type:"float",default:0,uniform:"posX",min:-50,max:50,step:.1,ui:{label:"pos x",control:"slider",category:"view",enabledBy:"viewMode"}},posY:{type:"float",default:0,uniform:"posY",min:-50,max:50,step:.1,ui:{label:"pos y",control:"slider",category:"view",enabledBy:"viewMode"}},matteOpacity:{type:"float",default:1,min:0,max:1,randMin:.75,uniform:"matteOpacity",ui:{label:"bg opacity",control:"slider",category:"visual"}}},passes:[{name:"diffuse",program:"diffuse",inputs:{trailTex:"global_points_trail"},uniforms:{intensity:"intensity"},outputs:{fragColor:"global_points_trail"}},{name:"copy",program:"copy",inputs:{sourceTex:"global_points_trail"},outputs:{fragColor:"global_points_trail"}},{name:"deposit",program:"deposit",drawMode:"points",count:"input",blend:!0,inputs:{xyzTex:"global_xyz",rgbaTex:"global_rgba"},uniforms:{density:"density",viewMode:"viewMode",rotateX:"rotateX",rotateY:"rotateY",rotateZ:"rotateZ",viewScale:"viewScale",posX:"posX",posY:"posY"},outputs:{fragColor:"global_points_trail"}},{name:"blend",program:"blend",inputs:{inputTex:"inputTex",trailTex:"global_points_trail"},uniforms:{inputIntensity:"inputIntensity",matteOpacity:"matteOpacity"},outputs:{fragColor:"outputTex"}}]});var i={blend:{glsl:`#version 300 es
+var o=class{constructor(e={}){this.state={},this.uniforms={},e.name&&(this.name=e.name),e.namespace&&(this.namespace=e.namespace),e.func&&(this.func=e.func),e.description&&(this.description=e.description),e.tags&&(this.tags=e.tags),e.globals&&(this.globals=e.globals),e.passes&&(this.passes=e.passes),e.textures&&(this.textures=e.textures),e.outputTex3d&&(this.outputTex3d=e.outputTex3d),e.outputGeo&&(this.outputGeo=e.outputGeo),e.uniformLayout&&(this.uniformLayout=e.uniformLayout),e.uniformLayouts&&(this.uniformLayouts=e.uniformLayouts),e.paramAliases&&(this.paramAliases=e.paramAliases),e.openCategories&&(this.openCategories=e.openCategories),e.defaultProgram&&(this.defaultProgram=e.defaultProgram),e.hidden&&(this.hidden=!0),e.deprecatedBy&&(this.deprecatedBy=e.deprecatedBy),e.onInit&&(this._configOnInit=e.onInit),e.onUpdate&&(this._configOnUpdate=e.onUpdate),e.onDestroy&&(this._configOnDestroy=e.onDestroy),e.asyncInit&&(this._configAsyncInit=e.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(e){return this._configOnUpdate?this._configOnUpdate.call(this,e):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(e){return this._configAsyncInit?this._configAsyncInit.call(this,e):Promise.resolve()}};var n=new o({name:"Points Render",namespace:"render",func:"pointsRender",tags:["agents"],description:"Blend agent trails with input for particle systems",textures:{global_points_trail:{width:"100%",height:"100%",format:"rgba16f"}},globals:{density:{type:"float",default:50,min:0,max:100,uniform:"density",ui:{label:"density",control:"slider",category:"visual"}},intensity:{type:"float",default:75,min:0,max:100,uniform:"intensity",ui:{label:"trail intensity",control:"slider",category:"visual"}},inputIntensity:{type:"float",default:10.15,min:0,max:100,uniform:"inputIntensity",ui:{label:"input mix",control:"slider",category:"visual"}},viewMode:{type:"int",default:0,min:0,max:2,uniform:"viewMode",choices:{flat:0,ortho:1,perspective:2},ui:{label:"view",control:"dropdown",category:"view"}},rotateX:{type:"float",default:.3,uniform:"rotateX",min:0,max:6.283185,step:.01,ui:{label:"rotate x",control:"slider",category:"view",enabledBy:"viewMode"}},rotateY:{type:"float",default:0,uniform:"rotateY",min:0,max:6.283185,step:.01,ui:{label:"rotate y",control:"slider",category:"view",enabledBy:"viewMode"}},rotateZ:{type:"float",default:0,uniform:"rotateZ",min:0,max:6.283185,step:.01,ui:{label:"rotate z",control:"slider",category:"view",enabledBy:"viewMode"}},viewScale:{type:"float",default:.8,uniform:"viewScale",min:.1,max:10,step:.01,ui:{label:"zoom",control:"slider",category:"view",enabledBy:"viewMode"}},posX:{type:"float",default:0,uniform:"posX",min:-50,max:50,step:.1,ui:{label:"pos x",control:"slider",category:"view",enabledBy:"viewMode"}},posY:{type:"float",default:0,uniform:"posY",min:-50,max:50,step:.1,ui:{label:"pos y",control:"slider",category:"view",enabledBy:"viewMode"}},posZ:{type:"float",default:0,uniform:"posZ",min:-200,max:200,step:.1,ui:{label:"pos z",control:"slider",category:"view",enabledBy:"viewMode"}},fieldOfView:{type:"float",default:60,uniform:"fieldOfView",min:10,max:150,step:1,ui:{label:"field of view",control:"slider",category:"view",enabledBy:{param:"viewMode",eq:2}}},matteOpacity:{type:"float",default:1,min:0,max:1,randMin:.75,uniform:"matteOpacity",ui:{label:"bg opacity",control:"slider",category:"visual"}}},passes:[{name:"diffuse",program:"diffuse",inputs:{trailTex:"global_points_trail"},uniforms:{intensity:"intensity"},outputs:{fragColor:"global_points_trail"}},{name:"copy",program:"copy",inputs:{sourceTex:"global_points_trail"},outputs:{fragColor:"global_points_trail"}},{name:"deposit",program:"deposit",drawMode:"points",count:"input",blend:!0,inputs:{xyzTex:"global_xyz",rgbaTex:"global_rgba"},uniforms:{density:"density",viewMode:"viewMode",rotateX:"rotateX",rotateY:"rotateY",rotateZ:"rotateZ",viewScale:"viewScale",posX:"posX",posY:"posY",posZ:"posZ",fieldOfView:"fieldOfView"},outputs:{fragColor:"global_points_trail"}},{name:"blend",program:"blend",inputs:{inputTex:"inputTex",trailTex:"global_points_trail"},uniforms:{inputIntensity:"inputIntensity",matteOpacity:"matteOpacity"},outputs:{fragColor:"outputTex"}}].flatMap(t=>t.name==="deposit"?[0,1,2].map(e=>({...t,name:`${t.name}_${e}`,defines:{VIEW_MODE:e},conditions:{runIf:[{uniform:"viewMode",equals:e}]}})):[t])});var i={blend:{glsl:`#version 300 es
 precision highp float;
 
 uniform sampler2D inputTex;
@@ -105,13 +105,15 @@ uniform vec2 resolution;
 uniform float density;
 
 // 3D viewport uniforms
-uniform int viewMode;     // 0=2D normalized, 1=3D orthographic
+const int viewMode = VIEW_MODE;     // 0=flat, 1=orthographic, 2=perspective
 uniform float rotateX;
 uniform float rotateY;
 uniform float rotateZ;
 uniform float viewScale;
 uniform float posX;
 uniform float posY;
+uniform float posZ;
+uniform float fieldOfView;
 
 out vec4 vColor;
 
@@ -162,12 +164,12 @@ void main() {
         // 2D mode: positions are normalized 0..1
         clipPos = pos.xy * 2.0 - 1.0;
     } else {
-        // 3D mode: apply rotation and orthographic projection
+        // 3D mode: rotate world coordinates before camera projection
         vec3 p = pos.xyz;
         
         // Detect if this is a 2D system (coords in 0-1) or 3D attractor (coords \xB140)
         // 2D systems have Z near 0 and XY in 0-1 range
-        bool is2DSystem = abs(p.z) < 1.0 && p.x >= 0.0 && p.x <= 1.0 && p.y >= 0.0 && p.y <= 1.0;
+        bool is2DSystem = viewMode == 1 && abs(p.z) < 1.0 && p.x >= 0.0 && p.x <= 1.0 && p.y >= 0.0 && p.y <= 1.0;
         
         if (is2DSystem) {
             // Center 2D coords around origin: 0-1 -> -0.5 to 0.5
@@ -194,8 +196,19 @@ void main() {
         p.x += posX;
         p.y += posY;
         
-        // Orthographic projection with scale
-        if (is2DSystem) {
+        if (viewMode == 2) {
+            // Match the billboard camera at Z=80, looking down negative Z.
+            float cameraDepth = 80.0 - (p.z + posZ);
+            if (cameraDepth <= 0.1) {
+                gl_Position = vec4(2.0, 2.0, 0.0, 1.0);
+                gl_PointSize = 0.0;
+                vColor = vec4(0.0);
+                return;
+            }
+            float focalLength = 1.0 / tan(clamp(fieldOfView, 10.0, 150.0) * 0.00872664626);
+            clipPos = p.xy * focalLength * viewScale / cameraDepth;
+            clipPos.x *= resolution.y / resolution.x;
+        } else if (is2DSystem) {
             // 2D systems: coords are now \xB10.5, scale to fill viewport
             // Use 3.5x multiplier for close-up view that's nice to pan around
             clipPos = p.xy * 3.5 * viewScale;
@@ -225,13 +238,14 @@ void main() {
 struct Uniforms {
     resolution: vec2<f32>,
     density: f32,
-    viewMode: i32,
     rotateX: f32,
     rotateY: f32,
     rotateZ: f32,
     viewScale: f32,
     posX: f32,
     posY: f32,
+    posZ: f32,
+    fieldOfView: f32,
 };
 
 struct VertexOutput {
@@ -285,16 +299,16 @@ fn vertexMain(@builtin(vertex_index) vertexIndex: u32) -> VertexOutput {
     
     var clipPos: vec2<f32>;
     
-    if (u.viewMode == 0) {
+    if (VIEW_MODE == 0) {
         // 2D mode: positions are normalized 0..1
         clipPos = vec2<f32>(pos.x * 2.0 - 1.0, 1.0 - pos.y * 2.0);
     } else {
-        // 3D mode: apply rotation and orthographic projection
+        // 3D mode: rotate world coordinates before camera projection
         var p = pos.xyz;
         
         // Detect if this is a 2D system (coords in 0-1) or 3D attractor (coords \xB140)
         // 2D systems have Z near 0 and XY in 0-1 range
-        let is2DSystem = abs(p.z) < 1.0 && p.x >= 0.0 && p.x <= 1.0 && p.y >= 0.0 && p.y <= 1.0;
+        let is2DSystem = VIEW_MODE == 1 && abs(p.z) < 1.0 && p.x >= 0.0 && p.x <= 1.0 && p.y >= 0.0 && p.y <= 1.0;
         
         if (is2DSystem) {
             // Center 2D coords around origin: 0-1 -> -0.5 to 0.5
@@ -320,8 +334,18 @@ fn vertexMain(@builtin(vertex_index) vertexIndex: u32) -> VertexOutput {
         p.x = p.x + u.posX;
         p.y = p.y + u.posY;
         
-        // Orthographic projection with scale
-        if (is2DSystem) {
+        if (VIEW_MODE == 2) {
+            // Match the billboard camera at Z=80, looking down negative Z.
+            let cameraDepth = 80.0 - (p.z + u.posZ);
+            if (cameraDepth <= 0.1) {
+                out.position = vec4<f32>(2.0, 2.0, 0.0, 1.0);
+                out.color = vec4<f32>(0.0);
+                return out;
+            }
+            let focalLength = 1.0 / tan(clamp(u.fieldOfView, 10.0, 150.0) * 0.00872664626);
+            clipPos = p.xy * focalLength * u.viewScale / cameraDepth;
+            clipPos.x = clipPos.x * u.resolution.y / u.resolution.x;
+        } else if (is2DSystem) {
             // 2D systems: coords are now \xB10.5, scale to fill viewport
             // Use 3.5x multiplier for close-up view that's nice to pan around
             clipPos = p.xy * 3.5 * u.viewScale;
@@ -386,7 +410,7 @@ fn main(@builtin(position) fragCoord: vec4<f32>) -> @location(0) vec4<f32> {
     let decay = clamp(u.intensity / 100.0, 0.0, 1.0);
     return clamp(trailColor * decay, vec4<f32>(0.0), vec4<f32>(1.0));
 }
-`}},r=`# pointsRender
+`}},a=`# pointsRender
 
 Accumulate agent trails and blend with input for particle systems
 
@@ -401,14 +425,18 @@ Renders each agent as a single point with trail accumulation over time.
 | density | float | 50 | 0-100 | Density |
 | intensity | float | 75 | 0-100 | Trail intensity |
 | inputIntensity | float | 10.15 | 0-100 | Input intensity |
-| viewMode | int | flat | flat/ortho | View |
+| viewMode | int | flat | flat/ortho/perspective | View |
 | rotateX | float | 0.3 | 0-6.283185 | Rotate X |
 | rotateY | float | 0 | 0-6.283185 | Rotate Y |
 | rotateZ | float | 0 | 0-6.283185 | Rotate Z |
 | viewScale | float | 0.8 | 0.1-10 | Zoom |
 | posX | float | 0 | -50-50 | Pos X |
 | posY | float | 0 | -50-50 | Pos Y |
+| posZ | float | 0 | -200-200 | Camera-space Z offset in perspective mode |
+| fieldOfView | float | 60 | 10-150 | Vertical perspective field of view in degrees |
 | matteOpacity | float | 1 | 0-1 | Background opacity |
+
+Perspective mode uses the same camera as \`pointsBillboardRender\`: world coordinates, a camera at Z=80 looking down negative Z, and X/Y/Z rotations followed by camera-space offsets. \`fieldOfView\` controls the vertical viewing angle, \`viewScale\` controls zoom, and \`posZ\` moves through the scene. Points at or behind the near plane are clipped. Each agent remains one pixel. Flat and orthographic rendering keep their existing behavior.
 
 ## Usage
 
@@ -423,4 +451,4 @@ noise()
 
 render(o0)
 \`\`\`
-`;if(e&&Object.keys(i).length>0){e.shaders||(e.shaders={});for(let[o,t]of Object.entries(i))e.shaders[o]={...t}}e&&r&&(e.help=r);var u="render/pointsRender",c="render",f="pointsRender",d=e;export{d as default,u as effectId,f as effectName,r as help,c as namespace};
+`;if(n&&Object.keys(i).length>0){n.shaders||(n.shaders={});for(let[t,e]of Object.entries(i))n.shaders[t]={...e}}n&&a&&(n.help=a);var c="render/pointsRender",u="render",f="pointsRender",d=n;export{d as default,c as effectId,f as effectName,a as help,u as namespace};

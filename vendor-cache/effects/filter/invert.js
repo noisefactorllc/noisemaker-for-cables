@@ -20,10 +20,11 @@ void main() {
     vec2 uv = gl_FragCoord.xy / vec2(texSize);
     vec4 color = texture(inputTex, uv);
 
+    // Invert the underlying color and retain premultiplied coverage.
     if (mode == 1) {
-        color.rgb = min(color.rgb, 1.0 - color.rgb);
+        color.rgb = min(color.rgb, color.a - color.rgb);
     } else {
-        color.rgb = 1.0 - color.rgb;
+        color.rgb = color.a - color.rgb;
     }
 
     fragColor = color;
@@ -49,10 +50,11 @@ fn main(@builtin(position) pos: vec4<f32>) -> @location(0) vec4<f32> {
     let uv = pos.xy / texSize;
     var color = textureSample(inputTex, inputSampler, uv);
 
+    // Invert the underlying color and retain premultiplied coverage.
     if (uniforms.mode == 1) {
-        color = vec4<f32>(min(color.rgb, 1.0 - color.rgb), color.a);
+        color = vec4<f32>(min(color.rgb, color.a - color.rgb), color.a);
     } else {
-        color = vec4<f32>(1.0 - color.rgb, color.a);
+        color = vec4<f32>(color.a - color.rgb, color.a);
     }
 
     return color;
@@ -87,4 +89,4 @@ noise(seed: 1, ridges: true)
 
 render(o0)
 \`\`\`
-`;if(n&&Object.keys(i).length>0){n.shaders||(n.shaders={});for(let[r,e]of Object.entries(i))n.shaders[r]={...e}}n&&o&&(n.help=o);var p="filter/invert",f="filter",c="invert",d=n;export{d as default,p as effectId,c as effectName,o as help,f as namespace};
+`;if(n&&Object.keys(i).length>0){n.shaders||(n.shaders={});for(let[r,e]of Object.entries(i))n.shaders[r]={...e}}n&&o&&(n.help=o);var p="filter/invert",c="filter",f="invert",d=n;export{d as default,p as effectId,f as effectName,o as help,c as namespace};

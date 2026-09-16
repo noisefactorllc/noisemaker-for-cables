@@ -1,5 +1,5 @@
 /* synth/media */
-var f=Object.defineProperty;var c=(i,t,s)=>t in i?f(i,t,{enumerable:!0,configurable:!0,writable:!0,value:s}):i[t]=s;var e=(i,t,s)=>c(i,typeof t!="symbol"?t+"":t,s);var o=class{constructor(t={}){this.state={},this.uniforms={},t.name&&(this.name=t.name),t.namespace&&(this.namespace=t.namespace),t.func&&(this.func=t.func),t.description&&(this.description=t.description),t.tags&&(this.tags=t.tags),t.globals&&(this.globals=t.globals),t.passes&&(this.passes=t.passes),t.textures&&(this.textures=t.textures),t.outputTex3d&&(this.outputTex3d=t.outputTex3d),t.outputGeo&&(this.outputGeo=t.outputGeo),t.uniformLayout&&(this.uniformLayout=t.uniformLayout),t.uniformLayouts&&(this.uniformLayouts=t.uniformLayouts),t.paramAliases&&(this.paramAliases=t.paramAliases),t.openCategories&&(this.openCategories=t.openCategories),t.defaultProgram&&(this.defaultProgram=t.defaultProgram),t.hidden&&(this.hidden=!0),t.deprecatedBy&&(this.deprecatedBy=t.deprecatedBy),t.onInit&&(this._configOnInit=t.onInit),t.onUpdate&&(this._configOnUpdate=t.onUpdate),t.onDestroy&&(this._configOnDestroy=t.onDestroy),t.asyncInit&&(this._configAsyncInit=t.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(t){return this._configOnUpdate?this._configOnUpdate.call(this,t):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(t){return this._configAsyncInit?this._configAsyncInit.call(this,t):Promise.resolve()}};var n=class extends o{constructor(){super(...arguments);e(this,"name","Media");e(this,"namespace","synth");e(this,"func","media");e(this,"tags",["image","video"]);e(this,"description","Video/camera/image input");e(this,"externalTexture","imageTex");e(this,"uniformLayout",{resolution:{slot:0,components:"xy"},time:{slot:0,components:"z"},position:{slot:1,components:"x"},rotation:{slot:1,components:"y"},scaleAmt:{slot:1,components:"z"},offsetX:{slot:1,components:"w"},offsetY:{slot:2,components:"x"},tiling:{slot:2,components:"y"},flip:{slot:2,components:"z"},bgAlpha:{slot:2,components:"w"},bgColor:{slot:3,components:"xyz"},imageSize:{slot:4,components:"xy"}});e(this,"globals",{position:{type:"int",default:4,uniform:"position",choices:{topLeft:0,topCenter:1,topRight:2,midLeft:3,midCenter:4,midRight:5,bottomLeft:6,bottomCenter:7,bottomRight:8},ui:{label:"position",control:"dropdown",category:"orientation"}},tiling:{type:"int",default:0,uniform:"tiling",choices:{none:0,horizAndVert:1,horizOnly:2,vertOnly:3},ui:{label:"tiling",control:"dropdown",category:"orientation"}},flip:{type:"int",default:0,uniform:"flip",choices:{none:0,all:1,horizontal:2,vertical:3,mirrorLtoR:11,mirrorRtoL:12,mirrorUtoD:13,mirrorDtoU:14,mirrorLtoRUtoD:15,mirrorLtoRDtoU:16,mirrorRtoLUtoD:17,mirrorRtoLDtoU:18},ui:{label:"flip/mirror",control:"dropdown",category:"orientation"}},scaleAmt:{type:"float",default:100,min:25,max:400,uniform:"scaleAmt",ui:{label:"scale %",control:"slider",category:"transform"}},rotation:{type:"float",default:0,min:-180,max:180,uniform:"rotation",ui:{label:"rotate",control:"slider",category:"transform"}},offsetX:{type:"float",default:0,min:-100,max:100,uniform:"offsetX",ui:{label:"offset x",control:"slider",category:"transform"}},offsetY:{type:"float",default:0,min:-100,max:100,uniform:"offsetY",ui:{label:"offset y",control:"slider",category:"transform"}},bgColor:{type:"color",default:[0,0,0],uniform:"bgColor",ui:{label:"bg color",control:"color",category:"background"}},bgAlpha:{type:"float",default:0,min:0,max:1,uniform:"bgAlpha",ui:{label:"bg opacity",control:"slider",category:"background"}},imageSize:{type:"vec2",default:[1024,1024],uniform:"imageSize",ui:{control:!1}}});e(this,"paramAliases",{backgroundColor:"bgColor",backgroundOpacity:"bgAlpha"});e(this,"passes",[{name:"main",program:"mediaInput",inputs:{imageTex:"imageTex"},outputs:{fragColor:"outputTex"}}])}onInit(){this.state.imageWidth=1,this.state.imageHeight=1}onUpdate(){return{imageSize:[this.state.imageWidth||1,this.state.imageHeight||1]}}setMediaDimensions(s,l){this.state.imageWidth=s,this.state.imageHeight=l}};var a={mediaInput:{glsl:`/*
+var f=Object.defineProperty;var c=(i,e,s)=>e in i?f(i,e,{enumerable:!0,configurable:!0,writable:!0,value:s}):i[e]=s;var t=(i,e,s)=>c(i,typeof e!="symbol"?e+"":e,s);var o=class{constructor(e={}){this.state={},this.uniforms={},e.name&&(this.name=e.name),e.namespace&&(this.namespace=e.namespace),e.func&&(this.func=e.func),e.description&&(this.description=e.description),e.tags&&(this.tags=e.tags),e.globals&&(this.globals=e.globals),e.passes&&(this.passes=e.passes),e.textures&&(this.textures=e.textures),e.outputTex3d&&(this.outputTex3d=e.outputTex3d),e.outputGeo&&(this.outputGeo=e.outputGeo),e.uniformLayout&&(this.uniformLayout=e.uniformLayout),e.uniformLayouts&&(this.uniformLayouts=e.uniformLayouts),e.paramAliases&&(this.paramAliases=e.paramAliases),e.openCategories&&(this.openCategories=e.openCategories),e.defaultProgram&&(this.defaultProgram=e.defaultProgram),e.hidden&&(this.hidden=!0),e.deprecatedBy&&(this.deprecatedBy=e.deprecatedBy),e.onInit&&(this._configOnInit=e.onInit),e.onUpdate&&(this._configOnUpdate=e.onUpdate),e.onDestroy&&(this._configOnDestroy=e.onDestroy),e.asyncInit&&(this._configAsyncInit=e.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(e){return this._configOnUpdate?this._configOnUpdate.call(this,e):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(e){return this._configAsyncInit?this._configAsyncInit.call(this,e):Promise.resolve()}};var n=class extends o{constructor(){super(...arguments);t(this,"name","Media");t(this,"namespace","synth");t(this,"func","media");t(this,"tags",["image","video"]);t(this,"description","Video/camera/image input");t(this,"externalTexture","imageTex");t(this,"uniformLayout",{resolution:{slot:0,components:"xy"},time:{slot:0,components:"z"},position:{slot:1,components:"x"},rotation:{slot:1,components:"y"},scaleAmt:{slot:1,components:"z"},offsetX:{slot:1,components:"w"},offsetY:{slot:2,components:"x"},tiling:{slot:2,components:"y"},flip:{slot:2,components:"z"},bgAlpha:{slot:2,components:"w"},bgColor:{slot:3,components:"xyz"},imageSize:{slot:4,components:"xy"}});t(this,"globals",{position:{type:"int",default:4,uniform:"position",choices:{topLeft:0,topCenter:1,topRight:2,midLeft:3,midCenter:4,midRight:5,bottomLeft:6,bottomCenter:7,bottomRight:8},ui:{label:"position",control:"dropdown",category:"orientation"}},tiling:{type:"int",default:0,uniform:"tiling",choices:{none:0,horizAndVert:1,horizOnly:2,vertOnly:3},ui:{label:"tiling",control:"dropdown",category:"orientation"}},flip:{type:"int",default:0,uniform:"flip",choices:{none:0,all:1,horizontal:2,vertical:3,mirrorLtoR:11,mirrorRtoL:12,mirrorUtoD:13,mirrorDtoU:14,mirrorLtoRUtoD:15,mirrorLtoRDtoU:16,mirrorRtoLUtoD:17,mirrorRtoLDtoU:18},ui:{label:"flip/mirror",control:"dropdown",category:"orientation"}},scaleAmt:{type:"float",default:100,min:25,max:400,uniform:"scaleAmt",ui:{label:"scale %",control:"slider",category:"transform"}},rotation:{type:"float",default:0,min:-180,max:180,uniform:"rotation",ui:{label:"rotate",control:"slider",category:"transform"}},offsetX:{type:"float",default:0,min:-100,max:100,uniform:"offsetX",ui:{label:"offset x",control:"slider",category:"transform"}},offsetY:{type:"float",default:0,min:-100,max:100,uniform:"offsetY",ui:{label:"offset y",control:"slider",category:"transform"}},bgColor:{type:"color",default:[0,0,0],uniform:"bgColor",ui:{label:"bg color",control:"color",category:"background"}},bgAlpha:{type:"float",default:0,min:0,max:1,uniform:"bgAlpha",ui:{label:"bg opacity",control:"slider",category:"background"}},imageSize:{type:"vec2",default:[1024,1024],uniform:"imageSize",ui:{control:!1}}});t(this,"paramAliases",{backgroundColor:"bgColor",backgroundOpacity:"bgAlpha"});t(this,"passes",[{name:"main",program:"mediaInput",inputs:{imageTex:"imageTex"},outputs:{fragColor:"outputTex"}}])}onInit(){this.state.imageWidth=1,this.state.imageHeight=1}onUpdate(){return{imageSize:[this.state.imageWidth||1,this.state.imageHeight||1]}}setMediaDimensions(s,l){this.state.imageWidth=s,this.state.imageHeight=l}};var a={mediaInput:{glsl:`/*
  * Media input shader.
  * Normalizes camera or video textures and exposes crop controls while preserving aspect ratio.
  * Offset sliders are remapped prior to sampling so live adjustments never read outside the source texture.
@@ -62,6 +62,22 @@ vec2 tile(vec2 st) {
     return st;
 }
 
+// External uploads use straight alpha. Interpolate premultiplied texels so
+// transparent pixels cannot darken edges or bleed their hidden RGB into them.
+vec4 mediaTexel(ivec2 p, ivec2 size) {
+    vec4 c = texelFetch(imageTex, clamp(p, ivec2(0), size - 1), 0);
+    return vec4(c.rgb * c.a, c.a);
+}
+
+vec4 sampleMedia(vec2 uv) {
+    ivec2 size = textureSize(imageTex, 0);
+    vec2 p = uv * vec2(size) - 0.5;
+    ivec2 lo = ivec2(floor(p));
+    vec2 f = fract(p);
+    return mix(mix(mediaTexel(lo, size), mediaTexel(lo + ivec2(1, 0), size), f.x),
+               mix(mediaTexel(lo + ivec2(0, 1), size), mediaTexel(lo + ivec2(1, 1), size), f.x), f.y);
+}
+
 vec4 getImage(vec2 st) {
     vec2 size = imageSize;
     st = gl_FragCoord.xy / size;
@@ -115,7 +131,9 @@ vec4 getImage(vec2 st) {
 
     // Correct for aspect ratio before rotation
     st.x *= size.x / size.y;
-    st = rotate2D(st, rotation);
+    // Zero rotation is an exact identity. Avoid backend-dependent rounding
+    // in the remap/trigonometry path before bilinear texture filtering.
+    if (rotation != 0.0) st = rotate2D(st, rotation);
     st.x /= size.x / size.y;
 
     st = tile(st);
@@ -188,18 +206,11 @@ vec4 getImage(vec2 st) {
        }
     }
 
-    vec4 text = texture(imageTex, st);
+    vec4 text = sampleMedia(st);
 
     if (st.x < 0.0 || st.x > 1.0 || st.y < 0.0 || st.y > 1.0) {
         // Don't draw texture if out of coordinate bounds
-        return vec4(bgColor, bgAlpha);
-    }
-
-    // Un-premultiply to compensate for linear filtering on straight-alpha textures
-    // Linear filtering averages with black (0,0,0,0) transparent pixels, darkening edges
-    // Dividing by alpha restores the original RGB values
-    if (text.a > 0.0) {
-        text.rgb = text.rgb / text.a;
+        return vec4(bgColor * bgAlpha, bgAlpha);
     }
 
     return text;
@@ -271,6 +282,21 @@ fn tile(st: vec2<f32>) -> vec2<f32> {
     return st;
 }
 
+// External uploads use straight alpha; filter premultiplied texels.
+fn mediaTexel(p: vec2<i32>, size: vec2<i32>) -> vec4<f32> {
+    let c = textureLoad(imageTex, clamp(p, vec2<i32>(0), size - vec2<i32>(1)), 0);
+    return vec4<f32>(c.rgb * c.a, c.a);
+}
+
+fn sampleMedia(uv: vec2<f32>) -> vec4<f32> {
+    let size = vec2<i32>(textureDimensions(imageTex));
+    let p = uv * vec2<f32>(size) - vec2<f32>(0.5);
+    let lo = vec2<i32>(floor(p));
+    let f = fract(p);
+    return mix(mix(mediaTexel(lo, size), mediaTexel(lo + vec2<i32>(1, 0), size), f.x),
+               mix(mediaTexel(lo + vec2<i32>(0, 1), size), mediaTexel(lo + vec2<i32>(1, 1), size), f.x), f.y);
+}
+
 fn getImage(pos: vec2<f32>) -> vec4<f32> {
     var st = pos / imageSize;
     st.y = 1.0 - st.y;
@@ -309,7 +335,8 @@ fn getImage(pos: vec2<f32>) -> vec4<f32> {
     st.y = st.y - map(offsetY, -100.0, 100.0, -resolution.y / imageSize.y * scale, resolution.y / imageSize.y * scale) * 1.5;
 
     st.x = st.x * (imageSize.x / imageSize.y);
-    st = rotate2D(st);
+    // Preserve exact texture coordinates for the identity transform.
+    if (rotation != 0.0) { st = rotate2D(st); }
     st.x = st.x / (imageSize.x / imageSize.y);
 
     st = tile(st);
@@ -345,17 +372,10 @@ fn getImage(pos: vec2<f32>) -> vec4<f32> {
         if (st.y < 0.5) { st.y = 1.0 - st.y; }
     }
 
-    // Compensate for WebGPU blit Y-flip (present shader maps UV y=0 to screen bottom)
-    st.y = 1.0 - st.y;
-
-    var text = textureSample(imageTex, samp, st);
+    let text = sampleMedia(st);
 
     if (st.x < 0.0 || st.x > 1.0 || st.y < 0.0 || st.y > 1.0) {
-        return vec4<f32>(bgColor, bgAlpha);
-    }
-
-    if (text.a > 0.0) {
-        text = vec4<f32>(text.rgb / text.a, text.a);
+        return vec4<f32>(bgColor * bgAlpha, bgAlpha);
     }
 
     return text;
@@ -379,10 +399,9 @@ fn main(@builtin(position) pos : vec4<f32>) -> @location(0) vec4<f32> {
 
     imageSize = uniforms.data[4].xy;
 
-    // Convert from WGSL top-down to bottom-up coordinates (matching GLSL gl_FragCoord)
-    let posFromBottom = vec2<f32>(pos.x, resolution.y - pos.y);
-
-    return getImage(posFromBottom);
+    // Internal rows match GLSL texture rows; presentation applies the final
+    // Y conversion. Keep anchor, offset and rotation in that same space.
+    return getImage(pos.xy);
 }
 `}},r=`# media
 
@@ -417,4 +436,4 @@ media()
 
 render(o0)
 \`\`\`
-`;if(n&&Object.keys(a).length>0){n.shaders||(n.shaders={});for(let[i,t]of Object.entries(a))n.shaders[i]={...t}}n&&r&&(n.help=r);var d="synth/media",h="synth",z="media",v=n;export{v as default,d as effectId,z as effectName,r as help,h as namespace};
+`;if(n&&Object.keys(a).length>0){n.shaders||(n.shaders={});for(let[i,e]of Object.entries(a))n.shaders[i]={...e}}n&&r&&(n.help=r);var g="synth/media",v="synth",z="media",h=n;export{h as default,g as effectId,z as effectName,r as help,v as namespace};

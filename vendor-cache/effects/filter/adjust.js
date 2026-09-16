@@ -1,5 +1,5 @@
 /* filter/adjust */
-var t=class{constructor(n={}){this.state={},this.uniforms={},n.name&&(this.name=n.name),n.namespace&&(this.namespace=n.namespace),n.func&&(this.func=n.func),n.description&&(this.description=n.description),n.tags&&(this.tags=n.tags),n.globals&&(this.globals=n.globals),n.passes&&(this.passes=n.passes),n.textures&&(this.textures=n.textures),n.outputTex3d&&(this.outputTex3d=n.outputTex3d),n.outputGeo&&(this.outputGeo=n.outputGeo),n.uniformLayout&&(this.uniformLayout=n.uniformLayout),n.uniformLayouts&&(this.uniformLayouts=n.uniformLayouts),n.paramAliases&&(this.paramAliases=n.paramAliases),n.openCategories&&(this.openCategories=n.openCategories),n.defaultProgram&&(this.defaultProgram=n.defaultProgram),n.hidden&&(this.hidden=!0),n.deprecatedBy&&(this.deprecatedBy=n.deprecatedBy),n.onInit&&(this._configOnInit=n.onInit),n.onUpdate&&(this._configOnUpdate=n.onUpdate),n.onDestroy&&(this._configOnDestroy=n.onDestroy),n.asyncInit&&(this._configAsyncInit=n.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(n){return this._configOnUpdate?this._configOnUpdate.call(this,n):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(n){return this._configAsyncInit?this._configAsyncInit.call(this,n):Promise.resolve()}};var e=new t({name:"Adjust",namespace:"filter",func:"adjust",tags:["color"],description:"Colorspace, hue/saturation, brightness/contrast",defaultProgram:`search filter, synth
+var r=class{constructor(n={}){this.state={},this.uniforms={},n.name&&(this.name=n.name),n.namespace&&(this.namespace=n.namespace),n.func&&(this.func=n.func),n.description&&(this.description=n.description),n.tags&&(this.tags=n.tags),n.globals&&(this.globals=n.globals),n.passes&&(this.passes=n.passes),n.textures&&(this.textures=n.textures),n.outputTex3d&&(this.outputTex3d=n.outputTex3d),n.outputGeo&&(this.outputGeo=n.outputGeo),n.uniformLayout&&(this.uniformLayout=n.uniformLayout),n.uniformLayouts&&(this.uniformLayouts=n.uniformLayouts),n.paramAliases&&(this.paramAliases=n.paramAliases),n.openCategories&&(this.openCategories=n.openCategories),n.defaultProgram&&(this.defaultProgram=n.defaultProgram),n.hidden&&(this.hidden=!0),n.deprecatedBy&&(this.deprecatedBy=n.deprecatedBy),n.onInit&&(this._configOnInit=n.onInit),n.onUpdate&&(this._configOnUpdate=n.onUpdate),n.onDestroy&&(this._configOnDestroy=n.onDestroy),n.asyncInit&&(this._configAsyncInit=n.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(n){return this._configOnUpdate?this._configOnUpdate.call(this,n):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(n){return this._configAsyncInit?this._configAsyncInit.call(this,n):Promise.resolve()}};var e=new r({name:"Adjust",namespace:"filter",func:"adjust",tags:["color"],description:"Colorspace, hue/saturation, brightness/contrast",defaultProgram:`search filter, synth
 
 perlin(scale: 75, octaves: 2)
 .adjust(mode: hsv, rotation: 120, hueRange: 40)
@@ -100,6 +100,8 @@ void main() {
     ivec2 texSize = textureSize(inputTex, 0);
     vec2 uv = gl_FragCoord.xy / vec2(texSize);
     vec4 color = texture(inputTex, uv);
+    // Color operations use straight RGB; retain coverage at the boundary.
+    color.rgb = color.a > 0.0 ? color.rgb / color.a : vec3(0.0);
 
     // --- Colorspace reinterpretation ---
     if (mode == 1) {
@@ -133,7 +135,7 @@ void main() {
     float contrastFactor = contrast * 2.0;
     color.rgb = (color.rgb - 0.5) * contrastFactor + 0.5;
 
-    fragColor = color;
+    fragColor = vec4(color.rgb * color.a, color.a);
 }
 `,wgsl:`/*
  * Combined color adjustment effect
@@ -238,6 +240,12 @@ fn main(@builtin(position) pos: vec4<f32>) -> @location(0) vec4<f32> {
     let texSize = vec2<f32>(textureDimensions(inputTex));
     let uv = pos.xy / texSize;
     var color = textureSample(inputTex, inputSampler, uv);
+    // Color operations use straight RGB; retain coverage at the boundary.
+    if (color.a > 0.0) {
+        color = vec4<f32>(color.rgb / color.a, color.a);
+    } else {
+        color = vec4<f32>(0.0);
+    }
 
     // --- Colorspace reinterpretation ---
     if (uniforms.mode == 1) {
@@ -274,7 +282,7 @@ fn main(@builtin(position) pos: vec4<f32>) -> @location(0) vec4<f32> {
     let contrastFactor = uniforms.contrast * 2.0;
     color = vec4<f32>((color.rgb - 0.5) * contrastFactor + 0.5, color.a);
 
-    return color;
+    return vec4<f32>(color.rgb * color.a, color.a);
 }
 `}},a=`# adjust
 
@@ -302,4 +310,4 @@ noise(seed: 1, ridges: true)
 
 render(o0)
 \`\`\`
-`;if(e&&Object.keys(o).length>0){e.shaders||(e.shaders={});for(let[r,n]of Object.entries(o))e.shaders[r]={...n}}e&&a&&(e.help=a);var c="filter/adjust",u="filter",b="adjust",g=e;export{g as default,c as effectId,b as effectName,a as help,u as namespace};
+`;if(e&&Object.keys(o).length>0){e.shaders||(e.shaders={});for(let[t,n]of Object.entries(o))e.shaders[t]={...n}}e&&a&&(e.help=a);var f="filter/adjust",u="filter",b="adjust",g=e;export{g as default,f as effectId,b as effectName,a as help,u as namespace};

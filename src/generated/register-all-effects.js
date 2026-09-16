@@ -160,60 +160,63 @@ import effect154 from '../../vendor-cache/effects/points/buddhabrot.js'
 import effect155 from '../../vendor-cache/effects/points/dla.js'
 import effect156 from '../../vendor-cache/effects/points/flock.js'
 import effect157 from '../../vendor-cache/effects/points/flow.js'
-import effect158 from '../../vendor-cache/effects/points/hydraulic.js'
-import effect159 from '../../vendor-cache/effects/points/lenia.js'
-import effect160 from '../../vendor-cache/effects/points/life.js'
-import effect161 from '../../vendor-cache/effects/points/physarum.js'
-import effect162 from '../../vendor-cache/effects/points/physical.js'
-import effect163 from '../../vendor-cache/effects/render/loopBegin.js'
-import effect164 from '../../vendor-cache/effects/render/loopEnd.js'
-import effect165 from '../../vendor-cache/effects/render/meshLoader.js'
-import effect166 from '../../vendor-cache/effects/render/meshRender.js'
-import effect167 from '../../vendor-cache/effects/render/pointsBillboardRender.js'
-import effect168 from '../../vendor-cache/effects/render/pointsEmit.js'
-import effect169 from '../../vendor-cache/effects/render/pointsRender.js'
-import effect170 from '../../vendor-cache/effects/render/render3d.js'
-import effect171 from '../../vendor-cache/effects/render/renderCubemap3d.js'
-import effect172 from '../../vendor-cache/effects/render/renderCubemapSurface.js'
-import effect173 from '../../vendor-cache/effects/render/renderLit3d.js'
-import effect174 from '../../vendor-cache/effects/synth/bitwise.js'
-import effect175 from '../../vendor-cache/effects/synth/cell.js'
-import effect176 from '../../vendor-cache/effects/synth/cellularAutomata.js'
-import effect177 from '../../vendor-cache/effects/synth/curl.js'
-import effect178 from '../../vendor-cache/effects/synth/gabor.js'
-import effect179 from '../../vendor-cache/effects/synth/gradient.js'
-import effect180 from '../../vendor-cache/effects/synth/julia.js'
-import effect181 from '../../vendor-cache/effects/synth/mandala.js'
-import effect182 from '../../vendor-cache/effects/synth/mandelbrot.js'
-import effect183 from '../../vendor-cache/effects/synth/media.js'
-import effect184 from '../../vendor-cache/effects/synth/mnca.js'
-import effect185 from '../../vendor-cache/effects/synth/modPattern.js'
-import effect186 from '../../vendor-cache/effects/synth/navierStokes.js'
-import effect187 from '../../vendor-cache/effects/synth/newton.js'
-import effect188 from '../../vendor-cache/effects/synth/noise.js'
-import effect189 from '../../vendor-cache/effects/synth/osc2d.js'
-import effect190 from '../../vendor-cache/effects/synth/pattern.js'
-import effect191 from '../../vendor-cache/effects/synth/perlin.js'
-import effect192 from '../../vendor-cache/effects/synth/polygon.js'
-import effect193 from '../../vendor-cache/effects/synth/reactionDiffusion.js'
-import effect194 from '../../vendor-cache/effects/synth/remap.js'
-import effect195 from '../../vendor-cache/effects/synth/roll.js'
-import effect196 from '../../vendor-cache/effects/synth/sacredGeometry.js'
-import effect197 from '../../vendor-cache/effects/synth/scope.js'
-import effect198 from '../../vendor-cache/effects/synth/shape.js'
-import effect199 from '../../vendor-cache/effects/synth/solid.js'
-import effect200 from '../../vendor-cache/effects/synth/spectrum.js'
-import effect201 from '../../vendor-cache/effects/synth/subdivide.js'
-import effect202 from '../../vendor-cache/effects/synth/testPattern.js'
-import effect203 from '../../vendor-cache/effects/synth3d/cell3d.js'
-import effect204 from '../../vendor-cache/effects/synth3d/cellularAutomata3d.js'
-import effect205 from '../../vendor-cache/effects/synth3d/flythrough3d.js'
-import effect206 from '../../vendor-cache/effects/synth3d/fractal3d.js'
-import effect207 from '../../vendor-cache/effects/synth3d/noise3d.js'
-import effect208 from '../../vendor-cache/effects/synth3d/reactionDiffusion3d.js'
-import effect209 from '../../vendor-cache/effects/synth3d/shape3d.js'
+import effect158 from '../../vendor-cache/effects/points/heightGrid.js'
+import effect159 from '../../vendor-cache/effects/points/hydraulic.js'
+import effect160 from '../../vendor-cache/effects/points/lenia.js'
+import effect161 from '../../vendor-cache/effects/points/life.js'
+import effect162 from '../../vendor-cache/effects/points/physarum.js'
+import effect163 from '../../vendor-cache/effects/points/physical.js'
+import effect164 from '../../vendor-cache/effects/render/loopBegin.js'
+import effect165 from '../../vendor-cache/effects/render/loopEnd.js'
+import effect166 from '../../vendor-cache/effects/render/meshLoader.js'
+import effect167 from '../../vendor-cache/effects/render/meshRender.js'
+import effect168 from '../../vendor-cache/effects/render/pointsBillboardRender.js'
+import effect169 from '../../vendor-cache/effects/render/pointsEmit.js'
+import effect170 from '../../vendor-cache/effects/render/pointsRender.js'
+import effect171 from '../../vendor-cache/effects/render/render3d.js'
+import effect172 from '../../vendor-cache/effects/render/renderCubemap3d.js'
+import effect173 from '../../vendor-cache/effects/render/renderCubemapSurface.js'
+import effect174 from '../../vendor-cache/effects/render/renderLandscape3d.js'
+import effect175 from '../../vendor-cache/effects/render/renderLit3d.js'
+import effect176 from '../../vendor-cache/effects/synth/bitwise.js'
+import effect177 from '../../vendor-cache/effects/synth/cell.js'
+import effect178 from '../../vendor-cache/effects/synth/cellularAutomata.js'
+import effect179 from '../../vendor-cache/effects/synth/curl.js'
+import effect180 from '../../vendor-cache/effects/synth/gabor.js'
+import effect181 from '../../vendor-cache/effects/synth/gradient.js'
+import effect182 from '../../vendor-cache/effects/synth/julia.js'
+import effect183 from '../../vendor-cache/effects/synth/mandala.js'
+import effect184 from '../../vendor-cache/effects/synth/mandelbrot.js'
+import effect185 from '../../vendor-cache/effects/synth/media.js'
+import effect186 from '../../vendor-cache/effects/synth/mnca.js'
+import effect187 from '../../vendor-cache/effects/synth/modPattern.js'
+import effect188 from '../../vendor-cache/effects/synth/navierStokes.js'
+import effect189 from '../../vendor-cache/effects/synth/newton.js'
+import effect190 from '../../vendor-cache/effects/synth/noise.js'
+import effect191 from '../../vendor-cache/effects/synth/osc2d.js'
+import effect192 from '../../vendor-cache/effects/synth/pattern.js'
+import effect193 from '../../vendor-cache/effects/synth/perlin.js'
+import effect194 from '../../vendor-cache/effects/synth/polygon.js'
+import effect195 from '../../vendor-cache/effects/synth/reactionDiffusion.js'
+import effect196 from '../../vendor-cache/effects/synth/remap.js'
+import effect197 from '../../vendor-cache/effects/synth/roll.js'
+import effect198 from '../../vendor-cache/effects/synth/sacredGeometry.js'
+import effect199 from '../../vendor-cache/effects/synth/scope.js'
+import effect200 from '../../vendor-cache/effects/synth/shape.js'
+import effect201 from '../../vendor-cache/effects/synth/solid.js'
+import effect202 from '../../vendor-cache/effects/synth/spectrum.js'
+import effect203 from '../../vendor-cache/effects/synth/subdivide.js'
+import effect204 from '../../vendor-cache/effects/synth/testPattern.js'
+import effect205 from '../../vendor-cache/effects/synth3d/cell3d.js'
+import effect206 from '../../vendor-cache/effects/synth3d/cellularAutomata3d.js'
+import effect207 from '../../vendor-cache/effects/synth3d/flythrough3d.js'
+import effect208 from '../../vendor-cache/effects/synth3d/fractal3d.js'
+import effect209 from '../../vendor-cache/effects/synth3d/heightmap3d.js'
+import effect210 from '../../vendor-cache/effects/synth3d/noise3d.js'
+import effect211 from '../../vendor-cache/effects/synth3d/reactionDiffusion3d.js'
+import effect212 from '../../vendor-cache/effects/synth3d/shape3d.js'
 
-export const effectCount = 210
+export const effectCount = 213
 export const effectIds = Object.freeze([
   'classicNoisedeck/bitEffects',
   'classicNoisedeck/caustic',
@@ -373,6 +376,7 @@ export const effectIds = Object.freeze([
   'points/dla',
   'points/flock',
   'points/flow',
+  'points/heightGrid',
   'points/hydraulic',
   'points/lenia',
   'points/life',
@@ -388,6 +392,7 @@ export const effectIds = Object.freeze([
   'render/render3d',
   'render/renderCubemap3d',
   'render/renderCubemapSurface',
+  'render/renderLandscape3d',
   'render/renderLit3d',
   'synth/bitwise',
   'synth/cell',
@@ -422,6 +427,7 @@ export const effectIds = Object.freeze([
   'synth3d/cellularAutomata3d',
   'synth3d/flythrough3d',
   'synth3d/fractal3d',
+  'synth3d/heightmap3d',
   'synth3d/noise3d',
   'synth3d/reactionDiffusion3d',
   'synth3d/shape3d',
@@ -586,58 +592,61 @@ const effects = [
   ['points/dla', effect155],
   ['points/flock', effect156],
   ['points/flow', effect157],
-  ['points/hydraulic', effect158],
-  ['points/lenia', effect159],
-  ['points/life', effect160],
-  ['points/physarum', effect161],
-  ['points/physical', effect162],
-  ['render/loopBegin', effect163],
-  ['render/loopEnd', effect164],
-  ['render/meshLoader', effect165],
-  ['render/meshRender', effect166],
-  ['render/pointsBillboardRender', effect167],
-  ['render/pointsEmit', effect168],
-  ['render/pointsRender', effect169],
-  ['render/render3d', effect170],
-  ['render/renderCubemap3d', effect171],
-  ['render/renderCubemapSurface', effect172],
-  ['render/renderLit3d', effect173],
-  ['synth/bitwise', effect174],
-  ['synth/cell', effect175],
-  ['synth/cellularAutomata', effect176],
-  ['synth/curl', effect177],
-  ['synth/gabor', effect178],
-  ['synth/gradient', effect179],
-  ['synth/julia', effect180],
-  ['synth/mandala', effect181],
-  ['synth/mandelbrot', effect182],
-  ['synth/media', effect183],
-  ['synth/mnca', effect184],
-  ['synth/modPattern', effect185],
-  ['synth/navierStokes', effect186],
-  ['synth/newton', effect187],
-  ['synth/noise', effect188],
-  ['synth/osc2d', effect189],
-  ['synth/pattern', effect190],
-  ['synth/perlin', effect191],
-  ['synth/polygon', effect192],
-  ['synth/reactionDiffusion', effect193],
-  ['synth/remap', effect194],
-  ['synth/roll', effect195],
-  ['synth/sacredGeometry', effect196],
-  ['synth/scope', effect197],
-  ['synth/shape', effect198],
-  ['synth/solid', effect199],
-  ['synth/spectrum', effect200],
-  ['synth/subdivide', effect201],
-  ['synth/testPattern', effect202],
-  ['synth3d/cell3d', effect203],
-  ['synth3d/cellularAutomata3d', effect204],
-  ['synth3d/flythrough3d', effect205],
-  ['synth3d/fractal3d', effect206],
-  ['synth3d/noise3d', effect207],
-  ['synth3d/reactionDiffusion3d', effect208],
-  ['synth3d/shape3d', effect209],
+  ['points/heightGrid', effect158],
+  ['points/hydraulic', effect159],
+  ['points/lenia', effect160],
+  ['points/life', effect161],
+  ['points/physarum', effect162],
+  ['points/physical', effect163],
+  ['render/loopBegin', effect164],
+  ['render/loopEnd', effect165],
+  ['render/meshLoader', effect166],
+  ['render/meshRender', effect167],
+  ['render/pointsBillboardRender', effect168],
+  ['render/pointsEmit', effect169],
+  ['render/pointsRender', effect170],
+  ['render/render3d', effect171],
+  ['render/renderCubemap3d', effect172],
+  ['render/renderCubemapSurface', effect173],
+  ['render/renderLandscape3d', effect174],
+  ['render/renderLit3d', effect175],
+  ['synth/bitwise', effect176],
+  ['synth/cell', effect177],
+  ['synth/cellularAutomata', effect178],
+  ['synth/curl', effect179],
+  ['synth/gabor', effect180],
+  ['synth/gradient', effect181],
+  ['synth/julia', effect182],
+  ['synth/mandala', effect183],
+  ['synth/mandelbrot', effect184],
+  ['synth/media', effect185],
+  ['synth/mnca', effect186],
+  ['synth/modPattern', effect187],
+  ['synth/navierStokes', effect188],
+  ['synth/newton', effect189],
+  ['synth/noise', effect190],
+  ['synth/osc2d', effect191],
+  ['synth/pattern', effect192],
+  ['synth/perlin', effect193],
+  ['synth/polygon', effect194],
+  ['synth/reactionDiffusion', effect195],
+  ['synth/remap', effect196],
+  ['synth/roll', effect197],
+  ['synth/sacredGeometry', effect198],
+  ['synth/scope', effect199],
+  ['synth/shape', effect200],
+  ['synth/solid', effect201],
+  ['synth/spectrum', effect202],
+  ['synth/subdivide', effect203],
+  ['synth/testPattern', effect204],
+  ['synth3d/cell3d', effect205],
+  ['synth3d/cellularAutomata3d', effect206],
+  ['synth3d/flythrough3d', effect207],
+  ['synth3d/fractal3d', effect208],
+  ['synth3d/heightmap3d', effect209],
+  ['synth3d/noise3d', effect210],
+  ['synth3d/reactionDiffusion3d', effect211],
+  ['synth3d/shape3d', effect212],
 ]
 
 const registerEffectBatch = createEffectBatchRegistrar(effects, {

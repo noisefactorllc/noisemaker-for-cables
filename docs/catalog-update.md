@@ -1,6 +1,6 @@
 # Updating the Noisemaker for Cables catalog
 
-The current lock contains 210 effects and 212 total artifacts: the core engine,
+The current lock contains 213 effects and 215 total artifacts: the core engine,
 the effect manifest, and one bundle for each effect. Artifact byte sizes and
 SHA-256 digests are recorded in `vendor.lock.json`; the installed op never
 depends on a mutable runtime download.
