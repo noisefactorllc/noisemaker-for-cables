@@ -3,8 +3,8 @@
  * Includes: CanvasRenderer + UIController + EffectSelect
  * Copyright (c) 2017-2026 Noise Factor LLC. https://noisefactor.io/
  * SPDX-License-Identifier: MIT
- * Build: 688c5146
- * Date: 2026-09-18T04:31:23.862Z
+ * Build: ead42a5d
+ * Date: 2026-09-18T21:10:51.321Z
  */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
@@ -4723,7 +4723,8 @@ function replaceEffect(compiled, stepIndex, newEffectName, newArgs = {}, options
   }
   const { planIndex, chainIndex, step } = location;
   const oldEffectName = step.op;
-  const isStarterPosition = chainIndex === 0;
+  const currentIsStarter = checkIsStarter(step.op, searchOrder);
+  const isStarterPosition = chainIndex === 0 || currentIsStarter && (step.from === null || step.from === void 0);
   const newIsStarter = checkIsStarter(newEffectName, searchOrder);
   const newSpec = getEffectSpec(newEffectName, searchOrder);
   if (!newSpec) {
@@ -4801,8 +4802,8 @@ function listSteps(compiled, options = {}) {
     if (!plan?.chain) continue;
     for (let chainIndex = 0; chainIndex < plan.chain.length; chainIndex++) {
       const step = plan.chain[chainIndex];
-      const isStarterPosition = chainIndex === 0;
       const isStarter = checkIsStarter(step.op, searchOrder);
+      const isStarterPosition = chainIndex === 0 || isStarter && (step.from === null || step.from === void 0);
       steps.push({
         stepIndex: step.temp,
         planIndex,
@@ -4827,8 +4828,9 @@ function getCompatibleReplacements(compiled, stepIndex, options = {}) {
   if (!location) {
     return { success: false, error: `Step with index ${stepIndex} not found` };
   }
-  const { chainIndex } = location;
-  const isStarterPosition = chainIndex === 0;
+  const { chainIndex, step } = location;
+  const currentIsStarter = checkIsStarter(step.op, searchOrder);
+  const isStarterPosition = chainIndex === 0 || currentIsStarter && (step.from === null || step.from === void 0);
   const starters = [];
   const nonStarters = [];
   for (const opName of Object.keys(ops)) {
