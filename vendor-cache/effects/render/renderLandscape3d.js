@@ -2,7 +2,7 @@
 var t=class{constructor(e={}){this.state={},this.uniforms={},e.name&&(this.name=e.name),e.namespace&&(this.namespace=e.namespace),e.func&&(this.func=e.func),e.description&&(this.description=e.description),e.tags&&(this.tags=e.tags),e.globals&&(this.globals=e.globals),e.passes&&(this.passes=e.passes),e.textures&&(this.textures=e.textures),e.outputTex3d&&(this.outputTex3d=e.outputTex3d),e.outputGeo&&(this.outputGeo=e.outputGeo),e.uniformLayout&&(this.uniformLayout=e.uniformLayout),e.uniformLayouts&&(this.uniformLayouts=e.uniformLayouts),e.paramAliases&&(this.paramAliases=e.paramAliases),e.openCategories&&(this.openCategories=e.openCategories),e.defaultProgram&&(this.defaultProgram=e.defaultProgram),e.hidden&&(this.hidden=!0),e.deprecatedBy&&(this.deprecatedBy=e.deprecatedBy),e.onInit&&(this._configOnInit=e.onInit),e.onUpdate&&(this._configOnUpdate=e.onUpdate),e.onDestroy&&(this._configOnDestroy=e.onDestroy),e.asyncInit&&(this._configAsyncInit=e.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(e){return this._configOnUpdate?this._configOnUpdate.call(this,e):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(e){return this._configAsyncInit?this._configAsyncInit.call(this,e):Promise.resolve()}};var n=new t({name:"Render Landscape 3D",namespace:"render",func:"renderLandscape3d",tags:["3d"],description:"Isometric and perspective voxel renderer with face lighting",textures:{screenGeoBuffer:{width:"screen",height:"screen",format:"rgba16f"}},globals:{volumeSize:{type:"int",default:64,uniform:"volumeSize",ui:{label:"volume size",control:!1}},threshold:{type:"float",default:.5,min:0,max:1,uniform:"threshold",ui:{label:"density threshold",control:!1}},densitySource:{type:"int",default:0,choices:{geometry:0},ui:{label:"density source",control:!1}},zoom:{type:"float",default:1,min:.25,max:4,uniform:"zoom",ui:{label:"zoom",control:"slider"}},panX:{type:"float",default:0,min:-1,max:1,uniform:"panX",ui:{label:"pan x",control:"slider"}},panY:{type:"float",default:0,min:-1,max:1,uniform:"panY",ui:{label:"pan y",control:"slider"}},lightDirection:{type:"vec3",default:[-.4,.85,.6],uniform:"lightDirection",min:-1,max:1,ui:{label:"light direction",control:"vector3"}},ambient:{type:"float",default:.35,min:0,max:1,uniform:"ambient",ui:{label:"ambient light",control:"slider"}},diffuseIntensity:{type:"float",default:.85,min:0,max:2,uniform:"diffuseIntensity",ui:{label:"diffuse light",control:"slider"}},specularIntensity:{type:"float",default:.12,min:0,max:1,uniform:"specularIntensity",ui:{label:"specular light",control:"slider"}},bgColor:{type:"color",default:[.025,.045,.075],uniform:"bgColor",ui:{label:"background color",control:"color"}},bgAlpha:{type:"float",default:1,min:0,max:1,uniform:"bgAlpha",ui:{label:"background opacity",control:"slider"}},viewMode:{type:"int",default:1,define:"VIEW_MODE",choices:{ortho:1,perspective:2},ui:{label:"view",control:"dropdown",category:"view"}},rotateX:{type:"float",default:.3,min:0,max:6.283185,step:.01,uniform:"rotateX",ui:{label:"rotate x",control:"slider",category:"view",enabledBy:{param:"viewMode",eq:2}}},rotateY:{type:"float",default:0,min:0,max:6.283185,step:.01,uniform:"rotateY",ui:{label:"rotate y",control:"slider",category:"view",enabledBy:{param:"viewMode",eq:2}}},rotateZ:{type:"float",default:0,min:0,max:6.283185,step:.01,uniform:"rotateZ",ui:{label:"rotate z",control:"slider",category:"view",enabledBy:{param:"viewMode",eq:2}}},viewScale:{type:"float",default:.8,min:.1,max:10,step:.01,uniform:"viewScale",ui:{label:"zoom",control:!1}},posX:{type:"float",default:0,min:-50,max:50,step:.1,uniform:"posX",ui:{label:"pos x",control:"slider",category:"view",enabledBy:{param:"viewMode",eq:2}}},posY:{type:"float",default:0,min:-50,max:50,step:.1,uniform:"posY",ui:{label:"pos y",control:"slider",category:"view",enabledBy:{param:"viewMode",eq:2}}},posZ:{type:"float",default:0,min:-200,max:200,step:.1,uniform:"posZ",ui:{label:"pos z",control:"slider",category:"view",enabledBy:{param:"viewMode",eq:2}}},fieldOfView:{type:"float",default:60,min:10,max:150,step:1,uniform:"fieldOfView",ui:{label:"field of view",control:"slider",category:"view",enabledBy:{param:"viewMode",eq:2}}}},passes:[{name:"render",program:"landscape",type:"compute",drawBuffers:2,inputs:{volumeCache:"inputTex3d",analyticalGeo:"inputGeo"},outputs:{color:"outputTex",geoOut:"screenGeoBuffer"}}],outputTex3d:"inputTex3d",outputGeo:"screenGeoBuffer",defaultProgram:`search synth, synth3d, render
 
 heightmap3d(heightTex: noise(scaleX: 90, scaleY: 90, colorMode: mono, speed: 0), tex: gradient(type: fourCorners, color1: #006e94, color2: #24e4ff, color3: #bcff46, color4: #efffff)).renderLandscape3d(panY: -0.18).write(o0)
-render(o0)`});var a={landscape:{glsl:`#version 300 es
+render(o0)`});var i={landscape:{glsl:`#version 300 es
 precision highp float;
 precision highp int;
 
@@ -362,4 +362,44 @@ fn main(@builtin(position) position: vec4f) -> FragmentOutput {
     }
     return out;
 }
-`}},o=null;if(n&&Object.keys(a).length>0){n.shaders||(n.shaders={});for(let[i,e]of Object.entries(a))n.shaders[i]={...e}}n&&o&&(n.help=o);var f="render/renderLandscape3d",u="render",p="renderLandscape3d",v=n;export{v as default,f as effectId,p as effectName,o as help,u as namespace};
+`}},o=`# renderLandscape3d
+
+Raymarch a voxel volume (from \`heightmap3d\`, or any other volume/geometry generator) as a lit landscape, in either a fixed isometric view or a movable perspective camera. Each hit voxel is shaded from its face normal and the light direction; the background shows through where the ray never hits geometry.
+
+| Parameter | Type | Default | Range | Description |
+|-----------|------|---------|-------|-------------|
+| volumeSize | int | 64 | - | Voxel grid resolution; inherited from the upstream 3D generator |
+| threshold | float | 0.5 | 0-1 | Density cutoff below which a voxel is treated as empty |
+| densitySource | int | geometry | geometry | Reserved; occupancy always comes from the volume's geometry buffer |
+| zoom | float | 1 | 0.25-4 | Camera zoom, shared between isometric and perspective view |
+| panX | float | 0 | -1-1 | Horizontal pan |
+| panY | float | 0 | -1-1 | Vertical pan |
+| lightDirection | vec3 | -0.4, 0.85, 0.6 | -1-1 | Direction toward the light source |
+| ambient | float | 0.35 | 0-1 | Ambient light applied to every voxel regardless of orientation |
+| diffuseIntensity | float | 0.85 | 0-2 | Lambertian shading strength from the face normal and light direction |
+| specularIntensity | float | 0.12 | 0-1 | Specular highlight strength |
+| bgColor | color | 0.025, 0.045, 0.075 | - | Color shown where the ray misses all geometry |
+| bgAlpha | float | 1 | 0-1 | Background opacity |
+| viewMode | int | ortho | ortho/perspective | Isometric orthographic camera, or a movable perspective camera |
+| rotateX | float | 0.3 | 0-6.283185 | Perspective camera rotation around X (perspective mode only) |
+| rotateY | float | 0 | 0-6.283185 | Perspective camera rotation around Y (perspective mode only) |
+| rotateZ | float | 0 | 0-6.283185 | Perspective camera rotation around Z (perspective mode only) |
+| viewScale | float | 0.8 | 0.1-10 | Perspective camera scale; the isometric view uses \`zoom\` instead |
+| posX | float | 0 | -50-50 | Perspective camera position X (perspective mode only) |
+| posY | float | 0 | -50-50 | Perspective camera position Y (perspective mode only) |
+| posZ | float | 0 | -200-200 | Perspective camera position Z (perspective mode only) |
+| fieldOfView | float | 60 | 10-150 | Perspective camera field of view in degrees (perspective mode only) |
+
+The perspective camera shares its projection with \`pointsRender\`/\`pointsBillboardRender\`'s own \`viewMode: perspective\`, so a landscape and a particle system can be composited from the same virtual camera. \`threshold\` and \`volumeSize\` normally come from the upstream generator (e.g. \`heightmap3d\`) and rarely need overriding by hand.
+
+## Usage
+
+\`\`\`
+search synth, filter, render
+
+renderLandscape3d()
+  .write(o0)
+
+render(o0)
+\`\`\`
+`;if(n&&Object.keys(i).length>0){n.shaders||(n.shaders={});for(let[a,e]of Object.entries(i))n.shaders[a]={...e}}n&&o&&(n.help=o);var f="render/renderLandscape3d",u="render",p="renderLandscape3d",m=n;export{m as default,f as effectId,p as effectName,o as help,u as namespace};
