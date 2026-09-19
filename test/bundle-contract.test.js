@@ -410,3 +410,49 @@ test('browser bundle compiles legacy noiseType with the pinned native warning', 
     "[noisemaker] S007: param 'noiseType' is deprecated, use 'type' instead. Aliases will be removed on 2026-09-01.",
   ])
 })
+
+test('pinned core and cables runtime compile chained variable alias syntax into valid render graph passes', async () => {
+  installTestDomShim()
+  const runtime = await import('../src/runtime/engine.js')
+
+  const dsl = `search synth, filter
+let gen = noise(scaleX: 50)
+let eff = rotate(1, 0.1)
+gen().eff().write(o0)
+render(o0)`
+
+  const graph = await runtime.compileProgram(dsl)
+  assert.equal(graph.renderSurface, 'o0')
+  assert.equal(graph.passes.length, 3)
+  assert.deepEqual(
+    graph.passes.map((p) => p.id),
+    ['node_0_pass_0', 'node_1_pass_0', 'node_2_write_blit'],
+  )
+
+  const bundle = await readProjectFile(
+    'Ops.Extension.Noisemaker/Ops.Extension.Noisemaker.Program/lib_noisemaker-cablesgl.js',
+  )
+  const context = {
+    Blob,
+    TextDecoder,
+    TextEncoder,
+    URL,
+    console,
+    performance,
+    setTimeout,
+    structuredClone,
+  }
+  installTestDomShim(context)
+  vm.runInNewContext(bundle, context, {
+    filename: 'lib_noisemaker-cablesgl.js',
+    timeout: 20_000,
+  })
+
+  const bundleGraph = await context.NoisemakerCablesGL.compileProgram(dsl)
+  assert.equal(bundleGraph.renderSurface, 'o0')
+  assert.equal(bundleGraph.passes.length, 3)
+  assert.deepEqual(
+    [...bundleGraph.passes.map((p) => p.id)],
+    ['node_0_pass_0', 'node_1_pass_0', 'node_2_write_blit'],
+  )
+})
