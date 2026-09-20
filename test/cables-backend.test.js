@@ -589,6 +589,53 @@ test('updateTextureFromSource detaches external/default records before any CPU u
   })
 })
 
+test('updateTextureFromSource supports borrowed VideoFrame and validates dimensions', () => {
+  const { gl } = createTrackingGL()
+  const backend = new CablesWebGL2Backend({ gl })
+  const id = 'vf-test'
+
+  class MockVideoFrame {
+    constructor({ displayWidth, displayHeight, visibleRect, rotation = 0 }) {
+      this.displayWidth = displayWidth
+      this.displayHeight = displayHeight
+      this.visibleRect = visibleRect || { width: displayWidth, height: displayHeight }
+      this.rotation = rotation
+    }
+  }
+  const previousVideoFrame = globalThis.VideoFrame
+  globalThis.VideoFrame = MockVideoFrame
+
+  try {
+    const frame = new MockVideoFrame({ displayWidth: 4, displayHeight: 2 })
+    const dims = backend.updateTextureFromSource(id, frame)
+    assert.deepEqual(dims, { width: 4, height: 2 })
+    assert.ok(backend.textures.has(id))
+
+    const anamorphic = new MockVideoFrame({
+      displayWidth: 8,
+      displayHeight: 2,
+      visibleRect: { width: 4, height: 2 },
+    })
+    const rejected = backend.updateTextureFromSource('vf-bad', anamorphic)
+    assert.deepEqual(rejected, { width: 0, height: 0 })
+
+    const rotated = new MockVideoFrame({
+      displayWidth: 2,
+      displayHeight: 4,
+      visibleRect: { width: 4, height: 2 },
+      rotation: 90,
+    })
+    const rotDims = backend.updateTextureFromSource('vf-rot', rotated)
+    assert.deepEqual(rotDims, { width: 2, height: 4 })
+  } finally {
+    if (previousVideoFrame === undefined) {
+      delete globalThis.VideoFrame
+    } else {
+      globalThis.VideoFrame = previousVideoFrame
+    }
+  }
+})
+
 test('_uploadMeshTexture detaches external/default records before any CPU upload', () => {
   assertDirectUploadDetaches(function uploadMeshTexture({ backend, gl, height, id, width }) {
     backend._uploadMeshTexture(

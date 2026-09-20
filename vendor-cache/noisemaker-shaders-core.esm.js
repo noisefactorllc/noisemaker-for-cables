@@ -3,8 +3,8 @@
  * Includes: CanvasRenderer + UIController + EffectSelect
  * Copyright (c) 2017-2026 Noise Factor LLC. https://noisefactor.io/
  * SPDX-License-Identifier: MIT
- * Build: f1d2b46a
- * Date: 2026-09-19T17:47:29.588Z
+ * Build: 2df19feb
+ * Date: 2026-09-20T02:18:04.253Z
  */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
@@ -7157,9 +7157,14 @@ var WebGL2Backend = class _WebGL2Backend extends Backend {
    * Update a texture from an external source (video, image, canvas).
    * This is used for media input effects that need to display camera/video content.
    * @param {string} id - Texture ID
-   * @param {HTMLVideoElement|HTMLImageElement|HTMLCanvasElement|ImageBitmap} source - Media source
+   * @param {HTMLVideoElement|HTMLImageElement|HTMLCanvasElement|ImageBitmap|VideoFrame} source - Borrowed media source
    * @param {object} [options] - Update options
    * @param {boolean} [options.flipY=true] - Whether to flip the Y axis
+   * @returns {{width: number, height: number}} Submitted display dimensions; zero for an unusable source.
+   * VideoFrame crop, rotation, color and alpha follow TexImageSource semantics.
+   * Frames requiring display-size scaling are rejected: native WebGL uploads
+   * visible pixels without that scaling. Submission is synchronous; callers retain ownership and may
+   * close their frame after this method returns, before GPU work completes.
    */
   updateTextureFromSource(id, source, options = {}) {
     const gl = this.gl;
@@ -7167,7 +7172,15 @@ var WebGL2Backend = class _WebGL2Backend extends Backend {
     let tex = this.textures.get(id);
     const flipY = options.flipY !== false;
     let width, height;
-    if (source instanceof HTMLVideoElement) {
+    if (typeof VideoFrame === "function" && source instanceof VideoFrame) {
+      width = source.displayWidth;
+      height = source.displayHeight;
+      const rect = source.visibleRect;
+      const rotated = source.rotation === 90 || source.rotation === 270;
+      if (!rect || width !== (rotated ? rect.height : rect.width) || height !== (rotated ? rect.width : rect.height)) {
+        return { width: 0, height: 0 };
+      }
+    } else if (source instanceof HTMLVideoElement) {
       width = source.videoWidth;
       height = source.videoHeight;
     } else if (source instanceof HTMLImageElement) {
@@ -8986,7 +8999,7 @@ var WebGPUBackend = class _WebGPUBackend extends Backend {
    * Update a texture from an external source (video, image, canvas).
    * This is used for media input effects that need to display camera/video content.
    * @param {string} id - Texture ID
-   * @param {HTMLVideoElement|HTMLImageElement|HTMLCanvasElement|ImageBitmap} source - Media source
+   * @param {HTMLVideoElement|HTMLImageElement|HTMLCanvasElement|ImageBitmap|VideoFrame} source - Borrowed media source
    * @param {object} [options] - Update options
    * @param {boolean} [options.flipY=true] - Whether to flip the Y axis
    * @returns {{ width: number, height: number }} Source dimensions
@@ -8997,11 +9010,17 @@ var WebGPUBackend = class _WebGPUBackend extends Backend {
    * imageSize uniform). Declaring this `async` returned a Promise instead,
    * so those reads silently yielded undefined on WebGPU. Every write below
    * is a queue submission, so there is nothing to await.
+   * VideoFrame crop, display size, rotation, color and alpha follow external
+   * image copy semantics. The caller owns the frame and may close it after
+   * submission returns; this method neither retains nor closes its handle.
    */
   updateTextureFromSource(id, source, options = {}) {
     let tex = this.textures.get(id);
     let width, height;
-    if (source instanceof HTMLVideoElement) {
+    if (typeof VideoFrame === "function" && source instanceof VideoFrame) {
+      width = source.displayWidth;
+      height = source.displayHeight;
+    } else if (source instanceof HTMLVideoElement) {
       width = source.videoWidth;
       height = source.videoHeight;
     } else if (source instanceof HTMLImageElement) {
