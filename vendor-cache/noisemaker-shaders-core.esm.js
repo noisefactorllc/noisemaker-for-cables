@@ -3,8 +3,8 @@
  * Includes: CanvasRenderer + UIController + EffectSelect
  * Copyright (c) 2017-2026 Noise Factor LLC. https://noisefactor.io/
  * SPDX-License-Identifier: MIT
- * Build: 2df19feb
- * Date: 2026-09-20T02:18:04.253Z
+ * Build: beabda38
+ * Date: 2026-09-20T15:14:20.523Z
  */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
@@ -2709,7 +2709,6 @@ function validate(ast) {
         "midi",
         "mode"
       );
-      const strictChannel = mode >= 5;
       const hasZone = node.zone !== void 0;
       const zone = hasZone ? resolveAutomationEnum(node.zone, "midiZone", void 0, /* @__PURE__ */ new Set([0, 1]), "midi", "zone") : void 0;
       let validSelection = !hasZone || zone !== void 0;
@@ -2740,7 +2739,7 @@ function validate(ast) {
         "midi",
         "channel",
         1,
-        strictChannel ? {
+        {
           integer: true,
           min: 1,
           max: 16,
@@ -2748,7 +2747,7 @@ function validate(ast) {
           onInvalid: () => {
             validChannel = false;
           }
-        } : { allowBoolean: true },
+        },
         depth
       );
       let validCc = true;
@@ -12747,8 +12746,9 @@ var Pipeline = class {
       }
       const oldSurface = this.surfaces.get(name);
       if (oldSurface) {
-        const existingTex = this.backend.textures?.get?.(oldSurface.read);
-        if (existingTex && existingTex.width === surfaceWidth && existingTex.height === surfaceHeight) {
+        const existingReadTex = this.backend.textures?.get?.(oldSurface.read);
+        const existingWriteTex = this.backend.textures?.get?.(oldSurface.write);
+        if (existingReadTex && existingWriteTex && existingReadTex.width === surfaceWidth && existingReadTex.height === surfaceHeight && existingReadTex.format === surfaceFormat && existingWriteTex.width === surfaceWidth && existingWriteTex.height === surfaceHeight && existingWriteTex.format === surfaceFormat) {
           continue;
         }
         this.backend.destroyTexture(`global_${name}_read`);
@@ -12849,8 +12849,10 @@ var Pipeline = class {
         const surface = this.surfaces.get(surfaceName);
         const readTexId = surface.read;
         const writeTexId = surface.write;
-        const existingTex = this.backend.textures?.get?.(readTexId);
-        if (existingTex && existingTex.width === width && existingTex.height === height) {
+        const expectedFormat = spec.format || "rgba16f";
+        const existingReadTex = this.backend.textures?.get?.(readTexId);
+        const existingWriteTex = this.backend.textures?.get?.(writeTexId);
+        if (existingReadTex && existingWriteTex && existingReadTex.width === width && existingReadTex.height === height && existingReadTex.format === expectedFormat && existingWriteTex.width === width && existingWriteTex.height === height && existingWriteTex.format === expectedFormat) {
           continue;
         }
         this.backend.destroyTexture(readTexId);
@@ -12870,7 +12872,7 @@ var Pipeline = class {
         });
       } else {
         const existingTex = this.backend.textures?.get?.(texId);
-        if (existingTex && existingTex.width === width && existingTex.height === height) {
+        if (existingTex && existingTex.width === width && existingTex.height === height && existingTex.format === spec.format) {
           if (!spec.is3D || existingTex.depth === this.resolveDimension(spec.depth, width, uniforms)) {
             continue;
           }

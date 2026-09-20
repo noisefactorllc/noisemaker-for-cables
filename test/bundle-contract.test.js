@@ -456,3 +456,90 @@ render(o0)`
     ['node_0_pass_0', 'node_1_pass_0', 'node_2_write_blit'],
   )
 })
+
+test('pinned core validates legacy MIDI channels as static integers 1 to 16', async () => {
+  installTestDomShim()
+  const { compile } = await import('../vendor-cache/noisemaker-shaders-core.esm.js')
+
+  const modes = ['noteChange', 'gateNote', 'gateVelocity', 'triggerNote', 'velocity']
+  for (const mode of modes) {
+    for (const channel of ['0', '17', '1.5', 'true', '"1"', 'osc()']) {
+      const result = compile(
+        `search synth\nnoise(scaleX: midi(channel: ${channel}, mode: midiMode.${mode})).write(o0)\nrender(o0)`,
+      )
+      assert.ok(
+        result.diagnostics.some((d) => d.code === 'S001' || d.code === 'S002'),
+        `${mode} with invalid channel ${channel} should emit diagnostic S001 or S002`,
+      )
+      assert.equal(
+        result.plans[0].chain[0].args.scaleX._invalid,
+        true,
+        `${mode} channel ${channel} should be marked invalid`,
+      )
+    }
+    for (const channel of [1, 16]) {
+      const result = compile(
+        `search synth\nnoise(scaleX: midi(channel: ${channel}, mode: midiMode.${mode})).write(o0)\nrender(o0)`,
+      )
+      assert.equal(result.diagnostics.length, 0)
+      assert.equal(result.plans[0].chain[0].args.scaleX.channel, channel)
+    }
+  }
+})
+
+test('pinned core pipeline recreates global surfaces when format changes', async () => {
+  installTestDomShim()
+  const { Pipeline } = await import('../vendor-cache/noisemaker-shaders-core.esm.js')
+
+  const destroyed = []
+  const created = []
+  const textures = new Map()
+
+  const backend = {
+    textures,
+    capabilities: { maxTextureSize: 4096 },
+    createTexture(id, desc) {
+      const tex = { id, ...desc }
+      created.push(tex)
+      textures.set(id, tex)
+      return tex
+    },
+    destroyTexture(id) {
+      destroyed.push(id)
+      textures.delete(id)
+    },
+  }
+
+  const makeGraph = (fmt) => ({
+    renderSurface: 'o0',
+    textures: new Map([
+      ['global_vel', { width: 128, height: 128, format: fmt }],
+    ]),
+    passes: [
+      {
+        inputs: { u_vel: 'global_vel' },
+        outputs: { fragColor: 'o0' },
+      },
+    ],
+  })
+
+  const p = new Pipeline(makeGraph('rgba32f'), backend)
+  p.createSurfaces()
+  assert.equal(backend.textures.get('global_vel_read')?.format, 'rgba32f')
+  assert.equal(backend.textures.get('global_vel_write')?.format, 'rgba32f')
+
+  // Re-run createSurfaces with matching format: preserved without destruction
+  const initialCreatedCount = created.length
+  p.createSurfaces()
+  assert.equal(created.length, initialCreatedCount)
+  assert.equal(destroyed.length, 0)
+
+  // Re-run createSurfaces with changed format: destroyed and recreated with new format
+  p.graph = makeGraph('rgba16f')
+  p.createSurfaces()
+  assert.ok(destroyed.includes('global_vel_read'))
+  assert.ok(destroyed.includes('global_vel_write'))
+  assert.equal(backend.textures.get('global_vel_read')?.format, 'rgba16f')
+  assert.equal(backend.textures.get('global_vel_write')?.format, 'rgba16f')
+})
+
