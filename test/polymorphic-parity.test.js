@@ -378,3 +378,56 @@ test('full Polymorphic corpus matches the separately instantiated pinned compile
     )
   }
 })
+
+test('public compiler rejects output surfaces outside o0-o7 in every DSL position', async () => {
+  const core = await import('../vendor-cache/noisemaker-shaders-core.esm.js')
+  const { compile } = core
+
+  assert.throws(
+    () => compile('search synth\nnoise().write(o0)\nrender(o8)'),
+    /Output surface reference 'o8' is out of range; expected o0-o7/,
+  )
+  assert.throws(
+    () => compile('search synth\nread(o99).write(o0)\nrender(o0)'),
+    /Output surface reference 'o99' is out of range; expected o0-o7/,
+  )
+  assert.throws(
+    () => compile('search synth\nnoise().write(o10)\nrender(o0)'),
+    /Output surface reference 'o10' is out of range; expected o0-o7/,
+  )
+
+  const boundary = compile('search synth\nread(o0).write(o7)\nrender(o7)')
+  assert.deepEqual(boundary.plans[0].chain[0].args.tex, { kind: 'output', name: 'o0' })
+  assert.deepEqual(boundary.plans[0].write, { kind: 'output', name: 'o7' })
+  assert.equal(boundary.render, 'o7')
+
+  const memberSegments = compile(`search synth
+let low = foo.o0
+let high = foo.o7
+let extended = foo.o8
+let many = foo.o99
+let source = s99
+let vol = vol99
+let geo = geo99
+let xyz = xyz99
+let vel = vel99
+let rgba = rgba99
+let mesh = mesh99`)
+  assert.deepEqual(
+    memberSegments.vars.map(({ expr }) => expr.path || expr.name),
+    [
+      ['foo', 'o0'],
+      ['foo', 'o7'],
+      ['foo', 'o8'],
+      ['foo', 'o99'],
+      's99',
+      'vol99',
+      'geo99',
+      'xyz99',
+      'vel99',
+      'rgba99',
+      'mesh99',
+    ],
+  )
+})
+

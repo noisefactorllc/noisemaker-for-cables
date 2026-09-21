@@ -3,8 +3,8 @@
  * Includes: CanvasRenderer + UIController + EffectSelect
  * Copyright (c) 2017-2026 Noise Factor LLC. https://noisefactor.io/
  * SPDX-License-Identifier: MIT
- * Build: f61ac073
- * Date: 2026-09-21T08:01:40.032Z
+ * Build: 50b8f909
+ * Date: 2026-09-21T17:03:51.960Z
  */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
@@ -321,6 +321,10 @@ function lex(src) {
       while (j < src.length && isDigit(src[j])) j++;
       const lexeme = src.slice(i, j);
       const tokenType = ch === "o" ? "OUTPUT_REF" : "SOURCE_REF";
+      const isMemberSegment = tokens[tokens.length - 1]?.type === "DOT";
+      if (tokenType === "OUTPUT_REF" && !isMemberSegment && !/^o[0-7]$/.test(lexeme)) {
+        throw new SyntaxError(`Output surface reference '${lexeme}' is out of range; expected o0-o7 at line ${startLine} col ${startCol}`);
+      }
       add(tokenType, lexeme, startLine, startCol);
       col += j - i;
       i = j;
