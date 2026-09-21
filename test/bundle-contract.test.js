@@ -102,7 +102,7 @@ test('generated effect entry statically imports every locked effect exactly once
   const registeredIds = [...source.matchAll(/^\s+\['([^']+)', effect\d+\],$/gm)]
     .map((match) => match[1])
 
-  assert.equal(lock.effectCount, 213)
+  assert.equal(lock.effectCount, 210)
   assert.equal(imports.length, lock.effectCount)
   assert.deepEqual(imports, lockedPaths)
   assert.deepEqual(registeredIds, lockedIds)
@@ -128,8 +128,8 @@ test('engine facade loads the pinned catalog and compiles with the reference Pol
 
   const loaded = await engine.loadEngine()
 
-  assert.equal(engine.catalogInfo.effectCount, 213)
-  assert.equal(engine.catalogInfo.effectIds.length, 213)
+  assert.equal(engine.catalogInfo.effectCount, 210)
+  assert.equal(engine.catalogInfo.effectIds.length, 210)
   assert.equal(engine.catalogInfo.effectIds[0], 'classicNoisedeck/bitEffects')
   assert.equal(Object.isFrozen(engine.catalogInfo.effectIds), true)
   assert.equal(loaded.catalogInfo, engine.catalogInfo)

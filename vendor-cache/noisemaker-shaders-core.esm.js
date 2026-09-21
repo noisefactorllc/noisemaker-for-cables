@@ -3,8 +3,8 @@
  * Includes: CanvasRenderer + UIController + EffectSelect
  * Copyright (c) 2017-2026 Noise Factor LLC. https://noisefactor.io/
  * SPDX-License-Identifier: MIT
- * Build: beabda38
- * Date: 2026-09-20T15:14:20.523Z
+ * Build: f61ac073
+ * Date: 2026-09-21T08:01:40.032Z
  */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
@@ -6356,6 +6356,10 @@ var FrameExportQueue = class {
     record.onFrame = null;
     record.context = void 0;
   }
+  _drop(record) {
+    if (record.pending) this.stats.dropped++;
+    this._release(record);
+  }
   _destroySlots() {
     let firstError2;
     for (let i = 0; i < this._slots.length; i++) {
@@ -6364,7 +6368,7 @@ var FrameExportQueue = class {
       const adapterSlot = record.adapterSlot;
       record.created = false;
       record.adapterSlot = null;
-      this._release(record);
+      this._drop(record);
       try {
         this.adapter.destroySlot(adapterSlot);
       } catch (error) {
@@ -6378,7 +6382,7 @@ var FrameExportQueue = class {
       const record = this._slots[i];
       record.created = false;
       record.adapterSlot = null;
-      this._release(record);
+      this._drop(record);
     }
   }
   _report(error) {

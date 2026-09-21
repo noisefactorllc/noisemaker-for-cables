@@ -312,17 +312,17 @@ test('verify rejects a registration count that differs from the manifest', async
   })
 })
 
-test('checked-in lock pins the complete 213-effect catalog', async () => {
+test('checked-in lock pins the complete 210-effect catalog', async () => {
   const lockPath = fileURLToPath(new URL('../vendor.lock.json', import.meta.url))
   const cacheRoot = fileURLToPath(new URL('../vendor-cache/', import.meta.url))
   const lock = JSON.parse(await readFile(lockPath, 'utf8'))
 
   assert.equal(lock.schemaVersion, 1)
-  assert.equal(lock.effectCount, 213)
+  assert.equal(lock.effectCount, 210)
   assert.equal(lock.artifacts.length, lock.effectCount + 2)
   assert.deepEqual(await verifyArtifactLock({ cacheRoot, lockPath }), {
-    artifactCount: 215,
-    effectCount: 213,
-    verifiedEffectCount: 213,
+    artifactCount: 212,
+    effectCount: 210,
+    verifiedEffectCount: 210,
   })
 })

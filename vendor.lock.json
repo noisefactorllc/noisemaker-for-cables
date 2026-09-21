@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
   "sourceBaseUrl": "https://shaders.noisedeck.app/1/",
-  "generatedAt": "2026-09-20T15:22:36.484Z",
-  "effectCount": 213,
+  "generatedAt": "2026-09-21T15:14:58.842Z",
+  "effectCount": 210,
   "artifacts": [
     {
       "bytes": 31849,
@@ -131,12 +131,6 @@
       "url": "https://shaders.noisedeck.app/1/effects/filter/adjust.js"
     },
     {
-      "bytes": 3953,
-      "path": "effects/filter/bc.js",
-      "sha256": "3339619e0b04480e4d6f03c048e43a3aedc7b59ba390ca58edacdcb0e082fdb9",
-      "url": "https://shaders.noisedeck.app/1/effects/filter/bc.js"
-    },
-    {
       "bytes": 12372,
       "path": "effects/filter/bloom.js",
       "sha256": "34f9c754931ab3e05752010d10a2da5111261eb32babfc35974c85b4b20332ca",
@@ -195,12 +189,6 @@
       "path": "effects/filter/colorReplace.js",
       "sha256": "f41b6a1a5330072d6eb631d0716f016626e7aaaa5431eec9c0482de91286f008",
       "url": "https://shaders.noisedeck.app/1/effects/filter/colorReplace.js"
-    },
-    {
-      "bytes": 8416,
-      "path": "effects/filter/colorspace.js",
-      "sha256": "f75e5ce4c8caeb6caff42d6be97842edd5bf3b5eb8e1932a14fda582b44f19eb",
-      "url": "https://shaders.noisedeck.app/1/effects/filter/colorspace.js"
     },
     {
       "bytes": 12930,
@@ -345,12 +333,6 @@
       "path": "effects/filter/historicPalette.js",
       "sha256": "d930389a6d2a9805bc29be96237fa87cfce6661b2b9233755e2b8267f91b939e",
       "url": "https://shaders.noisedeck.app/1/effects/filter/historicPalette.js"
-    },
-    {
-      "bytes": 6895,
-      "path": "effects/filter/hs.js",
-      "sha256": "b417e8f245a0552cb9cb1a3b20265793e4b469ce7614c90be305adc1c64ff195",
-      "url": "https://shaders.noisedeck.app/1/effects/filter/hs.js"
     },
     {
       "bytes": 4413,
@@ -833,9 +815,9 @@
       "url": "https://shaders.noisedeck.app/1/effects/filter3d/palette3d.js"
     },
     {
-      "bytes": 40464,
+      "bytes": 39906,
       "path": "effects/manifest.json",
-      "sha256": "239d625c2abebc035484a1196859b9233f617696beab492313104d8b65c9e73c",
+      "sha256": "05c4d7b7744837ae90a3bb4c89e5403ff09448a74d9d7e824abb3d719ad3314e",
       "url": "https://shaders.noisedeck.app/1/effects/manifest.json"
     },
     {
@@ -1289,9 +1271,9 @@
       "url": "https://shaders.noisedeck.app/1/effects/synth3d/shape3d.js"
     },
     {
-      "bytes": 831854,
+      "bytes": 831943,
       "path": "noisemaker-shaders-core.esm.js",
-      "sha256": "309bb4881322ec46926037fbb9095903ac0978486fdebfec0379b0b563d6b314",
+      "sha256": "69e6bda102e613a1fc5a67f0c971f2949ae1e472451e8725c438fc7c243aeaf2",
       "url": "https://shaders.noisedeck.app/1/noisemaker-shaders-core.esm.js"
     }
   ]

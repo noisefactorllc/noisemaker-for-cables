@@ -18,7 +18,7 @@ The first release exposes one native Cables op:
 initial package scope.
 
 The bundle contains the pinned reference Noisemaker compiler, engine, GLSL, and
-all 213 locked effects. It accepts complete Polymorphic programs, including
+all 210 locked effects. It accepts complete Polymorphic programs, including
 multi-pass graphs, feedback, points, simulations, 3D volumes, cubemaps, UBO
 remapping, and media input.
 

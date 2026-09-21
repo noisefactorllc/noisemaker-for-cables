@@ -23,7 +23,7 @@ test('every locked effect has an explicit valid Polymorphic catalog program', as
   const { compileProgram } = await import('../src/runtime/engine.js')
   const { createCatalogProgram } = await import('../parity/catalog-inputs.js')
 
-  assert.equal(effectIds.length, 213)
+  assert.equal(effectIds.length, 210)
   const compiled = []
   const failures = []
 
@@ -75,5 +75,5 @@ test('every locked effect has an explicit valid Polymorphic catalog program', as
   }
 
   assert.deepEqual(compiled, effectIds, failures.join('\n\n'))
-  assert.equal(compiled.length, 213, '213/213 catalog programs compiled')
+  assert.equal(compiled.length, 210, '210/210 catalog programs compiled')
 })

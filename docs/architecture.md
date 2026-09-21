@@ -34,7 +34,7 @@ later retry rather than silently losing owned GPU resources.
 
 The browser bundle is the installed boundary. The small native op wrapper asks
 that facade to create a controller and install the exact Cables port contract.
-All 213 effects are statically imported and registered once through a
+All 210 effects are statically imported and registered once through a
 retry-safe readiness gate.
 
 The product and package use the Noisemaker for Cables name. The installed

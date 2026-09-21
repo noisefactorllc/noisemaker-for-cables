@@ -633,8 +633,8 @@ export async function runFullCatalog({ end, start = 0 } = {}) {
     effectNames = Object.keys(manifest).sort()
     const last = end === undefined ? effectNames.length : Math.min(effectNames.length, end)
     const batchEffectNames = effectNames.slice(start, last)
-    if (effectNames.length !== 213) {
-      failures.push({ actual: effectNames.length, expected: 213, id: 'catalog-count' })
+    if (effectNames.length !== 210) {
+      failures.push({ actual: effectNames.length, expected: 210, id: 'catalog-count' })
     }
     if (preflight.failures.length > 0 || failures.length > 0) {
       return {

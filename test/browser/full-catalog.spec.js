@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test'
 import { attachArtifacts, expectCleanDiagnostics, loadHarness } from './spec-helpers.js'
 
 test.describe.serial('Task 9 full catalog sorted sweep', () => {
-  test('all 213 effects compile and link; executable effects render finite pixels and copy exactly', async ({ page }, testInfo) => {
+  test('all 210 effects compile and link; executable effects render finite pixels and copy exactly', async ({ page }, testInfo) => {
     test.setTimeout(900_000)
     const report = {
       compiledCount: 0,
@@ -15,11 +15,11 @@ test.describe.serial('Task 9 full catalog sorted sweep', () => {
       results: [],
     }
     const batchSize = 40
-    for (let start = 0; start < 213; start += batchSize) {
+    for (let start = 0; start < 210; start += batchSize) {
       expect(await loadHarness(page)).toBe('object')
       const batch = await page.evaluate(
         ({ end, start }) => window.task9Harness.runFullCatalog({ end, start }),
-        { end: Math.min(213, start + batchSize), start },
+        { end: Math.min(210, start + batchSize), start },
       )
       report.effectCount = batch.effectCount
       report.effectNames = batch.effectNames
@@ -35,11 +35,11 @@ test.describe.serial('Task 9 full catalog sorted sweep', () => {
     await attachArtifacts(testInfo, report.results)
     expectCleanDiagnostics(report)
 
-    expect(report.effectCount).toBe(213)
-    expect(report.compiledCount).toBe(213)
-    expect(report.renderedCount).toBe(212)
+    expect(report.effectCount).toBe(210)
+    expect(report.compiledCount).toBe(210)
+    expect(report.renderedCount).toBe(209)
     expect(report.effectNames).toEqual([...report.effectNames].sort())
-    expect(new Set(report.effectNames).size).toBe(213)
+    expect(new Set(report.effectNames).size).toBe(210)
     for (const result of report.results) {
       expect(result.compiled, `${result.id}: compiled`).toBe(true)
       expect(result.linked, `${result.id}: linked`).toBe(true)

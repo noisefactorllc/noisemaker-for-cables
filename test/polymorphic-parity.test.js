@@ -286,11 +286,7 @@ test('every pinned deprecated effect emits the reference deprecation diagnostic'
 
   assert.deepEqual(
     deprecatedEffects.map(({ effectId, deprecatedBy }) => [effectId, deprecatedBy]),
-    [
-      ['filter/bc', 'adjust'],
-      ['filter/colorspace', 'adjust'],
-      ['filter/hs', 'adjust'],
-    ],
+    [],
   )
 
   for (const deprecated of deprecatedEffects) {

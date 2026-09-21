@@ -23,200 +23,197 @@ import effect17 from '../../vendor-cache/effects/classicNoisedeck/shapes.js'
 import effect18 from '../../vendor-cache/effects/classicNoisedeck/shapes3d.js'
 import effect19 from '../../vendor-cache/effects/classicNoisedeck/splat.js'
 import effect20 from '../../vendor-cache/effects/filter/adjust.js'
-import effect21 from '../../vendor-cache/effects/filter/bc.js'
-import effect22 from '../../vendor-cache/effects/filter/bloom.js'
-import effect23 from '../../vendor-cache/effects/filter/blur.js'
-import effect24 from '../../vendor-cache/effects/filter/bulge.js'
-import effect25 from '../../vendor-cache/effects/filter/celShading.js'
-import effect26 from '../../vendor-cache/effects/filter/channel.js'
-import effect27 from '../../vendor-cache/effects/filter/chroma.js'
-import effect28 from '../../vendor-cache/effects/filter/chromaticAberration.js'
-import effect29 from '../../vendor-cache/effects/filter/chrome.js'
-import effect30 from '../../vendor-cache/effects/filter/clouds.js'
-import effect31 from '../../vendor-cache/effects/filter/colorReplace.js'
-import effect32 from '../../vendor-cache/effects/filter/colorspace.js'
-import effect33 from '../../vendor-cache/effects/filter/convolutionFeedback.js'
-import effect34 from '../../vendor-cache/effects/filter/corrupt.js'
-import effect35 from '../../vendor-cache/effects/filter/craquelure.js'
-import effect36 from '../../vendor-cache/effects/filter/crt.js'
-import effect37 from '../../vendor-cache/effects/filter/degauss.js'
-import effect38 from '../../vendor-cache/effects/filter/deriv.js'
-import effect39 from '../../vendor-cache/effects/filter/directionalBlur.js'
-import effect40 from '../../vendor-cache/effects/filter/dither.js'
-import effect41 from '../../vendor-cache/effects/filter/edge.js'
-import effect42 from '../../vendor-cache/effects/filter/emboss.js'
-import effect43 from '../../vendor-cache/effects/filter/extrude.js'
-import effect44 from '../../vendor-cache/effects/filter/feedback.js'
-import effect45 from '../../vendor-cache/effects/filter/fibers.js'
-import effect46 from '../../vendor-cache/effects/filter/flipMirror.js'
-import effect47 from '../../vendor-cache/effects/filter/fxaa.js'
-import effect48 from '../../vendor-cache/effects/filter/glowingEdge.js'
-import effect49 from '../../vendor-cache/effects/filter/glyphMap.js'
-import effect50 from '../../vendor-cache/effects/filter/grade.js'
-import effect51 from '../../vendor-cache/effects/filter/grain.js'
-import effect52 from '../../vendor-cache/effects/filter/grime.js'
-import effect53 from '../../vendor-cache/effects/filter/halftone.js'
-import effect54 from '../../vendor-cache/effects/filter/hatch.js'
-import effect55 from '../../vendor-cache/effects/filter/highPass.js'
-import effect56 from '../../vendor-cache/effects/filter/historicPalette.js'
-import effect57 from '../../vendor-cache/effects/filter/hs.js'
-import effect58 from '../../vendor-cache/effects/filter/invert.js'
-import effect59 from '../../vendor-cache/effects/filter/lens.js'
-import effect60 from '../../vendor-cache/effects/filter/lensFlare.js'
-import effect61 from '../../vendor-cache/effects/filter/lensWarp.js'
-import effect62 from '../../vendor-cache/effects/filter/lightLeak.js'
-import effect63 from '../../vendor-cache/effects/filter/lighting.js'
-import effect64 from '../../vendor-cache/effects/filter/lowPoly.js'
-import effect65 from '../../vendor-cache/effects/filter/median.js'
-import effect66 from '../../vendor-cache/effects/filter/morphology.js'
-import effect67 from '../../vendor-cache/effects/filter/mosaicTiles.js'
-import effect68 from '../../vendor-cache/effects/filter/motionBlur.js'
-import effect69 from '../../vendor-cache/effects/filter/normalMap.js'
-import effect70 from '../../vendor-cache/effects/filter/normalize.js'
-import effect71 from '../../vendor-cache/effects/filter/octaveWarp.js'
-import effect72 from '../../vendor-cache/effects/filter/oilPaint.js'
-import effect73 from '../../vendor-cache/effects/filter/osd.js'
-import effect74 from '../../vendor-cache/effects/filter/outline.js'
-import effect75 from '../../vendor-cache/effects/filter/palette.js'
-import effect76 from '../../vendor-cache/effects/filter/parallax.js'
-import effect77 from '../../vendor-cache/effects/filter/patchwork.js'
-import effect78 from '../../vendor-cache/effects/filter/photocopy.js'
-import effect79 from '../../vendor-cache/effects/filter/pinch.js'
-import effect80 from '../../vendor-cache/effects/filter/pixelSort.js'
-import effect81 from '../../vendor-cache/effects/filter/pixels.js'
-import effect82 from '../../vendor-cache/effects/filter/plasticWrap.js'
-import effect83 from '../../vendor-cache/effects/filter/polar.js'
-import effect84 from '../../vendor-cache/effects/filter/pondRipples.js'
-import effect85 from '../../vendor-cache/effects/filter/posterize.js'
-import effect86 from '../../vendor-cache/effects/filter/prismaticAberration.js'
-import effect87 from '../../vendor-cache/effects/filter/reindex.js'
-import effect88 from '../../vendor-cache/effects/filter/relief.js'
-import effect89 from '../../vendor-cache/effects/filter/repeat.js'
-import effect90 from '../../vendor-cache/effects/filter/reverb.js'
-import effect91 from '../../vendor-cache/effects/filter/ridge.js'
-import effect92 from '../../vendor-cache/effects/filter/rotate.js'
-import effect93 from '../../vendor-cache/effects/filter/scale.js'
-import effect94 from '../../vendor-cache/effects/filter/scanlineError.js'
-import effect95 from '../../vendor-cache/effects/filter/scatter.js'
-import effect96 from '../../vendor-cache/effects/filter/scratches.js'
-import effect97 from '../../vendor-cache/effects/filter/scroll.js'
-import effect98 from '../../vendor-cache/effects/filter/seamless.js'
-import effect99 from '../../vendor-cache/effects/filter/sharpen.js'
-import effect100 from '../../vendor-cache/effects/filter/simpleAberration.js'
-import effect101 from '../../vendor-cache/effects/filter/sine.js'
-import effect102 from '../../vendor-cache/effects/filter/skew.js'
-import effect103 from '../../vendor-cache/effects/filter/smooth.js'
-import effect104 from '../../vendor-cache/effects/filter/smoothstep.js'
-import effect105 from '../../vendor-cache/effects/filter/snow.js'
-import effect106 from '../../vendor-cache/effects/filter/sobel.js'
-import effect107 from '../../vendor-cache/effects/filter/spatter.js'
-import effect108 from '../../vendor-cache/effects/filter/spinBlur.js'
-import effect109 from '../../vendor-cache/effects/filter/spiral.js'
-import effect110 from '../../vendor-cache/effects/filter/spookyTicker.js'
-import effect111 from '../../vendor-cache/effects/filter/stamp.js'
-import effect112 from '../../vendor-cache/effects/filter/step.js'
-import effect113 from '../../vendor-cache/effects/filter/stipple.js'
-import effect114 from '../../vendor-cache/effects/filter/strayHair.js'
-import effect115 from '../../vendor-cache/effects/filter/strokes.js'
-import effect116 from '../../vendor-cache/effects/filter/temporalAberration.js'
-import effect117 from '../../vendor-cache/effects/filter/tetraColorArray.js'
-import effect118 from '../../vendor-cache/effects/filter/tetraCosine.js'
-import effect119 from '../../vendor-cache/effects/filter/text.js'
-import effect120 from '../../vendor-cache/effects/filter/texture.js'
-import effect121 from '../../vendor-cache/effects/filter/threshold.js'
-import effect122 from '../../vendor-cache/effects/filter/tile.js'
-import effect123 from '../../vendor-cache/effects/filter/tint.js'
-import effect124 from '../../vendor-cache/effects/filter/translate.js'
-import effect125 from '../../vendor-cache/effects/filter/tunnel.js'
-import effect126 from '../../vendor-cache/effects/filter/unsharpMask.js'
-import effect127 from '../../vendor-cache/effects/filter/vaseline.js'
-import effect128 from '../../vendor-cache/effects/filter/vignette.js'
-import effect129 from '../../vendor-cache/effects/filter/warp.js'
-import effect130 from '../../vendor-cache/effects/filter/watercolor.js'
-import effect131 from '../../vendor-cache/effects/filter/waves.js'
-import effect132 from '../../vendor-cache/effects/filter/wind.js'
-import effect133 from '../../vendor-cache/effects/filter/wobble.js'
-import effect134 from '../../vendor-cache/effects/filter/wormhole.js'
-import effect135 from '../../vendor-cache/effects/filter/zoomBlur.js'
-import effect136 from '../../vendor-cache/effects/filter3d/flow3d.js'
-import effect137 from '../../vendor-cache/effects/filter3d/palette3d.js'
-import effect138 from '../../vendor-cache/effects/mixer/alphaMask.js'
-import effect139 from '../../vendor-cache/effects/mixer/applyMode.js'
-import effect140 from '../../vendor-cache/effects/mixer/blendMode.js'
-import effect141 from '../../vendor-cache/effects/mixer/cellSplit.js'
-import effect142 from '../../vendor-cache/effects/mixer/centerMask.js'
-import effect143 from '../../vendor-cache/effects/mixer/channelCombine.js'
-import effect144 from '../../vendor-cache/effects/mixer/distortion.js'
-import effect145 from '../../vendor-cache/effects/mixer/focusBlur.js'
-import effect146 from '../../vendor-cache/effects/mixer/mashup.js'
-import effect147 from '../../vendor-cache/effects/mixer/patternMix.js'
-import effect148 from '../../vendor-cache/effects/mixer/shadow.js'
-import effect149 from '../../vendor-cache/effects/mixer/shapeMask.js'
-import effect150 from '../../vendor-cache/effects/mixer/split.js'
-import effect151 from '../../vendor-cache/effects/mixer/thresholdMix.js'
-import effect152 from '../../vendor-cache/effects/mixer/uvRemap.js'
-import effect153 from '../../vendor-cache/effects/points/attractor.js'
-import effect154 from '../../vendor-cache/effects/points/buddhabrot.js'
-import effect155 from '../../vendor-cache/effects/points/dla.js'
-import effect156 from '../../vendor-cache/effects/points/flock.js'
-import effect157 from '../../vendor-cache/effects/points/flow.js'
-import effect158 from '../../vendor-cache/effects/points/heightGrid.js'
-import effect159 from '../../vendor-cache/effects/points/hydraulic.js'
-import effect160 from '../../vendor-cache/effects/points/lenia.js'
-import effect161 from '../../vendor-cache/effects/points/life.js'
-import effect162 from '../../vendor-cache/effects/points/physarum.js'
-import effect163 from '../../vendor-cache/effects/points/physical.js'
-import effect164 from '../../vendor-cache/effects/render/loopBegin.js'
-import effect165 from '../../vendor-cache/effects/render/loopEnd.js'
-import effect166 from '../../vendor-cache/effects/render/meshLoader.js'
-import effect167 from '../../vendor-cache/effects/render/meshRender.js'
-import effect168 from '../../vendor-cache/effects/render/pointsBillboardRender.js'
-import effect169 from '../../vendor-cache/effects/render/pointsEmit.js'
-import effect170 from '../../vendor-cache/effects/render/pointsRender.js'
-import effect171 from '../../vendor-cache/effects/render/render3d.js'
-import effect172 from '../../vendor-cache/effects/render/renderCubemap3d.js'
-import effect173 from '../../vendor-cache/effects/render/renderCubemapSurface.js'
-import effect174 from '../../vendor-cache/effects/render/renderLandscape3d.js'
-import effect175 from '../../vendor-cache/effects/render/renderLit3d.js'
-import effect176 from '../../vendor-cache/effects/synth/bitwise.js'
-import effect177 from '../../vendor-cache/effects/synth/cell.js'
-import effect178 from '../../vendor-cache/effects/synth/cellularAutomata.js'
-import effect179 from '../../vendor-cache/effects/synth/curl.js'
-import effect180 from '../../vendor-cache/effects/synth/gabor.js'
-import effect181 from '../../vendor-cache/effects/synth/gradient.js'
-import effect182 from '../../vendor-cache/effects/synth/julia.js'
-import effect183 from '../../vendor-cache/effects/synth/mandala.js'
-import effect184 from '../../vendor-cache/effects/synth/mandelbrot.js'
-import effect185 from '../../vendor-cache/effects/synth/media.js'
-import effect186 from '../../vendor-cache/effects/synth/mnca.js'
-import effect187 from '../../vendor-cache/effects/synth/modPattern.js'
-import effect188 from '../../vendor-cache/effects/synth/navierStokes.js'
-import effect189 from '../../vendor-cache/effects/synth/newton.js'
-import effect190 from '../../vendor-cache/effects/synth/noise.js'
-import effect191 from '../../vendor-cache/effects/synth/osc2d.js'
-import effect192 from '../../vendor-cache/effects/synth/pattern.js'
-import effect193 from '../../vendor-cache/effects/synth/perlin.js'
-import effect194 from '../../vendor-cache/effects/synth/polygon.js'
-import effect195 from '../../vendor-cache/effects/synth/reactionDiffusion.js'
-import effect196 from '../../vendor-cache/effects/synth/remap.js'
-import effect197 from '../../vendor-cache/effects/synth/roll.js'
-import effect198 from '../../vendor-cache/effects/synth/sacredGeometry.js'
-import effect199 from '../../vendor-cache/effects/synth/scope.js'
-import effect200 from '../../vendor-cache/effects/synth/shape.js'
-import effect201 from '../../vendor-cache/effects/synth/solid.js'
-import effect202 from '../../vendor-cache/effects/synth/spectrum.js'
-import effect203 from '../../vendor-cache/effects/synth/subdivide.js'
-import effect204 from '../../vendor-cache/effects/synth/testPattern.js'
-import effect205 from '../../vendor-cache/effects/synth3d/cell3d.js'
-import effect206 from '../../vendor-cache/effects/synth3d/cellularAutomata3d.js'
-import effect207 from '../../vendor-cache/effects/synth3d/flythrough3d.js'
-import effect208 from '../../vendor-cache/effects/synth3d/fractal3d.js'
-import effect209 from '../../vendor-cache/effects/synth3d/heightmap3d.js'
-import effect210 from '../../vendor-cache/effects/synth3d/noise3d.js'
-import effect211 from '../../vendor-cache/effects/synth3d/reactionDiffusion3d.js'
-import effect212 from '../../vendor-cache/effects/synth3d/shape3d.js'
+import effect21 from '../../vendor-cache/effects/filter/bloom.js'
+import effect22 from '../../vendor-cache/effects/filter/blur.js'
+import effect23 from '../../vendor-cache/effects/filter/bulge.js'
+import effect24 from '../../vendor-cache/effects/filter/celShading.js'
+import effect25 from '../../vendor-cache/effects/filter/channel.js'
+import effect26 from '../../vendor-cache/effects/filter/chroma.js'
+import effect27 from '../../vendor-cache/effects/filter/chromaticAberration.js'
+import effect28 from '../../vendor-cache/effects/filter/chrome.js'
+import effect29 from '../../vendor-cache/effects/filter/clouds.js'
+import effect30 from '../../vendor-cache/effects/filter/colorReplace.js'
+import effect31 from '../../vendor-cache/effects/filter/convolutionFeedback.js'
+import effect32 from '../../vendor-cache/effects/filter/corrupt.js'
+import effect33 from '../../vendor-cache/effects/filter/craquelure.js'
+import effect34 from '../../vendor-cache/effects/filter/crt.js'
+import effect35 from '../../vendor-cache/effects/filter/degauss.js'
+import effect36 from '../../vendor-cache/effects/filter/deriv.js'
+import effect37 from '../../vendor-cache/effects/filter/directionalBlur.js'
+import effect38 from '../../vendor-cache/effects/filter/dither.js'
+import effect39 from '../../vendor-cache/effects/filter/edge.js'
+import effect40 from '../../vendor-cache/effects/filter/emboss.js'
+import effect41 from '../../vendor-cache/effects/filter/extrude.js'
+import effect42 from '../../vendor-cache/effects/filter/feedback.js'
+import effect43 from '../../vendor-cache/effects/filter/fibers.js'
+import effect44 from '../../vendor-cache/effects/filter/flipMirror.js'
+import effect45 from '../../vendor-cache/effects/filter/fxaa.js'
+import effect46 from '../../vendor-cache/effects/filter/glowingEdge.js'
+import effect47 from '../../vendor-cache/effects/filter/glyphMap.js'
+import effect48 from '../../vendor-cache/effects/filter/grade.js'
+import effect49 from '../../vendor-cache/effects/filter/grain.js'
+import effect50 from '../../vendor-cache/effects/filter/grime.js'
+import effect51 from '../../vendor-cache/effects/filter/halftone.js'
+import effect52 from '../../vendor-cache/effects/filter/hatch.js'
+import effect53 from '../../vendor-cache/effects/filter/highPass.js'
+import effect54 from '../../vendor-cache/effects/filter/historicPalette.js'
+import effect55 from '../../vendor-cache/effects/filter/invert.js'
+import effect56 from '../../vendor-cache/effects/filter/lens.js'
+import effect57 from '../../vendor-cache/effects/filter/lensFlare.js'
+import effect58 from '../../vendor-cache/effects/filter/lensWarp.js'
+import effect59 from '../../vendor-cache/effects/filter/lightLeak.js'
+import effect60 from '../../vendor-cache/effects/filter/lighting.js'
+import effect61 from '../../vendor-cache/effects/filter/lowPoly.js'
+import effect62 from '../../vendor-cache/effects/filter/median.js'
+import effect63 from '../../vendor-cache/effects/filter/morphology.js'
+import effect64 from '../../vendor-cache/effects/filter/mosaicTiles.js'
+import effect65 from '../../vendor-cache/effects/filter/motionBlur.js'
+import effect66 from '../../vendor-cache/effects/filter/normalMap.js'
+import effect67 from '../../vendor-cache/effects/filter/normalize.js'
+import effect68 from '../../vendor-cache/effects/filter/octaveWarp.js'
+import effect69 from '../../vendor-cache/effects/filter/oilPaint.js'
+import effect70 from '../../vendor-cache/effects/filter/osd.js'
+import effect71 from '../../vendor-cache/effects/filter/outline.js'
+import effect72 from '../../vendor-cache/effects/filter/palette.js'
+import effect73 from '../../vendor-cache/effects/filter/parallax.js'
+import effect74 from '../../vendor-cache/effects/filter/patchwork.js'
+import effect75 from '../../vendor-cache/effects/filter/photocopy.js'
+import effect76 from '../../vendor-cache/effects/filter/pinch.js'
+import effect77 from '../../vendor-cache/effects/filter/pixelSort.js'
+import effect78 from '../../vendor-cache/effects/filter/pixels.js'
+import effect79 from '../../vendor-cache/effects/filter/plasticWrap.js'
+import effect80 from '../../vendor-cache/effects/filter/polar.js'
+import effect81 from '../../vendor-cache/effects/filter/pondRipples.js'
+import effect82 from '../../vendor-cache/effects/filter/posterize.js'
+import effect83 from '../../vendor-cache/effects/filter/prismaticAberration.js'
+import effect84 from '../../vendor-cache/effects/filter/reindex.js'
+import effect85 from '../../vendor-cache/effects/filter/relief.js'
+import effect86 from '../../vendor-cache/effects/filter/repeat.js'
+import effect87 from '../../vendor-cache/effects/filter/reverb.js'
+import effect88 from '../../vendor-cache/effects/filter/ridge.js'
+import effect89 from '../../vendor-cache/effects/filter/rotate.js'
+import effect90 from '../../vendor-cache/effects/filter/scale.js'
+import effect91 from '../../vendor-cache/effects/filter/scanlineError.js'
+import effect92 from '../../vendor-cache/effects/filter/scatter.js'
+import effect93 from '../../vendor-cache/effects/filter/scratches.js'
+import effect94 from '../../vendor-cache/effects/filter/scroll.js'
+import effect95 from '../../vendor-cache/effects/filter/seamless.js'
+import effect96 from '../../vendor-cache/effects/filter/sharpen.js'
+import effect97 from '../../vendor-cache/effects/filter/simpleAberration.js'
+import effect98 from '../../vendor-cache/effects/filter/sine.js'
+import effect99 from '../../vendor-cache/effects/filter/skew.js'
+import effect100 from '../../vendor-cache/effects/filter/smooth.js'
+import effect101 from '../../vendor-cache/effects/filter/smoothstep.js'
+import effect102 from '../../vendor-cache/effects/filter/snow.js'
+import effect103 from '../../vendor-cache/effects/filter/sobel.js'
+import effect104 from '../../vendor-cache/effects/filter/spatter.js'
+import effect105 from '../../vendor-cache/effects/filter/spinBlur.js'
+import effect106 from '../../vendor-cache/effects/filter/spiral.js'
+import effect107 from '../../vendor-cache/effects/filter/spookyTicker.js'
+import effect108 from '../../vendor-cache/effects/filter/stamp.js'
+import effect109 from '../../vendor-cache/effects/filter/step.js'
+import effect110 from '../../vendor-cache/effects/filter/stipple.js'
+import effect111 from '../../vendor-cache/effects/filter/strayHair.js'
+import effect112 from '../../vendor-cache/effects/filter/strokes.js'
+import effect113 from '../../vendor-cache/effects/filter/temporalAberration.js'
+import effect114 from '../../vendor-cache/effects/filter/tetraColorArray.js'
+import effect115 from '../../vendor-cache/effects/filter/tetraCosine.js'
+import effect116 from '../../vendor-cache/effects/filter/text.js'
+import effect117 from '../../vendor-cache/effects/filter/texture.js'
+import effect118 from '../../vendor-cache/effects/filter/threshold.js'
+import effect119 from '../../vendor-cache/effects/filter/tile.js'
+import effect120 from '../../vendor-cache/effects/filter/tint.js'
+import effect121 from '../../vendor-cache/effects/filter/translate.js'
+import effect122 from '../../vendor-cache/effects/filter/tunnel.js'
+import effect123 from '../../vendor-cache/effects/filter/unsharpMask.js'
+import effect124 from '../../vendor-cache/effects/filter/vaseline.js'
+import effect125 from '../../vendor-cache/effects/filter/vignette.js'
+import effect126 from '../../vendor-cache/effects/filter/warp.js'
+import effect127 from '../../vendor-cache/effects/filter/watercolor.js'
+import effect128 from '../../vendor-cache/effects/filter/waves.js'
+import effect129 from '../../vendor-cache/effects/filter/wind.js'
+import effect130 from '../../vendor-cache/effects/filter/wobble.js'
+import effect131 from '../../vendor-cache/effects/filter/wormhole.js'
+import effect132 from '../../vendor-cache/effects/filter/zoomBlur.js'
+import effect133 from '../../vendor-cache/effects/filter3d/flow3d.js'
+import effect134 from '../../vendor-cache/effects/filter3d/palette3d.js'
+import effect135 from '../../vendor-cache/effects/mixer/alphaMask.js'
+import effect136 from '../../vendor-cache/effects/mixer/applyMode.js'
+import effect137 from '../../vendor-cache/effects/mixer/blendMode.js'
+import effect138 from '../../vendor-cache/effects/mixer/cellSplit.js'
+import effect139 from '../../vendor-cache/effects/mixer/centerMask.js'
+import effect140 from '../../vendor-cache/effects/mixer/channelCombine.js'
+import effect141 from '../../vendor-cache/effects/mixer/distortion.js'
+import effect142 from '../../vendor-cache/effects/mixer/focusBlur.js'
+import effect143 from '../../vendor-cache/effects/mixer/mashup.js'
+import effect144 from '../../vendor-cache/effects/mixer/patternMix.js'
+import effect145 from '../../vendor-cache/effects/mixer/shadow.js'
+import effect146 from '../../vendor-cache/effects/mixer/shapeMask.js'
+import effect147 from '../../vendor-cache/effects/mixer/split.js'
+import effect148 from '../../vendor-cache/effects/mixer/thresholdMix.js'
+import effect149 from '../../vendor-cache/effects/mixer/uvRemap.js'
+import effect150 from '../../vendor-cache/effects/points/attractor.js'
+import effect151 from '../../vendor-cache/effects/points/buddhabrot.js'
+import effect152 from '../../vendor-cache/effects/points/dla.js'
+import effect153 from '../../vendor-cache/effects/points/flock.js'
+import effect154 from '../../vendor-cache/effects/points/flow.js'
+import effect155 from '../../vendor-cache/effects/points/heightGrid.js'
+import effect156 from '../../vendor-cache/effects/points/hydraulic.js'
+import effect157 from '../../vendor-cache/effects/points/lenia.js'
+import effect158 from '../../vendor-cache/effects/points/life.js'
+import effect159 from '../../vendor-cache/effects/points/physarum.js'
+import effect160 from '../../vendor-cache/effects/points/physical.js'
+import effect161 from '../../vendor-cache/effects/render/loopBegin.js'
+import effect162 from '../../vendor-cache/effects/render/loopEnd.js'
+import effect163 from '../../vendor-cache/effects/render/meshLoader.js'
+import effect164 from '../../vendor-cache/effects/render/meshRender.js'
+import effect165 from '../../vendor-cache/effects/render/pointsBillboardRender.js'
+import effect166 from '../../vendor-cache/effects/render/pointsEmit.js'
+import effect167 from '../../vendor-cache/effects/render/pointsRender.js'
+import effect168 from '../../vendor-cache/effects/render/render3d.js'
+import effect169 from '../../vendor-cache/effects/render/renderCubemap3d.js'
+import effect170 from '../../vendor-cache/effects/render/renderCubemapSurface.js'
+import effect171 from '../../vendor-cache/effects/render/renderLandscape3d.js'
+import effect172 from '../../vendor-cache/effects/render/renderLit3d.js'
+import effect173 from '../../vendor-cache/effects/synth/bitwise.js'
+import effect174 from '../../vendor-cache/effects/synth/cell.js'
+import effect175 from '../../vendor-cache/effects/synth/cellularAutomata.js'
+import effect176 from '../../vendor-cache/effects/synth/curl.js'
+import effect177 from '../../vendor-cache/effects/synth/gabor.js'
+import effect178 from '../../vendor-cache/effects/synth/gradient.js'
+import effect179 from '../../vendor-cache/effects/synth/julia.js'
+import effect180 from '../../vendor-cache/effects/synth/mandala.js'
+import effect181 from '../../vendor-cache/effects/synth/mandelbrot.js'
+import effect182 from '../../vendor-cache/effects/synth/media.js'
+import effect183 from '../../vendor-cache/effects/synth/mnca.js'
+import effect184 from '../../vendor-cache/effects/synth/modPattern.js'
+import effect185 from '../../vendor-cache/effects/synth/navierStokes.js'
+import effect186 from '../../vendor-cache/effects/synth/newton.js'
+import effect187 from '../../vendor-cache/effects/synth/noise.js'
+import effect188 from '../../vendor-cache/effects/synth/osc2d.js'
+import effect189 from '../../vendor-cache/effects/synth/pattern.js'
+import effect190 from '../../vendor-cache/effects/synth/perlin.js'
+import effect191 from '../../vendor-cache/effects/synth/polygon.js'
+import effect192 from '../../vendor-cache/effects/synth/reactionDiffusion.js'
+import effect193 from '../../vendor-cache/effects/synth/remap.js'
+import effect194 from '../../vendor-cache/effects/synth/roll.js'
+import effect195 from '../../vendor-cache/effects/synth/sacredGeometry.js'
+import effect196 from '../../vendor-cache/effects/synth/scope.js'
+import effect197 from '../../vendor-cache/effects/synth/shape.js'
+import effect198 from '../../vendor-cache/effects/synth/solid.js'
+import effect199 from '../../vendor-cache/effects/synth/spectrum.js'
+import effect200 from '../../vendor-cache/effects/synth/subdivide.js'
+import effect201 from '../../vendor-cache/effects/synth/testPattern.js'
+import effect202 from '../../vendor-cache/effects/synth3d/cell3d.js'
+import effect203 from '../../vendor-cache/effects/synth3d/cellularAutomata3d.js'
+import effect204 from '../../vendor-cache/effects/synth3d/flythrough3d.js'
+import effect205 from '../../vendor-cache/effects/synth3d/fractal3d.js'
+import effect206 from '../../vendor-cache/effects/synth3d/heightmap3d.js'
+import effect207 from '../../vendor-cache/effects/synth3d/noise3d.js'
+import effect208 from '../../vendor-cache/effects/synth3d/reactionDiffusion3d.js'
+import effect209 from '../../vendor-cache/effects/synth3d/shape3d.js'
 
-export const effectCount = 213
+export const effectCount = 210
 export const effectIds = Object.freeze([
   'classicNoisedeck/bitEffects',
   'classicNoisedeck/caustic',
@@ -239,7 +236,6 @@ export const effectIds = Object.freeze([
   'classicNoisedeck/shapes3d',
   'classicNoisedeck/splat',
   'filter/adjust',
-  'filter/bc',
   'filter/bloom',
   'filter/blur',
   'filter/bulge',
@@ -250,7 +246,6 @@ export const effectIds = Object.freeze([
   'filter/chrome',
   'filter/clouds',
   'filter/colorReplace',
-  'filter/colorspace',
   'filter/convolutionFeedback',
   'filter/corrupt',
   'filter/craquelure',
@@ -275,7 +270,6 @@ export const effectIds = Object.freeze([
   'filter/hatch',
   'filter/highPass',
   'filter/historicPalette',
-  'filter/hs',
   'filter/invert',
   'filter/lens',
   'filter/lensFlare',
@@ -455,198 +449,195 @@ const effects = [
   ['classicNoisedeck/shapes3d', effect18],
   ['classicNoisedeck/splat', effect19],
   ['filter/adjust', effect20],
-  ['filter/bc', effect21],
-  ['filter/bloom', effect22],
-  ['filter/blur', effect23],
-  ['filter/bulge', effect24],
-  ['filter/celShading', effect25],
-  ['filter/channel', effect26],
-  ['filter/chroma', effect27],
-  ['filter/chromaticAberration', effect28],
-  ['filter/chrome', effect29],
-  ['filter/clouds', effect30],
-  ['filter/colorReplace', effect31],
-  ['filter/colorspace', effect32],
-  ['filter/convolutionFeedback', effect33],
-  ['filter/corrupt', effect34],
-  ['filter/craquelure', effect35],
-  ['filter/crt', effect36],
-  ['filter/degauss', effect37],
-  ['filter/deriv', effect38],
-  ['filter/directionalBlur', effect39],
-  ['filter/dither', effect40],
-  ['filter/edge', effect41],
-  ['filter/emboss', effect42],
-  ['filter/extrude', effect43],
-  ['filter/feedback', effect44],
-  ['filter/fibers', effect45],
-  ['filter/flipMirror', effect46],
-  ['filter/fxaa', effect47],
-  ['filter/glowingEdge', effect48],
-  ['filter/glyphMap', effect49],
-  ['filter/grade', effect50],
-  ['filter/grain', effect51],
-  ['filter/grime', effect52],
-  ['filter/halftone', effect53],
-  ['filter/hatch', effect54],
-  ['filter/highPass', effect55],
-  ['filter/historicPalette', effect56],
-  ['filter/hs', effect57],
-  ['filter/invert', effect58],
-  ['filter/lens', effect59],
-  ['filter/lensFlare', effect60],
-  ['filter/lensWarp', effect61],
-  ['filter/lightLeak', effect62],
-  ['filter/lighting', effect63],
-  ['filter/lowPoly', effect64],
-  ['filter/median', effect65],
-  ['filter/morphology', effect66],
-  ['filter/mosaicTiles', effect67],
-  ['filter/motionBlur', effect68],
-  ['filter/normalMap', effect69],
-  ['filter/normalize', effect70],
-  ['filter/octaveWarp', effect71],
-  ['filter/oilPaint', effect72],
-  ['filter/osd', effect73],
-  ['filter/outline', effect74],
-  ['filter/palette', effect75],
-  ['filter/parallax', effect76],
-  ['filter/patchwork', effect77],
-  ['filter/photocopy', effect78],
-  ['filter/pinch', effect79],
-  ['filter/pixelSort', effect80],
-  ['filter/pixels', effect81],
-  ['filter/plasticWrap', effect82],
-  ['filter/polar', effect83],
-  ['filter/pondRipples', effect84],
-  ['filter/posterize', effect85],
-  ['filter/prismaticAberration', effect86],
-  ['filter/reindex', effect87],
-  ['filter/relief', effect88],
-  ['filter/repeat', effect89],
-  ['filter/reverb', effect90],
-  ['filter/ridge', effect91],
-  ['filter/rotate', effect92],
-  ['filter/scale', effect93],
-  ['filter/scanlineError', effect94],
-  ['filter/scatter', effect95],
-  ['filter/scratches', effect96],
-  ['filter/scroll', effect97],
-  ['filter/seamless', effect98],
-  ['filter/sharpen', effect99],
-  ['filter/simpleAberration', effect100],
-  ['filter/sine', effect101],
-  ['filter/skew', effect102],
-  ['filter/smooth', effect103],
-  ['filter/smoothstep', effect104],
-  ['filter/snow', effect105],
-  ['filter/sobel', effect106],
-  ['filter/spatter', effect107],
-  ['filter/spinBlur', effect108],
-  ['filter/spiral', effect109],
-  ['filter/spookyTicker', effect110],
-  ['filter/stamp', effect111],
-  ['filter/step', effect112],
-  ['filter/stipple', effect113],
-  ['filter/strayHair', effect114],
-  ['filter/strokes', effect115],
-  ['filter/temporalAberration', effect116],
-  ['filter/tetraColorArray', effect117],
-  ['filter/tetraCosine', effect118],
-  ['filter/text', effect119],
-  ['filter/texture', effect120],
-  ['filter/threshold', effect121],
-  ['filter/tile', effect122],
-  ['filter/tint', effect123],
-  ['filter/translate', effect124],
-  ['filter/tunnel', effect125],
-  ['filter/unsharpMask', effect126],
-  ['filter/vaseline', effect127],
-  ['filter/vignette', effect128],
-  ['filter/warp', effect129],
-  ['filter/watercolor', effect130],
-  ['filter/waves', effect131],
-  ['filter/wind', effect132],
-  ['filter/wobble', effect133],
-  ['filter/wormhole', effect134],
-  ['filter/zoomBlur', effect135],
-  ['filter3d/flow3d', effect136],
-  ['filter3d/palette3d', effect137],
-  ['mixer/alphaMask', effect138],
-  ['mixer/applyMode', effect139],
-  ['mixer/blendMode', effect140],
-  ['mixer/cellSplit', effect141],
-  ['mixer/centerMask', effect142],
-  ['mixer/channelCombine', effect143],
-  ['mixer/distortion', effect144],
-  ['mixer/focusBlur', effect145],
-  ['mixer/mashup', effect146],
-  ['mixer/patternMix', effect147],
-  ['mixer/shadow', effect148],
-  ['mixer/shapeMask', effect149],
-  ['mixer/split', effect150],
-  ['mixer/thresholdMix', effect151],
-  ['mixer/uvRemap', effect152],
-  ['points/attractor', effect153],
-  ['points/buddhabrot', effect154],
-  ['points/dla', effect155],
-  ['points/flock', effect156],
-  ['points/flow', effect157],
-  ['points/heightGrid', effect158],
-  ['points/hydraulic', effect159],
-  ['points/lenia', effect160],
-  ['points/life', effect161],
-  ['points/physarum', effect162],
-  ['points/physical', effect163],
-  ['render/loopBegin', effect164],
-  ['render/loopEnd', effect165],
-  ['render/meshLoader', effect166],
-  ['render/meshRender', effect167],
-  ['render/pointsBillboardRender', effect168],
-  ['render/pointsEmit', effect169],
-  ['render/pointsRender', effect170],
-  ['render/render3d', effect171],
-  ['render/renderCubemap3d', effect172],
-  ['render/renderCubemapSurface', effect173],
-  ['render/renderLandscape3d', effect174],
-  ['render/renderLit3d', effect175],
-  ['synth/bitwise', effect176],
-  ['synth/cell', effect177],
-  ['synth/cellularAutomata', effect178],
-  ['synth/curl', effect179],
-  ['synth/gabor', effect180],
-  ['synth/gradient', effect181],
-  ['synth/julia', effect182],
-  ['synth/mandala', effect183],
-  ['synth/mandelbrot', effect184],
-  ['synth/media', effect185],
-  ['synth/mnca', effect186],
-  ['synth/modPattern', effect187],
-  ['synth/navierStokes', effect188],
-  ['synth/newton', effect189],
-  ['synth/noise', effect190],
-  ['synth/osc2d', effect191],
-  ['synth/pattern', effect192],
-  ['synth/perlin', effect193],
-  ['synth/polygon', effect194],
-  ['synth/reactionDiffusion', effect195],
-  ['synth/remap', effect196],
-  ['synth/roll', effect197],
-  ['synth/sacredGeometry', effect198],
-  ['synth/scope', effect199],
-  ['synth/shape', effect200],
-  ['synth/solid', effect201],
-  ['synth/spectrum', effect202],
-  ['synth/subdivide', effect203],
-  ['synth/testPattern', effect204],
-  ['synth3d/cell3d', effect205],
-  ['synth3d/cellularAutomata3d', effect206],
-  ['synth3d/flythrough3d', effect207],
-  ['synth3d/fractal3d', effect208],
-  ['synth3d/heightmap3d', effect209],
-  ['synth3d/noise3d', effect210],
-  ['synth3d/reactionDiffusion3d', effect211],
-  ['synth3d/shape3d', effect212],
+  ['filter/bloom', effect21],
+  ['filter/blur', effect22],
+  ['filter/bulge', effect23],
+  ['filter/celShading', effect24],
+  ['filter/channel', effect25],
+  ['filter/chroma', effect26],
+  ['filter/chromaticAberration', effect27],
+  ['filter/chrome', effect28],
+  ['filter/clouds', effect29],
+  ['filter/colorReplace', effect30],
+  ['filter/convolutionFeedback', effect31],
+  ['filter/corrupt', effect32],
+  ['filter/craquelure', effect33],
+  ['filter/crt', effect34],
+  ['filter/degauss', effect35],
+  ['filter/deriv', effect36],
+  ['filter/directionalBlur', effect37],
+  ['filter/dither', effect38],
+  ['filter/edge', effect39],
+  ['filter/emboss', effect40],
+  ['filter/extrude', effect41],
+  ['filter/feedback', effect42],
+  ['filter/fibers', effect43],
+  ['filter/flipMirror', effect44],
+  ['filter/fxaa', effect45],
+  ['filter/glowingEdge', effect46],
+  ['filter/glyphMap', effect47],
+  ['filter/grade', effect48],
+  ['filter/grain', effect49],
+  ['filter/grime', effect50],
+  ['filter/halftone', effect51],
+  ['filter/hatch', effect52],
+  ['filter/highPass', effect53],
+  ['filter/historicPalette', effect54],
+  ['filter/invert', effect55],
+  ['filter/lens', effect56],
+  ['filter/lensFlare', effect57],
+  ['filter/lensWarp', effect58],
+  ['filter/lightLeak', effect59],
+  ['filter/lighting', effect60],
+  ['filter/lowPoly', effect61],
+  ['filter/median', effect62],
+  ['filter/morphology', effect63],
+  ['filter/mosaicTiles', effect64],
+  ['filter/motionBlur', effect65],
+  ['filter/normalMap', effect66],
+  ['filter/normalize', effect67],
+  ['filter/octaveWarp', effect68],
+  ['filter/oilPaint', effect69],
+  ['filter/osd', effect70],
+  ['filter/outline', effect71],
+  ['filter/palette', effect72],
+  ['filter/parallax', effect73],
+  ['filter/patchwork', effect74],
+  ['filter/photocopy', effect75],
+  ['filter/pinch', effect76],
+  ['filter/pixelSort', effect77],
+  ['filter/pixels', effect78],
+  ['filter/plasticWrap', effect79],
+  ['filter/polar', effect80],
+  ['filter/pondRipples', effect81],
+  ['filter/posterize', effect82],
+  ['filter/prismaticAberration', effect83],
+  ['filter/reindex', effect84],
+  ['filter/relief', effect85],
+  ['filter/repeat', effect86],
+  ['filter/reverb', effect87],
+  ['filter/ridge', effect88],
+  ['filter/rotate', effect89],
+  ['filter/scale', effect90],
+  ['filter/scanlineError', effect91],
+  ['filter/scatter', effect92],
+  ['filter/scratches', effect93],
+  ['filter/scroll', effect94],
+  ['filter/seamless', effect95],
+  ['filter/sharpen', effect96],
+  ['filter/simpleAberration', effect97],
+  ['filter/sine', effect98],
+  ['filter/skew', effect99],
+  ['filter/smooth', effect100],
+  ['filter/smoothstep', effect101],
+  ['filter/snow', effect102],
+  ['filter/sobel', effect103],
+  ['filter/spatter', effect104],
+  ['filter/spinBlur', effect105],
+  ['filter/spiral', effect106],
+  ['filter/spookyTicker', effect107],
+  ['filter/stamp', effect108],
+  ['filter/step', effect109],
+  ['filter/stipple', effect110],
+  ['filter/strayHair', effect111],
+  ['filter/strokes', effect112],
+  ['filter/temporalAberration', effect113],
+  ['filter/tetraColorArray', effect114],
+  ['filter/tetraCosine', effect115],
+  ['filter/text', effect116],
+  ['filter/texture', effect117],
+  ['filter/threshold', effect118],
+  ['filter/tile', effect119],
+  ['filter/tint', effect120],
+  ['filter/translate', effect121],
+  ['filter/tunnel', effect122],
+  ['filter/unsharpMask', effect123],
+  ['filter/vaseline', effect124],
+  ['filter/vignette', effect125],
+  ['filter/warp', effect126],
+  ['filter/watercolor', effect127],
+  ['filter/waves', effect128],
+  ['filter/wind', effect129],
+  ['filter/wobble', effect130],
+  ['filter/wormhole', effect131],
+  ['filter/zoomBlur', effect132],
+  ['filter3d/flow3d', effect133],
+  ['filter3d/palette3d', effect134],
+  ['mixer/alphaMask', effect135],
+  ['mixer/applyMode', effect136],
+  ['mixer/blendMode', effect137],
+  ['mixer/cellSplit', effect138],
+  ['mixer/centerMask', effect139],
+  ['mixer/channelCombine', effect140],
+  ['mixer/distortion', effect141],
+  ['mixer/focusBlur', effect142],
+  ['mixer/mashup', effect143],
+  ['mixer/patternMix', effect144],
+  ['mixer/shadow', effect145],
+  ['mixer/shapeMask', effect146],
+  ['mixer/split', effect147],
+  ['mixer/thresholdMix', effect148],
+  ['mixer/uvRemap', effect149],
+  ['points/attractor', effect150],
+  ['points/buddhabrot', effect151],
+  ['points/dla', effect152],
+  ['points/flock', effect153],
+  ['points/flow', effect154],
+  ['points/heightGrid', effect155],
+  ['points/hydraulic', effect156],
+  ['points/lenia', effect157],
+  ['points/life', effect158],
+  ['points/physarum', effect159],
+  ['points/physical', effect160],
+  ['render/loopBegin', effect161],
+  ['render/loopEnd', effect162],
+  ['render/meshLoader', effect163],
+  ['render/meshRender', effect164],
+  ['render/pointsBillboardRender', effect165],
+  ['render/pointsEmit', effect166],
+  ['render/pointsRender', effect167],
+  ['render/render3d', effect168],
+  ['render/renderCubemap3d', effect169],
+  ['render/renderCubemapSurface', effect170],
+  ['render/renderLandscape3d', effect171],
+  ['render/renderLit3d', effect172],
+  ['synth/bitwise', effect173],
+  ['synth/cell', effect174],
+  ['synth/cellularAutomata', effect175],
+  ['synth/curl', effect176],
+  ['synth/gabor', effect177],
+  ['synth/gradient', effect178],
+  ['synth/julia', effect179],
+  ['synth/mandala', effect180],
+  ['synth/mandelbrot', effect181],
+  ['synth/media', effect182],
+  ['synth/mnca', effect183],
+  ['synth/modPattern', effect184],
+  ['synth/navierStokes', effect185],
+  ['synth/newton', effect186],
+  ['synth/noise', effect187],
+  ['synth/osc2d', effect188],
+  ['synth/pattern', effect189],
+  ['synth/perlin', effect190],
+  ['synth/polygon', effect191],
+  ['synth/reactionDiffusion', effect192],
+  ['synth/remap', effect193],
+  ['synth/roll', effect194],
+  ['synth/sacredGeometry', effect195],
+  ['synth/scope', effect196],
+  ['synth/shape', effect197],
+  ['synth/solid', effect198],
+  ['synth/spectrum', effect199],
+  ['synth/subdivide', effect200],
+  ['synth/testPattern', effect201],
+  ['synth3d/cell3d', effect202],
+  ['synth3d/cellularAutomata3d', effect203],
+  ['synth3d/flythrough3d', effect204],
+  ['synth3d/fractal3d', effect205],
+  ['synth3d/heightmap3d', effect206],
+  ['synth3d/noise3d', effect207],
+  ['synth3d/reactionDiffusion3d', effect208],
+  ['synth3d/shape3d', effect209],
 ]
 
 const registerEffectBatch = createEffectBatchRegistrar(effects, {
