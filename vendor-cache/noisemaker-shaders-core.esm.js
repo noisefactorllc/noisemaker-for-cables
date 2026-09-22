@@ -3,8 +3,8 @@
  * Includes: CanvasRenderer + UIController + EffectSelect
  * Copyright (c) 2017-2026 Noise Factor LLC. https://noisefactor.io/
  * SPDX-License-Identifier: MIT
- * Build: 68d37721
- * Date: 2026-09-21T23:22:17.395Z
+ * Build: e5bd2013
+ * Date: 2026-09-22T07:11:52.547Z
  */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
@@ -2318,7 +2318,7 @@ function validate(ast) {
     }
     let location = null;
     if (node?.loc) {
-      location = { line: node.loc.line, column: node.loc.column };
+      location = { line: node.loc.line, column: node.loc.column ?? node.loc.col };
     }
     diagnosticsList.push({
       code,

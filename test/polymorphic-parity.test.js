@@ -455,3 +455,27 @@ test('mutation introspection excludes builtin pipeline steps', async () => {
   assert.equal(compatResult.success, false)
   assert.equal(compatResult.error, `Step with index ${builtinStep.temp} not found`)
 })
+
+test('diagnostic locations preserve source columns', async () => {
+  const core = await createReferenceCompiler()
+  const { compile, lex, parse, validate } = core
+
+  const result = compile('search synth\n  read(123).write(o0)')
+  assert.deepEqual(
+    result.diagnostics.map((d) => ({ code: d.code, location: d.location })),
+    [
+      { code: 'S001', location: { line: 2, column: 3 } },
+      { code: 'S005', location: { line: 2, column: 13 } },
+    ],
+  )
+
+  const ast = parse(lex('search synth\n  read(123).write(o0)'))
+  ast.plans[0].chain[0].loc.column = 9
+  const customLocResult = validate(ast)
+  assert.deepEqual(customLocResult.diagnostics[0].location, { line: 2, column: 9 })
+
+  const unlocatedResult = compile('search synth\n  missing().write(o0)')
+  const missingDiag = unlocatedResult.diagnostics.find((d) => d.identifier === 'missing')
+  assert.equal(missingDiag.code, 'S001')
+  assert.equal(Object.hasOwn(missingDiag, 'location'), false)
+})
