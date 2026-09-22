@@ -3,8 +3,8 @@
  * Includes: CanvasRenderer + UIController + EffectSelect
  * Copyright (c) 2017-2026 Noise Factor LLC. https://noisefactor.io/
  * SPDX-License-Identifier: MIT
- * Build: e5bd2013
- * Date: 2026-09-22T07:11:52.547Z
+ * Build: 643b2be1
+ * Date: 2026-09-22T15:12:50.381Z
  */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
@@ -242,6 +242,26 @@ var init_obj_parser = __esm({
   }
 });
 
+// shaders/src/lang/diagnostics.js
+var diagnostics = {
+  L001: { stage: "lexer", severity: "error", message: "Unexpected character" },
+  L002: { stage: "lexer", severity: "error", message: "Unterminated string literal" },
+  L003: { stage: "lexer", severity: "error", message: "Unterminated comment" },
+  L004: { stage: "lexer", severity: "error", message: "Output surface reference out of range" },
+  P001: { stage: "parser", severity: "error", message: "Unexpected token" },
+  P002: { stage: "parser", severity: "error", message: "Expected closing parenthesis" },
+  S001: { stage: "semantic", severity: "error", message: "Unknown identifier" },
+  S002: { stage: "semantic", severity: "warning", message: "Argument out of range" },
+  S003: { stage: "semantic", severity: "error", message: "Variable used before assignment" },
+  S004: { stage: "semantic", severity: "error", message: "Cannot assign null or undefined" },
+  S005: { stage: "semantic", severity: "error", message: "Illegal chain structure" },
+  S006: { stage: "semantic", severity: "error", message: "Starter chain missing write() call" },
+  S007: { stage: "semantic", severity: "warning", message: "Deprecated parameter alias" },
+  S008: { stage: "semantic", severity: "warning", message: "Deprecated effect" },
+  R001: { stage: "runtime", severity: "error", message: "Runtime error" }
+};
+var diagnostics_default = diagnostics;
+
 // shaders/src/lang/lexer.js
 var RESERVED_KEYWORDS = Object.freeze({
   let: "LET",
@@ -266,6 +286,30 @@ function lex(src) {
   let col = 1;
   function add(type, lexeme, line2, col2) {
     tokens.push({ type, lexeme, line: line2, col: col2 });
+  }
+  function fail(code, message, start, end) {
+    let errorLine = 1;
+    let column = 1;
+    for (let offset = 0; offset < start; offset++) {
+      if (src[offset] === "\n") {
+        errorLine++;
+        column = 1;
+      } else {
+        column++;
+      }
+    }
+    const error = new SyntaxError(message);
+    Object.defineProperty(error, "diagnostic", {
+      value: {
+        code,
+        stage: diagnostics_default[code].stage,
+        severity: diagnostics_default[code].severity,
+        message,
+        location: { line: errorLine, column },
+        span: { start, end }
+      }
+    });
+    throw error;
   }
   const isDigit = (c) => c >= "0" && c <= "9";
   const isLetter = (c) => c >= "a" && c <= "z" || c >= "A" && c <= "Z";
@@ -307,7 +351,7 @@ function lex(src) {
         }
         j++;
       }
-      if (j >= src.length) throw new SyntaxError(`Unterminated comment at line ${startLine} col ${startCol}`);
+      if (j >= src.length) fail("L003", `Unterminated comment at line ${startLine} col ${startCol}`, i, src.length);
       j += 2;
       const text = src.slice(i, j);
       add("COMMENT", text, startLine, startCol);
@@ -323,7 +367,7 @@ function lex(src) {
       const tokenType = ch === "o" ? "OUTPUT_REF" : "SOURCE_REF";
       const isMemberSegment = tokens[tokens.length - 1]?.type === "DOT";
       if (tokenType === "OUTPUT_REF" && !isMemberSegment && !/^o[0-7]$/.test(lexeme)) {
-        throw new SyntaxError(`Output surface reference '${lexeme}' is out of range; expected o0-o7 at line ${startLine} col ${startCol}`);
+        fail("L004", `Output surface reference '${lexeme}' is out of range; expected o0-o7 at line ${startLine} col ${startCol}`, i, j);
       }
       add(tokenType, lexeme, startLine, startCol);
       col += j - i;
@@ -534,7 +578,7 @@ function lex(src) {
         j++;
       }
       if (j >= src.length - 2 || !(src[j] === '"' && src[j + 1] === '"' && src[j + 2] === '"')) {
-        throw new SyntaxError(`Unterminated triple-quoted string at line ${startLine} col ${startCol}`);
+        fail("L002", `Unterminated triple-quoted string at line ${startLine} col ${startCol}`, i, src.length);
       }
       const content = src.slice(i + 3, j);
       add("STRING", content, startLine, startCol);
@@ -558,7 +602,7 @@ function lex(src) {
         }
       }
       if (j >= src.length || src[j] === "\n") {
-        throw new SyntaxError(`Unterminated string literal at line ${line} col ${col}`);
+        fail("L002", `Unterminated string literal at line ${line} col ${col}`, i, j);
       }
       const content = src.slice(i + 1, j);
       add("STRING", content, startLine, startCol);
@@ -592,7 +636,7 @@ function lex(src) {
       i = j;
       continue;
     }
-    throw new SyntaxError(`Unexpected character '${ch}' at line ${line} col ${col}`);
+    fail("L001", `Unexpected character '${ch}' at line ${line} col ${col}`, i, i + 1);
   }
   add("EOF", "", line, col);
   return tokens;
@@ -1830,24 +1874,6 @@ function parse(tokens) {
   }
   return parseProgram();
 }
-
-// shaders/src/lang/diagnostics.js
-var diagnostics = {
-  L001: { stage: "lexer", severity: "error", message: "Unexpected character" },
-  L002: { stage: "lexer", severity: "error", message: "Unterminated string literal" },
-  P001: { stage: "parser", severity: "error", message: "Unexpected token" },
-  P002: { stage: "parser", severity: "error", message: "Expected closing parenthesis" },
-  S001: { stage: "semantic", severity: "error", message: "Unknown identifier" },
-  S002: { stage: "semantic", severity: "warning", message: "Argument out of range" },
-  S003: { stage: "semantic", severity: "error", message: "Variable used before assignment" },
-  S004: { stage: "semantic", severity: "error", message: "Cannot assign null or undefined" },
-  S005: { stage: "semantic", severity: "error", message: "Illegal chain structure" },
-  S006: { stage: "semantic", severity: "error", message: "Starter chain missing write() call" },
-  S007: { stage: "semantic", severity: "warning", message: "Deprecated parameter alias" },
-  S008: { stage: "semantic", severity: "warning", message: "Deprecated effect" },
-  R001: { stage: "runtime", severity: "error", message: "Runtime error" }
-};
-var diagnostics_default = diagnostics;
 
 // shaders/src/lang/enums.js
 var legacyEnums = {};
