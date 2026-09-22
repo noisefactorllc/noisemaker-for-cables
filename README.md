@@ -27,6 +27,7 @@ The installed op remains `Ops.Extension.Noisemaker.Program`. Its browser global
 are retained as compatibility identifiers so existing Cables patches continue
 to load unchanged.
 
+- [Read the completion audit and known gaps](docs/COMPLETION_GAPS.md)
 - [Install the op in Cables Standalone](docs/installation.md)
 - [Open the example patch](examples/README.md)
 - [Read the runtime architecture](docs/architecture.md)
