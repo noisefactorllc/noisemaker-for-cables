@@ -3,8 +3,8 @@
  * Includes: CanvasRenderer + UIController + EffectSelect
  * Copyright (c) 2017-2026 Noise Factor LLC. https://noisefactor.io/
  * SPDX-License-Identifier: MIT
- * Build: 50b8f909
- * Date: 2026-09-21T17:03:51.960Z
+ * Build: 68d37721
+ * Date: 2026-09-21T23:22:17.395Z
  */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
@@ -4689,7 +4689,7 @@ function findStepByIndex(compiled, stepIndex) {
     if (!plan?.chain) continue;
     for (let chainIndex = 0; chainIndex < plan.chain.length; chainIndex++) {
       const step = plan.chain[chainIndex];
-      if (step.temp === stepIndex) {
+      if (!step.builtin && step.temp === stepIndex) {
         return { planIndex, chainIndex, step };
       }
     }
@@ -4805,6 +4805,7 @@ function listSteps(compiled, options = {}) {
     if (!plan?.chain) continue;
     for (let chainIndex = 0; chainIndex < plan.chain.length; chainIndex++) {
       const step = plan.chain[chainIndex];
+      if (step.builtin) continue;
       const isStarter = checkIsStarter(step.op, searchOrder);
       const isStarterPosition = chainIndex === 0 || isStarter && (step.from === null || step.from === void 0);
       steps.push({
