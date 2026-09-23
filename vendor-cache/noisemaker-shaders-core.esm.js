@@ -3,8 +3,8 @@
  * Includes: CanvasRenderer + UIController + EffectSelect
  * Copyright (c) 2017-2026 Noise Factor LLC. https://noisefactor.io/
  * SPDX-License-Identifier: MIT
- * Build: 44bc4ed4
- * Date: 2026-09-22T23:10:13.418Z
+ * Build: 0766743e
+ * Date: 2026-09-23T15:09:12.567Z
  */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
@@ -250,6 +250,8 @@ var diagnostics = {
   L004: { stage: "lexer", severity: "error", message: "Output surface reference out of range" },
   P001: { stage: "parser", severity: "error", message: "Unexpected token" },
   P002: { stage: "parser", severity: "error", message: "Expected closing parenthesis" },
+  P003: { stage: "parser", severity: "error", message: "Invalid automation arguments" },
+  P004: { stage: "parser", severity: "error", message: "Invalid search directive" },
   S001: { stage: "semantic", severity: "error", message: "Unknown identifier" },
   S002: { stage: "semantic", severity: "warning", message: "Argument out of range" },
   S003: { stage: "semantic", severity: "error", message: "Variable used before assignment" },
@@ -905,11 +907,8 @@ function parse(tokens) {
   };
   const peek = () => tokens[current];
   const advance = () => tokens[current++];
-  const expect = (type, msg) => {
-    const token = peek();
-    if (token.type === type) return advance();
-    const error = new SyntaxError(`${msg} at line ${token.line} col ${token.col}`);
-    const code = type === "RPAREN" ? "P002" : "P001";
+  const parserError = (code, message, token) => {
+    const error = new SyntaxError(message);
     const hasLocation = Number.isInteger(token.line) && token.line > 0 && Number.isInteger(token.col) && token.col > 0;
     Object.defineProperty(error, "diagnostic", {
       value: {
@@ -922,7 +921,16 @@ function parse(tokens) {
         span: null
       }
     });
-    throw error;
+    return error;
+  };
+  const expect = (type, msg) => {
+    const token = peek();
+    if (token.type === type) return advance();
+    throw parserError(
+      type === "RPAREN" ? "P002" : "P001",
+      `${msg} at line ${token.line} col ${token.col}`,
+      token
+    );
   };
   function collectComments() {
     const comments = [];
@@ -1007,7 +1015,7 @@ function parse(tokens) {
     };
     for (const key of Object.keys(kwargs)) {
       if (!validParams.has(key)) {
-        throw new SyntaxError(`osc() unknown parameter '${key}' at line ${nameToken.line} col ${nameToken.col}. Valid: ${paramOrder.join(", ")}`);
+        throw parserError("P003", `osc() unknown parameter '${key}' at line ${nameToken.line} col ${nameToken.col}. Valid: ${paramOrder.join(", ")}`, nameToken);
       }
     }
     const resolved = {};
@@ -1040,11 +1048,11 @@ function parse(tokens) {
     const keywordOnlyParams = ["name", "id", "cc", "nrpn", "zone", "members"];
     const validParams = [...paramOrder, ...keywordOnlyParams];
     if (args.length > paramOrder.length) {
-      throw new SyntaxError(`midi() name, id, cc, nrpn, zone and members are keyword-only at line ${nameToken.line} col ${nameToken.col}`);
+      throw parserError("P003", `midi() name, id, cc, nrpn, zone and members are keyword-only at line ${nameToken.line} col ${nameToken.col}`, nameToken);
     }
     for (const key of Object.keys(kwargs)) {
       if (!validParams.includes(key)) {
-        throw new SyntaxError(`midi() unknown parameter '${key}' at line ${nameToken.line} col ${nameToken.col}. Valid: ${validParams.join(", ")}`);
+        throw parserError("P003", `midi() unknown parameter '${key}' at line ${nameToken.line} col ${nameToken.col}. Valid: ${validParams.join(", ")}`, nameToken);
       }
     }
     const defaults = {
@@ -1067,28 +1075,28 @@ function parse(tokens) {
       }
     }
     if (posCursor < args.length) {
-      throw new SyntaxError(`midi() has an excess positional argument at line ${nameToken.line} col ${nameToken.col}`);
+      throw parserError("P003", `midi() has an excess positional argument at line ${nameToken.line} col ${nameToken.col}`, nameToken);
     }
     if (!resolved.channel && kwargs.zone === void 0) {
-      throw new SyntaxError(`midi() requires 'channel' or 'zone' argument at line ${nameToken.line} col ${nameToken.col}`);
+      throw parserError("P003", `midi() requires 'channel' or 'zone' argument at line ${nameToken.line} col ${nameToken.col}`, nameToken);
     }
     if (resolved.channel && kwargs.zone !== void 0) {
-      throw new SyntaxError(`midi() 'channel' and 'zone' are mutually exclusive at line ${nameToken.line} col ${nameToken.col}`);
+      throw parserError("P003", `midi() 'channel' and 'zone' are mutually exclusive at line ${nameToken.line} col ${nameToken.col}`, nameToken);
     }
     if (kwargs.members !== void 0 && kwargs.zone === void 0) {
-      throw new SyntaxError(`midi() 'members' requires 'zone' at line ${nameToken.line} col ${nameToken.col}`);
+      throw parserError("P003", `midi() 'members' requires 'zone' at line ${nameToken.line} col ${nameToken.col}`, nameToken);
     }
     if (kwargs.id !== void 0 && kwargs.name === void 0) {
-      throw new SyntaxError(`midi() 'id' requires readable 'name' at line ${nameToken.line} col ${nameToken.col}`);
+      throw parserError("P003", `midi() 'id' requires readable 'name' at line ${nameToken.line} col ${nameToken.col}`, nameToken);
     }
     for (const paramName of ["name", "id"]) {
       const value = kwargs[paramName];
       if (value === void 0) continue;
       if (value.type !== "String") {
-        throw new SyntaxError(`midi() '${paramName}' requires a quoted string at line ${nameToken.line} col ${nameToken.col}`);
+        throw parserError("P003", `midi() '${paramName}' requires a quoted string at line ${nameToken.line} col ${nameToken.col}`, nameToken);
       }
       if (value.value.length === 0) {
-        throw new SyntaxError(`midi() '${paramName}' must not be empty at line ${nameToken.line} col ${nameToken.col}`);
+        throw parserError("P003", `midi() '${paramName}' must not be empty at line ${nameToken.line} col ${nameToken.col}`, nameToken);
       }
     }
     return {
@@ -1114,11 +1122,11 @@ function parse(tokens) {
     const keywordOnlyParams = ["channel", "name", "id"];
     const validParams = [...paramOrder, ...keywordOnlyParams];
     if (args.length > paramOrder.length) {
-      throw new SyntaxError(`audio() channel, name and id are keyword-only at line ${nameToken.line} col ${nameToken.col}`);
+      throw parserError("P003", `audio() channel, name and id are keyword-only at line ${nameToken.line} col ${nameToken.col}`, nameToken);
     }
     for (const key of Object.keys(kwargs)) {
       if (!validParams.includes(key)) {
-        throw new SyntaxError(`audio() unknown parameter '${key}' at line ${nameToken.line} col ${nameToken.col}. Valid: ${validParams.join(", ")}`);
+        throw parserError("P003", `audio() unknown parameter '${key}' at line ${nameToken.line} col ${nameToken.col}. Valid: ${validParams.join(", ")}`, nameToken);
       }
     }
     const defaults = {
@@ -1139,25 +1147,25 @@ function parse(tokens) {
       }
     }
     if (posCursor < args.length) {
-      throw new SyntaxError(`audio() has an excess positional argument at line ${nameToken.line} col ${nameToken.col}`);
+      throw parserError("P003", `audio() has an excess positional argument at line ${nameToken.line} col ${nameToken.col}`, nameToken);
     }
     if (!resolved.band) {
-      throw new SyntaxError(`audio() requires 'band' argument at line ${nameToken.line} col ${nameToken.col}`);
+      throw parserError("P003", `audio() requires 'band' argument at line ${nameToken.line} col ${nameToken.col}`, nameToken);
     }
     if (kwargs.id !== void 0 && kwargs.name === void 0) {
-      throw new SyntaxError(`audio() 'id' requires readable 'name' at line ${nameToken.line} col ${nameToken.col}`);
+      throw parserError("P003", `audio() 'id' requires readable 'name' at line ${nameToken.line} col ${nameToken.col}`, nameToken);
     }
     if (kwargs.name !== void 0 && kwargs.channel === void 0) {
-      throw new SyntaxError(`audio() selected device requires both 'name' and 'channel' at line ${nameToken.line} col ${nameToken.col}`);
+      throw parserError("P003", `audio() selected device requires both 'name' and 'channel' at line ${nameToken.line} col ${nameToken.col}`, nameToken);
     }
     for (const paramName of ["name", "id"]) {
       const value = kwargs[paramName];
       if (value === void 0) continue;
       if (value.type !== "String") {
-        throw new SyntaxError(`audio() '${paramName}' requires a quoted string at line ${nameToken.line} col ${nameToken.col}`);
+        throw parserError("P003", `audio() '${paramName}' requires a quoted string at line ${nameToken.line} col ${nameToken.col}`, nameToken);
       }
       if (value.value.length === 0) {
-        throw new SyntaxError(`audio() '${paramName}' must not be empty at line ${nameToken.line} col ${nameToken.col}`);
+        throw parserError("P003", `audio() '${paramName}' must not be empty at line ${nameToken.line} col ${nameToken.col}`, nameToken);
       }
     }
     return {
@@ -1288,19 +1296,19 @@ function parse(tokens) {
     function parseSearchDirective() {
       if (programSearchOrder !== null) {
         const t = peek();
-        throw new SyntaxError(`Only one search directive is allowed per program at line ${t.line} col ${t.col}`);
+        throw parserError("P004", `Only one search directive is allowed per program at line ${t.line} col ${t.col}`, t);
       }
       advance();
       const namespaces = [];
       function validateNamespace(token) {
         const ns = token.lexeme;
         if (!isValidNamespace(ns)) {
-          throw new SyntaxError(`Invalid namespace '${ns}' at line ${token.line} col ${token.col}. Valid namespaces: ${VALID_NAMESPACES.join(", ")}`);
+          throw parserError("P004", `Invalid namespace '${ns}' at line ${token.line} col ${token.col}. Valid namespaces: ${VALID_NAMESPACES.join(", ")}`, token);
         }
       }
       const firstToken = peek();
       if (!namespaceTokenTypes.has(firstToken.type)) {
-        throw new SyntaxError(`Expected namespace identifier after search at line ${firstToken.line} col ${firstToken.col}`);
+        throw parserError("P004", `Expected namespace identifier after search at line ${firstToken.line} col ${firstToken.col}`, firstToken);
       }
       advance();
       validateNamespace(firstToken);
@@ -1309,7 +1317,7 @@ function parse(tokens) {
         advance();
         const nsToken = peek();
         if (!namespaceTokenTypes.has(nsToken.type)) {
-          throw new SyntaxError(`Expected namespace identifier after comma at line ${nsToken.line} col ${nsToken.col}`);
+          throw parserError("P004", `Expected namespace identifier after comma at line ${nsToken.line} col ${nsToken.col}`, nsToken);
         }
         advance();
         validateNamespace(nsToken);
@@ -1342,7 +1350,7 @@ function parse(tokens) {
       if (peek().type === "SEARCH") {
         if (plans.length || vars.length || render) {
           const t = peek();
-          throw new SyntaxError(`'search' directive must appear before other statements at line ${t.line} col ${t.col}`);
+          throw parserError("P004", `'search' directive must appear before other statements at line ${t.line} col ${t.col}`, t);
         }
         parseSearchDirective();
         continue;
@@ -1365,9 +1373,9 @@ function parse(tokens) {
       appendStatement(stmt);
       while (peek().type === "SEMICOLON") advance();
     }
-    expect("EOF", "Expected end of input");
+    const eof = expect("EOF", "Expected end of input");
     if (!programSearchOrder || programSearchOrder.length === 0) {
-      throw new SyntaxError("Missing required 'search' directive. Every program must start with 'search <namespace>, ...' to specify namespace search order.");
+      throw parserError("P004", "Missing required 'search' directive. Every program must start with 'search <namespace>, ...' to specify namespace search order.", eof);
     }
     const program = { type: "Program", plans, render };
     if (vars.length) {
@@ -1404,7 +1412,7 @@ function parse(tokens) {
   function parseStatement() {
     if (peek().type === "SEARCH") {
       const t = peek();
-      throw new SyntaxError(`'search' directive is only allowed at the start of the program at line ${t.line} col ${t.col}`);
+      throw parserError("P004", `'search' directive is only allowed at the start of the program at line ${t.line} col ${t.col}`, t);
     }
     if (peek().type === "LET") {
       advance();

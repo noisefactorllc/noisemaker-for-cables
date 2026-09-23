@@ -628,3 +628,266 @@ test('renderLandscape3d filtering define choices compile with expected defines',
   assert.ok(voxelPass, 'renderLandscape3d pass found')
   assert.equal(voxelGraph.programs[voxelPass.program].defines.FILTERING, 1)
 })
+
+test('structured DSL automation diagnostics attach diagnostic metadata to thrown SyntaxError', async () => {
+  const core = await createReferenceCompiler()
+  const { compile, lex, parse } = core
+
+  const automationFailures = [
+    ['osc(type: oscKind.sine, bogus: 1)', "osc() unknown parameter 'bogus'", '. Valid: type, min, max, speed, offset, seed'],
+    ['midi(1, 2, 3, 4, 5, 6)', 'midi() name, id, cc, nrpn, zone and members are keyword-only', ''],
+    ['midi(bogus: 1)', "midi() unknown parameter 'bogus'", '. Valid: channel, mode, min, max, sensitivity, name, id, cc, nrpn, zone, members'],
+    ['midi(1, 2, 3, 4, 5, channel: 1)', 'midi() has an excess positional argument', ''],
+    ['midi()', "midi() requires 'channel' or 'zone' argument", ''],
+    ['midi(1, zone: 1)', "midi() 'channel' and 'zone' are mutually exclusive", ''],
+    ['midi(1, members: 2)', "midi() 'members' requires 'zone'", ''],
+    ['midi(1, id: "port")', "midi() 'id' requires readable 'name'", ''],
+    ['midi(1, name: 1)', "midi() 'name' requires a quoted string", ''],
+    ['midi(1, name: "")', "midi() 'name' must not be empty", ''],
+    ['midi(1, name: "port", id: 1)', "midi() 'id' requires a quoted string", ''],
+    ['midi(1, name: "port", id: "")', "midi() 'id' must not be empty", ''],
+    ['audio(1, 2, 3, 4)', 'audio() channel, name and id are keyword-only', ''],
+    ['audio(bogus: 1)', "audio() unknown parameter 'bogus'", '. Valid: band, min, max, channel, name, id'],
+    ['audio(1, 2, 3, band: 1)', 'audio() has an excess positional argument', ''],
+    ['audio()', "audio() requires 'band' argument", ''],
+    ['audio(1, id: "device")', "audio() 'id' requires readable 'name'", ''],
+    ['audio(1, name: "device")', "audio() selected device requires both 'name' and 'channel'", ''],
+    ['audio(1, channel: 1, name: 1)', "audio() 'name' requires a quoted string", ''],
+    ['audio(1, channel: 1, name: "")', "audio() 'name' must not be empty", ''],
+    ['audio(1, channel: 1, name: "device", id: 1)', "audio() 'id' requires a quoted string", ''],
+    ['audio(1, channel: 1, name: "device", id: "")', "audio() 'id' must not be empty", ''],
+  ]
+
+  for (const [invocation, prefix, suffix = ''] of automationFailures) {
+    const source = `search synth\nlet x = ${invocation}`
+    const message = `${prefix} at line 2 col 9${suffix}`
+    for (const entryPoint of [(src) => parse(lex(src)), compile]) {
+      assert.throws(
+        () => entryPoint(source),
+        (err) => {
+          assert.equal(err.name, 'SyntaxError')
+          assert.equal(err.message, message)
+          const expected = {
+            code: 'P003',
+            stage: 'parser',
+            severity: 'error',
+            message,
+            location: { line: 2, column: 9 },
+            span: null,
+          }
+          assert.deepEqual(err.diagnostic, expected)
+          return true
+        },
+      )
+    }
+  }
+})
+
+test('parser automation diagnostics preserve unavailable caller-token coordinates', async () => {
+  const core = await createReferenceCompiler()
+  const { lex, parse } = core
+
+  for (const invocation of ['osc(type: 1, bogus: 1)', 'midi()', 'audio()']) {
+    for (const coordinates of [{}, { line: 1 }, { line: 0, col: 1 }, { line: 1, col: NaN }]) {
+      const tokens = lex(`search synth\nlet x = ${invocation}`).map((token) => {
+        if (!['osc', 'midi', 'audio'].includes(token.lexeme)) return token
+        return { type: token.type, lexeme: token.lexeme, ...coordinates }
+      })
+      assert.throws(
+        () => parse(tokens),
+        (err) => {
+          assert.equal(err.name, 'SyntaxError')
+          assert.ok(err.message.includes(`at line ${coordinates.line} col ${coordinates.col}`))
+          assert.deepEqual(err.diagnostic, {
+            code: 'P003',
+            stage: 'parser',
+            severity: 'error',
+            message: err.message,
+            location: null,
+            span: null,
+          })
+          return true
+        },
+      )
+    }
+  }
+})
+
+test('valid automation invocations retain AST defaults and keys', async () => {
+  const core = await createReferenceCompiler()
+  const { lex, parse } = core
+
+  const source = 'search synth\nlet a = osc(); let b = midi(1); let c = audio(audioBand.low)'
+  assert.deepEqual(
+    parse(lex(source)).vars.map((variable) => variable.expr),
+    [
+      {
+        type: 'Oscillator',
+        oscType: { type: 'Member', path: ['oscKind', 'sine'] },
+        min: { type: 'Number', value: 0 },
+        max: { type: 'Number', value: 1 },
+        speed: { type: 'Number', value: 1 },
+        offset: { type: 'Number', value: 0 },
+        seed: { type: 'Number', value: 1 },
+        loc: { line: 2, col: 9 },
+      },
+      {
+        type: 'Midi',
+        channel: { type: 'Number', value: 1 },
+        mode: { type: 'Member', path: ['midiMode', 'velocity'] },
+        min: { type: 'Number', value: 0 },
+        max: { type: 'Number', value: 1 },
+        sensitivity: { type: 'Number', value: 1 },
+        cc: undefined,
+        nrpn: undefined,
+        zone: undefined,
+        members: undefined,
+        name: undefined,
+        id: undefined,
+        loc: { line: 2, col: 24 },
+      },
+      {
+        type: 'Audio',
+        band: { type: 'Member', path: ['audioBand', 'low'] },
+        min: { type: 'Number', value: 0 },
+        max: { type: 'Number', value: 1 },
+        channel: undefined,
+        name: undefined,
+        id: undefined,
+        loc: { line: 2, col: 41 },
+      },
+    ],
+  )
+})
+
+test('structured DSL search directive diagnostics attach diagnostic metadata to thrown SyntaxError', async () => {
+  const core = await createReferenceCompiler()
+  const { compile, lex, parse } = core
+
+  const missingSearchMessage =
+    "Missing required 'search' directive. Every program must start with 'search <namespace>, ...' to specify namespace search order."
+  const searchFailures = [
+    ['empty program', '', missingSearchMessage, 1, 1],
+    ['missing directive after statements', 'let x = 1', missingSearchMessage, 1, 10],
+    [
+      'duplicate directive',
+      'search synth search filter',
+      'Only one search directive is allowed per program at line 1 col 14',
+      1,
+      14,
+    ],
+    [
+      'invalid namespace',
+      'search bogus',
+      "Invalid namespace 'bogus' at line 1 col 8. Valid namespaces: io, classicNoisedeck, synth, mixer, filter, render, points, synth3d, filter3d, user",
+      1,
+      8,
+    ],
+    ['missing first namespace', 'search', 'Expected namespace identifier after search at line 1 col 7', 1, 7],
+    ['missing additional namespace', 'search synth,', 'Expected namespace identifier after comma at line 1 col 14', 1, 14],
+    [
+      'misplaced directive',
+      'let x = 1; search synth',
+      "'search' directive must appear before other statements at line 1 col 12",
+      1,
+      12,
+    ],
+    [
+      'nested directive',
+      'search synth\nif(true) { search filter }',
+      "'search' directive is only allowed at the start of the program at line 2 col 12",
+      2,
+      12,
+    ],
+    ['CRLF and tab', '// 😀\r\n\tsearch 1', 'Expected namespace identifier after search at line 2 col 9', 2, 9],
+    [
+      'UTF-16 column',
+      'search synth\nlet x = "😀"; search filter',
+      "'search' directive must appear before other statements at line 2 col 15",
+      2,
+      15,
+    ],
+  ]
+
+  for (const [, source, message, line, column] of searchFailures) {
+    for (const entryPoint of [(src) => parse(lex(src)), compile]) {
+      assert.throws(
+        () => entryPoint(source),
+        (err) => {
+          assert.equal(err.name, 'SyntaxError')
+          assert.equal(err.message, message)
+          const expected = {
+            code: 'P004',
+            stage: 'parser',
+            severity: 'error',
+            message,
+            location: { line, column },
+            span: null,
+          }
+          assert.deepEqual(err.diagnostic, expected)
+          return true
+        },
+      )
+    }
+  }
+})
+
+test('parser search diagnostics preserve unavailable caller-token coordinates', async () => {
+  const core = await createReferenceCompiler()
+  const { lex, parse } = core
+
+  const missingSearchMessage =
+    "Missing required 'search' directive. Every program must start with 'search <namespace>, ...' to specify namespace search order."
+  const searchFailures = [
+    ['empty program', '', missingSearchMessage, 1, 1],
+    ['missing directive after statements', 'let x = 1', missingSearchMessage, 1, 10],
+    [
+      'duplicate directive',
+      'search synth search filter',
+      'Only one search directive is allowed per program at line 1 col 14',
+      1,
+      14,
+    ],
+  ]
+
+  for (const [, source] of searchFailures) {
+    for (const coordinates of [{}, { line: 1 }, { line: 0, col: 1 }, { line: 1, col: NaN }]) {
+      const tokens = lex(source).map(({ type, lexeme }) => ({ type, lexeme, ...coordinates }))
+      assert.throws(
+        () => parse(tokens),
+        (err) => {
+          assert.equal(err.name, 'SyntaxError')
+          assert.deepEqual(err.diagnostic, {
+            code: 'P004',
+            stage: 'parser',
+            severity: 'error',
+            message: err.message,
+            location: null,
+            span: null,
+          })
+          return true
+        },
+      )
+    }
+  }
+})
+
+test('valid search directives retain namespace order, keyword namespaces, and compiled indexes', async () => {
+  const core = await createReferenceCompiler()
+  const { compile, lex, parse, registerOp, registerStarterOps } = core
+
+  registerOp('synth.diagProbe', { name: 'diagProbe', args: [] })
+  registerStarterOps(['synth.diagProbe'])
+
+  const source = '/* leading */ search render, synth, synth; diagProbe().write(o0)'
+  const ast = parse(lex(source))
+  assert.deepEqual(ast.namespace.searchOrder, ['render', 'synth', 'synth'])
+  const result = compile(source)
+  assert.deepEqual(result.searchNamespaces, ['render', 'synth', 'synth'])
+  assert.deepEqual(result.diagnostics, [])
+  assert.deepEqual(result.plans[0].chain, [
+    { op: 'synth.diagProbe', args: {}, from: null, temp: 0 },
+    { op: '_write', args: { tex: { kind: 'output', name: 'o0' } }, from: 0, temp: 1, builtin: true },
+  ])
+  assert.deepEqual(Object.keys(result).sort(), ['diagnostics', 'plans', 'render', 'searchNamespaces', 'vars'])
+})
