@@ -24,12 +24,19 @@ Only this document and its README link form the audit publication.
 These paths trigger no workflow in the reviewed repository.
 The shared audit state records the publication commit and remote checks.
 
+Review date: 2026-09-23. Current source: `a911c39a69c78ec13606019eeacdf7b680468872`.
+Current kit `0.1.19` records that source. Earlier measurements retain their original source and date.
+The current bundle incorporates landscape filtering after the worker audit.
+
+Live upstream at review: `532ed64775000635e43caac085e4451c06e71afc`. Published runtime: `1.0.169` at `44bc4ed4ac729bddaa95b083d64bee942ade35da`.
+The review does not qualify every upstream change after the recorded port authority.
+
 ## 2. Completion claims
 
 | Claim ID | Claim source | Claimed scope | Finding | Evidence |
 | --- | --- | --- | --- | --- |
 | CLAIM-001 | README.md and docs/architecture.md | Complete locked effect catalog | supported | The lock verifies 210 effects and 212 artifacts. Both current and pinned manifests contain 210 IDs. |
-| CLAIM-002 | README.md | Pixel-level parity and complete programs | partial | Eleven compiler cases match current authority. The current landscape filtering case fails in the candidate. See GAP-001 and GAP-002. |
+| CLAIM-002 | README.md | Pixel-level parity and complete programs | partial | The audit matched eleven cases and rejected landscape filtering. The review matches all twelve against the retained authority. Rendered scope remains incomplete. |
 | CLAIM-003 | docs/installation.md | Native editor installation, media, resize, reset, and recovery | supported | The retry passes on macOS arm64 with Standalone 0.11.0. The first welcome-dialog timeout remains recorded. See GAP-003 for limits. |
 | CLAIM-004 | docs/installation.md and export README template | Last-good rendering and recovery | supported | The player preserves rejected-edit pixels. Recovery renders the replacement color. |
 | CLAIM-005 | examples/README.md and Error port documentation | Useful error reporting | partial | The user sees a generic compile failure. The compiler's diagnostic does not reach that message. See GAP-004. |
@@ -116,20 +123,44 @@ That run checks out the reviewed SHA, passes 119 builder tests without skips, an
 The builder tests do not replace this repository's unit, browser, or native host tests.
 The [kit inventory](https://kits.noisedeck.app/cables/0.1.18/kit.json) records the same source SHA.
 
+### Daily review evidence, 2026-09-23
+
+Review evidence resides in `review-20260923-01/noisemaker-for-cables` in the shared store.
+`node --test test/polymorphic-parity.test.js` passes 13 tests, exit 0.
+The independent probe loads the committed bundle and the worker's retained authority `ae4e3302` separately.
+All 12 graph results match after removing only `compiledAt`. The previously rejected isosurface case now passes.
+The existing compiler suite also checks voxel and isosurface specialization. These checks do not compare rendered pixels.
+`differential.json` preserves the complete inputs and results.
+
+Kit `0.1.19` contains 17 files. Both changed bundle files match freshly downloaded bytes and inventory hashes.
+The other 15 inventory hashes match the prior kit. A fresh compatibility-file download also matches.
+[Current source CI](https://github.com/noisefactorllc/noisemaker-for-cables/actions/runs/35808132023) passed.
+[Downstream CI](https://github.com/noisefactorllc/scaffold/actions/runs/35808144297) passed 119 builder tests without a test skip.
+The workflow excluded other-kit suites. Neither workflow executes the port's native host or browser parity suite.
+
+The reviewer checked the worker's first timeout, successful native retry, player pixels, recovery messages, installation, removal, and browser logs.
+That evidence qualifies the old bundle on Standalone `0.11.0`, not the current bundle or every supported environment.
+The review did not repeat native editor interaction or the browser suites after the bundle change.
+The current official Sharing Ops guide still permits project directories and npm-compatible packages.
+The Standalone page advertises `0.11.2`. Support for that version remains unverified.
+
 ## 4. Known gaps
 
-### GAP-001: Port rejects current landscape filtering
+### GAP-001: Updated landscape filtering lacks rendered qualification
 
 - Status: open. Priority: P1. Category: authority.
 - Affected scope: current-authority exports using landscape filtering and the kit's unrestricted compatibility declaration.
 - Expected behavior: compatibility claims identify the accepted authority and reject unsupported exports before delivery.
-- Observed behavior: current authority accepts `renderLandscape3d(filtering: isosurface)`. The bundled compiler rejects the `filtering` argument.
+- Historical behavior: the audited bundle rejected `renderLandscape3d(filtering: isosurface)`.
+- Current behavior: bundle `a911c39a` accepts both choices. Twelve graph probes match retained authority `ae4e3302`.
+- Remaining uncertainty: rendered comparisons and host behavior for the updated modes remain unverified.
 - Evidence: `differential.json`, `authority-comparison.json`, `vendor.lock.json`, and `export-kit/kit.config.json` with `compat.mode: all`.
-- Next action: define the accepted authority boundary and compare changed landscape options without advancing the existing parity checkpoint.
-- Dependencies: separate implementation authorization for runtime or compatibility changes.
-- Acceptance criteria: supported exports execute against their declared authority. Unsupported authority features receive an explicit compatibility refusal.
+- Next action: compare both existing landscape modes against their declared authority through the public op and player.
+- Required starting check: `node --test test/polymorphic-parity.test.js` must pass all 13 tests.
+- Dependencies: record the updated bundle and authority hashes first. Further implementation remains outside this review.
+- Acceptance criteria: both modes produce source-bound matching frames under the declared gate. Default voxel behavior and last-good recovery remain intact.
 - Required checks: source-bound compiler and rendered comparisons for landscape filtering modes and the existing checkpoint cases.
-- Last verification: 2026-09-22.
+- Last verification: 2026-09-23 for compiler behavior. Rendered qualification remains open.
 
 ### GAP-002: Broad rendered parity lacks complete evidence
 
@@ -192,8 +223,10 @@ The [kit inventory](https://kits.noisedeck.app/cables/0.1.18/kit.json) records t
 
 ## 5. Ordered next actions
 
-1. Resolve GAP-001's authority contract before interpreting broader parity results.
-2. Define GAP-003's host qualification matrix and preserve both native test attempts.
+1. Record GAP-001's updated authority and bundle hashes. Run `node --test test/polymorphic-parity.test.js`. Require all 13 checks to pass.
+   Compare default, voxel, and isosurface outputs with the declared authority. Preserve tolerances and include both projection modes.
+2. Run `npm run test:standalone` with the declared `CABLES_APP` after the bundle change. Preserve both earlier native attempts.
+   Require visible output, media binding, resize, rejection recovery, reset, and recreation. Record saved-project reload separately.
 3. Preserve GAP-002's denominator and add missing evidence only within the authorized checkpoint.
 4. Correct GAP-004 in the separate implementation job. Preserve last-good rendering and error codes.
 5. Assess GAP-005 against the actual distribution and the declared host/platform matrix.
@@ -207,3 +240,4 @@ The operator does not authorize additional effects or parity checkpoint advancem
 | Date | Reviewed source | Change | Tested scope | Remaining limits |
 | --- | --- | --- | --- | --- |
 | 2026-09-22 | `0d860724f5305b854c6ffa64aed3de701157d2da` | Initial audit and README link. Five stable gaps recorded. | Unit checks, locked files, current compiler differential, package installation, published player recovery, native editor retry, bundle reproduction, artifact hashes, exact-source CI. | Broad parity, wider host qualification, actionable diagnostics, and release acceptance remain incomplete. |
+| 2026-09-23 | `a911c39a69c78ec13606019eeacdf7b680468872` | Corrected the stale landscape rejection. Added executable qualification actions. | Reviewed worker raw logs. Passed 13 compiler tests and 12 independent graph comparisons. Checked current kit changes and exact-source CI. | Five gaps remain. Current-bundle rendered and host qualification remains incomplete. No closure. |
