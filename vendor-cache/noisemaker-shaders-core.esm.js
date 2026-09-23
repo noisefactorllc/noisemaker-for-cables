@@ -3,8 +3,8 @@
  * Includes: CanvasRenderer + UIController + EffectSelect
  * Copyright (c) 2017-2026 Noise Factor LLC. https://noisefactor.io/
  * SPDX-License-Identifier: MIT
- * Build: 643b2be1
- * Date: 2026-09-22T15:12:50.381Z
+ * Build: 44bc4ed4
+ * Date: 2026-09-22T23:10:13.418Z
  */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
@@ -908,7 +908,21 @@ function parse(tokens) {
   const expect = (type, msg) => {
     const token = peek();
     if (token.type === type) return advance();
-    throw new SyntaxError(`${msg} at line ${token.line} col ${token.col}`);
+    const error = new SyntaxError(`${msg} at line ${token.line} col ${token.col}`);
+    const code = type === "RPAREN" ? "P002" : "P001";
+    const hasLocation = Number.isInteger(token.line) && token.line > 0 && Number.isInteger(token.col) && token.col > 0;
+    Object.defineProperty(error, "diagnostic", {
+      value: {
+        code,
+        stage: diagnostics_default[code].stage,
+        severity: diagnostics_default[code].severity,
+        message: error.message,
+        location: hasLocation ? { line: token.line, column: token.col } : null,
+        // Public tokens have no source offsets; do not infer a span from lexeme length.
+        span: null
+      }
+    });
+    throw error;
   };
   function collectComments() {
     const comments = [];

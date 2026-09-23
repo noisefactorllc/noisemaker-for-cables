@@ -537,3 +537,94 @@ test('structured DSL lexer diagnostics attach diagnostic metadata to thrown Synt
     }
   }
 })
+
+test('structured DSL parser expectation diagnostics attach diagnostic metadata to thrown SyntaxError', async () => {
+  const core = await createReferenceCompiler()
+  const { compile, lex, parse } = core
+
+  const parserExpectFailures = [
+    ['identifier', 'search synth\nlet = 1', 'P001', 'Expected identifier at line 2 col 5', 2, 5],
+    ['assignment sign', 'search synth\nlet x 1', 'P001', "Expect '=' at line 2 col 7", 2, 7],
+    ['block opening', 'search synth\nif(true) return 1', 'P001', "Expect '{' at line 2 col 10", 2, 10],
+    ['end of input', 'search synth\nrender(o0) xyz', 'P001', 'Expected end of input at line 2 col 12', 2, 12],
+    ['call closing parenthesis', 'search synth\nfoo(1', 'P002', "Expect ')' at line 2 col 6", 2, 6],
+    [
+      'write3d separator',
+      'search synth\nfoo().write3d(tex3d0 geo0)',
+      'P001',
+      "Expect ',' between tex3d and geo in write3d() at line 2 col 22",
+      2,
+      22,
+    ],
+    ['CRLF and tab', '// 😀\r\nsearch synth\r\n\trender(o0', 'P002', "Expect ')' at line 3 col 11", 3, 11],
+    ['UTF-16 column', 'search synth\nlet x = "😀"; render o0', 'P001', "Expect '(' at line 2 col 22", 2, 22],
+  ]
+
+  for (const [, source, code, message, line, column] of parserExpectFailures) {
+    for (const entryPoint of [(src) => parse(lex(src)), compile]) {
+      assert.throws(
+        () => entryPoint(source),
+        (err) => {
+          assert.equal(err.name, 'SyntaxError')
+          assert.equal(err.message, message)
+          const expected = {
+            code,
+            stage: 'parser',
+            severity: 'error',
+            message,
+            location: { line, column },
+            span: null,
+          }
+          assert.deepEqual(err.diagnostic, expected)
+          return true
+        },
+      )
+    }
+  }
+})
+
+test('parser expectation diagnostics represent unavailable caller-token coordinates explicitly', async () => {
+  const core = await createReferenceCompiler()
+  const { lex, parse } = core
+
+  for (const coordinates of [{}, { line: 1 }, { line: 0, col: 1 }, { line: 1, col: NaN }]) {
+    const tokens = lex('search synth\nrender o0').map((token) => {
+      if (token.type !== 'OUTPUT_REF') return token
+      return { type: token.type, lexeme: token.lexeme, ...coordinates }
+    })
+    assert.throws(
+      () => parse(tokens),
+      (err) => {
+        assert.equal(err.message, `Expect '(' at line ${coordinates.line} col ${coordinates.col}`)
+        assert.deepEqual(err.diagnostic, {
+          code: 'P001',
+          stage: 'parser',
+          severity: 'error',
+          message: err.message,
+          location: null,
+          span: null,
+        })
+        return true
+      },
+    )
+  }
+})
+
+test('renderLandscape3d filtering define choices compile with expected defines', async () => {
+  const { compileProgram } = await import('../src/browser.js')
+
+  const isosurfaceProgram =
+    'search synth, synth3d, render\n\nheightmap3d(heightTex: read(o1), tex: read(o2)).renderLandscape3d(filtering: isosurface).write(o0)\n\nrender(o0)'
+  const voxelProgram =
+    'search synth, synth3d, render\n\nheightmap3d(heightTex: read(o1), tex: read(o2)).renderLandscape3d(filtering: voxel).write(o0)\n\nrender(o0)'
+
+  const isoGraph = await compileProgram(isosurfaceProgram)
+  const isoPass = isoGraph.passes.find((p) => p.effectFunc === 'renderLandscape3d')
+  assert.ok(isoPass, 'renderLandscape3d pass found')
+  assert.equal(isoGraph.programs[isoPass.program].defines.FILTERING, 0)
+
+  const voxelGraph = await compileProgram(voxelProgram)
+  const voxelPass = voxelGraph.passes.find((p) => p.effectFunc === 'renderLandscape3d')
+  assert.ok(voxelPass, 'renderLandscape3d pass found')
+  assert.equal(voxelGraph.programs[voxelPass.program].defines.FILTERING, 1)
+})

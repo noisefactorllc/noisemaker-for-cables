@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "sourceBaseUrl": "https://shaders.noisedeck.app/1/",
-  "generatedAt": "2026-09-22T16:02:47.370Z",
+  "generatedAt": "2026-09-23T01:49:26.661Z",
   "effectCount": 210,
   "artifacts": [
     {
@@ -1037,9 +1037,9 @@
       "url": "https://shaders.noisedeck.app/1/effects/render/renderCubemapSurface.js"
     },
     {
-      "bytes": 23530,
+      "bytes": 35193,
       "path": "effects/render/renderLandscape3d.js",
-      "sha256": "5be64fc607ae2c45490512b10455868900cd7d9deedadabbffcc2fc6690bc579",
+      "sha256": "3858642240d677560f23d78ced736899ed02ba6e2e43a0586c5a8751529e1011",
       "url": "https://shaders.noisedeck.app/1/effects/render/renderLandscape3d.js"
     },
     {
@@ -1271,9 +1271,9 @@
       "url": "https://shaders.noisedeck.app/1/effects/synth3d/shape3d.js"
     },
     {
-      "bytes": 833120,
+      "bytes": 833735,
       "path": "noisemaker-shaders-core.esm.js",
-      "sha256": "3fa1dbb03cb25638a83cf9e81420c37da439eb69d15f5e6b603b6cfc3f3cab9e",
+      "sha256": "b36eef26f68f60d674f47e17328e72383377b4b3a0a302efd97f754916a27aa3",
       "url": "https://shaders.noisedeck.app/1/noisemaker-shaders-core.esm.js"
     }
   ]

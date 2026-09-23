@@ -1,10 +1,10 @@
 /* render/renderLandscape3d */
-var t=class{constructor(e={}){this.state={},this.uniforms={},e.name&&(this.name=e.name),e.namespace&&(this.namespace=e.namespace),e.func&&(this.func=e.func),e.description&&(this.description=e.description),e.tags&&(this.tags=e.tags),e.globals&&(this.globals=e.globals),e.passes&&(this.passes=e.passes),e.textures&&(this.textures=e.textures),e.outputTex3d&&(this.outputTex3d=e.outputTex3d),e.outputGeo&&(this.outputGeo=e.outputGeo),e.uniformLayout&&(this.uniformLayout=e.uniformLayout),e.uniformLayouts&&(this.uniformLayouts=e.uniformLayouts),e.paramAliases&&(this.paramAliases=e.paramAliases),e.openCategories&&(this.openCategories=e.openCategories),e.defaultProgram&&(this.defaultProgram=e.defaultProgram),e.hidden&&(this.hidden=!0),e.deprecatedBy&&(this.deprecatedBy=e.deprecatedBy),e.onInit&&(this._configOnInit=e.onInit),e.onUpdate&&(this._configOnUpdate=e.onUpdate),e.onDestroy&&(this._configOnDestroy=e.onDestroy),e.asyncInit&&(this._configAsyncInit=e.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(e){return this._configOnUpdate?this._configOnUpdate.call(this,e):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(e){return this._configAsyncInit?this._configAsyncInit.call(this,e):Promise.resolve()}};var n=new t({name:"Render Landscape 3D",namespace:"render",func:"renderLandscape3d",tags:["3d"],description:"Isometric and perspective voxel renderer with face lighting",textures:{screenGeoBuffer:{width:"screen",height:"screen",format:"rgba16f"}},globals:{volumeSize:{type:"int",default:64,uniform:"volumeSize",ui:{label:"volume size",control:!1}},threshold:{type:"float",default:.5,min:0,max:1,uniform:"threshold",ui:{label:"density threshold",control:!1}},densitySource:{type:"int",default:0,choices:{geometry:0},ui:{label:"density source",control:!1}},zoom:{type:"float",default:1,min:.25,max:4,uniform:"zoom",ui:{label:"zoom",control:"slider"}},panX:{type:"float",default:0,min:-1,max:1,uniform:"panX",ui:{label:"pan x",control:"slider"}},panY:{type:"float",default:0,min:-1,max:1,uniform:"panY",ui:{label:"pan y",control:"slider"}},lightDirection:{type:"vec3",default:[-.4,.85,.6],uniform:"lightDirection",min:-1,max:1,ui:{label:"light direction",control:"vector3"}},ambient:{type:"float",default:.35,min:0,max:1,uniform:"ambient",ui:{label:"ambient light",control:"slider"}},diffuseIntensity:{type:"float",default:.85,min:0,max:2,uniform:"diffuseIntensity",ui:{label:"diffuse light",control:"slider"}},specularIntensity:{type:"float",default:.12,min:0,max:1,uniform:"specularIntensity",ui:{label:"specular light",control:"slider"}},bgColor:{type:"color",default:[.025,.045,.075],uniform:"bgColor",ui:{label:"background color",control:"color"}},bgAlpha:{type:"float",default:1,min:0,max:1,uniform:"bgAlpha",ui:{label:"background opacity",control:"slider"}},viewMode:{type:"int",default:1,define:"VIEW_MODE",choices:{ortho:1,perspective:2},ui:{label:"view",control:"dropdown",category:"view"}},rotateX:{type:"float",default:.3,min:0,max:6.283185,step:.01,uniform:"rotateX",ui:{label:"rotate x",control:"slider",category:"view",enabledBy:{param:"viewMode",eq:2}}},rotateY:{type:"float",default:0,min:0,max:6.283185,step:.01,uniform:"rotateY",ui:{label:"rotate y",control:"slider",category:"view",enabledBy:{param:"viewMode",eq:2}}},rotateZ:{type:"float",default:0,min:0,max:6.283185,step:.01,uniform:"rotateZ",ui:{label:"rotate z",control:"slider",category:"view",enabledBy:{param:"viewMode",eq:2}}},viewScale:{type:"float",default:.8,min:.1,max:10,step:.01,uniform:"viewScale",ui:{label:"zoom",control:!1}},posX:{type:"float",default:0,min:-50,max:50,step:.1,uniform:"posX",ui:{label:"pos x",control:"slider",category:"view",enabledBy:{param:"viewMode",eq:2}}},posY:{type:"float",default:0,min:-50,max:50,step:.1,uniform:"posY",ui:{label:"pos y",control:"slider",category:"view",enabledBy:{param:"viewMode",eq:2}}},posZ:{type:"float",default:0,min:-200,max:200,step:.1,uniform:"posZ",ui:{label:"pos z",control:"slider",category:"view",enabledBy:{param:"viewMode",eq:2}}},fieldOfView:{type:"float",default:60,min:10,max:150,step:1,uniform:"fieldOfView",ui:{label:"field of view",control:"slider",category:"view",enabledBy:{param:"viewMode",eq:2}}}},passes:[{name:"render",program:"landscape",type:"compute",drawBuffers:2,inputs:{volumeCache:"inputTex3d",analyticalGeo:"inputGeo"},outputs:{color:"outputTex",geoOut:"screenGeoBuffer"}}],outputTex3d:"inputTex3d",outputGeo:"screenGeoBuffer",defaultProgram:`search synth, synth3d, render
+var t=class{constructor(e={}){this.state={},this.uniforms={},e.name&&(this.name=e.name),e.namespace&&(this.namespace=e.namespace),e.func&&(this.func=e.func),e.description&&(this.description=e.description),e.tags&&(this.tags=e.tags),e.globals&&(this.globals=e.globals),e.passes&&(this.passes=e.passes),e.textures&&(this.textures=e.textures),e.outputTex3d&&(this.outputTex3d=e.outputTex3d),e.outputGeo&&(this.outputGeo=e.outputGeo),e.uniformLayout&&(this.uniformLayout=e.uniformLayout),e.uniformLayouts&&(this.uniformLayouts=e.uniformLayouts),e.paramAliases&&(this.paramAliases=e.paramAliases),e.openCategories&&(this.openCategories=e.openCategories),e.defaultProgram&&(this.defaultProgram=e.defaultProgram),e.hidden&&(this.hidden=!0),e.deprecatedBy&&(this.deprecatedBy=e.deprecatedBy),e.onInit&&(this._configOnInit=e.onInit),e.onUpdate&&(this._configOnUpdate=e.onUpdate),e.onDestroy&&(this._configOnDestroy=e.onDestroy),e.asyncInit&&(this._configAsyncInit=e.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(e){return this._configOnUpdate?this._configOnUpdate.call(this,e):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(e){return this._configAsyncInit?this._configAsyncInit.call(this,e):Promise.resolve()}};var n=new t({name:"Render Landscape 3D",namespace:"render",func:"renderLandscape3d",tags:["3d"],description:"Isometric and perspective voxel renderer with face lighting",textures:{screenGeoBuffer:{width:"screen",height:"screen",format:"rgba16f"}},globals:{volumeSize:{type:"int",default:64,uniform:"volumeSize",ui:{label:"volume size",control:!1}},threshold:{type:"float",default:.5,min:0,max:1,uniform:"threshold",ui:{label:"density threshold",control:!1}},densitySource:{type:"int",default:0,choices:{geometry:0},ui:{label:"density source",control:!1}},zoom:{type:"float",default:1,min:.25,max:4,uniform:"zoom",ui:{label:"zoom",control:"slider"}},panX:{type:"float",default:0,min:-1,max:1,uniform:"panX",ui:{label:"pan x",control:"slider"}},panY:{type:"float",default:0,min:-1,max:1,uniform:"panY",ui:{label:"pan y",control:"slider"}},lightDirection:{type:"vec3",default:[-.4,.85,.6],uniform:"lightDirection",min:-1,max:1,ui:{label:"light direction",control:"vector3"}},ambient:{type:"float",default:.35,min:0,max:1,uniform:"ambient",ui:{label:"ambient light",control:"slider"}},diffuseIntensity:{type:"float",default:.85,min:0,max:2,uniform:"diffuseIntensity",ui:{label:"diffuse light",control:"slider"}},specularIntensity:{type:"float",default:.12,min:0,max:1,uniform:"specularIntensity",ui:{label:"specular light",control:"slider"}},bgColor:{type:"color",default:[.025,.045,.075],uniform:"bgColor",ui:{label:"background color",control:"color"}},bgAlpha:{type:"float",default:1,min:0,max:1,uniform:"bgAlpha",ui:{label:"background opacity",control:"slider"}},viewMode:{type:"int",default:1,define:"VIEW_MODE",choices:{ortho:1,perspective:2},ui:{label:"view",control:"dropdown",category:"view"}},rotateX:{type:"float",default:.3,min:0,max:6.283185,step:.01,uniform:"rotateX",ui:{label:"rotate x",control:"slider",category:"view",enabledBy:{param:"viewMode",eq:2}}},rotateY:{type:"float",default:0,min:0,max:6.283185,step:.01,uniform:"rotateY",ui:{label:"rotate y",control:"slider",category:"view",enabledBy:{param:"viewMode",eq:2}}},rotateZ:{type:"float",default:0,min:0,max:6.283185,step:.01,uniform:"rotateZ",ui:{label:"rotate z",control:"slider",category:"view",enabledBy:{param:"viewMode",eq:2}}},viewScale:{type:"float",default:.8,min:.1,max:10,step:.01,uniform:"viewScale",ui:{label:"zoom",control:!1}},posX:{type:"float",default:0,min:-50,max:50,step:.1,uniform:"posX",ui:{label:"pos x",control:"slider",category:"view",enabledBy:{param:"viewMode",eq:2}}},posY:{type:"float",default:0,min:-50,max:50,step:.1,uniform:"posY",ui:{label:"pos y",control:"slider",category:"view",enabledBy:{param:"viewMode",eq:2}}},posZ:{type:"float",default:0,min:-200,max:200,step:.1,uniform:"posZ",ui:{label:"pos z",control:"slider",category:"view",enabledBy:{param:"viewMode",eq:2}}},fieldOfView:{type:"float",default:60,min:10,max:150,step:1,uniform:"fieldOfView",ui:{label:"field of view",control:"slider",category:"view",enabledBy:{param:"viewMode",eq:2}}},filtering:{type:"int",default:1,define:"FILTERING",choices:{isosurface:0,voxel:1},ui:{label:"filtering",control:"dropdown"}}},passes:[{name:"render",program:"landscape",type:"compute",drawBuffers:2,inputs:{volumeCache:"inputTex3d",analyticalGeo:"inputGeo"},outputs:{color:"outputTex",geoOut:"screenGeoBuffer"}}],outputTex3d:"inputTex3d",outputGeo:"screenGeoBuffer",defaultProgram:`search synth, synth3d, render
 
 noise(scaleX: 90, scaleY: 90, colorMode: mono, speed: 0).write(o1)
 gradient(type: fourCorners, color1: #006e94, color2: #24e4ff, color3: #bcff46, color4: #efffff).write(o2)
 heightmap3d(heightTex: read(o1), tex: read(o2)).renderLandscape3d(panY: -0.18).write(o0)
-render(o0)`});var i={landscape:{glsl:`#version 300 es
+render(o0)`});var o={landscape:{glsl:`#version 300 es
 precision highp float;
 precision highp int;
 
@@ -24,6 +24,9 @@ uniform float diffuseIntensity;
 uniform float specularIntensity;
 uniform vec3 bgColor;
 uniform float bgAlpha;
+#ifndef FILTERING
+#define FILTERING 1
+#endif
 #ifndef VIEW_MODE
 #define VIEW_MODE 1
 #endif
@@ -48,6 +51,109 @@ vec3 lighting(vec3 color, vec3 normal, vec3 viewDirection) {
         specular = pow(max(dot(normal, normalize(halfVector)), 0.0), 32.0) * specularIntensity;
     }
     return color * (ambient + max(dot(normal, light), 0.0) * diffuseIntensity) + specular;
+}
+
+// The landscape lattice stores samples at voxel centers. Filter the 3D
+// coordinates explicitly so interpolation never crosses unrelated atlas rows.
+vec4 sampleAtlasTexel(sampler2D atlas, ivec3 p, bool material) {
+    ivec2 coord = ivec2(p.x, p.y + p.z * volumeSize);
+    vec4 value = texelFetch(atlas, coord, 0);
+    if (material) {
+        // Geometry defines empty samples. Volume alpha can hold unrelated data.
+        float present = texelFetch(analyticalGeo, coord, 0).a > 0.0 ? 1.0 : 0.0;
+        return vec4(value.rgb * present, present);
+    }
+    return value;
+}
+
+// Preserve constant fields exactly so flat surfaces have zero tangential gradient.
+vec4 interpolateAtlas(vec4 a, vec4 b, float weight) {
+    return a + (b - a) * weight;
+}
+
+struct AtlasCoords {
+    ivec3 lo;
+    vec3 fraction;
+};
+
+AtlasCoords atlasCoords(vec3 p) {
+    vec3 texel = clamp(p - 0.5, vec3(0.0), vec3(float(volumeSize - 1)));
+    return AtlasCoords(ivec3(floor(texel)), fract(texel));
+}
+
+vec4 sampleAtlasCoords(sampler2D atlas, AtlasCoords coords, bool material) {
+    ivec3 lo = coords.lo;
+    ivec3 hi = min(lo + 1, ivec3(volumeSize - 1));
+    vec3 f = coords.fraction;
+    vec4 c00 = interpolateAtlas(sampleAtlasTexel(atlas, ivec3(lo.x, lo.y, lo.z), material),
+                   sampleAtlasTexel(atlas, ivec3(hi.x, lo.y, lo.z), material), f.x);
+    vec4 c10 = interpolateAtlas(sampleAtlasTexel(atlas, ivec3(lo.x, hi.y, lo.z), material),
+                   sampleAtlasTexel(atlas, ivec3(hi.x, hi.y, lo.z), material), f.x);
+    vec4 c01 = interpolateAtlas(sampleAtlasTexel(atlas, ivec3(lo.x, lo.y, hi.z), material),
+                   sampleAtlasTexel(atlas, ivec3(hi.x, lo.y, hi.z), material), f.x);
+    vec4 c11 = interpolateAtlas(sampleAtlasTexel(atlas, ivec3(lo.x, hi.y, hi.z), material),
+                   sampleAtlasTexel(atlas, ivec3(hi.x, hi.y, hi.z), material), f.x);
+    vec4 value = interpolateAtlas(interpolateAtlas(c00, c10, f.y), interpolateAtlas(c01, c11, f.y), f.z);
+    if (material && value.a > 0.0) value.rgb /= value.a;
+    return value;
+}
+
+vec4 sampleAtlas(sampler2D atlas, vec3 p, bool material) {
+    return sampleAtlasCoords(atlas, atlasCoords(p), material);
+}
+
+bool isSolid(AtlasCoords coords) {
+    float density = sampleAtlasCoords(analyticalGeo, coords, false).a;
+    return density > 0.0 && density >= threshold;
+}
+
+struct IsoHit {
+    float distance;
+    vec3 position;
+    AtlasCoords coords;
+};
+
+IsoHit traceIsosurface(vec3 origin, vec3 direction, float start, float leave) {
+    vec3 position = origin + direction * start;
+    AtlasCoords coords = atlasCoords(position);
+    if (isSolid(coords)) return IsoHit(start, position, coords);
+    // Half-voxel steps cover the entire box, including long diagonal rays.
+    float stepSize = 0.5 / length(direction);
+    float previous = start;
+    for (int step = 0; step < volumeSize * 4; step++) {
+        float distance = min(previous + stepSize, leave);
+        position = origin + direction * distance;
+        coords = atlasCoords(position);
+        if (isSolid(coords)) {
+            float lo = previous;
+            float hi = distance;
+            for (int refine = 0; refine < 8; refine++) {
+                float mid = (lo + hi) * 0.5;
+                vec3 candidate = origin + direction * mid;
+                AtlasCoords candidateCoords = atlasCoords(candidate);
+                if (isSolid(candidateCoords)) {
+                    hi = mid;
+                    position = candidate;
+                    coords = candidateCoords;
+                } else lo = mid;
+            }
+            // Reuse the tested interpolation coordinates for material sampling.
+            // Recomputing them from position can round onto the empty boundary.
+            return IsoHit(hi, position, coords);
+        }
+        if (distance >= leave) break;
+        previous = distance;
+    }
+    return IsoHit(-1.0, vec3(0.0), AtlasCoords(ivec3(0), vec3(0.0)));
+}
+
+vec3 isosurfaceNormal(vec3 p, vec3 fallback) {
+    vec3 gradient = vec3(
+        sampleAtlas(analyticalGeo, p - vec3(0.5, 0.0, 0.0), false).a - sampleAtlas(analyticalGeo, p + vec3(0.5, 0.0, 0.0), false).a,
+        sampleAtlas(analyticalGeo, p - vec3(0.0, 0.5, 0.0), false).a - sampleAtlas(analyticalGeo, p + vec3(0.0, 0.5, 0.0), false).a,
+        sampleAtlas(analyticalGeo, p - vec3(0.0, 0.0, 0.5), false).a - sampleAtlas(analyticalGeo, p + vec3(0.0, 0.0, 0.5), false).a);
+    if (dot(gradient, gradient) > 1e-12) return normalize(gradient);
+    return fallback;
 }
 
 #if VIEW_MODE == 2
@@ -114,6 +220,17 @@ void renderPerspective(vec2 uv) {
         else if (nearT.x >= nearT.z) normal.x = -float(stepDir.x);
         else normal.z = -float(stepDir.z);
     }
+    // FILTERING is injected as a constant when the runtime compiles a variant.
+    if (FILTERING == 0) {
+        IsoHit hit = traceIsosurface(origin, direction, distance, leave);
+        if (hit.distance < 0.0) return;
+        vec3 p = hit.position;
+        if (hit.distance > distance) normal = isosurfaceNormal(p, normal);
+        vec3 worldNormal = forwardRotation(normal);
+        fragColor = vec4(lighting(sampleAtlasCoords(volumeCache, hit.coords, true).rgb, worldNormal, viewDirection), 1.0);
+        geoOut = vec4(worldNormal * 0.5 + 0.5, clamp(hit.distance / 320.0, 0.0, 1.0));
+        return;
+    }
     for (int step = 0; step < volumeSize * 3; step++) {
         if (any(lessThan(cell, ivec3(0))) || any(greaterThanEqual(cell, ivec3(volumeSize))) || distance >= leave) break;
         ivec2 atlas = ivec2(cell.x, cell.y + cell.z * volumeSize);
@@ -165,6 +282,15 @@ void main() {
     if (nearT.y >= nearT.x && nearT.y >= nearT.z) normal = vec3(0.0, 1.0, 0.0);
     else if (nearT.x >= nearT.z) normal = vec3(1.0, 0.0, 0.0);
 
+    if (FILTERING == 0) {
+        IsoHit hit = traceIsosurface(origin, vec3(-1.0), distance, leave);
+        if (hit.distance < 0.0) return;
+        vec3 p = hit.position;
+        if (hit.distance > distance) normal = isosurfaceNormal(p, normal);
+        fragColor = vec4(lighting(sampleAtlasCoords(volumeCache, hit.coords, true).rgb, normal, vec3(0.5773502692)), 1.0);
+        geoOut = vec4(normal * 0.5 + 0.5, clamp(hit.distance / (size * 4.0), 0.0, 1.0));
+        return;
+    }
     // A ray crosses at most 3*N cells, including tied boundaries.
     for (int step = 0; step < volumeSize * 3; step++) {
         if (any(lessThan(cell, ivec3(0))) || distance >= leave) break;
@@ -231,6 +357,108 @@ fn lighting(color: vec3f, normal: vec3f, viewDirection: vec3f) -> vec3f {
     return color * (u.ambient + max(dot(normal, light), 0.0) * u.diffuseIntensity) + specular;
 }
 
+// Filter voxel-center coordinates explicitly, avoiding unrelated atlas rows.
+fn sampleAtlasTexel(atlas: texture_2d<f32>, p: vec3i, material: bool) -> vec4f {
+    let coord = vec2i(p.x, p.y + p.z * u.volumeSize);
+    let value = textureLoad(atlas, coord, 0);
+    if (material) {
+        // Geometry defines empty samples. Volume alpha can hold unrelated data.
+        let present = select(0.0, 1.0, textureLoad(analyticalGeo, coord, 0).a > 0.0);
+        return vec4f(value.rgb * present, present);
+    }
+    return value;
+}
+
+// Preserve constant fields exactly so flat surfaces have zero tangential gradient.
+fn interpolateAtlas(a: vec4f, b: vec4f, weight: f32) -> vec4f {
+    return a + (b - a) * weight;
+}
+
+struct AtlasCoords {
+    lo: vec3i,
+    fraction: vec3f,
+}
+
+fn atlasCoords(p: vec3f) -> AtlasCoords {
+    let texel = clamp(p - 0.5, vec3f(0.0), vec3f(f32(u.volumeSize - 1)));
+    return AtlasCoords(vec3i(floor(texel)), fract(texel));
+}
+
+fn sampleAtlasCoords(atlas: texture_2d<f32>, coords: AtlasCoords, material: bool) -> vec4f {
+    let lo = coords.lo;
+    let hi = min(lo + 1, vec3i(u.volumeSize - 1));
+    let f = coords.fraction;
+    let c00 = interpolateAtlas(sampleAtlasTexel(atlas, vec3i(lo.x, lo.y, lo.z), material),
+                  sampleAtlasTexel(atlas, vec3i(hi.x, lo.y, lo.z), material), f.x);
+    let c10 = interpolateAtlas(sampleAtlasTexel(atlas, vec3i(lo.x, hi.y, lo.z), material),
+                  sampleAtlasTexel(atlas, vec3i(hi.x, hi.y, lo.z), material), f.x);
+    let c01 = interpolateAtlas(sampleAtlasTexel(atlas, vec3i(lo.x, lo.y, hi.z), material),
+                  sampleAtlasTexel(atlas, vec3i(hi.x, lo.y, hi.z), material), f.x);
+    let c11 = interpolateAtlas(sampleAtlasTexel(atlas, vec3i(lo.x, hi.y, hi.z), material),
+                  sampleAtlasTexel(atlas, vec3i(hi.x, hi.y, hi.z), material), f.x);
+    let value = interpolateAtlas(interpolateAtlas(c00, c10, f.y), interpolateAtlas(c01, c11, f.y), f.z);
+    if (material && value.a > 0.0) { return vec4f(value.rgb / value.a, value.a); }
+    return value;
+}
+
+fn sampleAtlas(atlas: texture_2d<f32>, p: vec3f, material: bool) -> vec4f {
+    return sampleAtlasCoords(atlas, atlasCoords(p), material);
+}
+
+fn isSolid(coords: AtlasCoords) -> bool {
+    let density = sampleAtlasCoords(analyticalGeo, coords, false).a;
+    return density > 0.0 && density >= u.threshold;
+}
+
+struct IsoHit {
+    distance: f32,
+    position: vec3f,
+    coords: AtlasCoords,
+}
+
+fn traceIsosurface(origin: vec3f, direction: vec3f, start: f32, leave: f32) -> IsoHit {
+    var position = origin + direction * start;
+    var coords = atlasCoords(position);
+    if (isSolid(coords)) { return IsoHit(start, position, coords); }
+    // Half-voxel steps cover the entire box, including long diagonal rays.
+    let stepSize = 0.5 / length(direction);
+    var previous = start;
+    for (var step = 0; step < u.volumeSize * 4; step++) {
+        let distance = min(previous + stepSize, leave);
+        position = origin + direction * distance;
+        coords = atlasCoords(position);
+        if (isSolid(coords)) {
+            var lo = previous;
+            var hi = distance;
+            for (var refine = 0; refine < 8; refine++) {
+                let mid = (lo + hi) * 0.5;
+                let candidate = origin + direction * mid;
+                let candidateCoords = atlasCoords(candidate);
+                if (isSolid(candidateCoords)) {
+                    hi = mid;
+                    position = candidate;
+                    coords = candidateCoords;
+                } else { lo = mid; }
+            }
+            // Reuse the tested interpolation coordinates for material sampling.
+            // Recomputing them from position can round onto the empty boundary.
+            return IsoHit(hi, position, coords);
+        }
+        if (distance >= leave) { break; }
+        previous = distance;
+    }
+    return IsoHit(-1.0, vec3f(0.0), AtlasCoords(vec3i(0), vec3f(0.0)));
+}
+
+fn isosurfaceNormal(p: vec3f, fallback: vec3f) -> vec3f {
+    let gradient = vec3f(
+        sampleAtlas(analyticalGeo, p - vec3f(0.5, 0.0, 0.0), false).a - sampleAtlas(analyticalGeo, p + vec3f(0.5, 0.0, 0.0), false).a,
+        sampleAtlas(analyticalGeo, p - vec3f(0.0, 0.5, 0.0), false).a - sampleAtlas(analyticalGeo, p + vec3f(0.0, 0.5, 0.0), false).a,
+        sampleAtlas(analyticalGeo, p - vec3f(0.0, 0.0, 0.5), false).a - sampleAtlas(analyticalGeo, p + vec3f(0.0, 0.0, 0.5), false).a);
+    if (dot(gradient, gradient) > 1e-12) { return normalize(gradient); }
+    return fallback;
+}
+
 // Inverse of the billboard renderer's X -> Y -> Z rotation.
 fn inverseRotation(input: vec3f) -> vec3f {
     let c = cos(vec3f(u.rotateX, u.rotateY, u.rotateZ));
@@ -295,6 +523,17 @@ fn renderPerspective(uv: vec2f) -> FragmentOutput {
         else if (nearT.x >= nearT.z) { normal.x = -f32(stepDir.x); }
         else { normal.z = -f32(stepDir.z); }
     }
+    // FILTERING is a module constant; the compiler removes the inactive path.
+    if (FILTERING == 0) {
+        let hit = traceIsosurface(origin, direction, distance, leave);
+        if (hit.distance < 0.0) { return out; }
+        let p = hit.position;
+        if (hit.distance > distance) { normal = isosurfaceNormal(p, normal); }
+        let worldNormal = forwardRotation(normal);
+        out.fragColor = vec4f(lighting(sampleAtlasCoords(volumeCache, hit.coords, true).rgb, worldNormal, viewDirection), 1.0);
+        out.geoOut = vec4f(worldNormal * 0.5 + 0.5, clamp(hit.distance / 320.0, 0.0, 1.0));
+        return out;
+    }
     for (var step = 0; step < u.volumeSize * 3; step++) {
         if (any(cell < vec3i(0)) || any(cell >= vec3i(u.volumeSize)) || distance >= leave) { break; }
         let atlas = vec2i(cell.x, cell.y + cell.z * u.volumeSize);
@@ -344,6 +583,15 @@ fn main(@builtin(position) position: vec4f) -> FragmentOutput {
     if (nearT.y >= nearT.x && nearT.y >= nearT.z) { normal = vec3f(0.0, 1.0, 0.0); }
     else if (nearT.x >= nearT.z) { normal = vec3f(1.0, 0.0, 0.0); }
 
+    if (FILTERING == 0) {
+        let hit = traceIsosurface(origin, vec3f(-1.0), distance, leave);
+        if (hit.distance < 0.0) { return out; }
+        let p = hit.position;
+        if (hit.distance > distance) { normal = isosurfaceNormal(p, normal); }
+        out.fragColor = vec4f(lighting(sampleAtlasCoords(volumeCache, hit.coords, true).rgb, normal, vec3f(0.5773502692)), 1.0);
+        out.geoOut = vec4f(normal * 0.5 + 0.5, clamp(hit.distance / (size * 4.0), 0.0, 1.0));
+        return out;
+    }
     for (var step = 0; step < u.volumeSize * 3; step++) {
         if (any(cell < vec3i(0)) || distance >= leave) { break; }
         let atlas = vec2i(cell.x, cell.y + cell.z * u.volumeSize);
@@ -364,9 +612,9 @@ fn main(@builtin(position) position: vec4f) -> FragmentOutput {
     }
     return out;
 }
-`}},o=`# renderLandscape3d
+`}},i=`# renderLandscape3d
 
-Raymarch a voxel volume (from \`heightmap3d\`, or any other volume/geometry generator) as a lit landscape, in either a fixed isometric view or a movable perspective camera. Each hit voxel is shaded from its face normal and the light direction; the background shows through where the ray never hits geometry.
+Raymarch a voxel volume (from \`heightmap3d\`, or any other volume/geometry generator) as a lit landscape, in either a fixed isometric view or a movable perspective camera. Voxel mode shades flat faces; isosurface mode interpolates geometry density and diffuse color, refines threshold crossings, and shades smooth normals. The background shows through where the ray never hits geometry.
 
 | Parameter | Type | Default | Range | Description |
 |-----------|------|---------|-------|-------------|
@@ -391,6 +639,7 @@ Raymarch a voxel volume (from \`heightmap3d\`, or any other volume/geometry gene
 | posY | float | 0 | -50-50 | Perspective camera position Y (perspective mode only) |
 | posZ | float | 0 | -200-200 | Perspective camera position Z (perspective mode only) |
 | fieldOfView | float | 60 | 10-150 | Perspective camera field of view in degrees (perspective mode only) |
+| filtering | int | voxel | isosurface/voxel | Smooth interpolated surface or flat voxel faces; changing modes compiles a shader variant that prunes the inactive path |
 
 The perspective camera shares its projection with \`pointsRender\`/\`pointsBillboardRender\`'s own \`viewMode: perspective\`, so a landscape and a particle system can be composited from the same virtual camera. \`threshold\` and \`volumeSize\` normally come from the upstream generator (e.g. \`heightmap3d\`) and rarely need overriding by hand.
 
@@ -404,4 +653,4 @@ renderLandscape3d()
 
 render(o0)
 \`\`\`
-`;if(n&&Object.keys(i).length>0){n.shaders||(n.shaders={});for(let[a,e]of Object.entries(i))n.shaders[a]={...e}}n&&o&&(n.help=o);var f="render/renderLandscape3d",u="render",p="renderLandscape3d",m=n;export{m as default,f as effectId,p as effectName,o as help,u as namespace};
+`;if(n&&Object.keys(o).length>0){n.shaders||(n.shaders={});for(let[a,e]of Object.entries(o))n.shaders[a]={...e}}n&&i&&(n.help=i);var f="render/renderLandscape3d",d="render",p="renderLandscape3d",u=n;export{u as default,f as effectId,p as effectName,i as help,d as namespace};
