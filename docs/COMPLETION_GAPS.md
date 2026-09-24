@@ -1,5 +1,7 @@
 # noisemaker-for-cables: completion gaps
 
+Current compatibility matrix: [compatibility report](COMPATIBILITY.md).
+
 ## 1. Scope and source revisions
 
 Audit date: 2026-09-22. Run: `20260922-cables-03`.

@@ -5,6 +5,8 @@
 
 # Noisemaker for Cables
 
+Current measured support: [compatibility report](docs/COMPATIBILITY.md).
+
 > This package supports the "Export Shader Pipeline" feature in Noisedeck.app. The
 > feature runs shader compositions on other platforms. Noise Factor derives this package
 > from the upstream Noisemaker Engine project and tests it for pixel-level parity.
