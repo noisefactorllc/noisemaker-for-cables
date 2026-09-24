@@ -543,3 +543,119 @@ test('pinned core pipeline recreates global surfaces when format changes', async
   assert.equal(backend.textures.get('global_vel_write')?.format, 'rgba16f')
 })
 
+test('pinned core Pipeline preserves scoped texture dimensions across setUniform', async () => {
+  installTestDomShim()
+  const { Pipeline } = await import('../vendor-cache/noisemaker-shaders-core.esm.js')
+
+  const textures = new Map()
+  const backend = {
+    textures,
+    capabilities: { maxTextureSize: 4096 },
+    createTexture(id, desc) {
+      const tex = { id, ...desc }
+      textures.set(id, tex)
+      return tex
+    },
+    destroyTexture(id) {
+      textures.delete(id)
+    },
+  }
+
+  const graph = {
+    passes: [
+      {
+        id: 'pass_0',
+        uniforms: {
+          volumeSize: 128,
+          volumeSize_chain_0: 128,
+        },
+      },
+      {
+        id: 'pass_1',
+        uniforms: {
+          volumeSize: 64,
+          volumeSize_chain_1: 64,
+        },
+      },
+    ],
+    textures: new Map([
+      ['node_0_volumeCache', { width: { param: 'volumeSize_chain_0' }, height: { param: 'volumeSize_chain_0', power: 2 }, format: 'rgba16f' }],
+      ['node_1_volumeCache', { width: { param: 'volumeSize_chain_1' }, height: { param: 'volumeSize_chain_1', power: 2 }, format: 'rgba16f' }],
+    ]),
+    surfaces: new Map(),
+  }
+
+  const p = new Pipeline(graph, backend)
+  p.recreateTextures(p.collectDefaultUniforms())
+
+  const atlasBeforeP0 = backend.textures.get('node_0_volumeCache')
+  const atlasBeforeP1 = backend.textures.get('node_1_volumeCache')
+  assert.equal(atlasBeforeP0.width, 128)
+  assert.equal(atlasBeforeP0.height, 16384)
+  assert.equal(atlasBeforeP1.width, 64)
+  assert.equal(atlasBeforeP1.height, 4096)
+
+  p.setUniform('volumeSize_chain_1', 32)
+  const atlasAfterP0 = backend.textures.get('node_0_volumeCache')
+  const atlasAfterP1 = backend.textures.get('node_1_volumeCache')
+
+  // Unaffected scoped texture is preserved identically
+  assert.equal(atlasAfterP0, atlasBeforeP0)
+  assert.equal(atlasAfterP0.width, 128)
+  assert.equal(atlasAfterP0.height, 16384)
+
+  // Modified scoped texture was resized
+  assert.notEqual(atlasAfterP1, atlasBeforeP1)
+  assert.equal(atlasAfterP1.width, 32)
+  assert.equal(atlasAfterP1.height, 1024)
+})
+
+test('pinned core SinkManager supports shouldDeferRender backpressure lifecycle', async () => {
+  installTestDomShim()
+  const { SinkManager } = await import('../vendor-cache/noisemaker-shaders-core.esm.js')
+
+  const manager = new SinkManager()
+  let defer = false
+  const unregister = manager.add({
+    configure() {},
+    submit() { return true },
+    close() {},
+    deferRender() { return defer },
+  })
+
+  assert.equal(manager.shouldDeferRender(), false)
+  defer = true
+  assert.equal(manager.shouldDeferRender(), true)
+  unregister()
+  assert.equal(manager.shouldDeferRender(), false)
+})
+
+test('pinned core Pipeline delegates shouldDeferRender to its sinkManager', async () => {
+  installTestDomShim()
+  const { Pipeline } = await import('../vendor-cache/noisemaker-shaders-core.esm.js')
+
+  const graph = {
+    passes: [],
+    textures: new Map(),
+    surfaces: new Map(),
+    renderSurface: 'o0',
+  }
+  const p = new Pipeline(graph, null)
+  assert.equal(typeof p.shouldDeferRender, 'function')
+  assert.equal(p.shouldDeferRender(), false)
+
+  let defer = false
+  const unregister = p.sinkManager.add({
+    configure() {},
+    submit() { return true },
+    close() {},
+    deferRender() { return defer },
+  })
+
+  assert.equal(p.shouldDeferRender(), false)
+  defer = true
+  assert.equal(p.shouldDeferRender(), true)
+  unregister()
+  assert.equal(p.shouldDeferRender(), false)
+})
+

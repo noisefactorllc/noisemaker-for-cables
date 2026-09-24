@@ -139,32 +139,35 @@ float offsets(vec2 st) {
 }
 
 vec4 glitch(vec2 st) {
-    vec2 freq = vec2(1.0);
-    freq.x *= map(xChonk, 1.0, 100.0, 50.0, 1.0);
-    freq.y *= map(yChonk, 1.0, 100.0, 50.0, 1.0);
+    // Zero glitchiness gives zero refraction, so st is unchanged in [0, 1).
+    if (glitchiness != 0.0) {
+        vec2 freq = vec2(1.0);
+        freq.x *= map(xChonk, 1.0, 100.0, 50.0, 1.0);
+        freq.y *= map(yChonk, 1.0, 100.0, 50.0, 1.0);
 
-    freq *= vec2(periodicFunction(prng(vec3(floor(st * freq), 0.0)).x - time));
+        freq *= vec2(periodicFunction(prng(vec3(floor(st * freq), 0.0)).x - time));
 
-    float g = map(glitchiness, 0.0, 100.0, 0.0, 1.0);
+        float g = map(glitchiness, 0.0, 100.0, 0.0, 1.0);
 
-    // get drift value from somewhere far away
-    float xDrift = prng(vec3(floor(st * freq) + 10.0, 0.0)).x * g;
-    float yDrift = prng(vec3(floor(st * freq) - 10.0, 0.0)).x * g;
+        // get drift value from somewhere far away
+        float xDrift = prng(vec3(floor(st * freq) + 10.0, 0.0)).x * g;
+        float yDrift = prng(vec3(floor(st * freq) - 10.0, 0.0)).x * g;
 
-    float sparseness = map(glitchiness, 0.0, 100.0, 8.0, 2.0);
+        float sparseness = map(glitchiness, 0.0, 100.0, 8.0, 2.0);
 
-    // clamp for sparseness
-	float rand = prng(vec3(floor(st * freq), 0.0)).x;
-    float xOffset = clamp((periodicFunction(rand + xDrift - time)
-        - periodicFunction(xDrift - time) * sparseness) * 4.0, 0.0, 1.0);
+        // clamp for sparseness
+    	float rand = prng(vec3(floor(st * freq), 0.0)).x;
+        float xOffset = clamp((periodicFunction(rand + xDrift - time)
+            - periodicFunction(xDrift - time) * sparseness) * 4.0, 0.0, 1.0);
 
-    float yOffset = clamp((periodicFunction(rand + yDrift - time)
-        - periodicFunction(yDrift - time) * sparseness) * 4.0, 0.0, 1.0);
+        float yOffset = clamp((periodicFunction(rand + yDrift - time)
+            - periodicFunction(yDrift - time) * sparseness) * 4.0, 0.0, 1.0);
 
-    float refract = g * .125;
+        float refract = g * .125;
 
-    st.x = mod(st.x + sin(xOffset * TAU) * refract, 1.0);
-    st.y = mod(st.y + sin(yOffset * TAU) * refract, 1.0);
+        st.x = mod(st.x + sin(xOffset * TAU) * refract, 1.0);
+        st.y = mod(st.y + sin(yOffset * TAU) * refract, 1.0);
+    }
 
     // aberration and lensing, borrowed from lens
     vec2 diff = vec2(0.5 - st);
@@ -210,8 +213,9 @@ void main() {
 	float blendy = periodicFunction(time - offsets(uv));
 
 	color = glitch(uv);
-	color = scanlines(color, uv);
-    color = snow(color, uv);
+	// Zero amounts mix the effect in with weight 0; skip the noise work.
+	if (scanlinesAmt != 0.0) color = scanlines(color, uv);
+    if (snowAmt != 0.0) color = snow(color, uv);
 
 	// vignette
 	if (vignetteAmt < 0.0) {
@@ -368,29 +372,32 @@ fn offsets(st: vec2<f32>) -> f32 {
 
 fn glitch(st_in: vec2<f32>, aspectRatio: f32, time: f32, xChonk: f32, yChonk: f32, glitchiness: f32, aspectLens: f32, distortion: f32, aberration: f32) -> vec4<f32> {
     var st = st_in;
-    var freq = vec2<f32>(1.0);
-    freq.x = freq.x * map(xChonk, 1.0, 100.0, 50.0, 1.0);
-    freq.y = freq.y * map(yChonk, 1.0, 100.0, 50.0, 1.0);
+    // Zero glitchiness gives zero refraction, so st is unchanged in [0, 1).
+    if (glitchiness != 0.0) {
+        var freq = vec2<f32>(1.0);
+        freq.x = freq.x * map(xChonk, 1.0, 100.0, 50.0, 1.0);
+        freq.y = freq.y * map(yChonk, 1.0, 100.0, 50.0, 1.0);
     
-    freq = freq * vec2<f32>(periodicFunction(prng(vec3<f32>(floor(st * freq), 0.0)).x - time));
+        freq = freq * vec2<f32>(periodicFunction(prng(vec3<f32>(floor(st * freq), 0.0)).x - time));
     
-    let g = map(glitchiness, 0.0, 100.0, 0.0, 1.0);
+        let g = map(glitchiness, 0.0, 100.0, 0.0, 1.0);
     
-    // get drift value from somewhere far away
-    let xDrift = prng(vec3<f32>(floor(st * freq) + 10.0, 0.0)).x * g;
-    let yDrift = prng(vec3<f32>(floor(st * freq) - 10.0, 0.0)).x * g;
+        // get drift value from somewhere far away
+        let xDrift = prng(vec3<f32>(floor(st * freq) + 10.0, 0.0)).x * g;
+        let yDrift = prng(vec3<f32>(floor(st * freq) - 10.0, 0.0)).x * g;
     
-    let sparseness = map(glitchiness, 0.0, 100.0, 8.0, 2.0);
+        let sparseness = map(glitchiness, 0.0, 100.0, 8.0, 2.0);
     
-    // clamp for sparseness
-    let rand = prng(vec3<f32>(floor(st * freq), 0.0)).x;
-    let xOffset = clamp((periodicFunction(rand + xDrift - time) - periodicFunction(xDrift - time) * sparseness) * 4.0, 0.0, 1.0);
-    let yOffset = clamp((periodicFunction(rand + yDrift - time) - periodicFunction(yDrift - time) * sparseness) * 4.0, 0.0, 1.0);
+        // clamp for sparseness
+        let rand = prng(vec3<f32>(floor(st * freq), 0.0)).x;
+        let xOffset = clamp((periodicFunction(rand + xDrift - time) - periodicFunction(xDrift - time) * sparseness) * 4.0, 0.0, 1.0);
+        let yOffset = clamp((periodicFunction(rand + yDrift - time) - periodicFunction(yDrift - time) * sparseness) * 4.0, 0.0, 1.0);
     
-    let refract = g * 0.125;
+        let refract = g * 0.125;
     
-    st.x = fract(st.x + sin(xOffset * TAU) * refract);
-    st.y = fract(st.y + sin(yOffset * TAU) * refract);
+        st.x = fract(st.x + sin(xOffset * TAU) * refract);
+        st.y = fract(st.y + sin(yOffset * TAU) * refract);
+    }
     
     // aberration and lensing
     var diff = vec2<f32>(0.5 - st.x, 0.5 - st.y);
@@ -432,8 +439,13 @@ fn main(@builtin(position) fragCoord: vec4<f32>) -> @location(0) vec4<f32> {
     var uv = fragCoord.xy / resolution;
     
     var color = glitch(uv, aspectRatio, u.time, u.xChonk, u.yChonk, u.glitchiness, u.aspectLens, u.distortion, u.aberration);
-    color = scanlines(color, uv, resolution, u.scanlinesAmt, u.time, u.seed);
-    color = snow(color, fragCoord.xy, u.snowAmt, u.time);
+    // Zero amounts mix the effect in with weight 0; skip the noise work.
+    if (u.scanlinesAmt != 0.0) {
+        color = scanlines(color, uv, resolution, u.scanlinesAmt, u.time, u.seed);
+    }
+    if (u.snowAmt != 0.0) {
+        color = snow(color, fragCoord.xy, u.snowAmt, u.time);
+    }
     
     // vignette
     if (u.vignetteAmt < 0.0) {

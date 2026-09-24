@@ -3,8 +3,8 @@
  * Includes: CanvasRenderer + UIController + EffectSelect
  * Copyright (c) 2017-2026 Noise Factor LLC. https://noisefactor.io/
  * SPDX-License-Identifier: MIT
- * Build: 0766743e
- * Date: 2026-09-23T15:09:12.567Z
+ * Build: 5b81e04f
+ * Date: 2026-09-24T02:14:57.349Z
  */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
@@ -11719,6 +11719,41 @@ var SinkManager = class {
       }
     }
   }
+  /**
+   * Report whether any active sink asks the renderer to skip drawing the
+   * next frame, for example while its encoder works through a backlog.
+   * Sinks opt in with an optional deferRender() method. A throwing sink is
+   * counted as failed, reported, and does not defer rendering. A deferred
+   * frame is not drawn at all, so the on-screen canvas also holds its image.
+   * @returns {boolean}
+   */
+  shouldDeferRender() {
+    if (this._closed) return false;
+    this._iterationDepth++;
+    try {
+      for (let i = 0; i < this._registrations.length; i++) {
+        const registration = this._registrations[i];
+        if (!registration.active || typeof registration.sink.deferRender !== "function") continue;
+        try {
+          if (registration.sink.deferRender() === true) return true;
+        } catch (error) {
+          registration.stats.failed++;
+          if (typeof this._onError === "function") {
+            try {
+              this._onError(error, registration.sink);
+            } catch {
+            }
+          }
+        }
+      }
+      return false;
+    } finally {
+      this._iterationDepth--;
+      if (this._iterationDepth === 0) {
+        this._compactRegistrations();
+      }
+    }
+  }
   submit(textureId, timestamp) {
     if (this._closed) return;
     this._iterationDepth++;
@@ -12333,6 +12368,13 @@ var Pipeline = class {
    */
   addSink(sink) {
     return this.sinkManager.add(sink);
+  }
+  /**
+   * Report whether a registered sink asks to skip drawing the next frame.
+   * @returns {boolean}
+   */
+  shouldDeferRender() {
+    return this.sinkManager.shouldDeferRender();
   }
   /**
    * Set the MIDI state for midi() function resolution.
@@ -13093,7 +13135,7 @@ var Pipeline = class {
         }
       }
       if (affectsTextures) {
-        this.updateParameterTextures(this.globalUniforms);
+        this.updateParameterTextures({ ...this.globalUniforms, ...this.collectDefaultUniforms() });
       }
     }
   }
@@ -15214,6 +15256,7 @@ var CanvasRenderer = class {
     this._loopStartTime = performance.now();
     this._isRunning = false;
     this._frameCount = 0;
+    this._deferredFrameCount = 0;
     this._fpsFrameCount = 0;
     this._fpsLastUpdateTime = performance.now();
     this._currentFPS = 0;
@@ -15416,6 +15459,10 @@ var CanvasRenderer = class {
   /** @returns {number} Total frames rendered */
   get frameCount() {
     return this._frameCount;
+  }
+  /** @returns {number} Loop frames skipped because an output sink deferred rendering */
+  get deferredFrameCount() {
+    return this._deferredFrameCount;
   }
   /** @returns {number} Current measured FPS */
   get currentFPS() {
@@ -15688,7 +15735,9 @@ var CanvasRenderer = class {
   _renderLoop(time) {
     if (!this._isRunning) return;
     this._animationFrameId = requestAnimationFrame(this._boundRenderLoop);
-    if (this._pipeline) {
+    if (this._pipeline && this._pipeline.shouldDeferRender?.()) {
+      this._deferredFrameCount++;
+    } else if (this._pipeline) {
       try {
         const renderStart = performance.now();
         const elapsedSeconds = (time - this._loopStartTime) / 1e3;
