@@ -3,8 +3,8 @@
  * Includes: CanvasRenderer + UIController + EffectSelect
  * Copyright (c) 2017-2026 Noise Factor LLC. https://noisefactor.io/
  * SPDX-License-Identifier: MIT
- * Build: c9ee8a04
- * Date: 2026-09-24T05:05:56.161Z
+ * Build: 13fa8b54
+ * Date: 2026-09-24T15:11:32.669Z
  */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
@@ -253,6 +253,7 @@ var diagnostics = {
   P003: { stage: "parser", severity: "error", message: "Invalid automation arguments" },
   P004: { stage: "parser", severity: "error", message: "Invalid search directive" },
   P005: { stage: "parser", severity: "error", message: "Invalid output operation" },
+  P006: { stage: "parser", severity: "error", message: "Invalid subchain" },
   S001: { stage: "semantic", severity: "error", message: "Unknown identifier" },
   S002: { stage: "semantic", severity: "warning", message: "Argument out of range" },
   S003: { stage: "semantic", severity: "error", message: "Variable used before assignment" },
@@ -1579,8 +1580,9 @@ function parse(tokens) {
     throw new SyntaxError(`Expected write or write3d at line ${tokenLine} col ${tokenCol}`);
   }
   function parseSubchainCall() {
-    const tokenLine = peek().line;
-    const tokenCol = peek().col;
+    const nameToken = peek();
+    const tokenLine = nameToken.line;
+    const tokenCol = nameToken.col;
     advance();
     expect("LPAREN", "Expect '(' after subchain");
     const kwargs = {};
@@ -1592,7 +1594,7 @@ function parse(tokens) {
           const key = advance().lexeme;
           advance();
           if (peek().type !== "STRING") {
-            throw new SyntaxError(`Expected string value for subchain ${key} at line ${peek().line} col ${peek().col}`);
+            throw parserError("P006", `Expected string value for subchain ${key} at line ${peek().line} col ${peek().col}`, peek());
           }
           kwargs[key] = { type: "String", value: advance().lexeme };
           if (peek().type === "COMMA") {
@@ -1608,7 +1610,7 @@ function parse(tokens) {
       const leadingComments = collectComments();
       if (peek().type === "RBRACE") break;
       if (peek().type !== "DOT") {
-        throw new SyntaxError(`Expected '.' before chain element in subchain body at line ${peek().line} col ${peek().col}`);
+        throw parserError("P006", `Expected '.' before chain element in subchain body at line ${peek().line} col ${peek().col}`, peek());
       }
       advance();
       const postDotComments = collectComments();
@@ -1621,7 +1623,7 @@ function parse(tokens) {
     }
     expect("RBRACE", "Expect '}' to end subchain body");
     if (body.length === 0) {
-      throw new SyntaxError(`Subchain body cannot be empty at line ${tokenLine} col ${tokenCol}`);
+      throw parserError("P006", `Subchain body cannot be empty at line ${tokenLine} col ${tokenCol}`, nameToken);
     }
     return {
       type: "Subchain",
