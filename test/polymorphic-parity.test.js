@@ -891,3 +891,147 @@ test('valid search directives retain namespace order, keyword namespaces, and co
   ])
   assert.deepEqual(Object.keys(result).sort(), ['diagnostics', 'plans', 'render', 'searchNamespaces', 'vars'])
 })
+
+test('structured DSL output validation diagnostics attach diagnostic metadata to thrown SyntaxError', async () => {
+  const core = await createReferenceCompiler()
+  const { compile, lex, parse, registerOp, registerStarterOps } = core
+
+  registerOp('synth.diagProbe', { name: 'diagProbe', args: [] })
+  registerStarterOps(['synth.diagProbe'])
+
+  const outputFailures = [
+    ['invalid render target', 'search synth\nrender(1)', 'Expected output reference in render()', 2, 8],
+    ['render target at EOF', 'search synth\nrender(', 'Expected output reference in render()', 2, 8],
+    [
+      'write in expression',
+      'search synth\nlet x = diagProbe().write(o0)',
+      "'.write()' is only allowed in statement context at line 2 col 21",
+      2,
+      21,
+    ],
+    [
+      'write3d in expression',
+      'search synth\nlet x = diagProbe().write3d(vol0, geo0)',
+      "'.write()' is only allowed in statement context at line 2 col 21",
+      2,
+      21,
+    ],
+    [
+      'missing write surface',
+      'search synth\ndiagProbe().write()',
+      'write() requires an explicit surface reference (e.g., o0, o1, xyz0, vel0, rgba0, mesh0, none) at line 2 col 19',
+      2,
+      19,
+    ],
+    [
+      'write surface at EOF',
+      'search synth\ndiagProbe().write(',
+      'write() requires an explicit surface reference (e.g., o0, o1, xyz0, vel0, rgba0, mesh0, none) at line 2 col 19',
+      2,
+      19,
+    ],
+    [
+      'invalid write surface',
+      'search synth\ndiagProbe().write(1)',
+      'write() requires an explicit surface reference (e.g., o0, o1, xyz0, vel0, rgba0, mesh0, none) at line 2 col 19',
+      2,
+      19,
+    ],
+    [
+      'invalid write3d texture',
+      'search synth\ndiagProbe().write3d(1, geo0)',
+      'Expected tex3d reference in write3d() at line 2 col 21',
+      2,
+      21,
+    ],
+    [
+      'write3d texture at EOF',
+      'search synth\ndiagProbe().write3d(',
+      'Expected tex3d reference in write3d() at line 2 col 21',
+      2,
+      21,
+    ],
+    [
+      'invalid write3d geometry',
+      'search synth\ndiagProbe().write3d(vol0, 1)',
+      'Expected geo reference in write3d() at line 2 col 27',
+      2,
+      27,
+    ],
+    [
+      'write3d geometry at EOF',
+      'search synth\ndiagProbe().write3d(vol0,',
+      'Expected geo reference in write3d() at line 2 col 26',
+      2,
+      26,
+    ],
+    ['CRLF and tab render target', '// 😀\r\nsearch synth\r\n\trender("😀")', 'Expected output reference in render()', 3, 9],
+    [
+      'UTF-16 render target column',
+      'search synth\nlet x = "😀"; render(none)',
+      'Expected output reference in render()',
+      2,
+      22,
+    ],
+  ]
+
+  for (const [, source, message, line, column] of outputFailures) {
+    for (const entryPoint of [(src) => parse(lex(src)), compile]) {
+      assert.throws(
+        () => entryPoint(source),
+        (err) => {
+          assert.equal(err.name, 'SyntaxError')
+          assert.equal(err.message, message)
+          const expected = {
+            code: 'P005',
+            stage: 'parser',
+            severity: 'error',
+            message,
+            location: { line, column },
+            span: null,
+          }
+          assert.deepEqual(err.diagnostic, expected)
+          return true
+        },
+      )
+    }
+  }
+})
+
+test('parser output diagnostics preserve unavailable caller-token coordinates', async () => {
+  const core = await createReferenceCompiler()
+  const { lex, parse, registerOp, registerStarterOps } = core
+
+  registerOp('synth.diagProbe', { name: 'diagProbe', args: [] })
+  registerStarterOps(['synth.diagProbe'])
+
+  const outputFailures = [
+    'search synth\nrender(1)',
+    'search synth\nlet x = diagProbe().write(o0)',
+    'search synth\ndiagProbe().write(1)',
+    'search synth\ndiagProbe().write3d(1, geo0)',
+    'search synth\ndiagProbe().write3d(vol0, 1)',
+  ]
+
+  for (const source of outputFailures) {
+    for (const coordinates of [{}, { line: 1 }, { line: 0, col: 1 }, { line: 1, col: NaN }]) {
+      const tokens = lex(source).map(({ type, lexeme }) => ({ type, lexeme, ...coordinates }))
+      assert.throws(
+        () => parse(tokens),
+        (err) => {
+          assert.equal(err.name, 'SyntaxError')
+          assert.deepEqual(err.diagnostic, {
+            code: 'P005',
+            stage: 'parser',
+            severity: 'error',
+            message: err.message,
+            location: null,
+            span: null,
+          })
+          return true
+        },
+      )
+    }
+  }
+})
+
