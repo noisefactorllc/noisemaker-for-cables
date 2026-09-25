@@ -1220,3 +1220,239 @@ test('subchain syntax preserves shared expectation diagnostic precedence', async
     }
   }
 })
+
+test('structured DSL call form diagnostics attach diagnostic metadata to thrown SyntaxError', async () => {
+  const core = await createReferenceCompiler()
+  const { compile, lex, parse, registerOp, registerStarterOps } = core
+
+  registerOp('synth.diagProbe', { name: 'diagProbe', args: [] })
+  registerOp('synth.probe', { name: 'probe', args: [] })
+  registerStarterOps(['synth.diagProbe', 'synth.probe'])
+
+  const callFormFailures = [
+    ['from named arguments', 'search synth\nlet x = from(a: 1, b: 2)', "'from' does not support named arguments at line 2 col 9", 2, 9],
+    ['from missing second argument', 'search synth\nlet x = from(synth)', "'from' requires exactly two arguments (namespace, call) at line 2 col 9", 2, 9],
+    ['from namespace not an identifier', 'search synth\nlet x = from(1, probe())', "'from' namespace argument must be an identifier at line 2 col 9", 2, 9],
+    ['from second argument not a call', 'search synth\nlet x = from(synth, 1)', "'from' second argument must be a call expression at line 2 col 9", 2, 9],
+    ['inline namespace', 'search synth\nnd.noise()', "Inline namespace syntax 'nd.noise()' is not allowed. Use 'search nd' at the start of the program instead, at line 2 col 1", 2, 1],
+    ['positional then keyword', 'search synth\ndiagProbe(1, x: 2)', 'Cannot mix positional and keyword arguments at line 2 col 14', 2, 14],
+    ['keyword then positional', 'search synth\ndiagProbe(x: 1, 2)', 'Cannot mix positional and keyword arguments at line 2 col 17', 2, 17],
+    ['CRLF tab and UTF-16', '// 😀\r\nsearch synth\r\n\tdiagProbe(1, x: 2)', 'Cannot mix positional and keyword arguments at line 3 col 15', 3, 15],
+    ['UTF-16 inline namespace column', 'search synth\nlet x = "😀"; nd.noise()', "Inline namespace syntax 'nd.noise()' is not allowed. Use 'search nd' at the start of the program instead, at line 2 col 15", 2, 15],
+  ]
+
+  for (const [, source, message, line, column] of callFormFailures) {
+    for (const entryPoint of [(src) => parse(lex(src)), compile]) {
+      assert.throws(
+        () => entryPoint(source),
+        (err) => {
+          assert.equal(err.name, 'SyntaxError')
+          assert.equal(err.message, message)
+          const expected = {
+            code: 'P007',
+            stage: 'parser',
+            severity: 'error',
+            message,
+            location: { line, column },
+            span: null,
+          }
+          assert.deepEqual(err.diagnostic, expected)
+          return true
+        },
+      )
+    }
+  }
+})
+
+test('parser call form diagnostics preserve unavailable caller-token coordinates', async () => {
+  const core = await createReferenceCompiler()
+  const { lex, parse, registerOp, registerStarterOps } = core
+
+  registerOp('synth.diagProbe', { name: 'diagProbe', args: [] })
+  registerOp('synth.probe', { name: 'probe', args: [] })
+  registerStarterOps(['synth.diagProbe', 'synth.probe'])
+
+  const callFormFailures = [
+    'search synth\nlet x = from(a: 1, b: 2)',
+    'search synth\nlet x = from(synth)',
+    'search synth\nlet x = from(1, probe())',
+    'search synth\nlet x = from(synth, 1)',
+    'search synth\nnd.noise()',
+    'search synth\ndiagProbe(1, x: 2)',
+    'search synth\ndiagProbe(x: 1, 2)',
+  ]
+
+  for (const source of callFormFailures) {
+    for (const coordinates of [{}, { line: 1 }, { line: 0, col: 1 }, { line: 1, col: NaN }]) {
+      const tokens = lex(source).map(({ type, lexeme }) => ({ type, lexeme, ...coordinates }))
+      assert.throws(
+        () => parse(tokens),
+        (err) => {
+          assert.equal(err.name, 'SyntaxError')
+          assert.deepEqual(err.diagnostic, {
+            code: 'P007',
+            stage: 'parser',
+            severity: 'error',
+            message: err.message,
+            location: null,
+            span: null,
+          })
+          return true
+        },
+      )
+    }
+  }
+})
+
+test('structured DSL remaining expectation diagnostics attach diagnostic metadata to thrown SyntaxError', async () => {
+  const core = await createReferenceCompiler()
+  const { compile, lex, parse, registerOp, registerStarterOps } = core
+
+  registerOp('synth.diagProbe', { name: 'diagProbe', args: [] })
+  registerStarterOps(['synth.diagProbe'])
+
+  const remainingExpectFailures = [
+    ['expected expression in assignment', 'search synth\nlet x = ;', "Expected expression after '=' at line 2 col 9", 2, 9],
+    ['expected expression in keyword argument', 'search synth\ndiagProbe(a: )', "Expected expression after '=' at line 2 col 14", 2, 14],
+    ['expected closing bracket', 'search synth\nlet x = [1 2]', "Expected ']' at line 2 col 12", 2, 12],
+    ['expected identifier after dot', 'search synth\nlet x = foo.+', "Expected identifier after '.' at line 2 col 13", 2, 13],
+    ['unexpected primary token', 'search synth\ndiagProbe(; 1)', 'Unexpected token SEMICOLON at line 2 col 11', 2, 11],
+    ['UTF-16 column', 'search synth\nlet x = "😀"; let y = [1 2]', "Expected ']' at line 2 col 26", 2, 26],
+  ]
+
+  for (const [, source, message, line, column] of remainingExpectFailures) {
+    for (const entryPoint of [(src) => parse(lex(src)), compile]) {
+      assert.throws(
+        () => entryPoint(source),
+        (err) => {
+          assert.equal(err.name, 'SyntaxError')
+          assert.equal(err.message, message)
+          const expected = {
+            code: 'P001',
+            stage: 'parser',
+            severity: 'error',
+            message,
+            location: { line, column },
+            span: null,
+          }
+          assert.deepEqual(err.diagnostic, expected)
+          return true
+        },
+      )
+    }
+  }
+})
+
+test('parser remaining expectation diagnostics preserve unavailable caller-token coordinates', async () => {
+  const core = await createReferenceCompiler()
+  const { lex, parse, registerOp, registerStarterOps } = core
+
+  registerOp('synth.diagProbe', { name: 'diagProbe', args: [] })
+  registerStarterOps(['synth.diagProbe'])
+
+  const remainingExpectFailures = [
+    'search synth\nlet x = ;',
+    'search synth\ndiagProbe(a: )',
+    'search synth\nlet x = [1 2]',
+    'search synth\nlet x = foo.+',
+    'search synth\ndiagProbe(; 1)',
+  ]
+
+  for (const source of remainingExpectFailures) {
+    for (const coordinates of [{}, { line: 1 }, { line: 0, col: 1 }, { line: 1, col: NaN }]) {
+      const tokens = lex(source).map(({ type, lexeme }) => ({ type, lexeme, ...coordinates }))
+      assert.throws(
+        () => parse(tokens),
+        (err) => {
+          assert.equal(err.name, 'SyntaxError')
+          assert.deepEqual(err.diagnostic, {
+            code: 'P001',
+            stage: 'parser',
+            severity: 'error',
+            message: err.message,
+            location: null,
+            span: null,
+          })
+          return true
+        },
+      )
+    }
+  }
+})
+
+test('number coercion diagnostics represent unavailable locations explicitly and preserve available locations', async () => {
+  const core = await createReferenceCompiler()
+  const { compile, lex, parse, registerOp, registerStarterOps } = core
+
+  registerOp('synth.diagProbe', { name: 'diagProbe', args: [] })
+  registerStarterOps(['synth.diagProbe'])
+
+  for (const source of ['search synth\nlet x = 1 + o0', 'search synth\nlet x = diagProbe() + 1']) {
+    for (const entryPoint of [(src) => parse(lex(src)), compile]) {
+      assert.throws(
+        () => entryPoint(source),
+        (err) => {
+          assert.equal(err.name, 'SyntaxError')
+          assert.equal(err.message, 'Expected number')
+          assert.deepEqual(err.diagnostic, {
+            code: 'P001',
+            stage: 'parser',
+            severity: 'error',
+            message: 'Expected number',
+            location: null,
+            span: null,
+          })
+          return true
+        },
+      )
+    }
+  }
+
+  const locatedSource = 'search synth\nlet x = 1 + [1, 2]'
+  for (const entryPoint of [(src) => parse(lex(src)), compile]) {
+    assert.throws(
+      () => entryPoint(locatedSource),
+      (err) => {
+        assert.equal(err.name, 'SyntaxError')
+        assert.equal(err.message, 'Expected number')
+        assert.deepEqual(err.diagnostic, {
+          code: 'P001',
+          stage: 'parser',
+          severity: 'error',
+          message: 'Expected number',
+          location: { line: 2, column: 13 },
+          span: null,
+        })
+        return true
+      },
+    )
+  }
+})
+
+test('valid call forms retain from override namespaces and mixed automation arguments', async () => {
+  const core = await createReferenceCompiler()
+  const { compile, lex, parse, registerOp, registerStarterOps } = core
+
+  registerOp('synth.probe', { name: 'probe', args: [] })
+  registerStarterOps(['synth.probe'])
+
+  const ast = parse(lex('search synth\nlet x = from(synth, probe())'))
+  assert.deepEqual(ast.vars[0].expr, {
+    type: 'Call',
+    name: 'probe',
+    args: [],
+    namespace: {
+      name: 'synth',
+      path: ['synth'],
+      explicit: true,
+      source: 'from',
+      resolved: 'synth',
+      searchOrder: ['synth'],
+      fromOverride: true,
+    },
+  })
+
+  const mixed = parse(lex('search synth\nlet a = midi(1, channel: 2)'))
+  assert.equal(mixed.vars[0].expr.channel.value, 2)
+})
+
