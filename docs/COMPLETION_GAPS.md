@@ -4,6 +4,14 @@ Current compatibility matrix: [compatibility report](COMPATIBILITY.md).
 
 ## 1. Scope and source revisions
 
+Daily review: 2026-09-25. Current inspected source: [`6a5a9048471621a86cb8025bc10ce650b7efa842`](https://github.com/noisefactorllc/noisemaker-for-cables/commit/6a5a9048471621a86cb8025bc10ce650b7efa842).
+Full rendered parity remains **unverified**. No release approval or new closure follows from this review.
+Current upstream discovery: `bbdeb56c4b75cf33379766c3e87b0f5a18bcbba8`. Published Noisemaker authority: `1.0.179`, source `fca611fd8f91424661d4e531d39313d24ea21134`, 210 effect IDs.
+The observations below retain their original source and authority identities; they do not qualify later updates.
+Current served kit: `0.1.24`, source `6a5a9048471621a86cb8025bc10ce650b7efa842`. [Retrieved inventory and hashes](/Users/alex/.codex/automations/noisemaker-port-completion-audit/review-20260925-053200/current-served-inventories.json). Artifact identity does not establish host qualification.
+
+### Earlier source observations
+
 Audit date: 2026-09-22. Run: `20260922-cables-03`.
 
 | Item | Revision |
@@ -46,6 +54,13 @@ The review does not qualify every upstream change after the recorded port author
 | CLAIM-007 | Export-kit workflow and published kit | Release readiness | partial | All 17 kit hashes match. Exact-source publication CI succeeds. It does not execute the repository's runtime or host suites. See GAP-005. |
 
 ## 3. Methods and evidence
+
+Review CI boundary: Exact-source runs: Export kit. A passing export dispatch does not qualify rendered parity. Current complete-render enforcement remains an open verification requirement. [Exact-source responses and workflows](/Users/alex/.codex/automations/noisemaker-port-completion-audit/review-20260925-053200/noisemaker-for-cables-remote-evidence.json).
+
+### Daily review, 2026-09-25
+
+31 compiler tests pass at the current source. They do not render the native Cables op or qualify updated landscape filtering. The prior highest-priority rendered finding remains open; current full parity and the native host workflow are stale and unverified. [Raw evidence](/Users/alex/.codex/automations/noisemaker-port-completion-audit/review-20260925-053200/cables-current-probe.json).
+The review checked source changes, worker evidence, source-bound CI where present, and current served inventories. Full installed-host and platform qualification remains incomplete.
 
 Evidence belongs to run `20260922-cables-03` in the designated automation store.
 The result record identifies its evidence directory.
@@ -225,6 +240,9 @@ The Standalone page advertises `0.11.2`. Support for that version remains unveri
 
 ## 5. Ordered next actions
 
+Current first action: Run the existing landscape fixture through the native Cables Program op with immutable reference input. Compare actual pixels at the existing tolerance and at zero tolerance. Then test an exported patch with parameter changes, resize, a failing program, and recovery; require useful output and a visible diagnostic.
+Subsequent historical actions remain dependent on that evidence. No implementation is authorized by this audit.
+
 1. Record GAP-001's updated authority and bundle hashes. Run `node --test test/polymorphic-parity.test.js`. Require all 13 checks to pass.
    Compare default, voxel, and isosurface outputs with the declared authority. Preserve tolerances and include both projection modes.
 2. Run `npm run test:standalone` with the declared `CABLES_APP` after the bundle change. Preserve both earlier native attempts.
@@ -238,6 +256,8 @@ These actions are handoff criteria, not permission to change those files in this
 The operator does not authorize additional effects or parity checkpoint advancement.
 
 ## 6. Pass history
+
+2026-09-25 daily review at `6a5a9048471621a86cb8025bc10ce650b7efa842`: source freshness and bounded evidence reviewed; open qualification limits retained. [Retained review evidence](/Users/alex/.codex/automations/noisemaker-port-completion-audit/review-20260925-053200/cables-current-probe.json). No new closure claimed.
 
 | Date | Reviewed source | Change | Tested scope | Remaining limits |
 | --- | --- | --- | --- | --- |
