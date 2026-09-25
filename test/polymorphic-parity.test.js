@@ -49,6 +49,15 @@ function normalizeCompilerValue(value) {
   )
 }
 
+function sourcePosition(lex, source, line, column) {
+  const matches = lex(source).filter(
+    (token) => token.position && token.position.line === line && token.position.column === column,
+  )
+  assert.ok(matches.length <= 1, `expected at most 1 token match for (${line}, ${column}) in source`)
+  if (matches.length === 0) return null
+  return { start: matches[0].position.start, end: matches[0].position.end }
+}
+
 async function createReferenceCompiler() {
   const referenceUrl = new URL(
     '../vendor-cache/noisemaker-shaders-core.esm.js?polymorphic-reference',
@@ -573,7 +582,7 @@ test('structured DSL parser expectation diagnostics attach diagnostic metadata t
             severity: 'error',
             message,
             location: { line, column },
-            span: null,
+            span: sourcePosition(lex, source, line, column),
           }
           assert.deepEqual(err.diagnostic, expected)
           return true
@@ -673,7 +682,7 @@ test('structured DSL automation diagnostics attach diagnostic metadata to thrown
             severity: 'error',
             message,
             location: { line: 2, column: 9 },
-            span: null,
+            span: sourcePosition(lex, source, 2, 9),
           }
           assert.deepEqual(err.diagnostic, expected)
           return true
@@ -822,7 +831,7 @@ test('structured DSL search directive diagnostics attach diagnostic metadata to 
             severity: 'error',
             message,
             location: { line, column },
-            span: null,
+            span: sourcePosition(lex, source, line, column),
           }
           assert.deepEqual(err.diagnostic, expected)
           return true
@@ -988,7 +997,7 @@ test('structured DSL output validation diagnostics attach diagnostic metadata to
             severity: 'error',
             message,
             location: { line, column },
-            span: null,
+            span: sourcePosition(lex, source, line, column),
           }
           assert.deepEqual(err.diagnostic, expected)
           return true
@@ -1121,7 +1130,7 @@ test('structured DSL subchain validation diagnostics attach diagnostic metadata 
             severity: 'error',
             message,
             location: { line, column },
-            span: null,
+            span: sourcePosition(lex, source, line, column),
           }
           assert.deepEqual(err.diagnostic, expected)
           return true
@@ -1188,7 +1197,10 @@ test('valid subchains preserve permissive arguments, defaults, body and compiled
       loc: { line: 2, col: 10 },
     })
     const result = compile(source)
-    assert.deepEqual(result.diagnostics, [])
+    assert.deepEqual(
+      result.diagnostics.map((d) => d.code),
+      args.includes('foo') ? ['P008', 'P010', 'P010', 'P009', 'P010'] : [],
+    )
     assert.deepEqual(result.plans[0].chain, [
       { op: '_read', args: { tex: { kind: 'output', name: 'o0' } }, from: null, temp: 0, builtin: true },
       { op: '_subchain_begin', args: { name, id }, from: 0, temp: 1, builtin: true },
@@ -1254,7 +1266,7 @@ test('structured DSL call form diagnostics attach diagnostic metadata to thrown 
             severity: 'error',
             message,
             location: { line, column },
-            span: null,
+            span: sourcePosition(lex, source, line, column),
           }
           assert.deepEqual(err.diagnostic, expected)
           return true
@@ -1333,7 +1345,7 @@ test('structured DSL remaining expectation diagnostics attach diagnostic metadat
             severity: 'error',
             message,
             location: { line, column },
-            span: null,
+            span: sourcePosition(lex, source, line, column),
           }
           assert.deepEqual(err.diagnostic, expected)
           return true
@@ -1421,7 +1433,7 @@ test('number coercion diagnostics represent unavailable locations explicitly and
           severity: 'error',
           message: 'Expected number',
           location: { line: 2, column: 13 },
-          span: null,
+          span: sourcePosition(lex, locatedSource, 2, 13),
         })
         return true
       },
@@ -1455,4 +1467,149 @@ test('valid call forms retain from override namespaces and mixed automation argu
   const mixed = parse(lex('search synth\nlet a = midi(1, channel: 2)'))
   assert.equal(mixed.vars[0].expr.channel.value, 2)
 })
+
+test('GAP-027: subchain argument validation contract exposes P008, P009, P010 diagnostics in permissive mode', async () => {
+  const core = await createReferenceCompiler()
+  const { compile, lex, parse, registerOp, registerStarterOps } = core
+
+  registerOp('synth.diagProbe', { name: 'diagProbe', args: [] })
+  registerOp('synth.diagFilter', { name: 'diagFilter', args: [] })
+  registerStarterOps(['synth.diagProbe'])
+
+  // P008: unknown subchain key reported as warning, discarded from AST
+  const p008Source = 'search synth\nread(o0).subchain(nme: "typo", name: "ok") { .diagFilter() }.write(o1)'
+  const p008Result = compile(p008Source)
+  const p008Subchain = p008Result.plans[0].chain.find((step) => step.op === '_subchain_begin')
+  assert.equal(p008Subchain.args.name, 'ok')
+  assert.equal(p008Subchain.args.id, null)
+  const p008Diags = p008Result.diagnostics.filter((d) => d.code === 'P008')
+  assert.equal(p008Diags.length, 1)
+  assert.match(p008Diags[0].message, /nme/)
+  assert.equal(p008Diags[0].severity, 'warning')
+  assert.deepEqual(p008Diags[0].location, { line: 2, column: 19 })
+  const p008Ast = parse(lex(p008Source))
+  const p008Node = p008Ast.plans[0].chain.find((node) => node.type === 'Subchain')
+  assert.equal(p008Node.subchainArgumentDiagnostics.length, 1)
+  assert.deepEqual(p008Node.subchainArgumentDiagnostics[0].span, sourcePosition(lex, p008Source, 2, 19))
+
+  // P009: duplicate subchain key reported as warning, last value wins
+  const p009Source = 'search synth\nread(o0).subchain(name: "first", name: "second") { .diagFilter() }.write(o1)'
+  const p009Result = compile(p009Source)
+  const p009Subchain = p009Result.plans[0].chain.find((step) => step.op === '_subchain_begin')
+  assert.equal(p009Subchain.args.name, 'second')
+  const p009Diags = p009Result.diagnostics.filter((d) => d.code === 'P009')
+  assert.equal(p009Diags.length, 1)
+  assert.match(p009Diags[0].message, /name/)
+  assert.equal(p009Diags[0].severity, 'warning')
+  assert.deepEqual(p009Diags[0].location, { line: 2, column: 34 })
+
+  // P010: missing comma separator reported as warning, parses successfully
+  const p010Source = 'search synth\nread(o0).subchain(name: "a" id: "b") { .diagFilter() }.write(o1)'
+  const p010Result = compile(p010Source)
+  const p010Subchain = p010Result.plans[0].chain.find((step) => step.op === '_subchain_begin')
+  assert.deepEqual(p010Subchain.args, { name: 'a', id: 'b' })
+  const p010Diags = p010Result.diagnostics.filter((d) => d.code === 'P010')
+  assert.equal(p010Diags.length, 1)
+  assert.equal(p010Diags[0].severity, 'warning')
+  assert.deepEqual(p010Diags[0].location, { line: 2, column: 29 })
+
+  // Co-occurring violations reported in source order
+  const coSource = 'search synth\nread(o0).subchain(nme: "x", name: "a" name: "b") { .diagFilter() }.write(o1)'
+  const coResult = compile(coSource)
+  assert.deepEqual(coResult.diagnostics.map((d) => d.code), ['P008', 'P010', 'P009'])
+})
+
+test('GAP-027: strict opt-in mode rejects subchain argument violations with SyntaxError', async () => {
+  const core = await createReferenceCompiler()
+  const { compile, lex, parse, registerOp, registerStarterOps } = core
+
+  registerOp('synth.diagProbe', { name: 'diagProbe', args: [] })
+  registerOp('synth.diagFilter', { name: 'diagFilter', args: [] })
+  registerStarterOps(['synth.diagProbe'])
+
+  const strictCases = [
+    {
+      source: 'search synth\nread(o0).subchain(nme: "typo", name: "ok") { .diagFilter() }.write(o1)',
+      code: 'P008',
+      line: 2,
+      column: 19,
+    },
+    {
+      source: 'search synth\nread(o0).subchain(name: "a", name: "b") { .diagFilter() }.write(o1)',
+      code: 'P009',
+      line: 2,
+      column: 30,
+    },
+    {
+      source: 'search synth\nread(o0).subchain(name: "a" id: "b") { .diagFilter() }.write(o1)',
+      code: 'P010',
+      line: 2,
+      column: 29,
+    },
+  ]
+
+  for (const { source, code, line, column } of strictCases) {
+    for (const entryPoint of [
+      (src) => parse(lex(src), { subchainArguments: 'strict' }),
+      (src) => compile(src, { subchainArguments: 'strict' }),
+    ]) {
+      assert.throws(
+        () => entryPoint(source),
+        (err) => {
+          assert.equal(err.name, 'SyntaxError')
+          assert.equal(err.diagnostic.code, code)
+          assert.equal(err.diagnostic.stage, 'parser')
+          assert.equal(err.diagnostic.severity, 'error')
+          assert.deepEqual(err.diagnostic.location, { line, column })
+          assert.deepEqual(err.diagnostic.span, sourcePosition(lex, source, line, column))
+          return true
+        },
+      )
+    }
+  }
+})
+
+test('parser diagnostic source coordinates survive scanner drift', async () => {
+  const core = await createReferenceCompiler()
+  const { compile, lex, parse, registerOp, registerStarterOps } = core
+
+  registerOp('synth.diagProbe', { name: 'diagProbe', args: [] })
+  registerStarterOps(['synth.diagProbe'])
+
+  const crlfSource = '/*\r\n * header\r\n */\r\nsearch synth\r\nlet x = "hello\\nworld";\r\nlet y = [1 2]'
+  for (const entryPoint of [(src) => parse(lex(src)), compile]) {
+    assert.throws(
+      () => entryPoint(crlfSource),
+      (err) => {
+        assert.equal(err.name, 'SyntaxError')
+        assert.equal(err.diagnostic.code, 'P001')
+        assert.deepEqual(err.diagnostic.location, { line: 6, column: 12 })
+        assert.deepEqual(err.diagnostic.span, sourcePosition(lex, crlfSource, 6, 12))
+        return true
+      },
+    )
+  }
+})
+
+test('caller tokens lacking position attributes preserve null spans in subchain reporting', async () => {
+  const core = await createReferenceCompiler()
+  const { lex, parse, registerOp } = core
+
+  registerOp('synth.diagFilter', { name: 'diagFilter', args: [] })
+
+  const subchainSource = 'search synth\nread(o0).subchain(bogus: "val") { .diagFilter() }.write(o1)'
+  const tokensWithoutPositions = lex(subchainSource).map(({ type, lexeme, line, col }) => ({ type, lexeme, line, col }))
+
+  assert.throws(
+    () => parse(tokensWithoutPositions, { subchainArguments: 'strict' }),
+    (err) => {
+      assert.equal(err.name, 'SyntaxError')
+      assert.equal(err.diagnostic.code, 'P008')
+      assert.deepEqual(err.diagnostic.location, { line: 2, column: 19 })
+      assert.equal(err.diagnostic.span, null)
+      return true
+    },
+  )
+})
+
 

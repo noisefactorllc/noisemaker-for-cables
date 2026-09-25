@@ -3,8 +3,8 @@
  * Includes: CanvasRenderer + UIController + EffectSelect
  * Copyright (c) 2017-2026 Noise Factor LLC. https://noisefactor.io/
  * SPDX-License-Identifier: MIT
- * Build: 4891b995
- * Date: 2026-09-25T02:27:49.035Z
+ * Build: 240740dd
+ * Date: 2026-09-25T07:09:32.524Z
  */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
@@ -255,6 +255,9 @@ var diagnostics = {
   P005: { stage: "parser", severity: "error", message: "Invalid output operation" },
   P006: { stage: "parser", severity: "error", message: "Invalid subchain" },
   P007: { stage: "parser", severity: "error", message: "Invalid call expression" },
+  P008: { stage: "parser", severity: "warning", message: "Unknown subchain argument key" },
+  P009: { stage: "parser", severity: "warning", message: "Duplicate subchain argument key" },
+  P010: { stage: "parser", severity: "warning", message: "Missing ',' between subchain arguments" },
   S001: { stage: "semantic", severity: "error", message: "Unknown identifier" },
   S002: { stage: "semantic", severity: "warning", message: "Argument out of range" },
   S003: { stage: "semantic", severity: "error", message: "Variable used before assignment" },
@@ -289,8 +292,35 @@ function lex(src) {
   let i = 0;
   let line = 1;
   let col = 1;
-  function add(type, lexeme, line2, col2) {
-    tokens.push({ type, lexeme, line: line2, col: col2 });
+  let srcLine = 1;
+  let srcCol = 1;
+  let anchor = 0;
+  function add(type, lexeme, line2, col2, end) {
+    for (let offset = anchor; offset < i; offset++) {
+      if (src[offset] === "\n") {
+        srcLine++;
+        srcCol = 1;
+      } else {
+        srcCol++;
+      }
+    }
+    const startLine = srcLine;
+    const startColumn = srcCol;
+    for (let offset = i; offset < end; offset++) {
+      if (src[offset] === "\n") {
+        srcLine++;
+        srcCol = 1;
+      } else {
+        srcCol++;
+      }
+    }
+    anchor = end;
+    const token = { type, lexeme, line: line2, col: col2 };
+    Object.defineProperty(token, "position", {
+      value: { line: startLine, column: startColumn, start: i, end },
+      enumerable: false
+    });
+    tokens.push(token);
   }
   function fail(code, message, start, end) {
     let errorLine = 1;
@@ -338,7 +368,7 @@ function lex(src) {
       let j = i + 2;
       while (j < src.length && src[j] !== "\n") j++;
       const text = src.slice(i, j);
-      add("COMMENT", text, startLine, startCol);
+      add("COMMENT", text, startLine, startCol, j);
       col += j - i;
       i = j;
       continue;
@@ -359,7 +389,7 @@ function lex(src) {
       if (j >= src.length) fail("L003", `Unterminated comment at line ${startLine} col ${startCol}`, i, src.length);
       j += 2;
       const text = src.slice(i, j);
-      add("COMMENT", text, startLine, startCol);
+      add("COMMENT", text, startLine, startCol, j);
       line = endLine;
       col = endCol + 2;
       i = j;
@@ -374,7 +404,7 @@ function lex(src) {
       if (tokenType === "OUTPUT_REF" && !isMemberSegment && !/^o[0-7]$/.test(lexeme)) {
         fail("L004", `Output surface reference '${lexeme}' is out of range; expected o0-o7 at line ${startLine} col ${startCol}`, i, j);
       }
-      add(tokenType, lexeme, startLine, startCol);
+      add(tokenType, lexeme, startLine, startCol, j);
       col += j - i;
       i = j;
       continue;
@@ -383,7 +413,7 @@ function lex(src) {
       let j = i + 3;
       while (j < src.length && isDigit(src[j])) j++;
       const lexeme = src.slice(i, j);
-      add("VOL_REF", lexeme, startLine, startCol);
+      add("VOL_REF", lexeme, startLine, startCol, j);
       col += j - i;
       i = j;
       continue;
@@ -392,7 +422,7 @@ function lex(src) {
       let j = i + 3;
       while (j < src.length && isDigit(src[j])) j++;
       const lexeme = src.slice(i, j);
-      add("GEO_REF", lexeme, startLine, startCol);
+      add("GEO_REF", lexeme, startLine, startCol, j);
       col += j - i;
       i = j;
       continue;
@@ -401,7 +431,7 @@ function lex(src) {
       let j = i + 3;
       while (j < src.length && isDigit(src[j])) j++;
       const lexeme = src.slice(i, j);
-      add("XYZ_REF", lexeme, startLine, startCol);
+      add("XYZ_REF", lexeme, startLine, startCol, j);
       col += j - i;
       i = j;
       continue;
@@ -410,7 +440,7 @@ function lex(src) {
       let j = i + 3;
       while (j < src.length && isDigit(src[j])) j++;
       const lexeme = src.slice(i, j);
-      add("VEL_REF", lexeme, startLine, startCol);
+      add("VEL_REF", lexeme, startLine, startCol, j);
       col += j - i;
       i = j;
       continue;
@@ -419,7 +449,7 @@ function lex(src) {
       let j = i + 4;
       while (j < src.length && isDigit(src[j])) j++;
       const lexeme = src.slice(i, j);
-      add("RGBA_REF", lexeme, startLine, startCol);
+      add("RGBA_REF", lexeme, startLine, startCol, j);
       col += j - i;
       i = j;
       continue;
@@ -428,7 +458,7 @@ function lex(src) {
       let j = i + 4;
       while (j < src.length && isDigit(src[j])) j++;
       const lexeme = src.slice(i, j);
-      add("MESH_REF", lexeme, startLine, startCol);
+      add("MESH_REF", lexeme, startLine, startCol, j);
       col += j - i;
       i = j;
       continue;
@@ -439,7 +469,7 @@ function lex(src) {
       const len = j - i;
       if (len === 4 || len === 7 || len === 9) {
         const lexeme = src.slice(i, j);
-        add("HEX", lexeme, startLine, startCol);
+        add("HEX", lexeme, startLine, startCol, j);
         col += len;
         i = j;
         continue;
@@ -465,7 +495,7 @@ function lex(src) {
           j++;
         }
         const expr = src.slice(exprStart, j).trim();
-        add("FUNC", expr, startLine, startCol);
+        add("FUNC", expr, startLine, startCol, j);
         col += j - i;
         i = j;
         continue;
@@ -475,97 +505,97 @@ function lex(src) {
       let j = i + 1;
       while (j < src.length && isDigit(src[j])) j++;
       const lexeme = src.slice(i, j);
-      add("NUMBER", lexeme, startLine, startCol);
+      add("NUMBER", lexeme, startLine, startCol, j);
       col += j - i;
       i = j;
       continue;
     }
     if (ch === ".") {
-      add("DOT", ".", startLine, startCol);
+      add("DOT", ".", startLine, startCol, i + 1);
       i++;
       col++;
       continue;
     }
     if (ch === "(") {
-      add("LPAREN", "(", startLine, startCol);
+      add("LPAREN", "(", startLine, startCol, i + 1);
       i++;
       col++;
       continue;
     }
     if (ch === ")") {
-      add("RPAREN", ")", startLine, startCol);
+      add("RPAREN", ")", startLine, startCol, i + 1);
       i++;
       col++;
       continue;
     }
     if (ch === "{") {
-      add("LBRACE", "{", startLine, startCol);
+      add("LBRACE", "{", startLine, startCol, i + 1);
       i++;
       col++;
       continue;
     }
     if (ch === "}") {
-      add("RBRACE", "}", startLine, startCol);
+      add("RBRACE", "}", startLine, startCol, i + 1);
       i++;
       col++;
       continue;
     }
     if (ch === "[") {
-      add("LBRACKET", "[", startLine, startCol);
+      add("LBRACKET", "[", startLine, startCol, i + 1);
       i++;
       col++;
       continue;
     }
     if (ch === "]") {
-      add("RBRACKET", "]", startLine, startCol);
+      add("RBRACKET", "]", startLine, startCol, i + 1);
       i++;
       col++;
       continue;
     }
     if (ch === ",") {
-      add("COMMA", ",", startLine, startCol);
+      add("COMMA", ",", startLine, startCol, i + 1);
       i++;
       col++;
       continue;
     }
     if (ch === ":") {
-      add("COLON", ":", startLine, startCol);
+      add("COLON", ":", startLine, startCol, i + 1);
       i++;
       col++;
       continue;
     }
     if (ch === "=") {
-      add("EQUAL", "=", startLine, startCol);
+      add("EQUAL", "=", startLine, startCol, i + 1);
       i++;
       col++;
       continue;
     }
     if (ch === ";") {
-      add("SEMICOLON", ";", startLine, startCol);
+      add("SEMICOLON", ";", startLine, startCol, i + 1);
       i++;
       col++;
       continue;
     }
     if (ch === "+") {
-      add("PLUS", "+", startLine, startCol);
+      add("PLUS", "+", startLine, startCol, i + 1);
       i++;
       col++;
       continue;
     }
     if (ch === "-") {
-      add("MINUS", "-", startLine, startCol);
+      add("MINUS", "-", startLine, startCol, i + 1);
       i++;
       col++;
       continue;
     }
     if (ch === "*") {
-      add("STAR", "*", startLine, startCol);
+      add("STAR", "*", startLine, startCol, i + 1);
       i++;
       col++;
       continue;
     }
     if (ch === "/") {
-      add("SLASH", "/", startLine, startCol);
+      add("SLASH", "/", startLine, startCol, i + 1);
       i++;
       col++;
       continue;
@@ -586,7 +616,7 @@ function lex(src) {
         fail("L002", `Unterminated triple-quoted string at line ${startLine} col ${startCol}`, i, src.length);
       }
       const content = src.slice(i + 3, j);
-      add("STRING", content, startLine, startCol);
+      add("STRING", content, startLine, startCol, j + 3);
       const lines = content.split("\n");
       if (lines.length > 1) {
         col = lines[lines.length - 1].length + 4;
@@ -610,7 +640,7 @@ function lex(src) {
         fail("L002", `Unterminated string literal at line ${line} col ${col}`, i, j);
       }
       const content = src.slice(i + 1, j);
-      add("STRING", content, startLine, startCol);
+      add("STRING", content, startLine, startCol, j + 1);
       col += j - i + 1;
       i = j + 1;
       continue;
@@ -623,7 +653,7 @@ function lex(src) {
         while (j < src.length && isDigit(src[j])) j++;
       }
       const lexeme = src.slice(i, j);
-      add("NUMBER", lexeme, startLine, startCol);
+      add("NUMBER", lexeme, startLine, startCol, j);
       col += j - i;
       i = j;
       continue;
@@ -633,9 +663,9 @@ function lex(src) {
       while (j < src.length && (isLetter(src[j]) || isDigit(src[j]) || src[j] === "_")) j++;
       const lexeme = src.slice(i, j);
       if (keywords[lexeme]) {
-        add(keywords[lexeme], lexeme, startLine, startCol);
+        add(keywords[lexeme], lexeme, startLine, startCol, j);
       } else {
-        add("IDENT", lexeme, startLine, startCol);
+        add("IDENT", lexeme, startLine, startCol, j);
       }
       col += j - i;
       i = j;
@@ -643,7 +673,7 @@ function lex(src) {
     }
     fail("L001", `Unexpected character '${ch}' at line ${line} col ${col}`, i, i + 1);
   }
-  add("EOF", "", line, col);
+  add("EOF", "", line, col, src.length);
   return tokens;
 }
 
@@ -901,8 +931,9 @@ function isIOFunction(funcName) {
 }
 
 // shaders/src/lang/parser.js
-function parse(tokens) {
+function parse(tokens, options = {}) {
   let current = 0;
+  const strictSubchainArguments = options.subchainArguments === "strict";
   let programSearchOrder = null;
   const programNamespace = {
     imports: [],
@@ -910,18 +941,19 @@ function parse(tokens) {
   };
   const peek = () => tokens[current];
   const advance = () => tokens[current++];
-  const parserError = (code, message, token) => {
+  const parserError = (code, message, token, severityOverride) => {
     const error = new SyntaxError(message);
-    const hasLocation = Number.isInteger(token.line) && token.line > 0 && Number.isInteger(token.col) && token.col > 0;
+    const position = token && typeof token === "object" ? token.position : null;
+    const hasPosition = position && Number.isInteger(position.line) && position.line > 0 && Number.isInteger(position.column) && position.column > 0 && Number.isInteger(position.start) && position.start >= 0 && Number.isInteger(position.end) && position.end >= position.start;
+    const hasLocation = Number.isInteger(token?.line) && token.line > 0 && Number.isInteger(token?.col) && token.col > 0;
     Object.defineProperty(error, "diagnostic", {
       value: {
         code,
         stage: diagnostics_default[code].stage,
-        severity: diagnostics_default[code].severity,
+        severity: severityOverride ?? diagnostics_default[code].severity,
         message: error.message,
-        location: hasLocation ? { line: token.line, column: token.col } : null,
-        // Public tokens have no source offsets; do not infer a span from lexeme length.
-        span: null
+        location: hasPosition ? { line: position.line, column: position.column } : hasLocation ? { line: token.line, column: token.col } : null,
+        span: hasPosition ? { start: position.start, end: position.end } : null
       }
     });
     return error;
@@ -1580,26 +1612,54 @@ function parse(tokens) {
     }
     throw parserError("P005", `Expected write or write3d at line ${tokenLine} col ${tokenCol}`, { line: tokenLine, col: tokenCol });
   }
+  const SUBCHAIN_KEYS = ["name", "id"];
   function parseSubchainCall() {
     const nameToken = peek();
     const tokenLine = nameToken.line;
     const tokenCol = nameToken.col;
     advance();
     expect("LPAREN", "Expect '(' after subchain");
+    const argDiagnostics = [];
+    const reportArgIssue = (code, message, token) => {
+      if (strictSubchainArguments) {
+        throw parserError(code, message, token, "error");
+      }
+      const position = token && typeof token === "object" ? token.position : null;
+      const hasPosition = position && Number.isInteger(position.line) && position.line > 0 && Number.isInteger(position.column) && position.column > 0 && Number.isInteger(position.start) && position.start >= 0 && Number.isInteger(position.end) && position.end >= position.start;
+      const hasLocation = Number.isInteger(token?.line) && token.line > 0 && Number.isInteger(token?.col) && token.col > 0;
+      argDiagnostics.push({
+        code,
+        message,
+        severity: diagnostics_default[code].severity,
+        ...hasPosition ? {
+          location: { line: position.line, column: position.column },
+          span: { start: position.start, end: position.end }
+        } : hasLocation ? { location: { line: token.line, column: token.col } } : {}
+      });
+    };
     const kwargs = {};
     if (peek().type !== "RPAREN") {
       if (peek().type === "STRING") {
         kwargs.name = { type: "String", value: advance().lexeme };
       } else if (peek().type === "IDENT" && tokens[current + 1]?.type === "COLON") {
         while (peek().type === "IDENT" && tokens[current + 1]?.type === "COLON") {
-          const key = advance().lexeme;
+          const keyToken = advance();
+          const key = keyToken.lexeme;
           advance();
           if (peek().type !== "STRING") {
             throw parserError("P006", `Expected string value for subchain ${key} at line ${peek().line} col ${peek().col}`, peek());
           }
-          kwargs[key] = { type: "String", value: advance().lexeme };
+          const value = advance().lexeme;
+          if (!SUBCHAIN_KEYS.includes(key)) {
+            reportArgIssue("P008", `Unknown subchain argument '${key}' at line ${keyToken.line} col ${keyToken.col}. Valid keys: name, id. The value is discarded.`, keyToken);
+          } else if (Object.hasOwn(kwargs, key)) {
+            reportArgIssue("P009", `Duplicate subchain argument '${key}' at line ${keyToken.line} col ${keyToken.col}. The last value wins.`, keyToken);
+          }
+          kwargs[key] = { type: "String", value };
           if (peek().type === "COMMA") {
             advance();
+          } else if (peek().type === "IDENT" && tokens[current + 1]?.type === "COLON") {
+            reportArgIssue("P010", `Missing ',' between subchain arguments at line ${peek().line} col ${peek().col}`, peek());
           }
         }
       }
@@ -1626,13 +1686,20 @@ function parse(tokens) {
     if (body.length === 0) {
       throw parserError("P006", `Subchain body cannot be empty at line ${tokenLine} col ${tokenCol}`, nameToken);
     }
-    return {
+    const node = {
       type: "Subchain",
       name: kwargs.name?.value || null,
       id: kwargs.id?.value || null,
       body,
       loc: { line: tokenLine, col: tokenCol }
     };
+    if (argDiagnostics.length > 0) {
+      Object.defineProperty(node, "subchainArgumentDiagnostics", {
+        value: argDiagnostics,
+        enumerable: false
+      });
+    }
+    return node;
   }
   function parseCall() {
     const nameToken = expect("IDENT", "Expected identifier");
@@ -1797,6 +1864,7 @@ function parse(tokens) {
       case "LBRACKET": {
         const startLine = token.line;
         const startCol = token.col;
+        const bracketPosition = token.position;
         advance();
         const elements = [];
         if (peek().type !== "RBRACKET") {
@@ -1811,7 +1879,19 @@ function parse(tokens) {
           throw parserError("P001", `Expected ']' at line ${t.line} col ${t.col}`, t);
         }
         advance();
-        return { type: "ArrayLiteral", elements, loc: { line: startLine, col: startCol } };
+        const arrayNode = { type: "ArrayLiteral", elements, loc: { line: startLine, col: startCol } };
+        if (bracketPosition) {
+          Object.defineProperty(arrayNode, "position", {
+            value: {
+              line: bracketPosition.line,
+              column: bracketPosition.column,
+              start: bracketPosition.start,
+              end: bracketPosition.end
+            },
+            enumerable: false
+          });
+        }
+        return arrayNode;
       }
       case "FUNC":
         advance();
@@ -1887,7 +1967,11 @@ function parse(tokens) {
   }
   function toNumber(node) {
     if (node.type !== "Number") {
-      throw parserError("P001", "Expected number", node.loc ?? {});
+      throw parserError("P001", "Expected number", {
+        position: node.position,
+        line: node.loc?.line,
+        col: node.loc?.col
+      });
     }
     return node.value;
   }
@@ -3168,6 +3252,18 @@ function validate(ast) {
           continue;
         }
         if (original.type === "Subchain") {
+          const argDiagnostics = original.subchainArgumentDiagnostics;
+          if (Array.isArray(argDiagnostics)) {
+            for (const report of argDiagnostics) {
+              diagnosticsList.push({
+                code: report.code,
+                message: report.message,
+                severity: report.severity,
+                nodeId: original?.id,
+                ...report.location && { location: report.location }
+              });
+            }
+          }
           if (current === null) {
             pushDiag("S005", original, "subchain() requires an input - cannot be first in chain");
             continue;
@@ -4962,9 +5058,9 @@ function isDslSyntaxError(error) {
 }
 
 // shaders/src/lang/index.js
-function compile(src) {
+function compile(src, options = {}) {
   const tokens = lex(src);
-  const ast = parse(tokens);
+  const ast = parse(tokens, options);
   return validate(ast);
 }
 
