@@ -1522,6 +1522,93 @@ test('GAP-027: subchain argument validation contract exposes P008, P009, P010 di
   const coResult = compile(coSource)
   assert.deepEqual(coResult.diagnostics.map((d) => d.code), ['P008', 'P010', 'P009'])
 })
+test('upstream texture-policy fields (mipmaps/persistent/3D filter) propagate from effect definitions into compiled texture specs', async () => {
+  const core = await createReferenceCompiler()
+  const { Effect, registerEffect, registerOp, registerStarterOps, compileGraph } = core
+
+  const policyProbe = new Effect({
+    name: 'Texture Policy Probe',
+    namespace: 'synth',
+    func: 'texturePolicyProbe',
+    description: 'Texture policy probe used by tests',
+    tags: ['noise', 'util'],
+    textures: {
+      acc: { width: 64, height: 64, format: 'rgba16f', mipmaps: true, persistent: true }
+    },
+    textures3d: {
+      vol: { width: 8, height: 8, depth: 8, format: 'rgba16f', filter: 'nearest' }
+    },
+    passes: [
+      { program: 'probe', inputs: {}, outputs: { color: 'acc' } }
+    ],
+  })
+  // Upstream convention (shaders/tests/test_mip_controls.js): the Effect
+  // constructor copies config.textures and config.outputTex3d but not
+  // config.textures3d — shipped 3D-effect definitions set textures3d as an
+  // instance field. Mirror that here rather than diverging from upstream.
+  policyProbe.textures3d = {
+    vol: { width: 8, height: 8, depth: 8, format: 'rgba16f', filter: 'nearest' }
+  }
+  policyProbe.outputTex3d = 'vol'
+  // Register under both the bare func and dotted 'namespace.func' ids: the DSL
+  // resolves effects through the namespace registry ('search synth'), while
+  // starter-op registration needs the dotted form (mirrors upstream's
+  // test_mip_controls.js registration order).
+  registerEffect('texturePolicyProbe', policyProbe)
+  registerEffect('synth.texturePolicyProbe', policyProbe)
+  registerOp('synth.texturePolicyProbe', {
+    name: 'texturePolicyProbe',
+    args: Object.entries(policyProbe.globals || {}).map(([key, spec]) => ({
+      name: key,
+      type: spec.type,
+      default: spec.default,
+    })),
+  })
+  registerStarterOps(['synth.texturePolicyProbe'])
+
+  const plainProbe = new Effect({
+    name: 'Plain Texture Probe',
+    namespace: 'synth',
+    func: 'plainTextureProbe',
+    description: 'Default texture probe used by tests',
+    tags: ['noise', 'util'],
+    textures: {
+      scratch: { width: 32, height: 32, format: 'rgba16f' }
+    },
+    passes: [
+      { program: 'probe', inputs: {}, outputs: { color: 'scratch' } }
+    ],
+  })
+  registerEffect('plainTextureProbe', plainProbe)
+  registerEffect('synth.plainTextureProbe', plainProbe)
+  registerOp('synth.plainTextureProbe', {
+    name: 'plainTextureProbe',
+    args: Object.entries(plainProbe.globals || {}).map(([key, spec]) => ({
+      name: key,
+      type: spec.type,
+      default: spec.default,
+    })),
+  })
+  registerStarterOps(['synth.plainTextureProbe'])
+
+  const policyGraph = compileGraph('search synth\ntexturePolicyProbe().write(o0)\nrender(o0)')
+  const specs = [...policyGraph.textures.entries()]
+  assert.ok(
+    specs.some(([, spec]) => spec.mipmaps === true && spec.persistent === true),
+    `no texture spec carries mipmaps+persistent: ${JSON.stringify(specs)}`,
+  )
+  assert.ok(
+    specs.some(([, spec]) => spec.is3D === true && spec.filter === 'nearest'),
+    `no 3D texture spec carries filter 'nearest': ${JSON.stringify(specs)}`,
+  )
+
+  const plainGraph = compileGraph('search synth\nplainTextureProbe().write(o0)\nrender(o0)')
+  for (const [, spec] of plainGraph.textures) {
+    assert.equal(spec.mipmaps, undefined, 'plain 2D spec must not carry mipmaps')
+    assert.equal(spec.persistent, undefined, 'plain 2D spec must not carry persistent')
+    assert.equal(spec.filter, undefined, 'plain spec must not carry filter')
+  }
+})
 
 test('GAP-027: strict opt-in mode rejects subchain argument violations with SyntaxError', async () => {
   const core = await createReferenceCompiler()
@@ -1615,5 +1702,3 @@ test('caller tokens lacking position attributes preserve null spans in subchain 
     },
   )
 })
-
-
