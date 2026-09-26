@@ -3,7 +3,7 @@
   "recordedAt": "2026-09-26",
   "source": {
     "repository": "noisefactorllc/noisemaker-for-cables",
-    "commit": "f214871b48fc7352c142c369ab44f320910e914c"
+    "commit": "7fe3b1627251a916d380124a46f6dac14c5192aa"
   },
   "authority": {
     "vendorLock": "vendor.lock.json",
@@ -57,5 +57,5 @@
     { "command": "npm run vendor:verify", "exitCode": 0, "result": "210/210 effects verified, 212 artifacts", "log": "evidence/gap-001-20260926/vendor.log" },
     { "command": "npm run test:browser", "exitCode": 0, "result": "3 suites passed", "log": "evidence/gap-001-20260926/browser.log" }
   ],
-  "recordNote": "The recorded checks executed at this exact source tree; the commit that ships this record adds only the evidence records themselves and changes no code or trigger paths."
+  "recordNote": "The recorded checks and frame evidence were executed at this exact source (7fe3b1627251a916d380124a46f6dac14c5192aa). The commit that ships this record changes only this record and the gap documentation; it changes no code or trigger paths."
 }

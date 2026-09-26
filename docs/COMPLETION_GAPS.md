@@ -165,7 +165,7 @@ The Standalone page advertises `0.11.2`. Support for that version remains unveri
 
 ### GAP-001: Updated landscape filtering lacks rendered qualification
 
-- Status: closed. Priority: P1. Category: authority.
+- Status: closed for rendered qualification. The residual expected behavior (pre-delivery rejection of unsupported exports under the kit's unrestricted compatibility declaration) is tracked as GAP-006. Priority: P1. Category: authority.
 - Affected scope: current-authority exports using landscape filtering and the kit's unrestricted compatibility declaration.
 - Expected behavior: compatibility claims identify the accepted authority and reject unsupported exports before delivery.
 - Historical behavior: the audited bundle rejected `renderLandscape3d(filtering: isosurface)`.
@@ -238,12 +238,25 @@ The Standalone page advertises `0.11.2`. Support for that version remains unveri
 - This audit checks artifact integrity and reproducible bytes. It does not approve a release.
 - Last verification: 2026-09-22.
 
+### GAP-006: Kit compatibility declaration lacks pre-delivery rejection
+
+- Status: open. Priority: P2. Category: authority.
+- Affected scope: the kit's unrestricted compatibility declaration for exports the port has not qualified, including landscape filtering beyond the measured cases.
+- Expected behavior: compatibility claims identify the accepted authority and reject unsupported exports before delivery (residual from GAP-001's expected behavior).
+- Observed behavior: `export-kit/kit.config.json` still declares `compat.mode: all`, and no builder-side rejection of unqualified exports exists.
+- Evidence: `export-kit/kit.config.json`, `authority-comparison.json`, and GAP-001's rendered qualification, which covers only the measured landscape cases through the op runtime boundary.
+- Next action: implement pre-delivery rejection of unsupported exports in the export-kit builder and narrow or annotate the declaration to the accepted authority.
+- Dependencies: the builder implementation lives outside this repository (scaffold export-kit builder); this record tracks the residual behavior.
+- Acceptance criteria: unsupported exports are rejected before delivery, and the shipped declaration matches the tested authority scope.
+- Required checks: builder rejection tests and exact-source kit export.
+- Last verification: 2026-09-26 (declaration recorded as still unrestricted).
+
 ## 5. Ordered next actions
 
 Current first action: Run the existing landscape fixture through the native Cables Program op with immutable reference input. Compare actual pixels at the existing tolerance and at zero tolerance. Then test an exported patch with parameter changes, resize, a failing program, and recovery. Require useful output and a visible diagnostic.
 Subsequent historical actions remain dependent on that evidence. No implementation is authorized by this audit.
 
-1. Record GAP-001's updated authority and bundle hashes. Run `node --test test/polymorphic-parity.test.js`. Require all 13 checks to pass.
+1. Record GAP-001's updated authority and bundle hashes. Run `node --test test/polymorphic-parity.test.js`. Require all 35 checks to pass.
    Compare default, voxel, and isosurface outputs with the declared authority. Preserve tolerances and include both projection modes.
 2. Run `npm run test:standalone` with the declared `CABLES_APP` after the bundle change. Preserve both earlier native attempts.
    Require visible output, media binding, resize, rejection recovery, reset, and recreation. Record saved-project reload separately.
@@ -263,4 +276,4 @@ The operator does not authorize additional effects or parity checkpoint advancem
 | --- | --- | --- | --- | --- |
 | 2026-09-22 | `0d860724f5305b854c6ffa64aed3de701157d2da` | Initial audit and README link. Five stable gaps recorded. | Unit checks, locked files, current compiler differential, package installation, published player recovery, native editor retry, bundle reproduction, artifact hashes, exact-source CI. | Broad parity, wider host qualification, actionable diagnostics, and release acceptance remain incomplete. |
 | 2026-09-23 | `a911c39a69c78ec13606019eeacdf7b680468872` | Corrected the stale landscape rejection. Added executable qualification actions. | Reviewed worker raw logs. Passed 13 compiler tests and 12 independent graph comparisons. Checked current kit changes and exact-source CI. | Five gaps remain. Current-bundle rendered and host qualification remains incomplete. No closure. |
-| 2026-09-26 | `f214871b48fc7352c142c369ab44f320910e914c` | Closed GAP-001's rendered qualification. Added source-bound compiler comparison and rendered fixtures for both `renderLandscape3d` filtering modes; recorded bundle and authority hashes in `differential.json` and `authority-comparison.json`; committed raw run logs and rendered frames under `evidence/gap-001-20260926/`. Executed at this source: 35 compiler tests pass; unit suite 245 pass, 0 fail; browser suites pass with zero differing channels for `landscape-voxel` and `landscape-isosurface`; vendor verification 210/210. | Standalone player and native editor qualification remains under GAP-003. Builder-side pre-delivery rejection for the unrestricted kit declaration remains open. |
+| 2026-09-26 | `7fe3b1627251a916d380124a46f6dac14c5192aa` | Closed GAP-001's rendered qualification; residual pre-delivery rejection tracked as GAP-006. Added source-bound compiler comparison and rendered fixtures for both `renderLandscape3d` filtering modes; recorded bundle and authority hashes in `differential.json` and `authority-comparison.json`; committed raw run logs and rendered frames under `evidence/gap-001-20260926/`, re-executed at this exact source: 35 compiler tests pass; unit suite 245 pass, 0 fail; browser suites pass with zero differing channels for `landscape-voxel` and `landscape-isosurface`; vendor verification 210/210. | Standalone player and native editor qualification remains under GAP-003. Builder-side pre-delivery rejection for the unrestricted kit declaration remains open under GAP-006. |
