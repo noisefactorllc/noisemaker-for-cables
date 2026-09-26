@@ -474,7 +474,7 @@ async function disposeSide(side, context, initialized, copier) {
   if (failures.length > 0) throw new AggregateError(failures, `${side} disposal failed`)
 }
 
-async function runSide(caseDefinition, side, context) {
+export async function runSide(caseDefinition, side, context) {
   let initialized
   let copier
   try {

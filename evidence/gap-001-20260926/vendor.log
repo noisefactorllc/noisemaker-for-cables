@@ -1,0 +1,7 @@
+npm run vendor:verify
+
+> @noisefactor/noisemaker-for-cables@0.1.0 vendor:verify
+> node tools/vendor.mjs verify
+
+210/210 effects verified (212 artifacts)
+exit=0

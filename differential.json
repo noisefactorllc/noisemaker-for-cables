@@ -3,7 +3,7 @@
   "recordedAt": "2026-09-26",
   "source": {
     "repository": "noisefactorllc/noisemaker-for-cables",
-    "commit": "ec4b95b871a52c2f068fd10e07247bdc11d53748"
+    "commit": "f214871b48fc7352c142c369ab44f320910e914c"
   },
   "authority": {
     "vendorLock": "vendor.lock.json",
@@ -47,11 +47,15 @@
       { "id": "landscape-voxel@0", "filtering": "voxel", "mismatchedChannels": 0, "copyExact": true, "finite": true },
       { "id": "landscape-isosurface@0", "filtering": "isosurface", "mismatchedChannels": 0, "copyExact": true, "finite": true }
     ],
+    "rawEvidence": "evidence/gap-001-20260926/ holds the executed-run logs (compiler-parity.log, unit.log, vendor.log, browser.log), the per-case comparison JSON (landscape-voxel@0.json, landscape-isosurface@0.json), and the raw reference and adapter frames (PNG) for both cases, produced by tools/landscape-evidence.mjs.",
     "evidence": "test/browser/pixel-parity.spec.js landscape-voxel and landscape-isosurface cases; npm run test:browser passes 3 of 3 suites (210/210 compile+link, 209 rendered catalog effects, 26 representative frame comparisons, state hygiene)",
     "limits": "The standalone Cables player boundary requires the native host harness (CABLES_APP) and remains under GAP-003 host qualification; this record covers the op runtime boundary in the browser harness."
   },
-  "vendorVerification": {
-    "command": "npm run vendor:verify",
-    "result": "210/210 effects verified, 212 artifacts"
-  }
+  "executedChecks": [
+    { "command": "node --test test/polymorphic-parity.test.js", "exitCode": 0, "result": "35 pass, 0 fail", "log": "evidence/gap-001-20260926/compiler-parity.log" },
+    { "command": "npm test", "exitCode": 0, "result": "245 pass, 0 fail, 0 skipped", "log": "evidence/gap-001-20260926/unit.log" },
+    { "command": "npm run vendor:verify", "exitCode": 0, "result": "210/210 effects verified, 212 artifacts", "log": "evidence/gap-001-20260926/vendor.log" },
+    { "command": "npm run test:browser", "exitCode": 0, "result": "3 suites passed", "log": "evidence/gap-001-20260926/browser.log" }
+  ],
+  "recordNote": "The recorded checks executed at this exact source tree; the commit that ships this record adds only the evidence records themselves and changes no code or trigger paths."
 }
