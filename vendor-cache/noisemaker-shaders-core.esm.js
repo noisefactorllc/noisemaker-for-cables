@@ -3,8 +3,8 @@
  * Includes: CanvasRenderer + UIController + EffectSelect
  * Copyright (c) 2017-2026 Noise Factor LLC. https://noisefactor.io/
  * SPDX-License-Identifier: MIT
- * Build: 8eeb7b5a
- * Date: 2026-09-25T22:45:28.980Z
+ * Build: 6a0af04d
+ * Date: 2026-09-26T01:49:01.443Z
  */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
@@ -6924,6 +6924,98 @@ var WebGL2FrameExportAdapter = class {
   }
 };
 
+// shaders/src/runtime/backends/diagnostics.js
+var DIAGNOSTIC_CODES = Object.freeze({
+  COMPILE: "ERR_SHADER_COMPILE",
+  LINK: "ERR_SHADER_LINK",
+  MISSING_SOURCE: "ERR_SHADER_MISSING",
+  NO_SOURCE: "ERR_NO_WGSL_SOURCE"
+});
+var ShaderDiagnostic = class extends Error {
+  /**
+   * @param {Object} spec
+   * @param {string} spec.code legacy machine code (see DIAGNOSTIC_CODES)
+   * @param {string} spec.backend 'webgl2' | 'webgpu'
+   * @param {string} spec.stage 'compile' | 'link' | 'missing-source' | 'bind'
+   * @param {string} [spec.detail] raw browser/compiler string
+   * @param {DiagnosticMessage[]} [spec.messages] parsed compiler messages
+   * @param {string} [spec.program] program/pass id
+   * @param {string} [spec.source] offending shader source
+   * @param {number} [spec.bindingIndex] parsed problem binding index
+   */
+  constructor(spec) {
+    const detail = spec.detail !== void 0 && spec.detail !== null ? String(spec.detail) : "";
+    super(detail);
+    this.name = "ShaderDiagnostic";
+    if (spec.code !== void 0) this.code = spec.code;
+    this.backend = spec.backend;
+    this.stage = spec.stage;
+    this.detail = detail;
+    this.messages = spec.messages || [];
+    if (spec.program !== void 0) this.program = spec.program;
+    if (spec.source !== void 0) this.source = spec.source;
+    if (spec.bindingIndex !== void 0) this.bindingIndex = spec.bindingIndex;
+  }
+};
+function parseGLSLInfoLog(log) {
+  if (typeof log !== "string" || log.length === 0) return [];
+  const messages = [];
+  for (const line of log.split("\n")) {
+    if (line.length === 0) continue;
+    const match = /^(ERROR|WARNING):\s*\d+:(\d+):\s*(.*)$/.exec(line);
+    if (match) {
+      messages.push({
+        severity: match[1].toLowerCase(),
+        line: parseInt(match[2], 10),
+        column: void 0,
+        message: match[3]
+      });
+    } else {
+      messages.push({
+        severity: "info",
+        line: void 0,
+        column: void 0,
+        message: line
+      });
+    }
+  }
+  return messages;
+}
+function parseWebGPUCompilationMessages(entries) {
+  if (!Array.isArray(entries)) return [];
+  return entries.map((entry) => ({
+    severity: entry.type,
+    line: typeof entry.lineNum === "number" ? entry.lineNum : void 0,
+    column: typeof entry.linePos === "number" ? entry.linePos : void 0,
+    message: entry.message
+  }));
+}
+function parseDiagnosticText(text) {
+  const parsed = { stage: void 0, bindingIndex: void 0, messages: [] };
+  if (typeof text !== "string" || text.length === 0) return parsed;
+  const bindingMatch = /binding index (\d+) not present/.exec(text);
+  if (bindingMatch) {
+    parsed.stage = "bind";
+    parsed.bindingIndex = parseInt(bindingMatch[1], 10);
+  }
+  parsed.messages = parseGLSLInfoLog(text);
+  return parsed;
+}
+function toDiagnostic(err, context) {
+  if (err instanceof ShaderDiagnostic) return err;
+  const detail = err && typeof err === "object" && typeof err.message === "string" ? err.message : String(err);
+  const parsed = parseDiagnosticText(detail);
+  return new ShaderDiagnostic({
+    code: void 0,
+    backend: context.backend,
+    stage: context.stage,
+    detail,
+    messages: parsed.messages,
+    program: context.program,
+    bindingIndex: parsed.bindingIndex
+  });
+}
+
 // shaders/src/runtime/backends/webgl2.js
 var GL_ERROR_CHECK_FRAMES = 3;
 function mipLevelCount(width, height) {
@@ -7680,7 +7772,13 @@ var WebGL2Backend = class _WebGL2Backend extends Backend {
     const gl = this.gl;
     const rawSource = spec.source || spec.glsl || spec.fragment;
     if (!rawSource) {
-      throw new Error(`Shader source missing for program '${id}'. You may need to regenerate the shader manifest.`);
+      throw new ShaderDiagnostic({
+        code: "ERR_SHADER_MISSING",
+        backend: "webgl2",
+        stage: "missing-source",
+        program: id,
+        detail: `Shader source missing for program '${id}'. You may need to regenerate the shader manifest.`
+      });
     }
     const source = this.injectDefines(rawSource, spec.defines || {});
     const vsSource = spec.vertex && Object.keys(spec.defines || {}).length ? this.injectDefines(spec.vertex, spec.defines) : spec.vertex || DEFAULT_VERTEX_SHADER;
@@ -7696,11 +7794,14 @@ var WebGL2Backend = class _WebGL2Backend extends Backend {
     gl.linkProgram(program);
     if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
       const log = gl.getProgramInfoLog(program);
-      throw {
+      throw new ShaderDiagnostic({
         code: "ERR_SHADER_LINK",
+        backend: "webgl2",
+        stage: "link",
+        program: id,
         detail: log,
-        program: id
-      };
+        messages: parseGLSLInfoLog(log)
+      });
     }
     gl.deleteShader(vertShader);
     gl.deleteShader(fragShader);
@@ -7731,17 +7832,25 @@ var WebGL2Backend = class _WebGL2Backend extends Backend {
       console.error("[GLSL compile error]", log);
       console.error("[GLSL source]", source);
       gl.deleteShader(shader);
-      throw {
+      throw new ShaderDiagnostic({
         code: "ERR_SHADER_COMPILE",
+        backend: "webgl2",
+        stage: "compile",
         detail: log,
+        messages: parseGLSLInfoLog(log),
         source
-      };
+      });
     }
     return shader;
   }
   injectDefines(source, defines) {
     if (!source) {
-      throw new Error("Shader source is missing. You may need to regenerate the shader manifest.");
+      throw new ShaderDiagnostic({
+        code: "ERR_SHADER_MISSING",
+        backend: "webgl2",
+        stage: "missing-source",
+        detail: "Shader source is missing. You may need to regenerate the shader manifest."
+      });
     }
     let injected = "#version 300 es\nprecision highp float;\nprecision highp int;\n";
     for (const [key, value] of Object.entries(defines)) {
@@ -9559,11 +9668,13 @@ var WebGPUBackend = class _WebGPUBackend extends Backend {
   async compileProgram(id, spec) {
     const source = this.resolveWGSLSource(spec);
     if (!source) {
-      throw {
+      throw new ShaderDiagnostic({
         code: "ERR_NO_WGSL_SOURCE",
-        detail: `No WGSL shader source found for program '${id}'. Available keys: ${Object.keys(spec).join(", ")}`,
-        program: id
-      };
+        backend: "webgpu",
+        stage: "missing-source",
+        program: id,
+        detail: `No WGSL shader source found for program '${id}'. Available keys: ${Object.keys(spec).join(", ")}`
+      });
     }
     const processedSource = this.injectDefines(source, spec.defines || {});
     const hasComputeEntry = /@compute\s/.test(processedSource);
@@ -9638,11 +9749,15 @@ var WebGPUBackend = class _WebGPUBackend extends Backend {
     const compilationInfo = await module.getCompilationInfo();
     const errors = compilationInfo.messages.filter((m) => m.type === "error");
     if (errors.length > 0) {
-      throw {
+      throw new ShaderDiagnostic({
         code: "ERR_SHADER_COMPILE",
+        backend: "webgpu",
+        stage: "compile",
+        program: id,
         detail: errors.map((e) => `Line ${e.lineNum}: ${e.message}`).join("\n"),
-        program: id
-      };
+        messages: parseWebGPUCompilationMessages(errors),
+        source
+      });
     }
     const bindings = this.parseShaderBindings(source);
     const entryPoints = [];
@@ -9702,11 +9817,15 @@ var WebGPUBackend = class _WebGPUBackend extends Backend {
     const moduleInfo = await mainModule.getCompilationInfo();
     const moduleErrors = moduleInfo.messages.filter((m) => m.type === "error");
     if (moduleErrors.length > 0) {
-      throw {
+      throw new ShaderDiagnostic({
         code: "ERR_SHADER_COMPILE",
+        backend: "webgpu",
+        stage: "compile",
+        program: id,
         detail: moduleErrors.map((e) => `Line ${e.lineNum}: ${e.message}`).join("\n"),
-        program: id
-      };
+        messages: parseWebGPUCompilationMessages(moduleErrors),
+        source
+      });
     }
     let vertexModule;
     let vertexEntryPoint;
@@ -9717,11 +9836,15 @@ var WebGPUBackend = class _WebGPUBackend extends Backend {
       const vertexInfo = await vertexModule.getCompilationInfo();
       const vertexErrors = vertexInfo.messages.filter((m) => m.type === "error");
       if (vertexErrors.length > 0) {
-        throw {
+        throw new ShaderDiagnostic({
           code: "ERR_SHADER_COMPILE",
+          backend: "webgpu",
+          stage: "compile",
+          program: id,
           detail: vertexErrors.map((e) => `Line ${e.lineNum}: ${e.message}`).join("\n"),
-          program: id
-        };
+          messages: parseWebGPUCompilationMessages(vertexErrors),
+          source: vertexSource
+        });
       }
       vertexEntryPoint = spec.vertexEntryPoint || DEFAULT_VERTEX_ENTRY_POINT;
       const vertexBindings = this.parseShaderBindings(vertexSource);
@@ -10930,37 +11053,43 @@ var WebGPUBackend = class _WebGPUBackend extends Backend {
         entries: []
       });
     }
+    return this.createBindGroupFromEntries(targetPipeline.getBindGroupLayout(0), entries);
+  }
+  /**
+   * Create a bind group from explicit entries, retrying with progressively
+   * filtered entries when the browser reports optimized-out bindings.
+   * The retry decision is made from the structured diagnostic union
+   * (parsed `bindingIndex`), not by re-matching the raw browser string.
+   */
+  createBindGroupFromEntries(layout, entries) {
     try {
       return this.device.createBindGroup({
-        layout: targetPipeline.getBindGroupLayout(0),
+        layout,
         entries
       });
     } catch (err) {
-      const errStr = err.message || String(err);
-      if (!errStr.includes("binding index")) {
+      const diagnostic = toDiagnostic(err, { backend: "webgpu", stage: "bind" });
+      if (diagnostic.bindingIndex === void 0) {
         throw err;
       }
       let currentEntries = entries;
       const maxRetries = 10;
       for (let attempt = 0; attempt < maxRetries; attempt++) {
-        const bindingMatch = /binding index (\d+) not present/.exec(errStr);
-        if (bindingMatch) {
-          const problemBinding = parseInt(bindingMatch[1], 10);
-          currentEntries = currentEntries.filter((e) => e.binding !== problemBinding);
-          try {
-            return this.device.createBindGroup({
-              layout: targetPipeline.getBindGroupLayout(0),
-              entries: currentEntries
-            });
-          } catch (retryErr) {
-            const retryErrStr = retryErr.message || String(retryErr);
-            if (!retryErrStr.includes("binding index")) {
-              throw retryErr;
-            }
-            continue;
+        const problemBinding = diagnostic.bindingIndex;
+        currentEntries = currentEntries.filter((e) => e.binding !== problemBinding);
+        try {
+          return this.device.createBindGroup({
+            layout,
+            entries: currentEntries
+          });
+        } catch (retryErr) {
+          const retryDiagnostic = toDiagnostic(retryErr, { backend: "webgpu", stage: "bind" });
+          if (retryDiagnostic.bindingIndex === void 0) {
+            throw retryErr;
           }
+          diagnostic.bindingIndex = retryDiagnostic.bindingIndex;
+          continue;
         }
-        break;
       }
       throw err;
     }
@@ -12692,9 +12821,11 @@ function evaluateAudio(config, audioState, min = config.min, max = config.max) {
   return min + rawValue * (max - min);
 }
 var Pipeline = class {
-  constructor(graph, backend) {
+  constructor(graph, backend, options = {}) {
     this.graph = graph;
     this.backend = backend;
+    this.texturePooling = options.texturePooling === true;
+    this._textureAliases = /* @__PURE__ */ new Map();
     this.sinkManager = new SinkManager();
     this._sinkDescriptor = {
       width: 0,
@@ -13383,6 +13514,9 @@ var Pipeline = class {
    */
   recreateTextures(uniforms = {}) {
     if (!this.graph || !this.graph.textures) return;
+    const previousAliases = this._textureAliases;
+    this._textureAliases = this.texturePooling ? this.buildTexturePoolingPlan() : /* @__PURE__ */ new Map();
+    this.releaseRegroupedTextures(previousAliases, this._textureAliases);
     for (const [texId, spec] of this.graph.textures.entries()) {
       const isGlobalSurface = texId.startsWith("global_") || texId.startsWith("global");
       if (isGlobalSurface) {
@@ -13426,6 +13560,8 @@ var Pipeline = class {
           persistent: spec.persistent === true
         });
       } else {
+        const storageId = this._textureAliases.get(texId);
+        if (storageId && storageId !== texId) continue;
         const existingTex = this.backend.textures?.get?.(texId);
         if (existingTex && existingTex.width === width && existingTex.height === height && existingTex.format === spec.format) {
           if (!spec.is3D || existingTex.depth === this.resolveDimension(spec.depth, width, uniforms)) {
@@ -13450,7 +13586,169 @@ var Pipeline = class {
         }
       }
     }
+    this.applyTextureAliases();
     this.refreshMipTargets();
+  }
+  /**
+   * Build the pooling plan consumed from the analyzer's physical allocation
+   * map (graph.allocations, produced by allocateResources()). Returns a Map
+   * of virtualId -> storageId for every poolable texture; members of a
+   * physical group share one backend texture created under the group's
+   * primary (first) member id.
+   *
+   * A group is poolable only when every member carries an identical plain
+   * 2D spec: persistent textures must keep their cross-frame contents, and
+   * mipmapped/3D textures carry policy state a shared record must not
+   * absorb. Groups with mismatched dimensions or formats fall back to
+   * standalone textures.
+   *
+   * First-read safety: a member whose first touch in the pass list is an
+   * input read (or that is sampled by its own producing pass) expects the
+   * zero-initialized/previous-frame contents a standalone texture would
+   * hold, so it is never pooled into a slot a group-mate writes earlier in
+   * the same frame. The same protection excludes textures written by
+   * partial/non-clearing passes — any explicit `drawMode` (points,
+   * billboards, triangles) scatters geometry without covering the surface,
+   * and `blend` makes the result depend on the destination's previous
+   * contents — because pooled storage would hand them a group-mate's
+   * content instead of their own accumulated state.
+   * @returns {Map} Map<virtualId, storageId>
+   */
+  buildTexturePoolingPlan() {
+    const allocations = this.graph?.allocations;
+    const textures = this.graph?.textures;
+    const aliases = /* @__PURE__ */ new Map();
+    if (!(allocations instanceof Map) || !textures) return aliases;
+    const firstTouchIsWrite = /* @__PURE__ */ new Map();
+    const selfSampled = /* @__PURE__ */ new Set();
+    const partiallyWritten = /* @__PURE__ */ new Set();
+    for (const pass of this.graph.passes || []) {
+      const inputs = new Set(Object.values(pass.inputs || {}));
+      const outputs = Object.values(pass.outputs || {});
+      if (pass.drawMode || pass.blend) {
+        for (const texId of outputs) partiallyWritten.add(texId);
+      } else if (pass.viewport && !pass.clear) {
+        for (const texId of outputs) partiallyWritten.add(texId);
+      }
+      for (const texId of outputs) {
+        if (!firstTouchIsWrite.has(texId)) firstTouchIsWrite.set(texId, true);
+        if (inputs.has(texId)) selfSampled.add(texId);
+      }
+      for (const texId of inputs) {
+        if (!firstTouchIsWrite.has(texId)) firstTouchIsWrite.set(texId, false);
+      }
+    }
+    const groups = /* @__PURE__ */ new Map();
+    for (const [texId, physicalId] of allocations) {
+      if (!physicalId || !textures.has(texId)) continue;
+      if (texId.startsWith("global")) continue;
+      if (firstTouchIsWrite.get(texId) === false) continue;
+      if (selfSampled.has(texId)) continue;
+      if (partiallyWritten.has(texId)) continue;
+      if (!groups.has(physicalId)) groups.set(physicalId, []);
+      groups.get(physicalId).push(texId);
+    }
+    for (const members of groups.values()) {
+      if (members.length < 2) continue;
+      const specs = members.map((id) => textures.get(id));
+      if (specs.some((spec) => !spec || spec.persistent === true || spec.mipmaps === true || spec.is3D === true)) {
+        continue;
+      }
+      const signature = (spec) => JSON.stringify([spec.width, spec.height, spec.format]);
+      const first = signature(specs[0]);
+      if (!specs.every((spec) => signature(spec) === first)) continue;
+      const storageId = members[0];
+      for (const member of members) aliases.set(member, storageId);
+    }
+    return aliases;
+  }
+  /**
+   * Destroy backend textures of pooling groups whose membership changed
+   * since the previous plan, so the recreation loop rebuilds them with the
+   * correct (standalone or re-grouped) sharing.
+   */
+  releaseRegroupedTextures(previousAliases, nextAliases) {
+    if (!(previousAliases instanceof Map) || previousAliases.size === 0) return;
+    const groups = /* @__PURE__ */ new Map();
+    for (const [member, storage] of previousAliases) {
+      if (!groups.has(storage)) groups.set(storage, []);
+      groups.get(storage).push(member);
+    }
+    for (const [storage, members] of groups) {
+      const unchanged = members.every((m) => nextAliases.get(m) === storage);
+      if (unchanged) continue;
+      for (const member of members) {
+        if (this.backend.textures?.has?.(member)) {
+          this.backend.destroyTexture(member);
+        }
+      }
+    }
+  }
+  /**
+   * Point every pooled secondary member's backend map entry at its group's
+   * shared storage record, so pass execution binds the same texture through
+   * either id.
+   */
+  applyTextureAliases() {
+    for (const [member, storage] of this._textureAliases) {
+      if (member === storage) continue;
+      const record = this.backend.textures?.get?.(storage);
+      if (!record) continue;
+      const existing = this.backend.textures?.get?.(member);
+      if (existing && existing !== record) {
+        this.backend.destroyTexture(member);
+      }
+      this.backend.textures?.set?.(member, record);
+    }
+  }
+  /**
+   * Query the actual runtime texture allocation/reuse plan.
+   *
+   * Reports the analyzer's physical allocation map (graph.allocations) and
+   * the sharing the renderer actually materialized: non-global graph
+   * textures grouped by identical backend texture record. With texture
+   * pooling enabled, members of a `sharedTextures` group are served by one
+   * physical texture; without it every virtual texture owns its own record.
+   * @returns {object} { pooling, allocations, sharedTextures, textures }
+   */
+  getResourcePlan() {
+    const textures = this.graph?.textures;
+    if (!textures) {
+      return {
+        pooling: this.texturePooling === true,
+        allocations: /* @__PURE__ */ new Map(),
+        sharedTextures: [],
+        textures: []
+      };
+    }
+    const allocations = this.graph.allocations instanceof Map ? this.graph.allocations : /* @__PURE__ */ new Map();
+    const records = /* @__PURE__ */ new Map();
+    for (const [texId] of textures) {
+      if (texId.startsWith("global")) continue;
+      const record = this.backend?.textures?.get?.(texId);
+      if (!record) continue;
+      if (!records.has(record)) records.set(record, { id: texId, members: [] });
+      records.get(record).members.push(texId);
+    }
+    const textureRecords = [];
+    const sharedTextures = [];
+    for (const { id, members } of records.values()) {
+      const record = this.backend.textures.get(id);
+      textureRecords.push({
+        id,
+        width: record?.width,
+        height: record?.height,
+        format: record?.format,
+        virtualTextures: members
+      });
+      if (members.length > 1) sharedTextures.push(members);
+    }
+    return {
+      pooling: this.texturePooling === true,
+      allocations,
+      sharedTextures,
+      textures: textureRecords
+    };
   }
   /**
    * Update parameter-dependent textures when uniforms change
@@ -14260,7 +14558,7 @@ async function createPipeline(graph, options = {}) {
   } else {
     throw new Error("No backend available or canvas not provided");
   }
-  const pipeline = new Pipeline(graph, backend);
+  const pipeline = new Pipeline(graph, backend, options);
   await pipeline.init(options.width || 800, options.height || 600);
   return pipeline;
 }
