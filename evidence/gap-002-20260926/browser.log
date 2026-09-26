@@ -1,0 +1,11 @@
+
+> @noisefactor/noisemaker-for-cables@0.1.0 test:browser
+> playwright test
+
+
+Running 3 tests using 1 worker
+
+[1/3] [chromium] › test/browser/full-catalog.spec.js:14:3 › Task 9 full catalog sorted sweep › all 210 effects compile and link; executable effects render finite pixels that match the independent reference and copy exactly
+[2/3] [chromium] › test/browser/pixel-parity.spec.js:35:3 › Task 9 deterministic pixel parity › reference backend and Cables adapter agree after common float readback
+[3/3] [chromium] › test/browser/state-hygiene.spec.js:19:3 › Task 9 hostile host state hygiene › compile, render, rejection, reset, and disposal restore exact WebGL2 state
+  3 passed (4.3m)

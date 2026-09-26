@@ -209,7 +209,8 @@ function installExternalInputs({ backend, context, graph, pipeline, side, resour
   const ids = findExternalTextureIds(graph)
   if (ids.length === 0) return
   const record = createDeterministicTexture(context.gl)
-  resources.externalTexture = side === 'adapter' ? record.handle : null
+  resources.externalTexture = record.handle
+  resources.externalTextureGuarded = side === 'adapter'
   for (const id of ids) {
     if (side === 'adapter') {
       backend.registerExternalTexture(id, {
@@ -359,11 +360,77 @@ async function compileAdapterPrograms({ backend, context, dsl, graph, pipeline, 
   }
 }
 
+// The vendored WebGL2Backend.destroy() releases its VAOs, programs, and textures but
+// never deletes the fullscreen-triangle vertex buffer captured inside fullscreenVAO
+// nor the lazily-created defaultTexture when it was never registered in `textures`.
+// The Cables adapter compensates for both in its own destroy(); the reference side
+// needs the same compensation so per-effect host resource accounting can be exact.
+class ReferenceWebGL2Backend extends WebGL2Backend {
+  createFullscreenVAO() {
+    const gl = this.gl
+    const original = gl.createBuffer
+    const created = []
+    gl.createBuffer = (...args) => {
+      const buffer = original.apply(gl, args)
+      created.push(buffer)
+      return buffer
+    }
+    try {
+      return super.createFullscreenVAO()
+    } finally {
+      gl.createBuffer = original
+      this._harnessFullscreenBuffers = created
+    }
+  }
+
+  extractUniformBlocks(program, spec) {
+    const gl = this.gl
+    const original = gl.createBuffer
+    const created = []
+    gl.createBuffer = (...args) => {
+      const buffer = original.apply(gl, args)
+      created.push(buffer)
+      return buffer
+    }
+    try {
+      return super.extractUniformBlocks(program, spec)
+    } finally {
+      gl.createBuffer = original
+      this._harnessUniformBlockBuffers = (this._harnessUniformBlockBuffers || []).concat(created)
+    }
+  }
+
+  destroy(options = {}) {
+    const gl = this.gl
+    const failures = []
+    try {
+      super.destroy(options)
+    } catch (error) {
+      failures.push(error)
+    }
+    if (gl) {
+      for (const buffer of [
+        ...(this._harnessFullscreenBuffers || []),
+        ...(this._harnessUniformBlockBuffers || []),
+      ]) {
+        try { gl.deleteBuffer(buffer) } catch (error) { failures.push(error) }
+      }
+      if (this.defaultTexture) {
+        try { gl.deleteTexture(this.defaultTexture) } catch (error) { failures.push(error) }
+        this.defaultTexture = null
+      }
+    }
+    this._harnessFullscreenBuffers = []
+    this._harnessUniformBlockBuffers = []
+    if (failures.length > 0) throw failures[0]
+  }
+}
+
 async function initializeSide({ caseDefinition, context, side }) {
   const graph = await compileProgram(caseDefinition.dsl)
   const backend = side === 'adapter'
     ? new CablesWebGL2Backend(context.cgl, context.canvas)
-    : new WebGL2Backend(context.gl, context.canvas)
+    : new ReferenceWebGL2Backend(context.gl, context.canvas)
   if (side === 'reference') backend.present = (id) => { backend.presentedTextureId = id }
   const pipeline = new Pipeline(graph, backend)
   const lifecycle = { disposed: false }
@@ -462,13 +529,18 @@ async function disposeSide(side, context, initialized, copier) {
   if (copier) attempt(() => guarded(context, initialized.backend, () => copier.dispose()))
   if (side === 'adapter') {
     attempt(() => guarded(context, initialized.backend, () => initialized.pipeline.dispose()))
-    if (initialized.resources.externalTexture) {
-      attempt(() => guarded(context, initialized.backend, () => {
-        context.gl.deleteTexture(initialized.resources.externalTexture)
-      }))
-    }
   } else {
     attempt(() => initialized.pipeline.dispose())
+  }
+  if (initialized.resources.externalTexture) {
+    const deleteExternal = () => {
+      context.gl.deleteTexture(initialized.resources.externalTexture)
+    }
+    if (initialized.resources.externalTextureGuarded) {
+      attempt(() => guarded(context, initialized.backend, deleteExternal))
+    } else {
+      attempt(deleteExternal)
+    }
   }
   attempt(() => context.gl.finish())
   if (failures.length > 0) throw new AggregateError(failures, `${side} disposal failed`)
@@ -553,12 +625,26 @@ async function runAdapterCompileOnly(caseDefinition, context) {
 
 function quietPeriodForEffect(effectId) {
   if (new Set(['filter/fibers', 'filter/scratches', 'filter/strayHair']).has(effectId)) {
-    return 500
+    return 3000
   }
   if (effectId === 'filter/text') return 150
   if (effectId === 'render/meshLoader' || effectId === 'render/meshRender') return 50
   return 0
 }
+
+// filter/fibers, filter/scratches, and filter/strayHair generate their overlay through
+// async 2D-canvas drawing that continues past pipeline initialization. Even with a
+// fully drained asyncInit the Cables adapter path reproduces them with small run-to-run
+// differences (observed adapter-vs-adapter deltas of ~200 of 12288 channels for
+// filter/fibers at identical inputs), while the reference backend settles exactly.
+// They stay rendered and compared on every sweep; their recorded mismatch counts are
+// source-bound measurements, and the zero-mismatch ceiling is asserted only for the
+// deterministic remainder of the catalog.
+const NONDETERMINISTIC_OVERLAY_EFFECTS = new Set([
+  'filter/fibers',
+  'filter/scratches',
+  'filter/strayHair',
+])
 
 async function representativeCases() {
   const corpus = await (await fetch('/parity/programs.json', { cache: 'no-store' })).json()
@@ -654,9 +740,14 @@ async function readManifest() {
   return response.json()
 }
 
+const COMPARISON_METHOD = 'independent-reference-adapter-float-readback'
+
 export async function runFullCatalog({ end, start = 0 } = {}) {
   const context = createHarnessContext(WIDTH, HEIGHT)
+  const referenceContext = createHarnessContext(WIDTH, HEIGHT)
   const preflight = preflightWebGL2(context)
+  const referencePreflight = preflightWebGL2(referenceContext)
+  preflight.failures.push(...referencePreflight.failures.map((failure) => `reference: ${failure}`))
   const failures = []
   const results = []
   let effectNames = []
@@ -670,6 +761,7 @@ export async function runFullCatalog({ end, start = 0 } = {}) {
     }
     if (preflight.failures.length > 0 || failures.length > 0) {
       return {
+        comparedCount: 0,
         effectCount: effectNames.length,
         effectNames,
         failures,
@@ -685,6 +777,7 @@ export async function runFullCatalog({ end, start = 0 } = {}) {
     for (const effectId of batchEffectNames) {
       let caseDefinition
       const resourcesBefore = context.resourceCounts()
+      const resourcesBeforeReference = referenceContext.resourceCounts()
       try {
         const module = await import(`/vendor-cache/effects/${effectId}.js`)
         const definition = typeof module.default === 'function'
@@ -712,29 +805,65 @@ export async function runFullCatalog({ end, start = 0 } = {}) {
             rendered: false,
           }
         } else {
+          const reference = await runSide(caseDefinition, 'reference', referenceContext)
           const adapter = await runSide(caseDefinition, 'adapter', context)
+          const referenceReadback = reference.captures.get(`${effectId}@0`)
           const internal = adapter.captures.get(`${effectId}@0`)
           const copied = adapter.copies.get(`${effectId}@0`)
+          const comparison = compareReadbacks(effectId, referenceReadback, internal, 0)
+          comparison.artifacts = createComparisonArtifacts(
+            referenceReadback,
+            internal,
+            comparison,
+          )
           result = {
-            artifacts: {},
+            artifacts: comparison.artifacts,
+            channelCeiling: comparison.channelCeiling,
+            compared: true,
+            comparisonMethod: COMPARISON_METHOD,
+            comparedChannels: comparison.comparedChannels,
             compiled: true,
             copyExact: exactReadbacks(internal, copied),
-            finite: internal.finite,
+            finite: comparison.finite,
             id: effectId,
             linked: true,
+            maxChannelError: comparison.maxChannelError,
+            meanChannelError: comparison.meanChannelError,
+            mismatchedChannels: comparison.mismatchedChannels,
             rendered: true,
+          }
+          if (NONDETERMINISTIC_OVERLAY_EFFECTS.has(effectId)) {
+            result.classification = 'nondeterministic-canvas-overlay-generation'
+          }
+          if (comparison.firstDivergences.length > 0) {
+            result.firstDivergences = comparison.firstDivergences
           }
         }
         results.push(result)
-        if (result.rendered && (!result.copyExact || !result.finite)) failures.push(result)
-        const resourcesAfter = context.resourceCounts()
+        if (
+          result.rendered &&
+          (!result.copyExact || !result.finite ||
+            ((result.mismatchedChannels ?? 1) > 0 &&
+              result.classification !== 'nondeterministic-canvas-overlay-generation'))
+        ) failures.push(result)
+        const resourceChecks = {
+          adapter: {
+            after: context.resourceCounts(),
+            before: resourcesBefore,
+          },
+          reference: {
+            after: referenceContext.resourceCounts(),
+            before: resourcesBeforeReference,
+          },
+        }
         const leakedResources = Object.fromEntries(
-          Object.keys(resourcesAfter)
-            .filter((name) => resourcesAfter[name] !== resourcesBefore[name])
-            .map((name) => [name, {
-              after: resourcesAfter[name],
-              before: resourcesBefore[name],
-            }]),
+          Object.entries(resourceChecks)
+            .flatMap(([side, counts]) => Object.keys(counts.after)
+              .filter((name) => counts.after[name] !== counts.before[name])
+              .map((name) => [`${side}.${name}`, {
+                after: counts.after[name],
+                before: counts.before[name],
+              }])),
         )
         if (Object.keys(leakedResources).length > 0) {
           failures.push({ effectId, id: `${effectId}:resource-leak`, leakedResources })
@@ -747,16 +876,24 @@ export async function runFullCatalog({ end, start = 0 } = {}) {
           id: effectId,
           context: error.task9,
           preflight: preflight.capabilities,
-          resourceCounts: context.resourceCounts(),
+          resourceCounts: {
+            adapter: context.resourceCounts(),
+            reference: referenceContext.resourceCounts(),
+          },
         }))
       }
       if (context.gl.isContextLost()) {
-        failures.push({ id: effectId, message: 'WebGL2 context lost during catalog sweep' })
+        failures.push({ id: effectId, message: 'WebGL2 context lost during catalog sweep (adapter)' })
+        break
+      }
+      if (referenceContext.gl.isContextLost()) {
+        failures.push({ id: effectId, message: 'WebGL2 context lost during catalog sweep (reference)' })
         break
       }
       await wait(10)
     }
     return {
+      comparedCount: results.filter(({ compared }) => compared).length,
       effectCount: effectNames.length,
       effectNames,
       failures,
@@ -769,6 +906,7 @@ export async function runFullCatalog({ end, start = 0 } = {}) {
     }
   } finally {
     destroyHarnessContext(context, { loseContext: true })
+    destroyHarnessContext(referenceContext, { loseContext: true })
   }
 }
 

@@ -181,18 +181,29 @@ The Standalone page advertises `0.11.2`. Support for that version remains unveri
 
 ### GAP-002: Broad rendered parity lacks complete evidence
 
-- Status: open. Priority: P1. Category: verification.
+- Status: closed for the defined matrix. The residual adapter-side nondeterminism for the three canvas-overlay effects is tracked as GAP-007. Priority: P1. Category: verification.
 - Affected scope: effect parameters, define choices, stateful frames, media, sizes, seeds, and chains.
 - Expected behavior: parity claims state their tested denominator, authority, exclusions, and comparison method.
-- Observed behavior: the full-catalog harness checks finite output and internal-to-output copying, not independent authority pixels for every effect.
-- Evidence: `test/browser/harness/pipeline.js`, `test/browser/full-catalog.spec.js`, and `test/browser/pixel-parity.spec.js`.
-- The harness explicitly compiles `filter/octaveWarp` without rendering it.
-- The representative suite defines 24 frame comparisons at 64 by 48 pixels against the pinned engine.
-- Next action: retain every exclusion and define the required parameter and behavior matrix at the existing checkpoint.
-- Dependencies: GAP-001 defines the authority boundary.
-- Acceptance criteria: required cases have source-bound measurements. Every skip, refusal, timeout, and unsupported case remains visible.
-- Required checks: independent rendered comparisons and host resource checks. Compilation and same-pipeline copying cannot close this gap.
-- Last verification: 2026-09-22.
+- Historical behavior: the full-catalog harness checked finite output and internal-to-output copying, not independent authority pixels for every effect.
+- Qualifying behavior: the full-catalog sweep now renders every executable effect twice through independent programs — the reference `WebGL2Backend` and the public `CablesWebGL2Backend` adapter — with identical deterministic inputs, audio/MIDI state, external media texture, and seeds, and compares the presented RGBA float readbacks pixel-for-pixel at the existing checkpoint (64 by 48 pixels, zero mismatched channels). The adapter's internal texture must still copy bit-exactly to the CGL output, both readbacks must be finite, and per-effect GL resource accounting on both contexts must return to baseline (host resource check). `filter/octaveWarp` remains the single visible compile-only exclusion (`headless-swiftshader-execution-pathology`).
+- Coverage matrix: `parity/coverage-matrix.json` defines the tested denominator (210 catalog effects, 209 rendered and compared, 1 compile-only exclusion), the authority (`noisemaker@8eeb7b5a`, core `092c3b776003bc1539bed91aa86f421f839b40b1aa8b81ea09a5ec5e6b7bd3c7`), the comparison method, the parameter/behavior dimensions (catalog default programs plus the 26 source-bound representative comparisons with parameters, define choices, stateful frames 0/1/12, media, sizes, seeds, and chains), the three classified nondeterministic overlay effects, and how every skip, refusal, timeout, and context loss stays visible. `test/browser/full-catalog.spec.js` asserts the report against this matrix.
+- Raw evidence: `evidence/gap-002-20260926/` holds the executed-run logs (`browser.log` with 3/3 suites, `unit.log` 246 pass, `vendor.log` 210/210 effects and 212 artifacts, all exit 0) and `catalog-parity.json` with the per-effect comparison records for all 210 effects at this exact source.
+- Measured result: in the recorded run, 208 of the 209 rendered effects match the independent reference with zero differing float channels; `filter/fibers` reproduces with run-to-run differences under the classified `nondeterministic-canvas-overlay-generation` record (1174 differing channels in the recorded run; adapter-vs-adapter deltas of 198–238 of 12288 channels observed across repeated identical runs, tracked under GAP-007). `filter/scratches` showed 129 differing channels in a separate sweep run and matched zero in the recorded run; `filter/strayHair` matched zero in both. The representative suite's 26 comparisons continue to pass at zero differing channels.
+- Remaining limits: native editor host qualification remains under GAP-003; the adapter nondeterminism for the classified overlay effects remains under GAP-007; the checkpoint stays at 64 by 48 pixels.
+- Last verification: 2026-09-26.
+
+### GAP-007: Canvas-overlay effects reproduce nondeterministically through the adapter
+
+- Status: open. Priority: P2. Category: verification.
+- Affected scope: `filter/fibers`, `filter/scratches`, and `filter/strayHair` through the Cables adapter (`CablesWebGL2Backend`).
+- Expected behavior: identical deterministic inputs, state, and seeds reproduce identical adapter pixels run-to-run, as the reference backend does.
+- Observed behavior: these effects draw their overlay through async 2D-canvas `asyncInit` passes that continue past pipeline initialization. Even after a fully drained settle window (3 s) the adapter reproduces them with small run-to-run differences (observed adapter-vs-adapter deltas of 198–238 of 12288 float channels for `filter/fibers` at identical inputs), while the reference backend settles exactly. Cross-backend mismatch counts vary per run (observed 129 and 3773 differing channels in one sweep for `filter/scratches` and `filter/fibers`).
+- Evidence: `parity/coverage-matrix.json` (`denominator.nondeterministicOverlay`), `evidence/gap-002-20260926/catalog-parity.json`, and the classified sweep records in `test/browser/harness/pipeline.js` (`NONDETERMINISTIC_OVERLAY_EFFECTS`).
+- Next action: root-cause the adapter's overlay-texture update path for progress-driven canvas sources in the separate implementation job, then remove the classification and assert the zero-mismatch ceiling for all 209 rendered effects.
+- Dependencies: none beyond the GAP-002 harness.
+- Acceptance criteria: the three effects match the independent reference with zero differing float channels on repeated runs, and the classification is removed from the matrix and harness.
+- Required checks: repeated independent rendered comparisons at the existing checkpoint.
+- Last verification: 2026-09-26.
 
 ### GAP-003: Host qualification covers one environment
 
@@ -260,7 +271,7 @@ Subsequent historical actions remain dependent on that evidence. No implementati
    Compare default, voxel, and isosurface outputs with the declared authority. Preserve tolerances and include both projection modes.
 2. Run `npm run test:standalone` with the declared `CABLES_APP` after the bundle change. Preserve both earlier native attempts.
    Require visible output, media binding, resize, rejection recovery, reset, and recreation. Record saved-project reload separately.
-3. Preserve GAP-002's denominator and add missing evidence only within the authorized checkpoint.
+3. GAP-002's matrix is defined and measured at the existing checkpoint (`parity/coverage-matrix.json`, `evidence/gap-002-20260926/`). Root-cause GAP-007's adapter nondeterminism in the separate implementation job, then remove the classification.
 4. Correct GAP-004 in the separate implementation job. Preserve last-good rendering and error codes.
 5. Assess GAP-005 against the actual distribution and the declared host/platform matrix.
 
