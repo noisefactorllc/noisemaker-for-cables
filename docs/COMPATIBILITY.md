@@ -66,7 +66,7 @@ Unknown values mean `not measured`, never zero.
 
 | Gate | Expected cases | Executed | Strict passes | Failures | Skips | Status |
 |---|---|---|---|---|---|---|
-| Current full render suite | 210 | 209 rendered, 210 compiled | 208 | 1 (`filter/fibers`, 1174 channels, GAP-007) | 1 (`filter/octaveWarp`, compile-only) | partial at the 64 by 48 checkpoint |
+| Current full render suite | 210 | 209 rendered, 210 compiled | 209 | 0 | 1 (`filter/octaveWarp`, compile-only) | full at the 64 by 48 checkpoint (GAP-007 closed 2026-09-26, `evidence/gap-007-20260926/`) |
 
 The served compatibility manifest declares mode `all`. That declaration covers the authority catalog but does not prove behavior.
 No missing ID conclusion follows without reconciling fixture behavior and the source contract.
@@ -119,7 +119,7 @@ Missing effects remain visible toward the full-parity goal. Contract exclusions 
 | `filter/emboss` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
 | `filter/extrude` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
 | `filter/feedback` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
-| `filter/fibers` | all | failed: 1174 differing channels in the recorded run. Overlay-nondeterministic (GAP-007). |
+| `filter/fibers` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26; overlay-settle drain per closed GAP-007) |
 | `filter/flipMirror` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
 | `filter/fxaa` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
 | `filter/glowingEdge` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
@@ -169,7 +169,7 @@ Missing effects remain visible toward the full-parity goal. Contract exclusions 
 | `filter/scale` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
 | `filter/scanlineError` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
 | `filter/scatter` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
-| `filter/scratches` | all | partial: matched in the recorded run. Overlay-nondeterministic (GAP-007). |
+| `filter/scratches` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26; overlay-settle drain per closed GAP-007) |
 | `filter/scroll` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
 | `filter/seamless` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
 | `filter/sharpen` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
@@ -187,7 +187,7 @@ Missing effects remain visible toward the full-parity goal. Contract exclusions 
 | `filter/stamp` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
 | `filter/step` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
 | `filter/stipple` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
-| `filter/strayHair` | all | partial: matched in the recorded run. Overlay-nondeterministic (GAP-007). |
+| `filter/strayHair` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26; overlay-settle drain per closed GAP-007) |
 | `filter/strokes` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
 | `filter/temporalAberration` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
 | `filter/tetraColorArray` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
@@ -299,7 +299,7 @@ A successful dispatch or unit-test summary does not establish a full rendered ga
 
 ## 5. Open compatibility limits
 
-Next bounded check: root-cause the adapter's overlay-texture update path for `filter/fibers`, `filter/scratches`, and `filter/strayHair` (GAP-007). Then assert the zero-mismatch ceiling for all 209 rendered effects on repeated runs. Native editor qualification needs a Cables Standalone host. This audit environment has none.
+Next bounded check: native editor qualification needs a Cables Standalone host. This audit environment has none. The canvas-overlay adapter nondeterminism (former GAP-007) is closed: repeated rendered comparisons at the checkpoint show zero differing channels for `filter/fibers`, `filter/scratches`, and `filter/strayHair` (`evidence/gap-007-20260926/`).
 See the stable entries in [completion gaps](COMPLETION_GAPS.md).
 
 See [GAP-002 and the complete gap register](COMPLETION_GAPS.md#4-known-gaps) for evidence, dependencies, and acceptance criteria.

@@ -310,8 +310,14 @@ function routeDelayedTextureUploads({ backend, context, side, lifecycle }) {
   const update = backend.updateTextureFromSource.bind(backend)
   backend.updateTextureFromSource = (...args) => {
     if (lifecycle.disposed) return undefined
-    if (side === 'adapter') return guarded(context, backend, () => update(...args))
-    return update(...args)
+    if (side === 'adapter') {
+      const result = guarded(context, backend, () => update(...args))
+      lifecycle.lastSourceUploadAt = performance.now()
+      return result
+    }
+    const result = update(...args)
+    lifecycle.lastSourceUploadAt = performance.now()
+    return result
   }
 }
 
@@ -551,6 +557,10 @@ export async function runSide(caseDefinition, side, context) {
   let copier
   try {
     initialized = await initializeSide({ caseDefinition, context, side })
+    const overlaySettle = overlaySettleForEffect(caseDefinition.id)
+    if (overlaySettle) {
+      await waitUntilOverlaySettled(initialized.lifecycle, overlaySettle)
+    }
     copier = side === 'adapter' ? createCopier(context) : null
     const captures = new Map()
     const copies = new Map()
@@ -633,18 +643,39 @@ function quietPeriodForEffect(effectId) {
 }
 
 // filter/fibers, filter/scratches, and filter/strayHair generate their overlay through
-// async 2D-canvas drawing that continues past pipeline initialization. Even with a
-// fully drained asyncInit the Cables adapter path reproduces them with small run-to-run
-// differences (observed adapter-vs-adapter deltas of ~200 of 12288 channels for
-// filter/fibers at identical inputs), while the reference backend settles exactly.
-// They stay rendered and compared on every sweep; their recorded mismatch counts are
-// source-bound measurements, and the zero-mismatch ceiling is asserted only for the
-// deterministic remainder of the catalog.
-const NONDETERMINISTIC_OVERLAY_EFFECTS = new Set([
-  'filter/fibers',
-  'filter/scratches',
-  'filter/strayHair',
-])
+// async 2D-canvas drawing that continues past pipeline initialization (progress uploads
+// fire on every few strokes). On the reference backend each upload lands in ~4ms, so the
+// drawing finishes long before any reasonable quiet window. On the adapter backend every
+// upload crosses the guarded shared-CGL state transition and takes ~30ms, so the same
+// drawing needs several seconds and a FIXED quiet window can expire mid-drawing: the
+// captured overlay would then depend on how many strokes happened to land before capture.
+// The comparison therefore drains the generation to completion first: after the initial
+// quiet period it waits until no overlay source upload has occurred for
+// overlaySettleQuietMs, so both sides capture the same fully drawn overlay. The cap turns
+// an unterminated generation into a visible failure instead of a silent skip.
+const OVERLAY_SETTLE_QUIET_MS = 1500
+const OVERLAY_SETTLE_CAP_MS = 60000
+
+function overlaySettleForEffect(effectId) {
+  return new Set(['filter/fibers', 'filter/scratches', 'filter/strayHair']).has(effectId)
+    ? { capMs: OVERLAY_SETTLE_CAP_MS, quietMs: OVERLAY_SETTLE_QUIET_MS }
+    : null
+}
+
+async function waitUntilOverlaySettled(lifecycle, { capMs, quietMs }) {
+  const startedAt = performance.now()
+  for (;;) {
+    await wait(quietMs)
+    const lastUploadAt = lifecycle.lastSourceUploadAt ?? 0
+    if (performance.now() - lastUploadAt >= quietMs) return
+    if (performance.now() - startedAt > capMs) {
+      throw new Error(
+        `overlay generation did not settle within ${capMs}ms ` +
+        `(last source upload ${Math.round(performance.now() - lastUploadAt)}ms ago)`,
+      )
+    }
+  }
+}
 
 async function representativeCases() {
   const corpus = await (await fetch('/parity/programs.json', { cache: 'no-store' })).json()
@@ -832,9 +863,6 @@ export async function runFullCatalog({ end, start = 0 } = {}) {
             mismatchedChannels: comparison.mismatchedChannels,
             rendered: true,
           }
-          if (NONDETERMINISTIC_OVERLAY_EFFECTS.has(effectId)) {
-            result.classification = 'nondeterministic-canvas-overlay-generation'
-          }
           if (comparison.firstDivergences.length > 0) {
             result.firstDivergences = comparison.firstDivergences
           }
@@ -842,9 +870,7 @@ export async function runFullCatalog({ end, start = 0 } = {}) {
         results.push(result)
         if (
           result.rendered &&
-          (!result.copyExact || !result.finite ||
-            ((result.mismatchedChannels ?? 1) > 0 &&
-              result.classification !== 'nondeterministic-canvas-overlay-generation'))
+          (!result.copyExact || !result.finite || (result.mismatchedChannels ?? 1) > 0)
         ) failures.push(result)
         const resourceChecks = {
           adapter: {

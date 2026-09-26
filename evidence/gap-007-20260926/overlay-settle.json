@@ -1,0 +1,139 @@
+{
+  "adapterRuns": 4,
+  "checkpoint": {
+    "channelCeiling": 0,
+    "comparisonMethod": "independent-reference-adapter-float-readback",
+    "height": 48,
+    "width": 64
+  },
+  "comparisons": [
+    {
+      "pair": "reference-vs-adapter0",
+      "mismatchedChannels": 0,
+      "maxChannelError": 0,
+      "meanChannelError": 0
+    },
+    {
+      "pair": "reference-vs-adapter1",
+      "mismatchedChannels": 0,
+      "maxChannelError": 0,
+      "meanChannelError": 0
+    },
+    {
+      "pair": "adapter0-vs-adapter1",
+      "mismatchedChannels": 0,
+      "maxChannelError": 0,
+      "meanChannelError": 0
+    },
+    {
+      "pair": "reference-vs-adapter2",
+      "mismatchedChannels": 0,
+      "maxChannelError": 0,
+      "meanChannelError": 0
+    },
+    {
+      "pair": "adapter1-vs-adapter2",
+      "mismatchedChannels": 0,
+      "maxChannelError": 0,
+      "meanChannelError": 0
+    },
+    {
+      "pair": "reference-vs-adapter3",
+      "mismatchedChannels": 0,
+      "maxChannelError": 0,
+      "meanChannelError": 0
+    },
+    {
+      "pair": "adapter2-vs-adapter3",
+      "mismatchedChannels": 0,
+      "maxChannelError": 0,
+      "meanChannelError": 0
+    },
+    {
+      "pair": "reference-vs-adapter0",
+      "mismatchedChannels": 0,
+      "maxChannelError": 0,
+      "meanChannelError": 0
+    },
+    {
+      "pair": "reference-vs-adapter1",
+      "mismatchedChannels": 0,
+      "maxChannelError": 0,
+      "meanChannelError": 0
+    },
+    {
+      "pair": "adapter0-vs-adapter1",
+      "mismatchedChannels": 0,
+      "maxChannelError": 0,
+      "meanChannelError": 0
+    },
+    {
+      "pair": "reference-vs-adapter2",
+      "mismatchedChannels": 0,
+      "maxChannelError": 0,
+      "meanChannelError": 0
+    },
+    {
+      "pair": "adapter1-vs-adapter2",
+      "mismatchedChannels": 0,
+      "maxChannelError": 0,
+      "meanChannelError": 0
+    },
+    {
+      "pair": "reference-vs-adapter3",
+      "mismatchedChannels": 0,
+      "maxChannelError": 0,
+      "meanChannelError": 0
+    },
+    {
+      "pair": "adapter2-vs-adapter3",
+      "mismatchedChannels": 0,
+      "maxChannelError": 0,
+      "meanChannelError": 0
+    },
+    {
+      "pair": "reference-vs-adapter0",
+      "mismatchedChannels": 0,
+      "maxChannelError": 0,
+      "meanChannelError": 0
+    },
+    {
+      "pair": "reference-vs-adapter1",
+      "mismatchedChannels": 0,
+      "maxChannelError": 0,
+      "meanChannelError": 0
+    },
+    {
+      "pair": "adapter0-vs-adapter1",
+      "mismatchedChannels": 0,
+      "maxChannelError": 0,
+      "meanChannelError": 0
+    },
+    {
+      "pair": "reference-vs-adapter2",
+      "mismatchedChannels": 0,
+      "maxChannelError": 0,
+      "meanChannelError": 0
+    },
+    {
+      "pair": "adapter1-vs-adapter2",
+      "mismatchedChannels": 0,
+      "maxChannelError": 0,
+      "meanChannelError": 0
+    },
+    {
+      "pair": "reference-vs-adapter3",
+      "mismatchedChannels": 0,
+      "maxChannelError": 0,
+      "meanChannelError": 0
+    },
+    {
+      "pair": "adapter2-vs-adapter3",
+      "mismatchedChannels": 0,
+      "maxChannelError": 0,
+      "meanChannelError": 0
+    }
+  ],
+  "effectCount": 3,
+  "ok": true
+}

@@ -69,26 +69,16 @@ test.describe.serial('Task 9 full catalog sorted sweep', () => {
       )
       expect(result.finite, `${result.id}: finite float readback`).toBe(true)
       expect(result.copyExact, `${result.id}: adapter internal -> CGL output copy`).toBe(true)
-      if (result.classification !== undefined) {
-        expect(
-          coverageMatrix.denominator.nondeterministicOverlay.map(({ id }) => id),
-          `${result.id}: unexpected classification`,
-        ).toContain(result.id)
-        expect(result.classification).toBe('nondeterministic-canvas-overlay-generation')
-      } else {
-        expect(
-          result.mismatchedChannels,
-          `${result.id}: reference vs adapter float channel mismatch ceiling`,
-        ).toBe(result.channelCeiling)
-      }
+      expect(result.classification, `${result.id}: no classification escapes the zero ceiling`).toBeUndefined()
+      expect(
+        result.mismatchedChannels,
+        `${result.id}: reference vs adapter float channel mismatch ceiling`,
+      ).toBe(result.channelCeiling)
     }
     const mismatching = report.results.filter(
       ({ rendered, mismatchedChannels }) => rendered && mismatchedChannels > 0,
     )
-    const classifiedIds = coverageMatrix.denominator.nondeterministicOverlay.map(({ id }) => id)
-    for (const { id } of mismatching) {
-      expect(classifiedIds, `${id}: mismatch without nondeterministic classification`).toContain(id)
-    }
+    expect(mismatching.map(({ id }) => id)).toEqual([])
     const unrendered = report.results.filter(({ rendered }) => !rendered)
     expect(unrendered.map(({ id }) => id)).toEqual(
       coverageMatrix.denominator.compileOnly.map(({ id }) => id),
