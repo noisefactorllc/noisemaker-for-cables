@@ -3,22 +3,43 @@
   "recordedAt": "2026-09-26",
   "source": {
     "repository": "noisefactorllc/noisemaker-for-cables",
-    "commit": "7fe3b1627251a916d380124a46f6dac14c5192aa"
+    "commit": "332e86b044127cd393251846a9ea9862e98cea99"
+  },
+  "upstreamRangeAudit": {
+    "declaredRange": "noisefactorllc/noisemaker fca611fd8f91424661d4e531d39313d24ea21134..6a0af04d3c4f345ffab5e9f8e54e532216b4cdaa",
+    "forcePushOrNonContiguous": true,
+    "audit": "Audited in a local upstream checkout rather than assuming the declared range. fca611fd8f91 is a verified ancestor of 6a0af04d3c4f (git merge-base --is-ancestor, exit 0), so the range is contiguous on the current main line; the observed delivery ranges 428ea29bf8fb..957436216964 and 957436216964..6a0af04d3c4f span several pushes but do not contradict ancestry.",
+    "rangeCommitsTouchingShaders": 40,
+    "shadersDiffStat": "20 files changed, 5587 insertions(+), 121 deletions(-) across shaders/src/lang (diagnostics.js, index.js, parser.js, validator.js), shaders/src/runtime (backends/diagnostics.js, backends/webgl2.js, backends/webgpu.js, compiler.js, effect-validator.js, expander.js, pipeline.js), and shaders/tests (8 new or extended suites). No effect-definition files changed in shaders/src over the range, so the effect catalog is unchanged.",
+    "keyShadersSrcCommits": [
+      "66b2c721840b263a5164cf6b457f1c5ba92572b9 feat: subchain-argument validation contract (P008/P009/P010, strict opt-in)",
+      "ba87ffae0dc0e5e3210ac7c59b92e3104f8c63e7 feat(shaders): validate effect definitions against spec at runtime (GAP-003)",
+      "9d3474dfdc6cb737ebb7b2f3598b16d940af1544 fix(shaders): complete GAP-003 validator contract, corpus gate, and test wiring",
+      "a021a2834008315e34d86f78c430b62d77ec6775 feat(shaders): authorable mipmaps/persistent/3D filter texture policies (GAP-004)",
+      "62eb56fa2f1f1f11fefeb184ce665cb186d4b2e8 fix(shaders): allocate the WebGL2 mip chain and cache WebGPU mip bind groups",
+      "2f47612c29045c1b91af94887a8ff20106e980ef fix(shaders): stop double-creating global surfaces on allocation change",
+      "fa83eeabf278f1f4999c1d1fff43e2e5338b72ba feat(shaders): copy name/viewport/clear/samplerTypes/type onto expanded passes (GAP-005)",
+      "6113da00a87b9ff8c80d3258fcc9874f3b5f5989 feat(shaders): consume the resource allocation plan behind texturePooling opt-in with a queryable runtime plan (GAP-006)",
+      "95743621696483b91968992ef6ee0d87b2089fa8 fix(shaders): treat viewport passes without clear as partially written for texture pooling",
+      "f83a427e680ad2bb9a5fd67ccd850143bc820f76 fix(shaders): normalize backend shader/compiler failures to one structured diagnostic union"
+    ],
+    "deliveryIntoPort": "The port consumes the upstream compiler/engine through the pinned CDN core artifact (https://shaders.noisedeck.app/1/noisemaker-shaders-core.esm.js). The refreshed vendored core carries header 'Build: 6a0af04d' (vendor-cache/noisemaker-shaders-core.esm.js line 6), pinning the range end exactly, and its symbol set contains the range's markers (ShaderDiagnostic/DIAGNOSTIC_CODES diagnostic union, texturePooling plan getResourcePlan, partiallyWritten partial-write fix, alias/persistence texture-policy symbols). The 210-effect manifest and all 210 per-effect bundles are byte-identical to the previous lock, matching the audited absence of effect-definition changes.",
+    "portSideChanges": "None required: the Cables adapter inherits the engine changes through WebGL2Backend/Pipeline exports from the refreshed core; the effect catalog and generated registrations are unchanged."
   },
   "authority": {
     "vendorLock": "vendor.lock.json",
-    "vendorLockSha256": "61a2cae487b1a7ab11f0a04d735e0d9cd5048b6c5671a2fa321cc93429eca169",
+    "vendorLockSha256": "b727f89bb0005d675213a392e349665df9dd483ac77bed0b799be4e6666a2aaf",
     "engineBundle": {
       "path": "vendor-cache/noisemaker-shaders-core.esm.js",
-      "sha256": "092c3b776003bc1539bed91aa86f421f839b40b1aa8b81ea09a5ec5e6b7bd3c7",
-      "bytes": 858616,
+      "sha256": "8b9f9eee0cffdb88e96907d32eb8d73128cca6ccdbaefb47b5eb026b894a8469",
+      "bytes": 870700,
       "url": "https://shaders.noisedeck.app/1/noisemaker-shaders-core.esm.js"
     },
-    "upstreamEngine": "noisemaker@8eeb7b5a"
+    "upstreamEngine": "noisemaker@6a0af04d3c4f"
   },
   "opBundle": {
     "path": "Ops.Extension.Noisemaker/Ops.Extension.Noisemaker.Program/lib_noisemaker-cablesgl.js",
-    "sha256": "8f640b46027d9efe13f33fb9db627cbc3ead79e2c26c252e2267d827ea836d7f"
+    "sha256": "d44c32e4a6a1ee28c2b96170cc26aed6a21e7765ef9902b4125d04c8c153fade"
   },
   "compilerDifferential": {
     "method": "Port facade src/browser.js compileProgram versus the vendored reference compiler (vendor-cache/noisemaker-shaders-core.esm.js) for both landscape filtering modes; graphs normalized by removing only compiledAt.",
@@ -38,7 +59,7 @@
         "warningsMatched": true
       }
     ],
-    "evidence": "test/polymorphic-parity.test.js: renderLandscape3d filtering modes match the vendored reference compiler and select expected defines (35 of 35 tests pass, node --test exit 0)"
+    "evidence": "test/polymorphic-parity.test.js: renderLandscape3d filtering modes match the vendored reference compiler and select expected defines (36 of 36 tests pass, node --test exit 0, at the refreshed 6a0af04d core)"
   },
   "renderedDifferential": {
     "method": "Browser harness (test/browser) renders both landscape filtering modes through the reference WebGL2 backend and the public Cables adapter backend (CablesWebGL2Backend) at 64x48 with deterministic inputs; frames compared after common float readback.",
@@ -47,15 +68,15 @@
       { "id": "landscape-voxel@0", "filtering": "voxel", "mismatchedChannels": 0, "copyExact": true, "finite": true },
       { "id": "landscape-isosurface@0", "filtering": "isosurface", "mismatchedChannels": 0, "copyExact": true, "finite": true }
     ],
-    "rawEvidence": "evidence/gap-001-20260926/ holds the executed-run logs (compiler-parity.log, unit.log, vendor.log, browser.log), the per-case comparison JSON (landscape-voxel@0.json, landscape-isosurface@0.json), and the raw reference and adapter frames (PNG) for both cases, produced by tools/landscape-evidence.mjs.",
+    "rawEvidence": "evidence/core-sync-6a0af04d-20260926/ holds the executed-run logs (compiler-parity.log, unit.log, vendor.log, browser.log), the per-case comparison JSON (landscape-voxel@0.json, landscape-isosurface@0.json), and the raw reference and adapter frames (PNG) for both cases, produced by tools/landscape-evidence.mjs at the refreshed core.",
     "evidence": "test/browser/pixel-parity.spec.js landscape-voxel and landscape-isosurface cases; npm run test:browser passes 3 of 3 suites (210/210 compile+link, 209 rendered catalog effects, 26 representative frame comparisons, state hygiene)",
     "limits": "The standalone Cables player boundary requires the native host harness (CABLES_APP) and remains under GAP-003 host qualification; this record covers the op runtime boundary in the browser harness."
   },
   "executedChecks": [
-    { "command": "node --test test/polymorphic-parity.test.js", "exitCode": 0, "result": "35 pass, 0 fail", "log": "evidence/gap-001-20260926/compiler-parity.log" },
-    { "command": "npm test", "exitCode": 0, "result": "245 pass, 0 fail, 0 skipped", "log": "evidence/gap-001-20260926/unit.log" },
-    { "command": "npm run vendor:verify", "exitCode": 0, "result": "210/210 effects verified, 212 artifacts", "log": "evidence/gap-001-20260926/vendor.log" },
-    { "command": "npm run test:browser", "exitCode": 0, "result": "3 suites passed", "log": "evidence/gap-001-20260926/browser.log" }
+    { "command": "node --test test/polymorphic-parity.test.js", "exitCode": 0, "result": "36 pass, 0 fail", "log": "evidence/core-sync-6a0af04d-20260926/compiler-parity.log" },
+    { "command": "npm test", "exitCode": 0, "result": "246 pass, 0 fail, 0 skipped", "log": "evidence/core-sync-6a0af04d-20260926/unit.log" },
+    { "command": "npm run vendor:verify", "exitCode": 0, "result": "210/210 effects verified, 212 artifacts", "log": "evidence/core-sync-6a0af04d-20260926/vendor.log" },
+    { "command": "npm run test:browser", "exitCode": 0, "result": "3 suites passed", "log": "evidence/core-sync-6a0af04d-20260926/browser.log" }
   ],
-  "recordNote": "The recorded checks and frame evidence were executed at this exact source (7fe3b1627251a916d380124a46f6dac14c5192aa). The commit that ships this record changes only this record and the gap documentation; it changes no code or trigger paths."
+  "recordNote": "The recorded checks and frame evidence were executed at this exact source (332e86b044127cd393251846a9ea9862e98cea99), the sync commit that ships the refreshed 6a0af04d core, refreshed lock, and rebuilt op bundle. The commit that ships this record changes only this record, authority-comparison.json, and the evidence logs; it changes no code or trigger paths."
 }
