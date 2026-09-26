@@ -3,8 +3,8 @@
  * Includes: CanvasRenderer + UIController + EffectSelect
  * Copyright (c) 2017-2026 Noise Factor LLC. https://noisefactor.io/
  * SPDX-License-Identifier: MIT
- * Build: 9d3474df
- * Date: 2026-09-25T15:35:28.419Z
+ * Build: 8eeb7b5a
+ * Date: 2026-09-25T22:45:28.980Z
  */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
@@ -5760,6 +5760,18 @@ function expand(compilationResult, options = {}) {
           workgroups: passDef.workgroups,
           storageBuffers: passDef.storageBuffers,
           storageTextures: passDef.storageTextures,
+          // GAP-005: pass labels and per-pass execution controls are
+          // copied verbatim. `name`/`type` stay queryable metadata
+          // (backend shader-kind dispatch remains source-derived);
+          // `viewport` is resolved to backend x/y/w/h numbers by
+          // Pipeline.resolvePassViewport(); `clear` drives the
+          // WebGPU render-pass loadOp; `samplerTypes` selects
+          // per-binding samplers in the WebGPU backend.
+          name: passDef.name,
+          type: passDef.type,
+          clear: passDef.clear,
+          viewport: passDef.viewport,
+          samplerTypes: passDef.samplerTypes,
           inputs: {},
           outputs: {},
           uniforms: {}
@@ -6914,6 +6926,13 @@ var WebGL2FrameExportAdapter = class {
 
 // shaders/src/runtime/backends/webgl2.js
 var GL_ERROR_CHECK_FRAMES = 3;
+function mipLevelCount(width, height) {
+  const maxDim = Math.max(1, Math.floor(width), Math.floor(height));
+  return Math.max(1, Math.floor(Math.log2(maxDim)) + 1);
+}
+function mipLevelSize(dim, level) {
+  return Math.max(1, Math.floor(dim / Math.pow(2, level)));
+}
 var WebGL2Backend = class _WebGL2Backend extends Backend {
   constructor(context, canvas) {
     super(context);
@@ -7120,28 +7139,51 @@ var WebGL2Backend = class _WebGL2Backend extends Backend {
     const texture = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, texture);
     const glFormat = this.resolveFormat(spec.format);
-    gl.texImage2D(
-      gl.TEXTURE_2D,
-      0,
-      glFormat.internalFormat,
-      spec.width,
-      spec.height,
-      0,
-      glFormat.format,
-      glFormat.type,
-      null
-    );
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    const mipLevels = spec.mipmaps ? mipLevelCount(spec.width, spec.height) : 1;
+    if (mipLevels > 1) {
+      for (let level = 0; level < mipLevels; level++) {
+        gl.texImage2D(
+          gl.TEXTURE_2D,
+          level,
+          glFormat.internalFormat,
+          mipLevelSize(spec.width, level),
+          mipLevelSize(spec.height, level),
+          0,
+          glFormat.format,
+          glFormat.type,
+          null
+        );
+      }
+    } else {
+      gl.texImage2D(
+        gl.TEXTURE_2D,
+        0,
+        glFormat.internalFormat,
+        spec.width,
+        spec.height,
+        0,
+        glFormat.format,
+        glFormat.type,
+        null
+      );
+    }
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    if (mipLevels > 1) {
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+    }
     gl.bindTexture(gl.TEXTURE_2D, null);
     this.textures.set(id, {
       handle: texture,
       width: spec.width,
       height: spec.height,
       format: spec.format,
-      glFormat
+      glFormat,
+      mipmaps: mipLevels > 1,
+      mipLevels,
+      persistent: !!spec.persistent
     });
     if (spec.usage && spec.usage.includes("render")) {
       this.createFBO(id, texture);
@@ -7276,7 +7318,8 @@ var WebGL2Backend = class _WebGL2Backend extends Backend {
       depth: spec.depth,
       format: spec.format,
       glFormat,
-      is3D: true
+      is3D: true,
+      filter: spec.filter || "linear"
     });
     return texture;
   }
@@ -7599,6 +7642,40 @@ var WebGL2Backend = class _WebGL2Backend extends Backend {
     gl.bindFramebuffer(gl.READ_FRAMEBUFFER, null);
     gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, null);
   }
+  /**
+   * Regenerate the mip chain of mipmapped 2D textures from level 0.
+   * Called by the Pipeline after each frame's passes for every texture
+   * authored with `mipmaps: true`. Uses a NEAREST blit chain between mip
+   * levels so the operation works for every renderable format, including
+   * non-filterable float formats where gl.generateMipmap() is invalid.
+   * Textures without a mip chain are skipped.
+   * @param {string[]} ids - Texture ids to regenerate
+   */
+  generateMipmaps(ids) {
+    const gl = this.gl;
+    if (!this._mipReadFbo) {
+      this._mipReadFbo = gl.createFramebuffer();
+      this._mipDrawFbo = gl.createFramebuffer();
+    }
+    for (const id of ids) {
+      const tex = this.textures.get(id);
+      if (!tex || !tex.mipmaps || tex.is3D) continue;
+      const { handle, width, height, mipLevels } = tex;
+      gl.bindFramebuffer(gl.READ_FRAMEBUFFER, this._mipReadFbo);
+      gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, this._mipDrawFbo);
+      for (let level = 1; level < mipLevels; level++) {
+        const srcW = mipLevelSize(width, level - 1);
+        const srcH = mipLevelSize(height, level - 1);
+        const dstW = mipLevelSize(width, level);
+        const dstH = mipLevelSize(height, level);
+        gl.framebufferTexture2D(gl.READ_FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, handle, level - 1);
+        gl.framebufferTexture2D(gl.DRAW_FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, handle, level);
+        gl.blitFramebuffer(0, 0, srcW, srcH, 0, 0, dstW, dstH, gl.COLOR_BUFFER_BIT, gl.NEAREST);
+      }
+      gl.bindFramebuffer(gl.READ_FRAMEBUFFER, null);
+      gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, null);
+    }
+  }
   async compileProgram(id, spec) {
     const gl = this.gl;
     const rawSource = spec.source || spec.glsl || spec.fragment;
@@ -7821,10 +7898,13 @@ var WebGL2Backend = class _WebGL2Backend extends Backend {
     }
     if (viewportTex) {
       gl.viewport(0, 0, viewportTex.width, viewportTex.height);
-    } else if (effectivePass.viewport) {
-      gl.viewport(effectivePass.viewport.x, effectivePass.viewport.y, effectivePass.viewport.w, effectivePass.viewport.h);
     } else {
-      gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+      const viewport = effectivePass.viewportResolved || effectivePass.viewport;
+      if (viewport) {
+        gl.viewport(viewport.x, viewport.y, viewport.w, viewport.h);
+      } else {
+        gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+      }
     }
     this.bindTextures(effectivePass, program, state);
     this.bindUniforms(effectivePass, program, state);
@@ -8800,6 +8880,57 @@ var WebGPUFrameExportAdapter = class {
 };
 
 // shaders/src/runtime/backends/webgpu.js
+function mipLevelCount2(width, height) {
+  const maxDim = Math.max(1, Math.floor(width), Math.floor(height));
+  return Math.max(1, Math.floor(Math.log2(maxDim)) + 1);
+}
+function mipLevelSize2(dim, level) {
+  return Math.max(1, Math.floor(dim / Math.pow(2, level)));
+}
+var RESAMPLE_WGSL = (
+  /* wgsl */
+  `
+struct VsOut {
+    @builtin(position) pos: vec4f,
+}
+
+@vertex
+fn vs(@builtin(vertex_index) vi: u32) -> VsOut {
+    var points = array<vec2f, 3>(vec2f(-1.0, -1.0), vec2f(3.0, -1.0), vec2f(-1.0, 3.0));
+    var out: VsOut;
+    out.pos = vec4f(points[vi], 0.0, 1.0);
+    return out;
+}
+
+@group(0) @binding(0) var src: texture_2d<f32>;
+@group(0) @binding(1) var<uniform> dims: vec4f;
+
+struct FsParams {
+    @builtin(position) frag: vec4f,
+}
+
+@fragment
+fn fsMip(f: FsParams) -> @location(0) vec4f {
+    let d = vec2u(f.frag.xy);
+    let base = d * 2u;
+    let a = textureLoad(src, base, 0u);
+    let b = textureLoad(src, base + vec2u(1u, 0u), 0u);
+    let c = textureLoad(src, base + vec2u(0u, 1u), 0u);
+    let e = textureLoad(src, base + vec2u(1u, 1u), 0u);
+    return (a + b + c + e) * 0.25;
+}
+
+@fragment
+fn fsScale(f: FsParams) -> @location(0) vec4f {
+    let d = vec2u(f.frag.xy);
+    let ratio = vec2f(dims.x, dims.y) / vec2f(dims.z, dims.w);
+    let scaled = vec2f(d) * ratio;
+    let maxCoord = vec2u(max(dims.x - 1.0, 0.0), max(dims.y - 1.0, 0.0));
+    let coord = min(vec2u(scaled), maxCoord);
+    return textureLoad(src, coord, 0u);
+}
+`
+);
 function float16ToFloat32(h) {
   const sign = h >> 15 & 1;
   const exponent = h >> 10 & 31;
@@ -8926,6 +9057,13 @@ var WebGPUBackend = class _WebGPUBackend extends Backend {
       addressModeU: "repeat",
       addressModeV: "repeat"
     }));
+    this.samplers.set("mipmap", this.device.createSampler({
+      minFilter: "linear",
+      magFilter: "linear",
+      mipmapFilter: "linear",
+      addressModeU: "clamp-to-edge",
+      addressModeV: "clamp-to-edge"
+    }));
     const dummyTexture = this.device.createTexture({
       size: { width: 1, height: 1, depthOrArrayLayers: 1 },
       format: "rgba8unorm",
@@ -8943,6 +9081,7 @@ var WebGPUBackend = class _WebGPUBackend extends Backend {
   createTexture(id, spec) {
     const format = this.resolveFormat(spec.format);
     const usage = this.resolveUsage(spec.usage || ["render", "sample", "copySrc", "copyDst"]);
+    const mipLevels = spec.mipmaps ? mipLevelCount2(spec.width, spec.height) : 1;
     const texture = this.device.createTexture({
       size: {
         width: spec.width,
@@ -8950,18 +9089,28 @@ var WebGPUBackend = class _WebGPUBackend extends Backend {
         depthOrArrayLayers: 1
       },
       format,
+      mipLevelCount: mipLevels,
       usage
     });
     const view = texture.createView();
+    const mipViews = [];
+    for (let level = 0; level < mipLevels; level++) {
+      mipViews.push(texture.createView({ baseMipLevel: level, mipLevelCount: 1 }));
+    }
     this.textures.set(id, {
       handle: texture,
       view,
+      renderView: mipViews[0],
+      mipViews,
       width: spec.width,
       height: spec.height,
       format: spec.format,
       gpuFormat: format,
-      usage
+      usage,
       // Store the usage flags for later checks
+      mipmaps: mipLevels > 1,
+      mipLevels,
+      persistent: !!spec.persistent
     });
     return texture;
   }
@@ -8992,7 +9141,8 @@ var WebGPUBackend = class _WebGPUBackend extends Backend {
       format: spec.format,
       gpuFormat: format,
       usage,
-      is3D: true
+      is3D: true,
+      filter: spec.filter
     });
     return texture;
   }
@@ -9236,6 +9386,10 @@ var WebGPUBackend = class _WebGPUBackend extends Backend {
       console.warn(`[copyTexture] Missing texture: src=${srcId} (${!!srcTex}), dst=${dstId} (${!!dstTex})`);
       return;
     }
+    if (srcTex.width !== dstTex.width || srcTex.height !== dstTex.height || srcTex.mipLevels > 1 || dstTex.mipLevels > 1) {
+      this.copyTextureScaled(srcId, dstId);
+      return;
+    }
     const commandEncoder = this.device.createCommandEncoder();
     commandEncoder.copyTextureToTexture(
       { texture: srcTex.handle },
@@ -9243,6 +9397,130 @@ var WebGPUBackend = class _WebGPUBackend extends Backend {
       [srcTex.width, srcTex.height, 1]
     );
     this.device.queue.submit([commandEncoder.finish()]);
+  }
+  /**
+   * Get or create a render pipeline for the shared resample shader.
+   * Uses layout:'auto' so the fsMip variant (which ignores the dims uniform)
+   * only binds its texture. Cached per gpu format + entry point.
+   * @param {string} gpuFormat - Destination color attachment format
+   * @param {string} entryPoint - 'fsMip' or 'fsScale'
+   * @returns {GPURenderPipeline}
+   */
+  getResamplePipeline(gpuFormat, entryPoint) {
+    const key = `${gpuFormat}|${entryPoint}`;
+    let pipeline = this.resamplePipelines?.get(key);
+    if (!pipeline) {
+      if (!this.resamplePipelines) {
+        this.resamplePipelines = /* @__PURE__ */ new Map();
+        this.resampleModule = this.device.createShaderModule({ code: RESAMPLE_WGSL });
+      }
+      pipeline = this.device.createRenderPipeline({
+        layout: "auto",
+        vertex: { module: this.resampleModule, entryPoint: "vs" },
+        fragment: {
+          module: this.resampleModule,
+          entryPoint,
+          targets: [{ format: gpuFormat }]
+        },
+        primitive: { topology: "triangle-list" }
+      });
+      this.resamplePipelines.set(key, pipeline);
+    }
+    return pipeline;
+  }
+  /**
+   * Copy one texture into another, resampling when the dimensions differ.
+   * The destination must be a 2D renderable texture. If the source has a mip
+   * chain, only level 0 is copied (chains are regenerated by generateMipmaps).
+   * @param {string} srcId - Source texture id
+   * @param {string} dstId - Destination texture id
+   */
+  copyTextureScaled(srcId, dstId) {
+    const srcTex = this.textures.get(srcId);
+    const dstTex = this.textures.get(dstId);
+    if (!srcTex || !dstTex || dstTex.is3D) {
+      console.warn(`[copyTextureScaled] Incompatible textures: src=${srcId}, dst=${dstId}`);
+      return;
+    }
+    const srcView = srcTex.renderView || srcTex.view;
+    const dstFormat = dstTex.gpuFormat || this.resolveFormat(dstTex.format || "rgba16float");
+    const pipeline = this.getResamplePipeline(dstFormat, "fsScale");
+    const dimsBuffer = this.device.createBuffer({
+      size: 16,
+      usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
+    });
+    this.device.queue.writeBuffer(dimsBuffer, 0, new Float32Array([
+      srcTex.width,
+      srcTex.height,
+      dstTex.width,
+      dstTex.height
+    ]));
+    const entries = [
+      { binding: 0, resource: srcView },
+      { binding: 1, resource: { buffer: dimsBuffer } }
+    ];
+    const encoder = this.device.createCommandEncoder();
+    const renderPass = encoder.beginRenderPass({
+      colorAttachments: [{
+        view: dstTex.renderView || dstTex.view,
+        clearValue: { r: 0, g: 0, b: 0, a: 0 },
+        loadOp: "clear",
+        storeOp: "store"
+      }]
+    });
+    renderPass.setPipeline(pipeline);
+    renderPass.setBindGroup(0, this.device.createBindGroup({
+      layout: pipeline.getBindGroupLayout(0),
+      entries
+    }));
+    renderPass.draw(3);
+    renderPass.end();
+    this.device.queue.submit([encoder.finish()]);
+    dimsBuffer.destroy();
+  }
+  /**
+   * Regenerate the mip chain of mipmapped 2D textures from level 0.
+   * Called by the Pipeline after each frame's passes for every texture
+   * authored with `mipmaps: true`. Each level renders a 2x2 box downsample
+   * of the previous level into that level's single-mip view. Textures
+   * without a mip chain are skipped.
+   * @param {string[]} ids - Texture ids to regenerate
+   */
+  generateMipmaps(ids) {
+    for (const id of ids) {
+      const tex = this.textures.get(id);
+      if (!tex || !tex.mipmaps || tex.is3D || !tex.mipViews) continue;
+      const dstFormat = tex.gpuFormat || this.resolveFormat(tex.format || "rgba16float");
+      const pipeline = this.getResamplePipeline(dstFormat, "fsMip");
+      for (let level = 1; level < tex.mipLevels; level++) {
+        if (!tex.mipBindGroups) tex.mipBindGroups = new Array(tex.mipLevels);
+        let bindGroup = tex.mipBindGroups[level];
+        if (!bindGroup) {
+          bindGroup = this.device.createBindGroup({
+            layout: pipeline.getBindGroupLayout(0),
+            entries: [
+              { binding: 0, resource: tex.mipViews[level - 1] }
+            ]
+          });
+          tex.mipBindGroups[level] = bindGroup;
+        }
+        const encoder = this.device.createCommandEncoder();
+        const renderPass = encoder.beginRenderPass({
+          colorAttachments: [{
+            view: tex.mipViews[level],
+            clearValue: { r: 0, g: 0, b: 0, a: 0 },
+            loadOp: "clear",
+            storeOp: "store"
+          }]
+        });
+        renderPass.setPipeline(pipeline);
+        renderPass.setViewport(0, 0, mipLevelSize2(tex.width, level), mipLevelSize2(tex.height, level), 0, 1);
+        renderPass.setBindGroup(0, bindGroup);
+        renderPass.draw(3);
+        renderPass.end();
+        this.device.queue.submit([encoder.finish()]);
+      }
+    }
   }
   /**
    * Clear a texture to transparent black.
@@ -10038,7 +10316,7 @@ var WebGPUBackend = class _WebGPUBackend extends Backend {
       }
     }
     let outputTex = this.textures.get(outputId) || state.surfaces?.[outputId];
-    let targetView = outputTex?.view;
+    let targetView = outputTex?.renderView || outputTex?.view;
     if (!outputTex && outputId === "screen" && this.context) {
       const currentTexture = this.context.getCurrentTexture();
       outputTex = {
@@ -10138,7 +10416,7 @@ var WebGPUBackend = class _WebGPUBackend extends Backend {
       const resolvedFormat = tex.gpuFormat || this.resolveFormat(tex.format || "rgba16float");
       formats.push(resolvedFormat);
       colorAttachments.push({
-        view: tex.view,
+        view: tex.renderView || tex.view,
         clearValue: { r: 0, g: 0, b: 0, a: 0 },
         loadOp: pass.clear ? "clear" : "load",
         storeOp: "store"
@@ -10318,8 +10596,9 @@ var WebGPUBackend = class _WebGPUBackend extends Backend {
     if (tex?.width && tex?.height) {
       return { x: 0, y: 0, w: tex.width, h: tex.height };
     }
-    if (pass.viewport) {
-      return { x: pass.viewport.x, y: pass.viewport.y, w: pass.viewport.w, h: pass.viewport.h };
+    const viewport = pass.viewportResolved || pass.viewport;
+    if (viewport) {
+      return { x: viewport.x, y: viewport.y, w: viewport.w, h: viewport.h };
     }
     if (this.context?.canvas) {
       return { x: 0, y: 0, w: this.context.canvas.width, h: this.context.canvas.height };
@@ -10553,7 +10832,10 @@ var WebGPUBackend = class _WebGPUBackend extends Backend {
     const inputSamplerDefault = pass.inputs && Object.values(pass.inputs).some((texId) => {
       const t = this.textures.get(texId) || (typeof texId === "string" ? this.textures.get(texId.replace(/_chain_\d+$/, "")) : null);
       return t?.isExternal === true;
-    }) ? "default" : "nearest";
+    }) ? "default" : pass.inputs && Object.values(pass.inputs).some((texId) => {
+      const t = this.textures.get(texId) || (typeof texId === "string" ? this.textures.get(texId.replace(/_chain_\d+$/, "")) : null);
+      return t?.mipmaps === true;
+    }) ? "mipmap" : "nearest";
     for (const binding of bindings) {
       if (binding.group !== 0) continue;
       const entry = { binding: binding.binding };
@@ -10832,7 +11114,7 @@ var WebGPUBackend = class _WebGPUBackend extends Backend {
       if (writeTex) {
         const texture2 = this.textures.get(writeTex);
         if (texture2) {
-          return texture2.view;
+          return texture2.renderView || texture2.view;
         }
       }
     }
@@ -10842,13 +11124,13 @@ var WebGPUBackend = class _WebGPUBackend extends Backend {
       if (writeTex) {
         const texture2 = this.textures.get(writeTex);
         if (texture2) {
-          return texture2.view;
+          return texture2.renderView || texture2.view;
         }
       }
     }
     const texture = this.textures.get(textureId);
     if (texture) {
-      return texture.view;
+      return texture.renderView || texture.view;
     }
     console.warn(`Storage texture ${textureId} not found`);
     return null;
@@ -10864,7 +11146,7 @@ var WebGPUBackend = class _WebGPUBackend extends Backend {
       if (writeTex) {
         const texture2 = this.textures.get(writeTex);
         if (texture2) {
-          return texture2.view;
+          return texture2.renderView || texture2.view;
         }
       }
     }
@@ -10920,7 +11202,7 @@ var WebGPUBackend = class _WebGPUBackend extends Backend {
             resource: textureView
           });
           const texRec = this.textures.get(texId) || (typeof texId === "string" ? this.textures.get(texId.replace(/_chain_\d+$/, "")) : null);
-          const legacyDefault = texRec?.isExternal ? "default" : "nearest";
+          const legacyDefault = texRec?.isExternal ? "default" : texRec?.is3D ? texRec.filter === "linear" ? "default" : "nearest" : texRec?.mipmaps ? "mipmap" : "nearest";
           const samplerType = pass.samplerTypes?.[samplerName] || legacyDefault;
           entries.push({
             binding: binding++,
@@ -12429,6 +12711,7 @@ var Pipeline = class {
     this.frameIndex = 0;
     this.lastTime = 0;
     this.surfaces = /* @__PURE__ */ new Map();
+    this._mipTargets = [];
     this.globalUniforms = {};
     this.width = 0;
     this.height = 0;
@@ -12580,6 +12863,7 @@ var Pipeline = class {
     this._sinkDescriptor.height = height;
     this.sinkManager.configure(this._sinkDescriptor);
     this.createSurfaces();
+    this.refreshMipTargets();
     const defaultUniforms = this.collectDefaultUniforms();
     this.recreateTextures(defaultUniforms);
     this.initAsyncEffects();
@@ -12867,6 +13151,55 @@ var Pipeline = class {
       }
     }
   }
+  /**
+   * Destroy and recreate a 2D texture. When the previous texture record was
+   * marked `persistent` (opt-in via the texture spec), its contents are
+   * resampled into the replacement through backend.copyTexture(), so the
+   * texture survives resize and parameter-driven recreation at its new size.
+   * @param {string} texId - Texture id to recreate
+   * @param {object} spec - New texture spec { width, height, format, usage, ... }
+   */
+  recreateTexturePreserving(texId, spec) {
+    const existingTex = this.backend.textures?.get?.(texId);
+    let preserveId = null;
+    if (existingTex && !existingTex.is3D && existingTex.persistent) {
+      preserveId = `${texId}__preserve_tmp`;
+      this.backend.createTexture(preserveId, {
+        width: existingTex.width,
+        height: existingTex.height,
+        format: existingTex.format,
+        usage: ["sample", "copySrc", "copyDst"]
+      });
+      this.backend.copyTexture(texId, preserveId);
+    }
+    this.backend.destroyTexture(texId);
+    this.backend.createTexture(texId, spec);
+    if (preserveId) {
+      this.backend.copyTexture(preserveId, texId);
+      this.backend.destroyTexture(preserveId);
+    }
+  }
+  /**
+   * Recompute the list of texture ids whose mip chains must be regenerated
+   * after each frame. Global surfaces map their single graph spec to both
+   * halves of the double-buffered surface.
+   */
+  refreshMipTargets() {
+    this._mipTargets.length = 0;
+    if (!this.graph || !this.graph.textures) return;
+    for (const [texId, spec] of this.graph.textures) {
+      if (!spec.mipmaps) continue;
+      if (texId.startsWith("global_")) {
+        const surfaceName = this.parseGlobalName(texId);
+        if (surfaceName && this.surfaces.has(surfaceName)) {
+          const surface = this.surfaces.get(surfaceName);
+          this._mipTargets.push(surface.read, surface.write);
+        }
+      } else {
+        this._mipTargets.push(texId);
+      }
+    }
+  }
   createSurfaces() {
     this.clampGraphVolumeSizes();
     this.applyMrtFormatBudget();
@@ -12952,20 +13285,39 @@ var Pipeline = class {
         if (existingReadTex && existingWriteTex && existingReadTex.width === surfaceWidth && existingReadTex.height === surfaceHeight && existingReadTex.format === surfaceFormat && existingWriteTex.width === surfaceWidth && existingWriteTex.height === surfaceHeight && existingWriteTex.format === surfaceFormat) {
           continue;
         }
-        this.backend.destroyTexture(`global_${name}_read`);
-        this.backend.destroyTexture(`global_${name}_write`);
+        this.recreateTexturePreserving(`global_${name}_read`, {
+          width: surfaceWidth,
+          height: surfaceHeight,
+          format: surfaceFormat,
+          usage: ["render", "sample", "copySrc", "copyDst", "storage"],
+          mipmaps: texSpec?.mipmaps === true,
+          persistent: texSpec?.persistent === true
+        });
+        this.recreateTexturePreserving(`global_${name}_write`, {
+          width: surfaceWidth,
+          height: surfaceHeight,
+          format: surfaceFormat,
+          usage: ["render", "sample", "copySrc", "copyDst", "storage"],
+          mipmaps: texSpec?.mipmaps === true,
+          persistent: texSpec?.persistent === true
+        });
+        continue;
       }
       this.backend.createTexture(`global_${name}_read`, {
         width: surfaceWidth,
         height: surfaceHeight,
         format: surfaceFormat,
-        usage: ["render", "sample", "copySrc", "copyDst", "storage"]
+        usage: ["render", "sample", "copySrc", "copyDst", "storage"],
+        mipmaps: texSpec?.mipmaps === true,
+        persistent: texSpec?.persistent === true
       });
       this.backend.createTexture(`global_${name}_write`, {
         width: surfaceWidth,
         height: surfaceHeight,
         format: surfaceFormat,
-        usage: ["render", "sample", "copySrc", "copyDst", "storage"]
+        usage: ["render", "sample", "copySrc", "copyDst", "storage"],
+        mipmaps: texSpec?.mipmaps === true,
+        persistent: texSpec?.persistent === true
       });
       this.surfaces.set(name, {
         read: `global_${name}_read`,
@@ -13056,20 +13408,22 @@ var Pipeline = class {
         if (existingReadTex && existingWriteTex && existingReadTex.width === width && existingReadTex.height === height && existingReadTex.format === expectedFormat && existingWriteTex.width === width && existingWriteTex.height === height && existingWriteTex.format === expectedFormat) {
           continue;
         }
-        this.backend.destroyTexture(readTexId);
-        this.backend.destroyTexture(writeTexId);
         const format = spec.format || "rgba16f";
-        this.backend.createTexture(readTexId, {
+        this.recreateTexturePreserving(readTexId, {
           width,
           height,
           format,
-          usage: ["render", "sample", "copySrc", "copyDst", "storage"]
+          usage: ["render", "sample", "copySrc", "copyDst", "storage"],
+          mipmaps: spec.mipmaps === true,
+          persistent: spec.persistent === true
         });
-        this.backend.createTexture(writeTexId, {
+        this.recreateTexturePreserving(writeTexId, {
           width,
           height,
           format,
-          usage: ["render", "sample", "copySrc", "copyDst", "storage"]
+          usage: ["render", "sample", "copySrc", "copyDst", "storage"],
+          mipmaps: spec.mipmaps === true,
+          persistent: spec.persistent === true
         });
       } else {
         const existingTex = this.backend.textures?.get?.(texId);
@@ -13078,9 +13432,9 @@ var Pipeline = class {
             continue;
           }
         }
-        this.backend.destroyTexture(texId);
         if (spec.is3D) {
           const depth = this.resolveDimension(spec.depth, width, uniforms);
+          this.backend.destroyTexture(texId);
           this.backend.createTexture3D(texId, {
             ...spec,
             width,
@@ -13088,7 +13442,7 @@ var Pipeline = class {
             depth
           });
         } else {
-          this.backend.createTexture(texId, {
+          this.recreateTexturePreserving(texId, {
             ...spec,
             width,
             height
@@ -13096,6 +13450,7 @@ var Pipeline = class {
         }
       }
     }
+    this.refreshMipTargets();
   }
   /**
    * Update parameter-dependent textures when uniforms change
@@ -13104,6 +13459,7 @@ var Pipeline = class {
    */
   updateParameterTextures(uniforms = {}) {
     this.recreateTextures(uniforms);
+    this.refreshMipTargets();
   }
   /**
    * Check if a value is an automation config (oscillator, midi, audio)
@@ -13393,7 +13749,13 @@ var Pipeline = class {
       try {
         for (let i = 0; i < this.graph.passes.length; i++) {
           const originalPass = this.graph.passes[i];
+          if (originalPass.viewport !== void 0) {
+            this.resolvePassViewport(originalPass);
+          }
           const pass = this.resolvePassUniforms(originalPass, time);
+          if (originalPass.viewport !== void 0) {
+            this.resolvePassViewport(pass, originalPass);
+          }
           if (this.shouldSkipPass(pass)) {
             continue;
           }
@@ -13417,6 +13779,9 @@ var Pipeline = class {
         console.error(`[Pipeline.render] LOOP ERROR: ${loopErr.detail || loopErr.message || JSON.stringify(loopErr)}`);
         throw loopErr;
       }
+    }
+    if (this._mipTargets.length > 0 && typeof this.backend.generateMipmaps === "function") {
+      this.backend.generateMipmaps(this._mipTargets);
     }
     this.backend.endFrame();
     const renderSurfaceName = this.graph?.renderSurface;
@@ -13543,6 +13908,7 @@ var Pipeline = class {
     proxy.repeat = pass.repeat;
     proxy.conditions = pass.conditions;
     proxy.viewport = pass.viewport;
+    proxy.viewportResolved = pass.viewportResolved;
     proxy.drawBuffers = pass.drawBuffers;
     proxy.storageTextures = pass.storageTextures;
     proxy.samplerTypes = pass.samplerTypes;
@@ -13599,6 +13965,51 @@ var Pipeline = class {
       }
     }
     return 1;
+  }
+  /**
+   * Resolve an authored pass viewport spec to backend {x, y, w, h} numbers
+   * (GAP-005). The authored spec accepts the same dimension grammar as
+   * texture sizes (numbers, 'screen', percentages, {param}/{screenDivide}/
+   * {scale, clamp} forms) on the x/y/w/h/width/height keys. Resolution is
+   * cached per pass: the reusable box is mutated in place each frame so
+   * param-driven viewports track uniform changes without per-frame
+   * allocation. The authored spec stays queryable on `pass.viewport`; the
+   * resolved numbers land on `pass.viewportResolved`, which the backends
+   * prefer over the raw spec.
+   * @param {Object} pass - Pass providing the uniforms for resolution (the
+   *   oscillator-resolved proxy when applicable)
+   * @param {Object} [cacheHolder] - Object carrying the cached resolution
+   *   (the original compiled pass; defaults to `pass`)
+   */
+  resolvePassViewport(pass, cacheHolder = pass) {
+    const spec = cacheHolder.viewport;
+    if (!spec || typeof spec !== "object") return;
+    if (cacheHolder._viewportSpecSource !== spec) {
+      Object.defineProperty(cacheHolder, "_viewportSpecSource", { value: spec, enumerable: false, configurable: true, writable: true });
+      const isNumericBox = typeof spec.x === "number" && typeof spec.y === "number" && typeof spec.w === "number" && typeof spec.h === "number";
+      if (isNumericBox) {
+        Object.defineProperty(cacheHolder, "_viewportBox", { value: null, enumerable: false, configurable: true, writable: true });
+        cacheHolder.viewportResolved = spec;
+        if (pass !== cacheHolder) pass.viewportResolved = spec;
+        return;
+      }
+      const box2 = { x: 0, y: 0, w: 0, h: 0 };
+      Object.defineProperty(cacheHolder, "_viewportBox", { value: box2, enumerable: false, configurable: true, writable: true });
+    }
+    if (cacheHolder.viewportResolved === spec) {
+      if (pass !== cacheHolder) pass.viewportResolved = spec;
+      return;
+    }
+    const box = cacheHolder._viewportBox;
+    const uniforms = pass.uniforms || {};
+    box.x = this.resolveDimension(spec.x ?? 0, this.width, uniforms);
+    box.y = this.resolveDimension(spec.y ?? 0, this.height, uniforms);
+    const widthSpec = spec.w ?? spec.width;
+    const heightSpec = spec.h ?? spec.height;
+    box.w = widthSpec !== void 0 ? this.resolveDimension(widthSpec, this.width, uniforms) : this.width;
+    box.h = heightSpec !== void 0 ? this.resolveDimension(heightSpec, this.height, uniforms) : this.height;
+    cacheHolder.viewportResolved = box;
+    if (pass !== cacheHolder) pass.viewportResolved = box;
   }
   /**
    * Adopt a repeated pass's frame-local ping-pong bindings into the
@@ -15153,6 +15564,16 @@ function extractTextureSpecs(passes, options, textureSpecs = {}) {
       spec.depth = effectSpec.depth || effectSpec.width || 64;
       spec.is3D = true;
       spec.usage = ["storage", "sample", "copySrc", "copyDst"];
+      if (effectSpec.filter) {
+        spec.filter = effectSpec.filter;
+      }
+    } else {
+      if (effectSpec.mipmaps !== void 0) {
+        spec.mipmaps = effectSpec.mipmaps;
+      }
+      if (effectSpec.persistent !== void 0) {
+        spec.persistent = effectSpec.persistent;
+      }
     }
     textures.set(texId, spec);
   }
