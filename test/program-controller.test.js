@@ -283,6 +283,25 @@ function createHarness(options = {}) {
       cpu(`compile:${dsl}`)
       compileCalls.push(dsl)
       if (options.compileFailureDsl === dsl) throw new Error(`compile failed for ${dsl}`)
+      if (options.compileDiagnosticDsl === dsl) {
+        throw options.compileThrow ?? {
+          code: 'ERR_COMPILATION_FAILED',
+          diagnostics: options.compileDiagnostics ?? [
+            {
+              code: 'S001',
+              message: "Unknown effect: 'invalidEffect'",
+              severity: 'error',
+              identifier: 'invalidEffect',
+            },
+            {
+              code: 'S002',
+              message: 'Argument out of range: scaleX',
+              location: { column: 17, line: 2 },
+              severity: 'warning',
+            },
+          ],
+        }
+      }
       const pending = options.compileDeferred?.get(dsl)
       if (pending) await pending.promise
       return graphFor(dsl, {
@@ -571,6 +590,50 @@ test('a failed edit retains the last-good pipeline and stable output texture', a
   assert.equal(after.error.code, 'ERR_DSL_COMPILE')
   assert.equal(after.error.phase, 'compile')
   assert.equal(harness.events.includes('pipeline-dispose:valid dsl'), false)
+})
+
+test('compiler diagnostics reach the visible error and stay attached without dropping the last-good pipeline', async () => {
+  const harness = createHarness({ compileDiagnosticDsl: 'invalidEffect()' })
+  await harness.controller.setProgram('valid dsl')
+  const before = harness.controller.getState()
+
+  const after = await harness.controller.setProgram('invalidEffect()')
+
+  assert.ok(after.error instanceof ControllerError)
+  assert.equal(after.error.code, 'ERR_DSL_COMPILE')
+  assert.equal(after.error.phase, 'compile')
+  assert.match(after.error.message, /Noisemaker controller compile failed: \[S001\] Unknown effect: 'invalidEffect'/)
+  assert.match(after.error.message, /\[S002\] Argument out of range: scaleX \(line 2, column 17\)/)
+  assert.deepEqual(
+    after.error.diagnostics.map((diagnostic) => diagnostic.code),
+    ['S001', 'S002'],
+  )
+  assert.equal(after.ready, true)
+  assert.equal(after.activeDsl, 'valid dsl')
+  assert.equal(after.texture, before.texture)
+  assert.equal(harness.events.includes('pipeline-dispose:valid dsl'), false)
+})
+
+test('lexer and parser diagnostic metadata renders code and location when message exists', async () => {
+  const failure = new SyntaxError('Unexpected token')
+  Object.defineProperty(failure, 'diagnostic', {
+    value: {
+      code: 'P001',
+      location: { line: 1, column: 9 },
+      message: 'Unexpected token',
+      severity: 'error',
+      stage: 'parser',
+    },
+    enumerable: false,
+  })
+  const harness = createHarness({
+    compileDiagnosticDsl: 'broken tokens',
+    compileThrow: failure,
+  })
+  const state = await harness.controller.setProgram('broken tokens')
+  assert.equal(state.error.code, 'ERR_DSL_COMPILE')
+  assert.equal(state.error.message, 'Noisemaker controller compile failed: [P001] Unexpected token (line 1, column 9)')
+  assert.deepEqual(state.error.diagnostics.map((diagnostic) => diagnostic.code), ['P001'])
 })
 
 test('promotion assigns the new candidate before old disposal and keeps same-size output identity', async () => {

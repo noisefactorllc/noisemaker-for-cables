@@ -1,0 +1,9 @@
+DSL: "search synth\nbogusEffect(seed: 1).write(o0)\nrender(o0)"
+  code: ERR_DSL_COMPILE | phase: compile
+  message: Noisemaker controller compile failed: [S001] Unknown effect: 'bogusEffect'; [S005] write() requires an input - cannot be first in chain: '[Write]' (line 2, column 22)
+  diagnostics: [{"code":"S001","message":"Unknown effect: 'bogusEffect'","severity":"error","identifier":"bogusEffect"},{"code":"S005","message":"write() requires an input - cannot be first in chain: '[Write]'","severity":"error","location":{"line":2,"column":22},"identifier":"[Write]"}]
+DSL: "search synth\nnoise(seed: \"bogus\").write(o0)\nrender(o0)"
+  code: ERR_DSL_COMPILE | phase: compile
+  message: Noisemaker controller compile failed: [S001] String literal not allowed for numeric parameter 'seed' - strings are only valid for type: "string" parameters
+  diagnostics: [{"code":"S001","message":"String literal not allowed for numeric parameter 'seed' - strings are only valid for type: \"string\" parameters","severity":"error","identifier":"bogus"}]
+DSL compiled (no error): "search synth\nnoise(seed: 1, scaleX: 50, scaleY: 50).write(o0)\nrender(o0)"

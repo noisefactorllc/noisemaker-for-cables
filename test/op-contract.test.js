@@ -341,6 +341,35 @@ test('controller state publishes Texture, Ready, Error, and matching UI errors',
   assert.equal(op.uiErrors.get('noisemaker'), 'Invalid Polymorphic program')
 })
 
+test('structured compiler diagnostics from the controller state reach the Error port and UI error', () => {
+  const harness = installHarness()
+  const { controllerOptions, op } = harness
+  const texture = { tex: 'last-good-output' }
+
+  controllerOptions.onStateChange({
+    error: {
+      code: 'ERR_DSL_COMPILE',
+      diagnostics: [
+        {
+          code: 'S001',
+          identifier: 'invalidEffect',
+          message: "Unknown effect: 'invalidEffect'",
+          severity: 'error',
+        },
+      ],
+      message: "Noisemaker controller compile failed: [S001] Unknown effect: 'invalidEffect'",
+      phase: 'compile',
+    },
+    ready: true,
+    texture,
+  })
+
+  assert.equal(op.output('Error').get(), "Noisemaker controller compile failed: [S001] Unknown effect: 'invalidEffect'")
+  assert.equal(op.uiErrors.get('noisemaker'), "Noisemaker controller compile failed: [S001] Unknown effect: 'invalidEffect'")
+  assert.equal(op.output('Texture').get(), texture)
+  assert.equal(op.output('Ready').get(), true)
+})
+
 test('Render remains synchronous, handles its promise, publishes before Next, and never throws', async () => {
   const controller = createControllerHarness()
   const render = deferred()

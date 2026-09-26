@@ -1,0 +1,10 @@
+$ npm run vendor:verify
+
+210/210 effects verified (212 artifacts)
+
+$ npm run build
+Built Noisemaker for Cables (4135590 bytes)
+
+$ npm pack --dry-run (tail)
+npm notice
+noisefactor-noisemaker-for-cables-0.1.0.tgz

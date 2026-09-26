@@ -1,0 +1,10 @@
+$ node --test test/*.test.js
+✔ checked-in lock pins the complete 210-effect catalog (250.139818ms)
+ℹ tests 257
+ℹ suites 0
+ℹ pass 257
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 9737.63827
