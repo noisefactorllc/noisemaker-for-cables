@@ -4,11 +4,11 @@ Current compatibility matrix: [compatibility report](COMPATIBILITY.md).
 
 ## 1. Scope and source revisions
 
-Daily review: 2026-09-26. Current inspected source: [`411b2b646bb6692918c17d705f0afdaf837f6e48`](https://github.com/noisefactorllc/noisemaker-for-cables/commit/411b2b646bb6692918c17d705f0afdaf837f6e48).
-Full rendered parity remains **unverified**. No release approval follows from this review. This review independently rechecked the GAP-001 and GAP-002 closures and retained them.
+Core sync review: 2026-09-26. Current inspected source: [`9534c5701cac86095fdcac6edf2ef800a1153897`](https://github.com/noisefactorllc/noisemaker-for-cables/commit/9534c5701cac86095fdcac6edf2ef800a1153897).
+The catalog matrix was re-verified by execution at this source (see the core sync review below). Full-parameter parity, native host qualification, and release acceptance remain open.
 Current upstream discovery: `a651c075bb2848b584b2bf2484f5f8a0db754b0c`. Published Noisemaker authority: `1.0.185`, source `6a0af04d3c4f345ffab5e9f8e54e532216b4cdaa`, 210 effect IDs. The effect-manifest SHA-256 `05c4d7b7744837ae90a3bb4c89e5403ff09448a74d9d7e824abb3d719ad3314e` is unchanged through `1.0.185`.
 The observations below retain their original source and authority identities. They do not qualify later updates.
-Current served kit: `0.1.27`, source `69beff8ae5ef5954ee85cd70674f66a659c08bd9`. This review verified all 17 inventory hashes. The served engine bundle is byte-identical to the qualifying bundle `8f640b46027d9efe13f33fb9db627cbc3ead79e2c26c252e2267d827ea836d7f`. Artifact identity does not establish host qualification. The vendored authority remains `noisemaker@8eeb7b5a` (`1.0.183`). Later published versions stay unqualified.
+Current served kit: `0.1.28`, source `9534c5701cac86095fdcac6edf2ef800a1153897`. This review verified all 17 inventory hashes 2026-09-26. The served engine bundle `d44c32e4a6a1ee28c2b96170cc26aed6a21e7765ef9902b4125d04c8c153fade` (4134801 bytes) is byte-identical to the committed op bundle built from the refreshed core. The vendored engine authority is now `noisemaker@6a0af04d3c4f` (`1.0.185`, core `8b9f9eee0cffdb88e96907d32eb8d73128cca6ccdbaefb47b5eb026b894a8469`, header `Build: 6a0af04d`), following the core sync at `332e86b`. The earlier `8eeb7b5a` (`1.0.183`) qualification statements retain their original source identities; the `6a0af04d` authority is qualified by the executed checks below, not inherited.
 
 ### Earlier source observations
 
@@ -55,7 +55,25 @@ The review does not qualify every upstream change after the recorded port author
 
 ## 3. Methods and evidence
 
-Review CI boundary: Exact-source runs: Export kit. The latest export dispatch ([run 36204756771](https://github.com/noisefactorllc/noisemaker-for-cables/actions/runs/36204756771)) succeeded at served-kit source `69beff8ae5ef5954ee85cd70674f66a659c08bd9`. The doc, test, and evidence commits after it match no workflow path filter and triggered no run. A passing export dispatch does not qualify rendered parity. Current complete-render enforcement remains an open verification requirement.
+Review CI boundary: Exact-source runs: Export kit. The latest export dispatch ([run 36222300492](https://github.com/noisefactorllc/noisemaker-for-cables/actions/runs/36222300492)) succeeded at head source `9534c5701cac86095fdcac6edf2ef800a1153897` and published kit `0.1.28` (verified below). The sync's core/artifact commits were covered by that run; the follow-up evidence-record and review commits match no workflow path filter and are exempt by the task contract (no required checks declared). A passing export dispatch does not by itself qualify rendered parity; rendered parity at this source is qualified by the executed browser sweep below. Complete-render enforcement as a required CI check remains open; complete rendering at the candidate source is evidenced, not enforced in CI.
+
+### Core sync review, 2026-09-26 (upstream `6a0af04d3c4f`)
+
+Executed at source `332e86b`/`9534c57` on Linux x86_64, Node `v26.5.1`, headless Chromium with SwiftShader. No native Cables host exists in this environment. Host checks stay unverified.
+
+| Check | Command or method | Exit | Observed result |
+| --- | --- | --- | --- |
+| Locked artifacts | `npm run vendor:verify` | 0 | 210 effects and 212 artifacts verified at the refreshed core. `evidence/core-sync-6a0af04d-20260926/vendor.log`. |
+| Unit suite | `npm test` | 0 | 246 pass, zero fail, zero skip. `evidence/core-sync-6a0af04d-20260926/unit.log`. |
+| Compiler parity | `node --test test/polymorphic-parity.test.js` | 0 | 36 pass, including the full Polymorphic corpus and landscape filtering define selection at the refreshed core. `evidence/core-sync-6a0af04d-20260926/compiler-parity.log`. |
+| Browser suites | `npm run test:browser` | 0 | Full-catalog sweep passes the coverage-matrix gate (210 compile+link, 209 rendered at zero differing float channels under the matrix's zero-channel gate, one compile-only), 26 representative frame comparisons, and state hygiene. `evidence/core-sync-6a0af04d-20260926/browser.log`. |
+| Rendered differential | `tools/landscape-evidence.mjs` | 0 | Both landscape filtering modes match the reference at zero mismatched channels; frames and JSON in `evidence/core-sync-6a0af04d-20260926/`. |
+| Upstream range audit | Upstream checkout diff | n/a | `fca611fd8f91` verified ancestor of `6a0af04d3c4f`; 40 range commits touch only `shaders/src/lang`, `shaders/src/runtime`, and `shaders/tests`; no effect-definition files changed; manifest and all 210 effect bundles byte-identical. `differential.json` `upstreamRangeAudit`. |
+| Exact-source CI | Export kit run `36222300492` | success | Push of `9534c57` to `refs/heads/main` triggered and succeeded on that head SHA; the run published kit `0.1.28`. |
+| Published distribution | Fetch kit `0.1.28` files and hash | 0 | 17 of 17 inventory hashes match; served engine bundle equals the committed op bundle `d44c32e4...` (`Build: 6a0af04d`). |
+| Compat declaration | Fetch kit `0.1.28/compat.json` | n/a | Mode unchanged (`all`); GAP-006 stays open. |
+
+Complete-render status at this source: the full catalog renders through the Cables adapter with reference parity and the full-catalog browser gate passes with committed logs, so the previously open "complete-render enforcement" verification requirement is satisfied by execution for this candidate. It is not yet a required repository check; the CI boundary statement above records that limit. No GAP status changes: this is a Tearoff port sync, not a gap closure. Full-parameter parity, native host qualification, and release acceptance remain open under their existing GAP records.
 
 ### Daily review, 2026-09-26
 
