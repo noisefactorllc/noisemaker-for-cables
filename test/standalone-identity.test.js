@@ -76,6 +76,7 @@ test('attests the resolved Cables Standalone 0.11.0 app identity', async () => {
   }))
 
   assert.deepEqual(identity, {
+    platform: 'macos',
     expectedVersion: '0.11.0',
     appBundlePath: '/fixture/cables.app',
     asarIntegrity: {
@@ -410,6 +411,113 @@ test('attests the resolved Linux AppImage bundle identity without an embedded as
       'X-AppImage-Version': '0.11.3',
     },
   })
+})
+
+test('attests the Linux AppImage happy path through inspectCablesStandalone', async () => {
+  const linuxExecutable = '/fixture/cables-linux/cables'
+  const linuxAsarPath = '/fixture/cables-linux/resources/app.asar'
+  const calls = []
+  const identity = await inspectCablesStandalone(linuxExecutable, dependencies({
+    access: async (path) => {
+      calls.push(['access', path])
+    },
+    hashAsarHeader: async (...args) => {
+      calls.push(['hashAsarHeader', ...args])
+      return {
+        actualSha256: asarSha256,
+        headerByteLength: 123,
+        headerOffset: 16,
+      }
+    },
+    hashFile: async (...args) => {
+      calls.push(['hashFile', ...args])
+      return args[0] === linuxAsarPath ? asarWholeFileSha256 : executableSha256
+    },
+    realpath: async () => linuxExecutable,
+    readLinuxAppVersion: async (desktopEntryPath) => {
+      calls.push(['readLinuxAppVersion', desktopEntryPath])
+      return {
+        version: '0.11.3',
+        entry: { Name: 'cables', 'X-AppImage-Version': '0.11.3' },
+      }
+    },
+  }))
+
+  assert.deepEqual(identity, {
+    platform: 'linux',
+    appDirectory: '/fixture/cables-linux',
+    appUpdate: { owner: null, repo: null, provider: null },
+    asarIntegrity: {
+      actualSha256: asarSha256,
+      algorithm: 'SHA256',
+      asarPath: linuxAsarPath,
+      expectedSha256: null,
+      headerByteLength: 123,
+      headerOffset: 16,
+      wholeFileSha256: asarWholeFileSha256,
+    },
+    expectedVersion: '0.11.3',
+    executablePath: linuxExecutable,
+    executableSha256,
+    version: '0.11.3',
+  })
+  assert.deepEqual(calls, [
+    ['access', linuxExecutable],
+    ['hashFile', linuxExecutable],
+    ['readLinuxAppVersion', '/fixture/cables-linux/cables.desktop'],
+    ['access', linuxAsarPath],
+    ['hashAsarHeader', linuxAsarPath],
+    ['hashFile', linuxAsarPath],
+  ])
+  assert.equal(Object.isFrozen(identity), true)
+  assert.equal(Object.isFrozen(identity.asarIntegrity), true)
+})
+
+test('rejects a Linux app.asar whose header hash is malformed', async () => {
+  const linuxExecutable = '/fixture/cables-linux/cables'
+
+  await assert.rejects(
+    inspectCablesStandalone(linuxExecutable, dependencies({
+      realpath: async () => linuxExecutable,
+      readLinuxAppVersion: async () => ({
+        version: '0.11.3',
+        entry: { Name: 'cables', 'X-AppImage-Version': '0.11.3' },
+      }),
+      hashAsarHeader: async () => ({ actualSha256: 'nothex', headerByteLength: 1, headerOffset: 16 }),
+    })),
+    /app\.asar actual header SHA-256 is invalid/i,
+  )
+})
+
+test('rejects a Linux app.asar with invalid header framing', async () => {
+  const linuxExecutable = '/fixture/cables-linux/cables'
+
+  await assert.rejects(
+    inspectCablesStandalone(linuxExecutable, dependencies({
+      realpath: async () => linuxExecutable,
+      readLinuxAppVersion: async () => ({
+        version: '0.11.3',
+        entry: { Name: 'cables', 'X-AppImage-Version': '0.11.3' },
+      }),
+      hashAsarHeader: async () => ({
+        actualSha256: asarSha256,
+        headerByteLength: 0,
+        headerOffset: 16,
+      }),
+    })),
+    /app\.asar header SHA-256 byte range is invalid/i,
+  )
+})
+
+test('rejects a Windows executable instead of misreading it as a Linux AppImage', async () => {
+  const windowsExecutable = '/fixture/cables-win/Cables.exe'
+
+  await assert.rejects(
+    inspectCablesStandalone(windowsExecutable, dependencies({
+      realpath: async () => windowsExecutable,
+    })),
+    /Windows Cables Standalone inspection is not implemented/i,
+  )
 })
 
 test('reads XML or binary app plists through plutil JSON conversion', async () => {

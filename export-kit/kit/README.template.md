@@ -20,7 +20,7 @@ Open <http://localhost:8000/>. No backend, no build step, no npm.
 
 ## Open it in Cables Standalone
 
-Tested with Cables Standalone 0.11.0.
+Tested with Cables Standalone 0.11.0 and 0.11.3.
 
 1. Open `patch/program.cables`.
 2. Add the `extension/` folder from this export as a project op directory (Settings, then op
@@ -87,8 +87,8 @@ The other ports are:
 ## Requirements
 
 The op needs WebGL2 with `EXT_color_buffer_float`, `OES_texture_float_linear` and `EXT_float_blend`
-for the complete effect catalog, which current desktop browsers and Cables Standalone 0.11.0 both
-provide. Hardware that falls short fails before **Ready** goes true and says why in **Error**.
+for the complete effect catalog, which current desktop browsers and Cables Standalone 0.11.0 and
+0.11.3 both provide. Hardware that falls short fails before **Ready** goes true and says why in **Error**.
 cables CGP (WebGPU) is not a target of this op.
 
 ## License

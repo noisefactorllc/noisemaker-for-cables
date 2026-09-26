@@ -65,9 +65,9 @@ function validateInfoPlist(plist, executablePath, macOsPath) {
     throw new TypeError('Cables Info.plist must decode to a dictionary')
   }
 
-  if (plist.CFBundleShortVersionString !== EXPECTED_CABLES_STANDALONE_VERSION) {
+  if (!SUPPORTED_CABLES_STANDALONE_VERSIONS.includes(plist.CFBundleShortVersionString)) {
     throw new Error(
-      `Cables Standalone version ${EXPECTED_CABLES_STANDALONE_VERSION} is required; ` +
+      `Cables Standalone version ${SUPPORTED_CABLES_STANDALONE_VERSIONS.join(' or ')} is required; ` +
       `Info.plist reports ${String(plist.CFBundleShortVersionString)}`,
     )
   }
@@ -381,6 +381,7 @@ export async function inspectCablesStandalone(
     hashAsarHeader = sha256AsarHeader,
     hashFile = sha256File,
     readInfoPlist = readMacAppInfoPlist,
+    readLinuxAppVersion: readLinuxAppVersionDependency = readLinuxAppVersion,
     realpath = resolveRealpath,
   } = {},
 ) {
@@ -407,13 +408,19 @@ export async function inspectCablesStandalone(
   }
 
   if (!isMacAppBundle) {
+    if (basename(executablePath).toLowerCase().endsWith('.exe')) {
+      throw new Error(
+        'Windows Cables Standalone inspection is not implemented; add a Windows ' +
+        'identity branch before qualifying the Windows x64 environment',
+      )
+    }
     return inspectLinuxCablesStandalone({
       executablePath,
       executableSha256,
       access,
       hashAsarHeader,
       hashFile,
-      readLinuxAppVersion,
+      readLinuxAppVersion: readLinuxAppVersionDependency,
     })
   }
 
@@ -455,7 +462,8 @@ export async function inspectCablesStandalone(
   }
 
   return deepFreeze({
-    expectedVersion: EXPECTED_CABLES_STANDALONE_VERSION,
+    platform: 'macos',
+    expectedVersion: plist.CFBundleShortVersionString,
     appBundlePath,
     asarIntegrity: {
       ...asarIntegrity,

@@ -107,19 +107,19 @@
   "pixels": {
     "animated": {
       "first": {
-        "hash": "8debbdc5",
+        "hash": "22913dc5",
         "height": 96,
         "maximum": 1,
-        "mean": 0.6546932431786748,
-        "minimum": 0.0001214742660522461,
+        "mean": 0.6504719548138382,
+        "minimum": 0.000029146671295166016,
         "width": 128
       },
       "second": {
-        "hash": "a2433dc5",
+        "hash": "87e17dc5",
         "height": 96,
         "maximum": 1,
-        "mean": 0.6551626989761038,
-        "minimum": 0.000038564205169677734,
+        "mean": 0.6528044180158759,
+        "minimum": 0.00002092123031616211,
         "width": 128
       }
     },
@@ -134,7 +134,7 @@
     }
   },
   "recreated": {
-    "id": "ij8q2lw6x",
+    "id": "qip243rg5",
     "oldId": "noisemaker-program-op"
   },
   "reloadTerminalGlErrors": [],
@@ -154,9 +154,9 @@
     }
   },
   "screenshot": "test-report/standalone-smoke.png",
-  "screenshotSha256": "1fc523313ff2e7e3fe1c8f0ece3180e75758dd7568efff3e62d0be53db99fdcb",
+  "screenshotSha256": "01dc5b187aa4108bac95390aba467425313228d04d03d866da16981dfba68f31",
   "time": {
-    "first": 99.897883561,
-    "second": 99.94289986399998
+    "first": 71.64091829,
+    "second": 79.445824167
   }
 }
