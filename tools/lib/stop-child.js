@@ -4,7 +4,7 @@ export async function stopChild(
   child,
   { delay = sleep, graceMilliseconds = 3_000 } = {},
 ) {
-  if (child.exitCode !== null) return
+  if (child.exitCode !== null || child.signalCode != null) return
 
   const exited = new Promise((resolve) => child.once('exit', resolve))
   child.kill('SIGTERM')
@@ -14,6 +14,6 @@ export async function stopChild(
   ])
 
   if (result === 'exited') return
-  if (child.exitCode === null) child.kill('SIGKILL')
+  if (child.exitCode === null && child.signalCode == null) child.kill('SIGKILL')
   await exited
 }

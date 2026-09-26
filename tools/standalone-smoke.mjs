@@ -622,10 +622,74 @@ try {
   }, 'recreated Program op did not render successfully')
   assert.equal(finalState.ready, true)
 
-  // Saved-project reload: copy the committed project (patch file plus the op
-  // directory it references) into a fresh location and open it in a second
-  // Standalone instance. This exercises the ordinary saved-project lifecycle:
-  // the project loads after a full editor restart and renders again.
+  // Saved-project lifecycle: copy the committed project (patch file plus the op
+  // directory it references) into a fresh location and open it in further
+  // Standalone instances. This exercises the ordinary saved-project lifecycle:
+  // the project loads after a full editor restart and renders again, the
+  // Noisemaker op can be removed from the saved project and the reduced project
+  // still loads cleanly, and a legacy-parameter saved project (deprecated
+  // parameter aliases) still loads and renders through the current op.
+  const bootProjectInstance = async (patchPath, cdpPort) => {
+    const profile = await mkdtemp(join(tmpdir(), 'noisemaker-cables-project-profile-'))
+    const terminalLines = []
+    const url = `http://127.0.0.1:${cdpPort}`
+    const child = spawn(executable, [
+      `--patch=${patchPath}`,
+      `--remote-debugging-port=${cdpPort}`,
+      `--user-data-dir=${profile}`,
+      ...(process.platform === 'linux'
+        ? ['--no-sandbox', '--use-angle=swiftshader', '--enable-unsafe-swiftshader']
+        : []),
+    ], {
+      env: { ...process.env, ELECTRON_DISABLE_SECURITY_WARNINGS: 'true' },
+      stdio: ['ignore', 'pipe', 'pipe'],
+    })
+    for (const stream of [child.stdout, child.stderr]) {
+      stream.setEncoding('utf8')
+      stream.on('data', (chunk) => terminalLines.push(...chunk.split(/\r?\n/).filter(Boolean)))
+    }
+    let browser
+    let frame
+    try {
+      await waitFor(async () => {
+        const response = await fetch(`${url}/json/version`)
+        return response.ok
+      }, 'reloaded saved project did not expose CDP')
+      browser = await chromium.connectOverCDP(url)
+      const page = await waitFor(
+        () => browser.contexts()[0].pages()[0],
+        'reloaded editor page did not open',
+      )
+      frame = await waitFor(
+        () => page.frames().find((candidate) => candidate.url().includes('/dist/ui/')),
+        'reloaded editor frame did not load',
+      )
+      await waitFor(
+        () => frame.evaluate(() => Boolean(globalThis.gui?.corePatch)),
+        'reloaded patch runtime did not initialize',
+      )
+      const readProgramState = async () => frame.evaluate(() => {
+        const program = gui.corePatch().getOpsByObjName('Ops.Extension.Noisemaker.Program')[0]
+        if (!program) return null
+        const texture = program.getPort('Texture')?.get()
+        return {
+          dsl: program.getPort('DSL').get(),
+          error: program.getPort('Error').get(),
+          height: texture?.height,
+          ready: program.getPort('Ready').get(),
+          texture: Boolean(texture?.tex),
+          width: texture?.width,
+        }
+      })
+      return { browser, child, frame, profile, readProgramState, terminalLines }
+    } catch (error) {
+      if (browser) await browser.close().catch(() => {})
+      await stopChild(child)
+      await removeTemporaryDirectory(profile)
+      throw error
+    }
+  }
+
   const reloadRoot = await mkdtemp(join(tmpdir(), 'noisemaker-cables-reload-'))
   const reloadProjectDirectory = join(reloadRoot, 'project')
   const reloadPatchPath = join(reloadProjectDirectory, 'noisemaker-program.cables')
@@ -636,58 +700,13 @@ try {
     { recursive: true },
   )
   const reloadPatchSha256 = digest(await readFile(reloadPatchPath))
-  const reloadProfile = await mkdtemp(join(tmpdir(), 'noisemaker-cables-reload-profile-'))
-  const reloadTerminalLines = []
   const reloadCdpPort = cdpPort + 1
-  const reloadCdpUrl = `http://127.0.0.1:${reloadCdpPort}`
-  const reloadChild = spawn(executable, [
-    `--patch=${reloadPatchPath}`,
-    `--remote-debugging-port=${reloadCdpPort}`,
-    `--user-data-dir=${reloadProfile}`,
-    ...(process.platform === 'linux'
-      ? ['--no-sandbox', '--use-angle=swiftshader', '--enable-unsafe-swiftshader']
-      : []),
-  ], {
-    env: { ...process.env, ELECTRON_DISABLE_SECURITY_WARNINGS: 'true' },
-    stdio: ['ignore', 'pipe', 'pipe'],
-  })
-  for (const stream of [reloadChild.stdout, reloadChild.stderr]) {
-    stream.setEncoding('utf8')
-    stream.on('data', (chunk) => reloadTerminalLines.push(...chunk.split(/\r?\n/).filter(Boolean)))
-  }
-  let reloadBrowser
   let savedProjectReload
+  console.error('[smoke] booting reload instance')
+  let instance = await bootProjectInstance(reloadPatchPath, reloadCdpPort)
   try {
-    await waitFor(async () => {
-      const response = await fetch(`${reloadCdpUrl}/json/version`)
-      return response.ok
-    }, 'reloaded saved project did not expose CDP')
-    reloadBrowser = await chromium.connectOverCDP(reloadCdpUrl)
-    const reloadPage = await waitFor(
-      () => reloadBrowser.contexts()[0].pages()[0],
-      'reloaded editor page did not open',
-    )
-    const reloadFrame = await waitFor(
-      () => reloadPage.frames().find((candidate) => candidate.url().includes('/dist/ui/')),
-      'reloaded editor frame did not load',
-    )
-    await waitFor(
-      () => reloadFrame.evaluate(() => Boolean(globalThis.gui?.corePatch)),
-      'reloaded patch runtime did not initialize',
-    )
     const reloadedState = await waitFor(async () => {
-      const state = await reloadFrame.evaluate(() => {
-        const program = gui.corePatch().getOpsByObjName('Ops.Extension.Noisemaker.Program')[0]
-        const texture = program?.getPort('Texture')?.get()
-        return program ? {
-          dsl: program.getPort('DSL').get(),
-          error: program.getPort('Error').get(),
-          height: texture?.height,
-          ready: program.getPort('Ready').get(),
-          texture: Boolean(texture?.tex),
-          width: texture?.width,
-        } : null
-      })
+      const state = await instance.readProgramState()
       return state?.ready && state.texture && state.error === '' ? state : null
     }, 'reloaded saved project did not render the committed Program op')
     assert.match(reloadedState.dsl, /noise\(seed:\s*1/)
@@ -696,13 +715,123 @@ try {
       ready: reloadedState.ready,
       size: { height: reloadedState.height, width: reloadedState.width },
     }
+
+    // Removal from a saved project: delete the Noisemaker op in the loaded
+    // saved project, persist the reduced patch, and reopen it in a fresh
+    // editor instance.
+    const removal = await instance.frame.evaluate(() => {
+      const patch = gui.corePatch()
+      const program = patch.getOpsByObjName('Ops.Extension.Noisemaker.Program')[0]
+      patch.deleteOp(program.id)
+      const serialized = typeof patch.serialize === 'function'
+        ? patch.serialize()
+        : (typeof patch.toJSON === 'function' ? patch.toJSON() : null)
+      return {
+        opCount: patch.getOpsByObjName('Ops.Extension.Noisemaker.Program').length,
+        opIds: patch.ops ? patch.ops.map((op) => op.objName) : null,
+        serialized: serialized === null ? null : (typeof serialized === 'string' ? serialized : JSON.stringify(serialized)),
+      }
+    })
+    assert.equal(removal.opCount, 0, 'Noisemaker Program op was not removed from the loaded saved project')
+    const removalTerminalErrors = instance.terminalLines.filter((line) =>
+      /webgl|gl_invalid|\bgl error\b|unhandled|uncaught.*promise|promise rejection/i.test(line))
+    assert.deepEqual(removalTerminalErrors, [], 'removing the op from the saved project logged errors')
+    // Persist the reduced project in the original saved format (the editor's
+    // serialize() omits objName, so its output is not reloadable): take the
+    // saved project file, drop the Program op entry and the links that
+    // referenced it, and reopen the result in a fresh editor instance.
+    const originalProject = JSON.parse(await readFile(reloadPatchPath, 'utf8'))
+    const removedProgramIds = new Set(
+      originalProject.ops
+        .filter((op) => op.objName === 'Ops.Extension.Noisemaker.Program')
+        .map((op) => op.id),
+    )
+    const reducedProject = {
+      ...originalProject,
+      ops: originalProject.ops.filter((op) => !removedProgramIds.has(op.id)),
+    }
+    for (const op of reducedProject.ops) {
+      for (const portsKey of ['portsIn', 'portsOut']) {
+        for (const port of op[portsKey] ?? []) {
+          for (const linkKey of ['links']) {
+            if (Array.isArray(port[linkKey])) {
+              port[linkKey] = port[linkKey].filter((link) =>
+                !removedProgramIds.has(link.objIn) && !removedProgramIds.has(link.objOut))
+            }
+          }
+        }
+      }
+    }
+    await writeFile(reloadPatchPath, `${JSON.stringify(reducedProject, null, 2)}\n`)
   } finally {
-    if (reloadBrowser) await reloadBrowser.close().catch(() => {})
-    await stopChild(reloadChild)
-    await removeTemporaryDirectory(reloadProfile)
-    await removeTemporaryDirectory(reloadRoot)
+    if (instance.browser) await instance.browser.close().catch(() => {})
+    await stopChild(instance.child)
+    await removeTemporaryDirectory(instance.profile)
   }
 
+  console.error('[smoke] booting reduced instance')
+  const reducedInstance = await bootProjectInstance(reloadPatchPath, reloadCdpPort + 1)
+  let savedProjectRemoval
+  try {
+    const reducedState = await waitFor(() => reducedInstance.frame.evaluate(() => {
+      const mainLoop = gui.corePatch().getOpsByObjName('Ops.Gl.MainLoop_v2').length
+      if (mainLoop !== 1) return null
+      return {
+        noisemakerOps: gui.corePatch().getOpsByObjName('Ops.Extension.Noisemaker.Program').length,
+        mainLoop,
+      }
+    }), 'reduced saved project did not load its remaining ops')
+    assert.equal(reducedState.noisemakerOps, 0, 'reduced saved project still contains the Noisemaker op')
+    assert.equal(reducedState.mainLoop, 1, 'reduced saved project lost its other ops')
+    const reducedTerminalErrors = reducedInstance.terminalLines.filter((line) =>
+      /webgl|gl_invalid|\bgl error\b|unhandled|uncaught.*promise|promise rejection/i.test(line))
+    assert.deepEqual(reducedTerminalErrors, [], 'the reduced saved project logged errors on reload')
+    savedProjectRemoval = { noisemakerOps: reducedState.noisemakerOps, mainLoop: reducedState.mainLoop, opCount: reducedState.opCount }
+  } finally {
+    if (reducedInstance.browser) await reducedInstance.browser.close().catch(() => {})
+    await stopChild(reducedInstance.child)
+    await removeTemporaryDirectory(reducedInstance.profile)
+  }
+
+  // Saved-project upgrade: a project saved against an older parameter surface
+  // (deprecated parameter aliases) must still load and render through the
+  // current op.
+  const upgradePatchPath = join(reloadProjectDirectory, 'noisemaker-program-legacy-parameters.cables')
+  const upgradedProject = JSON.parse(await readFile(patchPath, 'utf8'))
+  const legacyDsl = 'search classicNoisedeck\ncellNoise(cellSmooth: 20, cellVariation: 50, loopAmp: 2).write(o0)\nrender(o0)'
+  for (const op of upgradedProject.ops) {
+    if (op.objName === 'Ops.Extension.Noisemaker.Program') {
+      const dslPort = op.portsIn.find((port) => port.name === 'DSL')
+      dslPort.value = legacyDsl
+    }
+  }
+  await writeFile(upgradePatchPath, `${JSON.stringify(upgradedProject, null, 2)}\n`)
+  console.error('[smoke] booting legacy-parameter instance')
+  const upgradeInstance = await bootProjectInstance(upgradePatchPath, reloadCdpPort + 2)
+  let savedProjectUpgrade
+  try {
+    const upgradedState = await waitFor(async () => {
+      const state = await upgradeInstance.readProgramState()
+      return state?.ready && state.texture && state.error === '' ? state : null
+    }, 'legacy-parameter saved project did not render through the current op')
+    assert.match(upgradedState.dsl, /cellSmooth:/)
+    const upgradeTerminalErrors = upgradeInstance.terminalLines.filter((line) =>
+      /webgl|gl_invalid|\bgl error\b|unhandled|uncaught.*promise|promise rejection/i.test(line))
+    assert.deepEqual(upgradeTerminalErrors, [], 'the legacy-parameter saved project logged errors on reload')
+    savedProjectUpgrade = {
+      ready: upgradedState.ready,
+      rendered: upgradedState.texture,
+      size: { height: upgradedState.height, width: upgradedState.width },
+    }
+  } finally {
+    if (upgradeInstance.browser) await upgradeInstance.browser.close().catch(() => {})
+    await stopChild(upgradeInstance.child)
+    await removeTemporaryDirectory(upgradeInstance.profile)
+  }
+  console.error('[smoke] removing reload tree')
+  await removeTemporaryDirectory(reloadRoot)
+
+  console.error('[smoke] screenshot')
   const screenshot = await page.screenshot({ path: screenshotPath })
   const glOrPromiseErrors = [...consoleErrors, ...pageErrors].filter((message) =>
     /webgl|gl_invalid|\bgl error\b|unhandled|uncaught.*promise|promise rejection/i.test(message))
@@ -729,15 +858,14 @@ try {
       solid: solidPixels,
     },
     recreated,
-    reloadTerminalGlErrors: reloadTerminalLines.filter((line) =>
-      /webgl|gl_invalid|\bgl error\b|unhandled|uncaught.*promise|promise rejection/i.test(line)),
     resize,
+    savedProjectRemoval,
     savedProjectReload,
+    savedProjectUpgrade,
     screenshot: 'test-report/standalone-smoke.png',
     screenshotSha256: digest(screenshot),
     time: { first: firstTime, second: secondTime },
   }
-  assert.deepEqual(report.reloadTerminalGlErrors, [], 'reloaded saved project logged GL errors')
   await writeFile(reportPath, `${JSON.stringify(report, null, 2)}\n`)
   console.log(JSON.stringify(report, null, 2))
 } finally {

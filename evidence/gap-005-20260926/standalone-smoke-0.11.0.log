@@ -1,0 +1,182 @@
+
+> @noisefactor/noisemaker-for-cables@0.1.0 test:standalone
+> node tools/standalone-smoke.mjs
+
+[smoke] booting reload instance
+[smoke] booting reduced instance
+[smoke] booting legacy-parameter instance
+[smoke] removing reload tree
+[smoke] screenshot
+{
+  "cablesStandalone": {
+    "platform": "linux",
+    "appDirectory": "/state/cache/scratch/squashfs-root-0110",
+    "appUpdate": {
+      "owner": null,
+      "repo": null,
+      "provider": null
+    },
+    "asarIntegrity": {
+      "algorithm": "SHA256",
+      "asarPath": "/state/cache/scratch/squashfs-root-0110/resources/app.asar",
+      "expectedSha256": null,
+      "actualSha256": "29a6958b02361f8b33a239e5ae48a34be2f52546e977ee2bd65d8528a6209a9a",
+      "headerByteLength": 8260184,
+      "headerOffset": 16,
+      "wholeFileSha256": "8c8cbd985a1295380f95fe8b0322fd2b5e09c321c37b5648db928c6e02c67dc3"
+    },
+    "expectedVersion": "0.11.0",
+    "executablePath": "/state/cache/scratch/squashfs-root-0110/cables",
+    "executableSha256": "75a01a24c2c52ed88eb70464a68408bd63d41848fed3f81ba4fd23df1c0578a5",
+    "version": "0.11.0"
+  },
+  "canvasResize": {
+    "canvas": {
+      "height": 270,
+      "width": 480
+    },
+    "cgl": {
+      "canvasHeight": 270,
+      "canvasWidth": 480,
+      "drawingBufferHeight": 270,
+      "drawingBufferWidth": 480,
+      "viewPort": [
+        0,
+        0,
+        480,
+        270
+      ]
+    },
+    "error": "",
+    "height": 270,
+    "mode": "Canvas",
+    "programId": "noisemaker-program-op",
+    "ready": true,
+    "replacedTexture": true,
+    "stableProgram": true,
+    "texture": true,
+    "width": 480
+  },
+  "canvasResizeBefore": {
+    "canvasHeight": 320,
+    "canvasWidth": 640,
+    "height": 320,
+    "mode": "Canvas",
+    "programId": "noisemaker-program-op",
+    "width": 640,
+    "requestedCss": {
+      "height": 270,
+      "width": 480
+    },
+    "target": {
+      "height": 270,
+      "width": 480
+    }
+  },
+  "consoleErrors": [],
+  "facade": {
+    "effectCount": 210,
+    "effectIds": 210,
+    "issues": [],
+    "packageVersion": "0.1.0",
+    "supported": true
+  },
+  "finalState": {
+    "dsl": "search synth\nnoise(seed: 1, scaleX: 50, scaleY: 50).write(o0)\nrender(o0)",
+    "error": "",
+    "height": 270,
+    "ready": true,
+    "texture": true,
+    "width": 480
+  },
+  "initial": {
+    "dsl": "search synth\n\nnoise(seed: 1, scaleX: 50, scaleY: 50, ridges: true)\n  .write(o0)\n\nrender(o0)",
+    "error": "",
+    "height": 320,
+    "ready": true,
+    "texture": true,
+    "width": 640
+  },
+  "keyboardFocus": {
+    "after": "IFRAME",
+    "hasFocus": true,
+    "pageActive": "IFRAME",
+    "tags": [
+      "CANVAS",
+      "CANVAS",
+      "A"
+    ]
+  },
+  "mediaProbe": {
+    "bindCount": 2,
+    "hostHandle": true,
+    "readPixelsCount": 0
+  },
+  "pageErrors": [],
+  "pixels": {
+    "animated": {
+      "first": {
+        "hash": "3c1a1dc5",
+        "height": 96,
+        "maximum": 1,
+        "mean": 0.6550996316339782,
+        "minimum": 0.000057816505432128906,
+        "width": 128
+      },
+      "second": {
+        "hash": "6ea77dc5",
+        "height": 96,
+        "maximum": 1,
+        "mean": 0.6577227202869835,
+        "minimum": 0.000022530555725097656,
+        "width": 128
+      }
+    },
+    "invalidRetainedHash": "1e4b9dc5",
+    "solid": {
+      "hash": "1e4b9dc5",
+      "height": 96,
+      "maximum": 1,
+      "mean": 0.557891845703125,
+      "minimum": 0.1490478515625,
+      "width": 128
+    }
+  },
+  "recreated": {
+    "id": "mfronovf7",
+    "oldId": "noisemaker-program-op"
+  },
+  "resize": {
+    "error": "",
+    "height": 180,
+    "ready": true,
+    "stableTexture": true,
+    "width": 320
+  },
+  "savedProjectRemoval": {
+    "noisemakerOps": 0,
+    "mainLoop": 1
+  },
+  "savedProjectReload": {
+    "patchSha256": "da418ac3ed14974baddc763491047253517ea6df9581e9088b77574f963bc978",
+    "ready": true,
+    "size": {
+      "height": 320,
+      "width": 640
+    }
+  },
+  "savedProjectUpgrade": {
+    "ready": true,
+    "rendered": true,
+    "size": {
+      "height": 320,
+      "width": 640
+    }
+  },
+  "screenshot": "test-report/standalone-smoke.png",
+  "screenshotSha256": "44d2839bfa493a68b0e2e445109dcab6de5bd2e8cc8931e06f061a89503c030c",
+  "time": {
+    "first": 110.95084043100002,
+    "second": 111.01200755000002
+  }
+}

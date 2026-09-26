@@ -1,0 +1,96 @@
+[
+  {
+    "id": "@noisefactor/noisemaker-for-cables@0.1.0",
+    "name": "@noisefactor/noisemaker-for-cables",
+    "version": "0.1.0",
+    "size": 866447,
+    "unpackedSize": 4216024,
+    "shasum": "14e1c220ec2deb9cc5fd543eabd155eff88f3af7",
+    "integrity": "sha512-PL6UodcIHd2RfZV8z27FXL3uOl1Nx0JsBWt5+nVmvHxl6CYPNdlcBRLMZJcmeBuLzb14qX8c+j3pdn5IcN3IIA==",
+    "filename": "noisefactor-noisemaker-for-cables-0.1.0.tgz",
+    "files": [
+      {
+        "path": "LICENSE",
+        "size": 1073,
+        "mode": 420
+      },
+      {
+        "path": "Ops.Extension.Noisemaker/Ops.Extension.Noisemaker.json",
+        "size": 154,
+        "mode": 420
+      },
+      {
+        "path": "Ops.Extension.Noisemaker/Ops.Extension.Noisemaker.Program/lib_noisemaker-cablesgl.js",
+        "size": 4135590,
+        "mode": 420
+      },
+      {
+        "path": "Ops.Extension.Noisemaker/Ops.Extension.Noisemaker.Program/Ops.Extension.Noisemaker.Program.js",
+        "size": 50,
+        "mode": 420
+      },
+      {
+        "path": "Ops.Extension.Noisemaker/Ops.Extension.Noisemaker.Program/Ops.Extension.Noisemaker.Program.json",
+        "size": 3073,
+        "mode": 420
+      },
+      {
+        "path": "Ops.Extension.Noisemaker/Ops.Extension.Noisemaker.Program/Ops.Extension.Noisemaker.Program.md",
+        "size": 1394,
+        "mode": 420
+      },
+      {
+        "path": "README.md",
+        "size": 1995,
+        "mode": 420
+      },
+      {
+        "path": "docs/architecture.md",
+        "size": 2206,
+        "mode": 420
+      },
+      {
+        "path": "docs/catalog-update.md",
+        "size": 1646,
+        "mode": 420
+      },
+      {
+        "path": "docs/installation.md",
+        "size": 4009,
+        "mode": 420
+      },
+      {
+        "path": "examples/noisemaker-program.cables",
+        "size": 3130,
+        "mode": 420
+      },
+      {
+        "path": "examples/README.md",
+        "size": 1339,
+        "mode": 420
+      },
+      {
+        "path": "package.json",
+        "size": 1252,
+        "mode": 384
+      },
+      {
+        "path": "parity/catalog-inputs.js",
+        "size": 6052,
+        "mode": 420
+      },
+      {
+        "path": "parity/programs.json",
+        "size": 2305,
+        "mode": 420
+      },
+      {
+        "path": "vendor.lock.json",
+        "size": 50756,
+        "mode": 420
+      }
+    ],
+    "entryCount": 16,
+    "bundled": []
+  }
+]

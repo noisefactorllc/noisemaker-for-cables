@@ -1,0 +1,6 @@
+
+> @noisefactor/noisemaker-for-cables@0.1.0 build
+> node tools/build.mjs
+
+Built Noisemaker for Cables (4135590 bytes)
+d58e6d21af82b832a5ca84baccbb2dea69f024c692307db0a259a8fe71395ef6  Ops.Extension.Noisemaker/Ops.Extension.Noisemaker.Program/lib_noisemaker-cablesgl.js

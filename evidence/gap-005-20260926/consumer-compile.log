@@ -1,0 +1,10 @@
+$ npm install --ignore-scripts --no-audit --no-fund noisefactor-noisemaker-for-cables-0.1.0.tgz
+
+added 1 package in 546ms
+
+$ node shim.mjs  # loads the installed IIFE bundle with vm.runInThisContext after DOM stubs, then facade.compileProgram of the starter DSL
+compile ok 0.1.0
+
+$ sha256sum committed-bundle installed-bundle
+d58e6d21af82b832a5ca84baccbb2dea69f024c692307db0a259a8fe71395ef6  /workspace/repos/noisemaker-for-cables/Ops.Extension.Noisemaker/Ops.Extension.Noisemaker.Program/lib_noisemaker-cablesgl.js
+d58e6d21af82b832a5ca84baccbb2dea69f024c692307db0a259a8fe71395ef6  node_modules/@noisefactor/noisemaker-for-cables/Ops.Extension.Noisemaker/Ops.Extension.Noisemaker.Program/lib_noisemaker-cablesgl.js
