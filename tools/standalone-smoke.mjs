@@ -80,8 +80,11 @@ try {
     // chrome-sandbox helper, and Cables' editor needs WebGL, which on
     // GPU-less hosts only initializes through the SwiftShader ANGLE backend.
     ...(process.platform === 'linux'
-      ? ['--no-sandbox', '--use-angle=swiftshader', '--enable-unsafe-swiftshader']
-      : []),
+      ? ['--no-sandbox', '--use-angle=swiftshader', '--enable-unsafe-swiftshader',
+        // The container's /dev/shm is 64 MiB; additional editor instances
+        // crash their renderers without this flag.
+        '--disable-dev-shm-usage']
+    : []),
   ], {
     env: { ...process.env, ELECTRON_DISABLE_SECURITY_WARNINGS: 'true' },
     stdio: ['ignore', 'pipe', 'pipe'],
@@ -135,8 +138,143 @@ try {
       tags.push(await frame.evaluate(() => document.activeElement?.tagName ?? null))
     }
     const after = await page.evaluate(() => document.activeElement?.tagName ?? null)
+    // Accessible-control interaction: continue Tab traversal until a visible
+    // editor control is focused, then send real keyboard Enter and Space to
+    // it. Capture-phase listeners record any activation click and whether the
+    // keydown default (activation) was prevented, without mutating the patch.
+    const alreadyArmed = await frame.evaluate(() => Boolean(globalThis.__noisemakerKeyboardArm))
+    if (!alreadyArmed) {
+      await frame.evaluate(() => {
+        globalThis.__noisemakerKeyboardArm = {
+          click: (event) => {
+            event.preventDefault()
+            event.stopImmediatePropagation()
+            globalThis.__noisemakerKeyboardClicks.push(
+              event.target?.id || event.target?.tagName)
+          },
+          keydown: (event) => {
+            setTimeout(() => globalThis.__noisemakerKeydowns.push({
+              defaultPrevented: event.defaultPrevented,
+              key: event.key,
+              on: document.activeElement?.id || document.activeElement?.tagName,
+            }), 0)
+          },
+        }
+        globalThis.__noisemakerKeyboardClicks = []
+        globalThis.__noisemakerKeydowns = []
+        document.addEventListener('click', globalThis.__noisemakerKeyboardArm.click, {
+          capture: true,
+        })
+        document.addEventListener('keydown', globalThis.__noisemakerKeyboardArm.keydown, {
+          capture: true,
+        })
+      })
+    }
+    await frame.evaluate(() => {
+      globalThis.__noisemakerKeyboardClicks.length = 0
+      globalThis.__noisemakerKeydowns.length = 0
+    })
+    let focusedControl = null
+    for (let tab = 0; tab < 60 && !focusedControl; tab += 1) {
+      await page.keyboard.press('Tab')
+      await sleep(120)
+      focusedControl = await frame.evaluate(() => {
+        const el = document.activeElement
+        if (!el || el === document.body) return null
+        const isControl = el.tagName === 'BUTTON'
+          || el.getAttribute?.('role') === 'button'
+          || /(^|\s)(button|iconbutton|eleAsButton)/.test(String(el.className))
+        if (!isControl) return null
+        const rect = el.getBoundingClientRect()
+        if (rect.width <= 0 || rect.height <= 0) return null
+        return {
+          className: String(el.className).slice(0, 60),
+          id: el.id || null,
+          role: el.getAttribute('role') || el.tagName.toLowerCase(),
+          text: (el.textContent || '').trim().slice(0, 40),
+        }
+      })
+    }
+    assert.ok(focusedControl, 'Tab traversal did not focus a visible editor control')
+    await page.keyboard.press('Enter')
+    await sleep(250)
+    await page.keyboard.press('Space')
+    await sleep(250)
+    const activation = await frame.evaluate(() => ({
+      clicks: [...globalThis.__noisemakerKeyboardClicks],
+      keydowns: [...globalThis.__noisemakerKeydowns],
+    }))
+    const activationKeys = activation.keydowns.filter((key) =>
+      key.key === 'Enter' || key.key === ' ')
+    assert.ok(
+      activationKeys.length >= 2,
+      `keyboard Enter/Space did not reach the focused control: ${JSON.stringify(activation)}`,
+    )
+    // Control probe outside the editor iframe: the same CDP keyboard events
+    // activate a natively injected host-page control, recording that the
+    // suppression above is editor-side.
+    const hostPageActivation = await (async () => {
+      await page.evaluate(() => {
+        const button = document.createElement('button')
+        button.id = 'noisemaker-kb-probe'
+        button.textContent = 'probe'
+        button.style.cssText = 'position:fixed;top:8px;left:8px;z-index:2147483647;'
+        document.body.appendChild(button)
+        window.__noisemakerHostKbClicks = []
+        window.__noisemakerHostKbHandler = (event) => {
+          window.__noisemakerHostKbClicks.push(
+            event.target?.id || event.target?.tagName)
+        }
+        document.addEventListener('click', window.__noisemakerHostKbHandler, {
+          capture: true,
+        })
+        button.focus()
+      })
+      await page.keyboard.press('Enter')
+      await sleep(250)
+      await page.keyboard.press('Space')
+      await sleep(250)
+      return await page.evaluate(() => {
+        const clicks = [...window.__noisemakerHostKbClicks]
+        document.getElementById('noisemaker-kb-probe').remove()
+        document.removeEventListener('click', window.__noisemakerHostKbHandler, {
+          capture: true,
+        })
+        delete window.__noisemakerHostKbClicks
+        delete window.__noisemakerHostKbHandler
+        return { activated: clicks.length >= 2, clicks }
+      })
+    })()
+    assert.deepEqual(
+      hostPageActivation,
+      { activated: true, clicks: ['noisemaker-kb-probe', 'noisemaker-kb-probe'] },
+      'the host page did not activate an injected control with the same keyboard events',
+    )
+    await frame.evaluate(() => {
+      document.removeEventListener('click', globalThis.__noisemakerKeyboardArm.click, {
+        capture: true,
+      })
+      document.removeEventListener('keydown', globalThis.__noisemakerKeyboardArm.keydown, {
+        capture: true,
+      })
+      delete globalThis.__noisemakerKeyboardArm
+      delete globalThis.__noisemakerKeyboardClicks
+      delete globalThis.__noisemakerKeydowns
+    })
     await page.keyboard.press('Escape')
-    return { after, hasFocus: pageState.hasFocus, pageActive: pageState.activeElement, tags }
+    return {
+      accessibleControls: {
+        activationClicks: activation.clicks,
+        activationDefaultPrevented: activationKeys.every((key) => key.defaultPrevented),
+        focusedControl,
+        hostPageActivation,
+        keyboardEnterSpaceReachesControl: activationKeys.length >= 2,
+      },
+      after,
+      hasFocus: pageState.hasFocus,
+      pageActive: pageState.activeElement,
+      tags,
+    }
   })()
   assert.equal(
     keyboardFocus.hasFocus,
@@ -638,7 +776,10 @@ try {
       `--remote-debugging-port=${cdpPort}`,
       `--user-data-dir=${profile}`,
       ...(process.platform === 'linux'
-        ? ['--no-sandbox', '--use-angle=swiftshader', '--enable-unsafe-swiftshader']
+        ? ['--no-sandbox', '--use-angle=swiftshader', '--enable-unsafe-swiftshader',
+          // The container's /dev/shm is 64 MiB; additional editor instances
+          // crash their renderers without this flag.
+          '--disable-dev-shm-usage']
         : []),
     ], {
       env: { ...process.env, ELECTRON_DISABLE_SECURITY_WARNINGS: 'true' },
