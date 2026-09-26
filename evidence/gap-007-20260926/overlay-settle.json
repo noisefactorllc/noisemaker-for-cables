@@ -1,5 +1,349 @@
 {
   "adapterRuns": 4,
+  "cases": [
+    {
+      "adapterRuns": 4,
+      "comparisons": [
+        {
+          "id": "filter/fibers:reference-vs-adapter0",
+          "effectId": "filter/fibers",
+          "pair": "reference-vs-adapter0",
+          "mismatchedChannels": 0,
+          "maxChannelError": 0,
+          "meanChannelError": 0
+        },
+        {
+          "id": "filter/fibers:reference-vs-adapter1",
+          "effectId": "filter/fibers",
+          "pair": "reference-vs-adapter1",
+          "mismatchedChannels": 0,
+          "maxChannelError": 0,
+          "meanChannelError": 0
+        },
+        {
+          "id": "filter/fibers:adapter0-vs-adapter1",
+          "effectId": "filter/fibers",
+          "pair": "adapter0-vs-adapter1",
+          "mismatchedChannels": 0,
+          "maxChannelError": 0,
+          "meanChannelError": 0
+        },
+        {
+          "id": "filter/fibers:reference-vs-adapter2",
+          "effectId": "filter/fibers",
+          "pair": "reference-vs-adapter2",
+          "mismatchedChannels": 0,
+          "maxChannelError": 0,
+          "meanChannelError": 0
+        },
+        {
+          "id": "filter/fibers:adapter1-vs-adapter2",
+          "effectId": "filter/fibers",
+          "pair": "adapter1-vs-adapter2",
+          "mismatchedChannels": 0,
+          "maxChannelError": 0,
+          "meanChannelError": 0
+        },
+        {
+          "id": "filter/fibers:reference-vs-adapter3",
+          "effectId": "filter/fibers",
+          "pair": "reference-vs-adapter3",
+          "mismatchedChannels": 0,
+          "maxChannelError": 0,
+          "meanChannelError": 0
+        },
+        {
+          "id": "filter/fibers:adapter2-vs-adapter3",
+          "effectId": "filter/fibers",
+          "pair": "adapter2-vs-adapter3",
+          "mismatchedChannels": 0,
+          "maxChannelError": 0,
+          "meanChannelError": 0
+        }
+      ],
+      "id": "filter/fibers",
+      "uploads": {
+        "filter/fibers:reference:0": {
+          "count": 133,
+          "maxGapMs": 13,
+          "spanMs": 530
+        },
+        "filter/fibers:adapter:0": {
+          "count": 133,
+          "maxGapMs": 45,
+          "spanMs": 4366
+        },
+        "filter/fibers:adapter:1": {
+          "count": 133,
+          "maxGapMs": 49,
+          "spanMs": 3836
+        },
+        "filter/fibers:adapter:2": {
+          "count": 133,
+          "maxGapMs": 55,
+          "spanMs": 4114
+        },
+        "filter/fibers:adapter:3": {
+          "count": 133,
+          "maxGapMs": 56,
+          "spanMs": 4404
+        }
+      }
+    },
+    {
+      "adapterRuns": 4,
+      "comparisons": [
+        {
+          "id": "filter/scratches:reference-vs-adapter0",
+          "effectId": "filter/scratches",
+          "pair": "reference-vs-adapter0",
+          "mismatchedChannels": 0,
+          "maxChannelError": 0,
+          "meanChannelError": 0
+        },
+        {
+          "id": "filter/scratches:reference-vs-adapter1",
+          "effectId": "filter/scratches",
+          "pair": "reference-vs-adapter1",
+          "mismatchedChannels": 0,
+          "maxChannelError": 0,
+          "meanChannelError": 0
+        },
+        {
+          "id": "filter/scratches:adapter0-vs-adapter1",
+          "effectId": "filter/scratches",
+          "pair": "adapter0-vs-adapter1",
+          "mismatchedChannels": 0,
+          "maxChannelError": 0,
+          "meanChannelError": 0
+        },
+        {
+          "id": "filter/scratches:reference-vs-adapter2",
+          "effectId": "filter/scratches",
+          "pair": "reference-vs-adapter2",
+          "mismatchedChannels": 0,
+          "maxChannelError": 0,
+          "meanChannelError": 0
+        },
+        {
+          "id": "filter/scratches:adapter1-vs-adapter2",
+          "effectId": "filter/scratches",
+          "pair": "adapter1-vs-adapter2",
+          "mismatchedChannels": 0,
+          "maxChannelError": 0,
+          "meanChannelError": 0
+        },
+        {
+          "id": "filter/scratches:reference-vs-adapter3",
+          "effectId": "filter/scratches",
+          "pair": "reference-vs-adapter3",
+          "mismatchedChannels": 0,
+          "maxChannelError": 0,
+          "meanChannelError": 0
+        },
+        {
+          "id": "filter/scratches:adapter2-vs-adapter3",
+          "effectId": "filter/scratches",
+          "pair": "adapter2-vs-adapter3",
+          "mismatchedChannels": 0,
+          "maxChannelError": 0,
+          "meanChannelError": 0
+        }
+      ],
+      "id": "filter/scratches",
+      "uploads": {
+        "filter/fibers:reference:0": {
+          "count": 133,
+          "maxGapMs": 13,
+          "spanMs": 530
+        },
+        "filter/fibers:adapter:0": {
+          "count": 133,
+          "maxGapMs": 45,
+          "spanMs": 4366
+        },
+        "filter/fibers:adapter:1": {
+          "count": 133,
+          "maxGapMs": 49,
+          "spanMs": 3836
+        },
+        "filter/fibers:adapter:2": {
+          "count": 133,
+          "maxGapMs": 55,
+          "spanMs": 4114
+        },
+        "filter/fibers:adapter:3": {
+          "count": 133,
+          "maxGapMs": 56,
+          "spanMs": 4404
+        },
+        "filter/scratches:reference:0": {
+          "count": 25,
+          "maxGapMs": 6,
+          "spanMs": 88
+        },
+        "filter/scratches:adapter:0": {
+          "count": 25,
+          "maxGapMs": 31,
+          "spanMs": 617
+        },
+        "filter/scratches:adapter:1": {
+          "count": 25,
+          "maxGapMs": 33,
+          "spanMs": 717
+        },
+        "filter/scratches:adapter:2": {
+          "count": 25,
+          "maxGapMs": 39,
+          "spanMs": 732
+        },
+        "filter/scratches:adapter:3": {
+          "count": 25,
+          "maxGapMs": 39,
+          "spanMs": 841
+        }
+      }
+    },
+    {
+      "adapterRuns": 4,
+      "comparisons": [
+        {
+          "id": "filter/strayHair:reference-vs-adapter0",
+          "effectId": "filter/strayHair",
+          "pair": "reference-vs-adapter0",
+          "mismatchedChannels": 0,
+          "maxChannelError": 0,
+          "meanChannelError": 0
+        },
+        {
+          "id": "filter/strayHair:reference-vs-adapter1",
+          "effectId": "filter/strayHair",
+          "pair": "reference-vs-adapter1",
+          "mismatchedChannels": 0,
+          "maxChannelError": 0,
+          "meanChannelError": 0
+        },
+        {
+          "id": "filter/strayHair:adapter0-vs-adapter1",
+          "effectId": "filter/strayHair",
+          "pair": "adapter0-vs-adapter1",
+          "mismatchedChannels": 0,
+          "maxChannelError": 0,
+          "meanChannelError": 0
+        },
+        {
+          "id": "filter/strayHair:reference-vs-adapter2",
+          "effectId": "filter/strayHair",
+          "pair": "reference-vs-adapter2",
+          "mismatchedChannels": 0,
+          "maxChannelError": 0,
+          "meanChannelError": 0
+        },
+        {
+          "id": "filter/strayHair:adapter1-vs-adapter2",
+          "effectId": "filter/strayHair",
+          "pair": "adapter1-vs-adapter2",
+          "mismatchedChannels": 0,
+          "maxChannelError": 0,
+          "meanChannelError": 0
+        },
+        {
+          "id": "filter/strayHair:reference-vs-adapter3",
+          "effectId": "filter/strayHair",
+          "pair": "reference-vs-adapter3",
+          "mismatchedChannels": 0,
+          "maxChannelError": 0,
+          "meanChannelError": 0
+        },
+        {
+          "id": "filter/strayHair:adapter2-vs-adapter3",
+          "effectId": "filter/strayHair",
+          "pair": "adapter2-vs-adapter3",
+          "mismatchedChannels": 0,
+          "maxChannelError": 0,
+          "meanChannelError": 0
+        }
+      ],
+      "id": "filter/strayHair",
+      "uploads": {
+        "filter/fibers:reference:0": {
+          "count": 133,
+          "maxGapMs": 13,
+          "spanMs": 530
+        },
+        "filter/fibers:adapter:0": {
+          "count": 133,
+          "maxGapMs": 45,
+          "spanMs": 4366
+        },
+        "filter/fibers:adapter:1": {
+          "count": 133,
+          "maxGapMs": 49,
+          "spanMs": 3836
+        },
+        "filter/fibers:adapter:2": {
+          "count": 133,
+          "maxGapMs": 55,
+          "spanMs": 4114
+        },
+        "filter/fibers:adapter:3": {
+          "count": 133,
+          "maxGapMs": 56,
+          "spanMs": 4404
+        },
+        "filter/scratches:reference:0": {
+          "count": 25,
+          "maxGapMs": 6,
+          "spanMs": 88
+        },
+        "filter/scratches:adapter:0": {
+          "count": 25,
+          "maxGapMs": 31,
+          "spanMs": 617
+        },
+        "filter/scratches:adapter:1": {
+          "count": 25,
+          "maxGapMs": 33,
+          "spanMs": 717
+        },
+        "filter/scratches:adapter:2": {
+          "count": 25,
+          "maxGapMs": 39,
+          "spanMs": 732
+        },
+        "filter/scratches:adapter:3": {
+          "count": 25,
+          "maxGapMs": 39,
+          "spanMs": 841
+        },
+        "filter/strayHair:reference:0": {
+          "count": 3,
+          "maxGapMs": 6,
+          "spanMs": 6
+        },
+        "filter/strayHair:adapter:0": {
+          "count": 3,
+          "maxGapMs": 35,
+          "spanMs": 59
+        },
+        "filter/strayHair:adapter:1": {
+          "count": 3,
+          "maxGapMs": 30,
+          "spanMs": 50
+        },
+        "filter/strayHair:adapter:2": {
+          "count": 3,
+          "maxGapMs": 24,
+          "spanMs": 43
+        },
+        "filter/strayHair:adapter:3": {
+          "count": 3,
+          "maxGapMs": 30,
+          "spanMs": 56
+        }
+      }
+    }
+  ],
   "checkpoint": {
     "channelCeiling": 0,
     "comparisonMethod": "independent-reference-adapter-float-readback",
@@ -8,126 +352,168 @@
   },
   "comparisons": [
     {
+      "id": "filter/fibers:reference-vs-adapter0",
+      "effectId": "filter/fibers",
       "pair": "reference-vs-adapter0",
       "mismatchedChannels": 0,
       "maxChannelError": 0,
       "meanChannelError": 0
     },
     {
+      "id": "filter/fibers:reference-vs-adapter1",
+      "effectId": "filter/fibers",
       "pair": "reference-vs-adapter1",
       "mismatchedChannels": 0,
       "maxChannelError": 0,
       "meanChannelError": 0
     },
     {
+      "id": "filter/fibers:adapter0-vs-adapter1",
+      "effectId": "filter/fibers",
       "pair": "adapter0-vs-adapter1",
       "mismatchedChannels": 0,
       "maxChannelError": 0,
       "meanChannelError": 0
     },
     {
+      "id": "filter/fibers:reference-vs-adapter2",
+      "effectId": "filter/fibers",
       "pair": "reference-vs-adapter2",
       "mismatchedChannels": 0,
       "maxChannelError": 0,
       "meanChannelError": 0
     },
     {
+      "id": "filter/fibers:adapter1-vs-adapter2",
+      "effectId": "filter/fibers",
       "pair": "adapter1-vs-adapter2",
       "mismatchedChannels": 0,
       "maxChannelError": 0,
       "meanChannelError": 0
     },
     {
+      "id": "filter/fibers:reference-vs-adapter3",
+      "effectId": "filter/fibers",
       "pair": "reference-vs-adapter3",
       "mismatchedChannels": 0,
       "maxChannelError": 0,
       "meanChannelError": 0
     },
     {
+      "id": "filter/fibers:adapter2-vs-adapter3",
+      "effectId": "filter/fibers",
       "pair": "adapter2-vs-adapter3",
       "mismatchedChannels": 0,
       "maxChannelError": 0,
       "meanChannelError": 0
     },
     {
+      "id": "filter/scratches:reference-vs-adapter0",
+      "effectId": "filter/scratches",
       "pair": "reference-vs-adapter0",
       "mismatchedChannels": 0,
       "maxChannelError": 0,
       "meanChannelError": 0
     },
     {
+      "id": "filter/scratches:reference-vs-adapter1",
+      "effectId": "filter/scratches",
       "pair": "reference-vs-adapter1",
       "mismatchedChannels": 0,
       "maxChannelError": 0,
       "meanChannelError": 0
     },
     {
+      "id": "filter/scratches:adapter0-vs-adapter1",
+      "effectId": "filter/scratches",
       "pair": "adapter0-vs-adapter1",
       "mismatchedChannels": 0,
       "maxChannelError": 0,
       "meanChannelError": 0
     },
     {
+      "id": "filter/scratches:reference-vs-adapter2",
+      "effectId": "filter/scratches",
       "pair": "reference-vs-adapter2",
       "mismatchedChannels": 0,
       "maxChannelError": 0,
       "meanChannelError": 0
     },
     {
+      "id": "filter/scratches:adapter1-vs-adapter2",
+      "effectId": "filter/scratches",
       "pair": "adapter1-vs-adapter2",
       "mismatchedChannels": 0,
       "maxChannelError": 0,
       "meanChannelError": 0
     },
     {
+      "id": "filter/scratches:reference-vs-adapter3",
+      "effectId": "filter/scratches",
       "pair": "reference-vs-adapter3",
       "mismatchedChannels": 0,
       "maxChannelError": 0,
       "meanChannelError": 0
     },
     {
+      "id": "filter/scratches:adapter2-vs-adapter3",
+      "effectId": "filter/scratches",
       "pair": "adapter2-vs-adapter3",
       "mismatchedChannels": 0,
       "maxChannelError": 0,
       "meanChannelError": 0
     },
     {
+      "id": "filter/strayHair:reference-vs-adapter0",
+      "effectId": "filter/strayHair",
       "pair": "reference-vs-adapter0",
       "mismatchedChannels": 0,
       "maxChannelError": 0,
       "meanChannelError": 0
     },
     {
+      "id": "filter/strayHair:reference-vs-adapter1",
+      "effectId": "filter/strayHair",
       "pair": "reference-vs-adapter1",
       "mismatchedChannels": 0,
       "maxChannelError": 0,
       "meanChannelError": 0
     },
     {
+      "id": "filter/strayHair:adapter0-vs-adapter1",
+      "effectId": "filter/strayHair",
       "pair": "adapter0-vs-adapter1",
       "mismatchedChannels": 0,
       "maxChannelError": 0,
       "meanChannelError": 0
     },
     {
+      "id": "filter/strayHair:reference-vs-adapter2",
+      "effectId": "filter/strayHair",
       "pair": "reference-vs-adapter2",
       "mismatchedChannels": 0,
       "maxChannelError": 0,
       "meanChannelError": 0
     },
     {
+      "id": "filter/strayHair:adapter1-vs-adapter2",
+      "effectId": "filter/strayHair",
       "pair": "adapter1-vs-adapter2",
       "mismatchedChannels": 0,
       "maxChannelError": 0,
       "meanChannelError": 0
     },
     {
+      "id": "filter/strayHair:reference-vs-adapter3",
+      "effectId": "filter/strayHair",
       "pair": "reference-vs-adapter3",
       "mismatchedChannels": 0,
       "maxChannelError": 0,
       "meanChannelError": 0
     },
     {
+      "id": "filter/strayHair:adapter2-vs-adapter3",
+      "effectId": "filter/strayHair",
       "pair": "adapter2-vs-adapter3",
       "mismatchedChannels": 0,
       "maxChannelError": 0,
@@ -135,5 +521,40 @@
     }
   ],
   "effectCount": 3,
+  "generation": [
+    {
+      "adapterUploadCounts": [
+        133,
+        133,
+        133,
+        133
+      ],
+      "adapterUploadCountsMatchReference": true,
+      "id": "filter/fibers",
+      "referenceUploadCount": 133
+    },
+    {
+      "adapterUploadCounts": [
+        25,
+        25,
+        25,
+        25
+      ],
+      "adapterUploadCountsMatchReference": true,
+      "id": "filter/scratches",
+      "referenceUploadCount": 25
+    },
+    {
+      "adapterUploadCounts": [
+        3,
+        3,
+        3,
+        3
+      ],
+      "adapterUploadCountsMatchReference": true,
+      "id": "filter/strayHair",
+      "referenceUploadCount": 3
+    }
+  ],
   "ok": true
 }

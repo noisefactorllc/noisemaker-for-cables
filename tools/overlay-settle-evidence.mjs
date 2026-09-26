@@ -87,6 +87,8 @@ const pageEvaluate = async ({ effects, adapterRuns }) => {
           0,
         )
         comparisons.push({
+          id: `${caseDefinition.id}:reference-vs-adapter${run}`,
+          effectId: caseDefinition.id,
           pair: `reference-vs-adapter${run}`,
           mismatchedChannels: referenceComparison.mismatchedChannels,
           maxChannelError: referenceComparison.maxChannelError,
@@ -100,6 +102,8 @@ const pageEvaluate = async ({ effects, adapterRuns }) => {
             0,
           )
           comparisons.push({
+            id: `${caseDefinition.id}:adapter${run - 1}-vs-adapter${run}`,
+            effectId: caseDefinition.id,
             pair: `adapter${run - 1}-vs-adapter${run}`,
             mismatchedChannels: repeatComparison.mismatchedChannels,
             maxChannelError: repeatComparison.maxChannelError,
@@ -112,7 +116,7 @@ const pageEvaluate = async ({ effects, adapterRuns }) => {
         comparisons,
         id: caseDefinition.id,
         referencePng: toPngBase64(referenceReadback),
-        adapterPng: toPngBase64(adapterReadbacks[adapterReadbacks.length - 1]),
+        adapterPngs: adapterReadbacks.map((readback) => toPngBase64(readback)),
         uploads: Object.fromEntries(
           Object.entries(
             window.__uploadLog.reduce((acc, { tag, t }) => {
@@ -168,20 +172,40 @@ try {
   await mkdir(OUT_DIR, { recursive: true })
   const comparisons = cases.flatMap(({ comparisons }) => comparisons)
   const mismatched = comparisons.filter(({ mismatchedChannels }) => mismatchedChannels > 0)
+  // Drain-sufficiency record: every adapter run must perform the same number of overlay
+  // source uploads as the reference's completed generation before capture.
+  const generation = cases.map(({ id, uploads }) => {
+    const referenceUploadCount = uploads[`${id}:reference:0`].count
+    const adapterUploadCounts = uploads && ADAPTER_RUNS
+      ? Array.from({ length: ADAPTER_RUNS }, (_, run) => uploads[`${id}:adapter:${run}`].count)
+      : []
+    return {
+      adapterUploadCounts,
+      adapterUploadCountsMatchReference: adapterUploadCounts
+        .every((count) => count === referenceUploadCount),
+      id,
+      referenceUploadCount,
+    }
+  })
   const report = {
     adapterRuns: ADAPTER_RUNS,
+    cases: cases.map(({ adapterPngs, referencePng, ...jsonCase }) => jsonCase),
     checkpoint: { channelCeiling: 0, comparisonMethod: 'independent-reference-adapter-float-readback', height: HEIGHT, width: WIDTH },
     comparisons,
     effectCount: cases.length,
-    ok: mismatched.length === 0,
+    generation,
+    ok: mismatched.length === 0 && generation.every(({ adapterUploadCountsMatchReference }) => adapterUploadCountsMatchReference),
   }
   await writeFile(new URL('overlay-settle.json', OUT_DIR), `${JSON.stringify(report, null, 2)}\n`)
-  for (const { adapterPng, id, referencePng } of cases) {
-    await writeFile(new URL(`${id.replaceAll('/', '-')}@0-reference.png`, OUT_DIR), Buffer.from(referencePng, 'base64'))
-    await writeFile(new URL(`${id.replaceAll('/', '-')}@0-adapter.png`, OUT_DIR), Buffer.from(adapterPng, 'base64'))
+  for (const { adapterPngs, id, referencePng } of cases) {
+    const stem = id.replaceAll('/', '-')
+    await writeFile(new URL(`${stem}@0-reference.png`, OUT_DIR), Buffer.from(referencePng, 'base64'))
+    for (const [run, adapterPng] of adapterPngs.entries()) {
+      await writeFile(new URL(`${stem}@0-adapter-run${run}.png`, OUT_DIR), Buffer.from(adapterPng, 'base64'))
+    }
   }
   console.log(JSON.stringify({ effectCount: cases.length, mismatchedComparisons: mismatched.length, ok: report.ok, totalComparisons: comparisons.length }))
-  if (mismatched.length > 0) process.exitCode = 1
+  if (!report.ok) process.exitCode = 1
 } finally {
   server.kill()
 }
