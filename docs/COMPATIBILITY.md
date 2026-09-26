@@ -2,11 +2,11 @@
 
 ## 1. Source and authority revisions
 
-Daily review: 2026-09-25. Current inspected source: [`6a5a9048471621a86cb8025bc10ce650b7efa842`](https://github.com/noisefactorllc/noisemaker-for-cables/commit/6a5a9048471621a86cb8025bc10ce650b7efa842).
-Full rendered parity remains **unverified**. No release approval or new closure follows from this review.
-Current upstream discovery: `bbdeb56c4b75cf33379766c3e87b0f5a18bcbba8`. Published Noisemaker authority: `1.0.179`, source `fca611fd8f91424661d4e531d39313d24ea21134`, 210 effect IDs.
+Daily review: 2026-09-26. Current inspected source: [`411b2b646bb6692918c17d705f0afdaf837f6e48`](https://github.com/noisefactorllc/noisemaker-for-cables/commit/411b2b646bb6692918c17d705f0afdaf837f6e48).
+Full rendered parity remains **unverified**. No release approval follows from this review.
+Current upstream discovery: `a651c075bb2848b584b2bf2484f5f8a0db754b0c`. Published Noisemaker authority: `1.0.185`, source `6a0af04d3c4f345ffab5e9f8e54e532216b4cdaa`, 210 effect IDs, manifest SHA-256 unchanged (`05c4d7b7744837ae90a3bb4c89e5403ff09448a74d9d7e824abb3d719ad3314e`).
 The observations below retain their original source and authority identities. They do not qualify later updates.
-Current served kit: `0.1.24`, source `6a5a9048471621a86cb8025bc10ce650b7efa842`. [Retrieved inventory and hashes](/Users/alex/.codex/automations/noisemaker-port-completion-audit/review-20260925-053200/current-served-inventories.json). Artifact identity does not establish host qualification.
+Current served kit: `0.1.27`, source `69beff8ae5ef5954ee85cd70674f66a659c08bd9`. This review verified all 17 inventory hashes. The served engine bundle is byte-identical to the qualifying bundle `8f640b46027d9efe13f33fb9db627cbc3ead79e2c26c252e2267d827ea836d7f`. Artifact identity does not establish host qualification. The vendored authority remains `noisemaker@8eeb7b5a` (`1.0.183`). Later published versions stay unqualified.
 
 ### Earlier source observations
 
@@ -34,18 +34,22 @@ The matrix below retains the earlier measured scope. A historical verified row i
 
 | Dimension | Status | Measured scope or limit |
 |---|---|---|
-| Source-level checks | unverified | Historical browser and Standalone evidence exists. Current-source full parity was not rerun. |
-| Actual host rendering | unverified | No new complete native or browser workflow qualified by this report. |
+| Source-level checks | verified | Review rerun 2026-09-26 at `411b2b6`: vendor 210/210, unit 246 pass, compiler parity 36 pass, browser suites 3/3, bundle reproduction. |
+| Actual host rendering | unverified | Browser checkpoint rendering is verified through the adapter backend. No native Cables editor or standalone player run at this source. |
 | Minimum and current host versions | unverified | Declared requirements are not a tested version matrix. |
-| Supported operating systems and backends | unverified | This pass does not establish Windows, Linux, and macOS coverage. |
+| Supported operating systems and backends | unverified | Checkpoint rendering measured on Linux x86_64 SwiftShader only. Windows, macOS, other browsers, and GPU drivers remain untested. |
 | Installed package and first useful result | unverified | Complete isolated installation was not qualified for this source. |
-| Parameters, external inputs, state, and chains | unverified | Full current-authority combinations remain unmeasured. |
+| Parameters, external inputs, state, and chains | partial | 26 representative comparisons plus catalog-default programs at the 64 by 48 checkpoint. Full current-authority combinations remain unmeasured. |
 | Invalid input and recovery | unverified | Unit checks do not establish every installed public entry point. |
 | Upgrade, removal, and resource cleanup | unverified | Prior defects and missing workflows remain in the gap register. |
 | Accessibility of provided controls | unverified | Keyboard, focus, labels, and diagnostics need host observations where applicable. |
 | Release readiness | blocked | Full parity, installation, host, and artifact evidence remain incomplete. |
 
 ## 3. Parity coverage
+
+### Daily review, 2026-09-26
+
+No new worker audit result arrived since the last review. The implementation commits `ec4b95b..411b2b6` closed GAP-001 for rendered qualification and GAP-002 for the defined matrix. This review independently reproduced their gates at source `411b2b6` on Linux x86_64, Node `v26.5.1`, headless Chromium with SwiftShader. The reruns passed: vendor 210/210, unit 246 pass, compiler parity 36 pass, and all three browser suites in 4.4 minutes. The recorded sweep (`evidence/gap-002-20260926/catalog-parity.json`) counts 210 effects, 209 rendered and compared, and 208 with zero differing float channels. `filter/fibers` shows 1174 differing channels. `filter/octaveWarp` is compile-only. Served kit `0.1.27` (source `69beff8`) verified: 17 of 17 hashes match. The engine bundle is byte-identical to the qualifying bundle. Full parity remains unverified. The checkpoint is 64 by 48 pixels. Three overlay effects are nondeterministic through the adapter (GAP-007). One case is compile-only. No native host ran at this source.
 
 ### Daily review, 2026-09-25
 
@@ -62,7 +66,7 @@ Unknown values mean `not measured`, never zero.
 
 | Gate | Expected cases | Executed | Strict passes | Failures | Skips | Status |
 |---|---|---|---|---|---|---|
-| Current full render suite | not measured | not measured | not measured | not measured | not measured | unverified |
+| Current full render suite | 210 | 209 rendered, 210 compiled | 208 | 1 (`filter/fibers`, 1174 channels, GAP-007) | 1 (`filter/octaveWarp`, compile-only) | partial at the 64 by 48 checkpoint |
 
 The served compatibility manifest declares mode `all`. That declaration covers the authority catalog but does not prove behavior.
 No missing ID conclusion follows without reconciling fixture behavior and the source contract.
@@ -72,216 +76,216 @@ Missing effects remain visible toward the full-parity goal. Contract exclusions 
 
 | Effect ID | Served declaration | Current full parity |
 |---|---|---|
-| `classicNoisedeck/bitEffects` | all | unverified |
-| `classicNoisedeck/caustic` | all | unverified |
-| `classicNoisedeck/cellNoise` | all | unverified |
-| `classicNoisedeck/cellRefract` | all | unverified |
-| `classicNoisedeck/coalesce` | all | unverified |
-| `classicNoisedeck/colorLab` | all | unverified |
-| `classicNoisedeck/composite` | all | unverified |
-| `classicNoisedeck/effects` | all | unverified |
-| `classicNoisedeck/fractal` | all | unverified |
-| `classicNoisedeck/glitch` | all | unverified |
-| `classicNoisedeck/kaleido` | all | unverified |
-| `classicNoisedeck/lensDistortion` | all | unverified |
-| `classicNoisedeck/moodscape` | all | unverified |
-| `classicNoisedeck/noise` | all | unverified |
-| `classicNoisedeck/noise3d` | all | unverified |
-| `classicNoisedeck/refract` | all | unverified |
-| `classicNoisedeck/shapeMixer` | all | unverified |
-| `classicNoisedeck/shapes` | all | unverified |
-| `classicNoisedeck/shapes3d` | all | unverified |
-| `classicNoisedeck/splat` | all | unverified |
-| `filter/adjust` | all | unverified |
-| `filter/bloom` | all | unverified |
-| `filter/blur` | all | unverified |
-| `filter/bulge` | all | unverified |
-| `filter/celShading` | all | unverified |
-| `filter/channel` | all | unverified |
-| `filter/chroma` | all | unverified |
-| `filter/chromaticAberration` | all | unverified |
-| `filter/chrome` | all | unverified |
-| `filter/clouds` | all | unverified |
-| `filter/colorReplace` | all | unverified |
-| `filter/convolutionFeedback` | all | unverified |
-| `filter/corrupt` | all | unverified |
-| `filter/craquelure` | all | unverified |
-| `filter/crt` | all | unverified |
-| `filter/degauss` | all | unverified |
-| `filter/deriv` | all | unverified |
-| `filter/directionalBlur` | all | unverified |
-| `filter/dither` | all | unverified |
-| `filter/edge` | all | unverified |
-| `filter/emboss` | all | unverified |
-| `filter/extrude` | all | unverified |
-| `filter/feedback` | all | unverified |
-| `filter/fibers` | all | unverified |
-| `filter/flipMirror` | all | unverified |
-| `filter/fxaa` | all | unverified |
-| `filter/glowingEdge` | all | unverified |
-| `filter/glyphMap` | all | unverified |
-| `filter/grade` | all | unverified |
-| `filter/grain` | all | unverified |
-| `filter/grime` | all | unverified |
-| `filter/halftone` | all | unverified |
-| `filter/hatch` | all | unverified |
-| `filter/highPass` | all | unverified |
-| `filter/historicPalette` | all | unverified |
-| `filter/invert` | all | unverified |
-| `filter/lens` | all | unverified |
-| `filter/lensFlare` | all | unverified |
-| `filter/lensWarp` | all | unverified |
-| `filter/lightLeak` | all | unverified |
-| `filter/lighting` | all | unverified |
-| `filter/lowPoly` | all | unverified |
-| `filter/median` | all | unverified |
-| `filter/morphology` | all | unverified |
-| `filter/mosaicTiles` | all | unverified |
-| `filter/motionBlur` | all | unverified |
-| `filter/normalMap` | all | unverified |
-| `filter/normalize` | all | unverified |
-| `filter/octaveWarp` | all | unverified |
-| `filter/oilPaint` | all | unverified |
-| `filter/osd` | all | unverified |
-| `filter/outline` | all | unverified |
-| `filter/palette` | all | unverified |
-| `filter/parallax` | all | unverified |
-| `filter/patchwork` | all | unverified |
-| `filter/photocopy` | all | unverified |
-| `filter/pinch` | all | unverified |
-| `filter/pixelSort` | all | unverified |
-| `filter/pixels` | all | unverified |
-| `filter/plasticWrap` | all | unverified |
-| `filter/polar` | all | unverified |
-| `filter/pondRipples` | all | unverified |
-| `filter/posterize` | all | unverified |
-| `filter/prismaticAberration` | all | unverified |
-| `filter/reindex` | all | unverified |
-| `filter/relief` | all | unverified |
-| `filter/repeat` | all | unverified |
-| `filter/reverb` | all | unverified |
-| `filter/ridge` | all | unverified |
-| `filter/rotate` | all | unverified |
-| `filter/scale` | all | unverified |
-| `filter/scanlineError` | all | unverified |
-| `filter/scatter` | all | unverified |
-| `filter/scratches` | all | unverified |
-| `filter/scroll` | all | unverified |
-| `filter/seamless` | all | unverified |
-| `filter/sharpen` | all | unverified |
-| `filter/simpleAberration` | all | unverified |
-| `filter/sine` | all | unverified |
-| `filter/skew` | all | unverified |
-| `filter/smooth` | all | unverified |
-| `filter/smoothstep` | all | unverified |
-| `filter/snow` | all | unverified |
-| `filter/sobel` | all | unverified |
-| `filter/spatter` | all | unverified |
-| `filter/spinBlur` | all | unverified |
-| `filter/spiral` | all | unverified |
-| `filter/spookyTicker` | all | unverified |
-| `filter/stamp` | all | unverified |
-| `filter/step` | all | unverified |
-| `filter/stipple` | all | unverified |
-| `filter/strayHair` | all | unverified |
-| `filter/strokes` | all | unverified |
-| `filter/temporalAberration` | all | unverified |
-| `filter/tetraColorArray` | all | unverified |
-| `filter/tetraCosine` | all | unverified |
-| `filter/text` | all | unverified |
-| `filter/texture` | all | unverified |
-| `filter/threshold` | all | unverified |
-| `filter/tile` | all | unverified |
-| `filter/tint` | all | unverified |
-| `filter/translate` | all | unverified |
-| `filter/tunnel` | all | unverified |
-| `filter/unsharpMask` | all | unverified |
-| `filter/vaseline` | all | unverified |
-| `filter/vignette` | all | unverified |
-| `filter/warp` | all | unverified |
-| `filter/watercolor` | all | unverified |
-| `filter/waves` | all | unverified |
-| `filter/wind` | all | unverified |
-| `filter/wobble` | all | unverified |
-| `filter/wormhole` | all | unverified |
-| `filter/zoomBlur` | all | unverified |
-| `filter3d/flow3d` | all | unverified |
-| `filter3d/palette3d` | all | unverified |
-| `mixer/alphaMask` | all | unverified |
-| `mixer/applyMode` | all | unverified |
-| `mixer/blendMode` | all | unverified |
-| `mixer/cellSplit` | all | unverified |
-| `mixer/centerMask` | all | unverified |
-| `mixer/channelCombine` | all | unverified |
-| `mixer/distortion` | all | unverified |
-| `mixer/focusBlur` | all | unverified |
-| `mixer/mashup` | all | unverified |
-| `mixer/patternMix` | all | unverified |
-| `mixer/shadow` | all | unverified |
-| `mixer/shapeMask` | all | unverified |
-| `mixer/split` | all | unverified |
-| `mixer/thresholdMix` | all | unverified |
-| `mixer/uvRemap` | all | unverified |
-| `points/attractor` | all | unverified |
-| `points/buddhabrot` | all | unverified |
-| `points/dla` | all | unverified |
-| `points/flock` | all | unverified |
-| `points/flow` | all | unverified |
-| `points/heightGrid` | all | unverified |
-| `points/hydraulic` | all | unverified |
-| `points/lenia` | all | unverified |
-| `points/life` | all | unverified |
-| `points/physarum` | all | unverified |
-| `points/physical` | all | unverified |
-| `render/loopBegin` | all | unverified |
-| `render/loopEnd` | all | unverified |
-| `render/meshLoader` | all | unverified |
-| `render/meshRender` | all | unverified |
-| `render/pointsBillboardRender` | all | unverified |
-| `render/pointsEmit` | all | unverified |
-| `render/pointsRender` | all | unverified |
-| `render/render3d` | all | unverified |
-| `render/renderCubemap3d` | all | unverified |
-| `render/renderCubemapSurface` | all | unverified |
+| `classicNoisedeck/bitEffects` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `classicNoisedeck/caustic` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `classicNoisedeck/cellNoise` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `classicNoisedeck/cellRefract` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `classicNoisedeck/coalesce` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `classicNoisedeck/colorLab` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `classicNoisedeck/composite` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `classicNoisedeck/effects` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `classicNoisedeck/fractal` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `classicNoisedeck/glitch` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `classicNoisedeck/kaleido` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `classicNoisedeck/lensDistortion` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `classicNoisedeck/moodscape` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `classicNoisedeck/noise` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `classicNoisedeck/noise3d` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `classicNoisedeck/refract` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `classicNoisedeck/shapeMixer` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `classicNoisedeck/shapes` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `classicNoisedeck/shapes3d` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `classicNoisedeck/splat` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/adjust` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/bloom` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/blur` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/bulge` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/celShading` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/channel` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/chroma` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/chromaticAberration` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/chrome` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/clouds` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/colorReplace` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/convolutionFeedback` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/corrupt` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/craquelure` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/crt` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/degauss` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/deriv` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/directionalBlur` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/dither` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/edge` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/emboss` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/extrude` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/feedback` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/fibers` | all | failed: 1174 differing channels in the recorded run. Overlay-nondeterministic (GAP-007). |
+| `filter/flipMirror` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/fxaa` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/glowingEdge` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/glyphMap` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/grade` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/grain` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/grime` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/halftone` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/hatch` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/highPass` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/historicPalette` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/invert` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/lens` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/lensFlare` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/lensWarp` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/lightLeak` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/lighting` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/lowPoly` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/median` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/morphology` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/mosaicTiles` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/motionBlur` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/normalMap` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/normalize` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/octaveWarp` | all | unverified: compile-only exclusion, headless SwiftShader execution window (GAP-002) |
+| `filter/oilPaint` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/osd` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/outline` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/palette` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/parallax` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/patchwork` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/photocopy` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/pinch` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/pixelSort` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/pixels` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/plasticWrap` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/polar` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/pondRipples` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/posterize` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/prismaticAberration` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/reindex` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/relief` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/repeat` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/reverb` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/ridge` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/rotate` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/scale` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/scanlineError` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/scatter` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/scratches` | all | partial: matched in the recorded run. Overlay-nondeterministic (GAP-007). |
+| `filter/scroll` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/seamless` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/sharpen` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/simpleAberration` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/sine` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/skew` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/smooth` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/smoothstep` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/snow` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/sobel` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/spatter` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/spinBlur` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/spiral` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/spookyTicker` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/stamp` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/step` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/stipple` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/strayHair` | all | partial: matched in the recorded run. Overlay-nondeterministic (GAP-007). |
+| `filter/strokes` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/temporalAberration` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/tetraColorArray` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/tetraCosine` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/text` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/texture` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/threshold` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/tile` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/tint` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/translate` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/tunnel` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/unsharpMask` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/vaseline` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/vignette` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/warp` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/watercolor` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/waves` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/wind` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/wobble` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/wormhole` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter/zoomBlur` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter3d/flow3d` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `filter3d/palette3d` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `mixer/alphaMask` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `mixer/applyMode` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `mixer/blendMode` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `mixer/cellSplit` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `mixer/centerMask` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `mixer/channelCombine` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `mixer/distortion` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `mixer/focusBlur` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `mixer/mashup` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `mixer/patternMix` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `mixer/shadow` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `mixer/shapeMask` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `mixer/split` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `mixer/thresholdMix` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `mixer/uvRemap` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `points/attractor` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `points/buddhabrot` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `points/dla` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `points/flock` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `points/flow` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `points/heightGrid` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `points/hydraulic` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `points/lenia` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `points/life` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `points/physarum` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `points/physical` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `render/loopBegin` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `render/loopEnd` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `render/meshLoader` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `render/meshRender` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `render/pointsBillboardRender` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `render/pointsEmit` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `render/pointsRender` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `render/render3d` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `render/renderCubemap3d` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `render/renderCubemapSurface` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
 | `render/renderLandscape3d` | all | partial: both filtering modes measured (GAP-001) |
-| `render/renderLit3d` | all | unverified |
-| `synth/bitwise` | all | unverified |
-| `synth/cell` | all | unverified |
-| `synth/cellularAutomata` | all | unverified |
-| `synth/curl` | all | unverified |
-| `synth/gabor` | all | unverified |
-| `synth/gradient` | all | unverified |
-| `synth/julia` | all | unverified |
-| `synth/mandala` | all | unverified |
-| `synth/mandelbrot` | all | unverified |
-| `synth/media` | all | unverified |
-| `synth/mnca` | all | unverified |
-| `synth/modPattern` | all | unverified |
-| `synth/navierStokes` | all | unverified |
-| `synth/newton` | all | unverified |
-| `synth/noise` | all | unverified |
-| `synth/osc2d` | all | unverified |
-| `synth/pattern` | all | unverified |
-| `synth/perlin` | all | unverified |
-| `synth/polygon` | all | unverified |
-| `synth/reactionDiffusion` | all | unverified |
-| `synth/remap` | all | unverified |
-| `synth/roll` | all | unverified |
-| `synth/sacredGeometry` | all | unverified |
-| `synth/scope` | all | unverified |
-| `synth/shape` | all | unverified |
-| `synth/solid` | all | unverified |
-| `synth/spectrum` | all | unverified |
-| `synth/subdivide` | all | unverified |
-| `synth/testPattern` | all | unverified |
-| `synth3d/cell3d` | all | unverified |
-| `synth3d/cellularAutomata3d` | all | unverified |
-| `synth3d/flythrough3d` | all | unverified |
-| `synth3d/fractal3d` | all | unverified |
-| `synth3d/heightmap3d` | all | unverified |
-| `synth3d/noise3d` | all | unverified |
-| `synth3d/reactionDiffusion3d` | all | unverified |
-| `synth3d/shape3d` | all | unverified |
+| `render/renderLit3d` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `synth/bitwise` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `synth/cell` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `synth/cellularAutomata` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `synth/curl` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `synth/gabor` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `synth/gradient` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `synth/julia` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `synth/mandala` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `synth/mandelbrot` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `synth/media` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `synth/mnca` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `synth/modPattern` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `synth/navierStokes` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `synth/newton` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `synth/noise` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `synth/osc2d` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `synth/pattern` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `synth/perlin` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `synth/polygon` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `synth/reactionDiffusion` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `synth/remap` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `synth/roll` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `synth/sacredGeometry` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `synth/scope` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `synth/shape` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `synth/solid` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `synth/spectrum` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `synth/subdivide` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `synth/testPattern` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `synth3d/cell3d` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `synth3d/cellularAutomata3d` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `synth3d/flythrough3d` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `synth3d/fractal3d` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `synth3d/heightmap3d` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `synth3d/noise3d` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `synth3d/reactionDiffusion3d` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
+| `synth3d/shape3d` | all | partial: default program matches the reference at the 64 by 48 checkpoint (GAP-002, 2026-09-26) |
 
 ## 4. Evidence
 
@@ -295,7 +299,7 @@ A successful dispatch or unit-test summary does not establish a full rendered ga
 
 ## 5. Open compatibility limits
 
-Next bounded check: Run the existing landscape fixture through the native Cables Program op with immutable reference input. Compare actual pixels at the existing tolerance and at zero tolerance. Then test an exported patch with parameter changes, resize, a failing program, and recovery. Require useful output and a visible diagnostic.
+Next bounded check: root-cause the adapter's overlay-texture update path for `filter/fibers`, `filter/scratches`, and `filter/strayHair` (GAP-007). Then assert the zero-mismatch ceiling for all 209 rendered effects on repeated runs. Native editor qualification needs a Cables Standalone host. This audit environment has none.
 See the stable entries in [completion gaps](COMPLETION_GAPS.md).
 
 See [GAP-002 and the complete gap register](COMPLETION_GAPS.md#4-known-gaps) for evidence, dependencies, and acceptance criteria.
@@ -312,8 +316,11 @@ Implementation corrections remain with the separate job. This report does not ad
 
 2026-09-25 daily review at `6a5a9048471621a86cb8025bc10ce650b7efa842`: source freshness and bounded evidence reviewed. Open qualification limits retained. [Retained review evidence](/Users/alex/.codex/automations/noisemaker-port-completion-audit/review-20260925-053200/cables-current-probe.json). No new closure claimed.
 
+2026-09-26 daily review at `411b2b646bb6692918c17d705f0afdaf837f6e48`: no new worker audit result. Reviewed the implementation closures of GAP-001 (rendered landscape qualification) and GAP-002 (defined, measured matrix) and independently reproduced their gates. Refreshed source, authority, kit, and per-effect checkpoint statuses. Full parity remains unverified.
+
 | Date | Source | Result | Change |
 |---|---|---|---|
 | 2026-09-24 | `f64ad0b25ca6b453e01b90fb40dbe920d7c690ad` | Full qualification unverified | Created the requested maintained compatibility report. Preserved historical evidence and open gaps. |
+| 2026-09-26 | `411b2b646bb6692918c17d705f0afdaf837f6e48` | Checkpoint parity measured. Full qualification unverified. | Recorded the 210-effect sweep at the 64 by 48 checkpoint: 208 zero-mismatch, one classified overlay mismatch, one compile-only case. Updated the effect inventory and host matrix with measured scopes. |
 
 Run: `20260924-remaining-gap-documents`. Later audits and reviews update this report with source-bound results.

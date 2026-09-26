@@ -4,11 +4,11 @@ Current compatibility matrix: [compatibility report](COMPATIBILITY.md).
 
 ## 1. Scope and source revisions
 
-Daily review: 2026-09-25. Current inspected source: [`6a5a9048471621a86cb8025bc10ce650b7efa842`](https://github.com/noisefactorllc/noisemaker-for-cables/commit/6a5a9048471621a86cb8025bc10ce650b7efa842).
-Full rendered parity remains **unverified**. No release approval or new closure follows from this review.
-Current upstream discovery: `bbdeb56c4b75cf33379766c3e87b0f5a18bcbba8`. Published Noisemaker authority: `1.0.179`, source `fca611fd8f91424661d4e531d39313d24ea21134`, 210 effect IDs.
+Daily review: 2026-09-26. Current inspected source: [`411b2b646bb6692918c17d705f0afdaf837f6e48`](https://github.com/noisefactorllc/noisemaker-for-cables/commit/411b2b646bb6692918c17d705f0afdaf837f6e48).
+Full rendered parity remains **unverified**. No release approval follows from this review. This review independently rechecked the GAP-001 and GAP-002 closures and retained them.
+Current upstream discovery: `a651c075bb2848b584b2bf2484f5f8a0db754b0c`. Published Noisemaker authority: `1.0.185`, source `6a0af04d3c4f345ffab5e9f8e54e532216b4cdaa`, 210 effect IDs. The effect-manifest SHA-256 `05c4d7b7744837ae90a3bb4c89e5403ff09448a74d9d7e824abb3d719ad3314e` is unchanged through `1.0.185`.
 The observations below retain their original source and authority identities. They do not qualify later updates.
-Current served kit: `0.1.24`, source `6a5a9048471621a86cb8025bc10ce650b7efa842`. [Retrieved inventory and hashes](/Users/alex/.codex/automations/noisemaker-port-completion-audit/review-20260925-053200/current-served-inventories.json). Artifact identity does not establish host qualification.
+Current served kit: `0.1.27`, source `69beff8ae5ef5954ee85cd70674f66a659c08bd9`. This review verified all 17 inventory hashes. The served engine bundle is byte-identical to the qualifying bundle `8f640b46027d9efe13f33fb9db627cbc3ead79e2c26c252e2267d827ea836d7f`. Artifact identity does not establish host qualification. The vendored authority remains `noisemaker@8eeb7b5a` (`1.0.183`). Later published versions stay unqualified.
 
 ### Earlier source observations
 
@@ -46,16 +46,34 @@ The review does not qualify every upstream change after the recorded port author
 | Claim ID | Claim source | Claimed scope | Finding | Evidence |
 | --- | --- | --- | --- | --- |
 | CLAIM-001 | README.md and docs/architecture.md | Complete locked effect catalog | supported | The lock verifies 210 effects and 212 artifacts. Both current and pinned manifests contain 210 IDs. |
-| CLAIM-002 | README.md | Pixel-level parity and complete programs | partial | The audit matched eleven cases and rejected landscape filtering. The review matches all twelve against the retained authority. Rendered scope remains incomplete. |
+| CLAIM-002 | README.md | Pixel-level parity and complete programs | partial | The 2026-09-26 sweep rendered 209 of 210 effects at 64 by 48. 208 matched the reference with zero differing channels. One overlay effect mismatched. One case is compile-only. Full-parameter parity remains incomplete. |
 | CLAIM-003 | docs/installation.md | Native editor installation, media, resize, reset, and recovery | supported | The retry passes on macOS arm64 with Standalone 0.11.0. The first welcome-dialog timeout remains recorded. See GAP-003 for limits. |
 | CLAIM-004 | docs/installation.md and export README template | Last-good rendering and recovery | supported | The player preserves rejected-edit pixels. Recovery renders the replacement color. |
 | CLAIM-005 | examples/README.md and Error port documentation | Useful error reporting | partial | The user sees a generic compile failure. The compiler's diagnostic does not reach that message. See GAP-004. |
 | CLAIM-006 | Project-local op directory and self-contained bundle | Ecosystem fit | partial | The directory layout follows official Cables guidance. Isolated package installation succeeds. The declared editor passes on macOS arm64. |
-| CLAIM-007 | Export-kit workflow and published kit | Release readiness | partial | All 17 kit hashes match. Exact-source publication CI succeeds. It does not execute the repository's runtime or host suites. See GAP-005. |
+| CLAIM-007 | Export-kit workflow and published kit | Release readiness | partial | Kit `0.1.27` at source `69beff8ae5ef5954ee85cd70674f66a659c08bd9`: all 17 inventory hashes verified 2026-09-26. Exact-source export dispatch succeeded at that source. It does not execute the repository's runtime or host suites. See GAP-005. |
 
 ## 3. Methods and evidence
 
-Review CI boundary: Exact-source runs: Export kit. A passing export dispatch does not qualify rendered parity. Current complete-render enforcement remains an open verification requirement. [Exact-source responses and workflows](/Users/alex/.codex/automations/noisemaker-port-completion-audit/review-20260925-053200/noisemaker-for-cables-remote-evidence.json).
+Review CI boundary: Exact-source runs: Export kit. The latest export dispatch ([run 36204756771](https://github.com/noisefactorllc/noisemaker-for-cables/actions/runs/36204756771)) succeeded at served-kit source `69beff8ae5ef5954ee85cd70674f66a659c08bd9`. The doc, test, and evidence commits after it match no workflow path filter and triggered no run. A passing export dispatch does not qualify rendered parity. Current complete-render enforcement remains an open verification requirement.
+
+### Daily review, 2026-09-26
+
+This review independently rechecked both new closures at the inspected source `411b2b646bb6692918c17d705f0afdaf837f6e48` on Linux x86_64, Node `v26.5.1`, headless Chromium with SwiftShader. No native Cables host exists in this environment. Host checks stay unverified.
+
+| Check | Command or method | Exit | Observed result |
+| --- | --- | --- | --- |
+| Locked artifacts | `npm run vendor:verify` | 0 | 210 effects and 212 artifacts verified. |
+| Unit suite | `npm test` | 0 | 246 pass, zero fail, zero skip. |
+| Compiler parity | `node --test test/polymorphic-parity.test.js` | 0 | 36 pass at the current source (35 recorded at the qualifying source). |
+| Browser suites | `npm run test:browser` | 0 | Full-catalog sweep, pixel parity, and state hygiene suites pass in 4.4 minutes. |
+| Bundle reproduction | `npm run build`, then SHA-256 | 0 | Rebuilt bundle equals `8f640b46027d9efe13f33fb9db627cbc3ead79e2c26c252e2267d827ea836d7f`. |
+| Served distribution | Fetch kit `0.1.27` files and hash | 0 | 17 of 17 inventory hashes match. The served engine bundle is byte-identical to the qualifying bundle. |
+| Compat declaration | Fetch kit `0.1.27/compat.json` | 0 | Still `mode: all`. GAP-006 stays open. |
+| Recorded sweep data | Parse `evidence/gap-002-20260926/catalog-parity.json` | 0 | 210 effects, 209 rendered, 208 zero-mismatch, `filter/fibers` 1174 differing channels, `filter/octaveWarp` compile-only. Matches the document claims. |
+| Published authority | Fetch `1.0.185` manifest and tags | 0 | Manifest SHA unchanged (`05c4d7b7...`). `1.0.185` at `6a0af04d`. Upstream head `a651c075`. |
+
+The GAP-001 qualifying evidence is executed at source `7fe3b1627251a916d380124a46f6dac14c5192aa` per `differential.json` and `authority-comparison.json`. The GAP-002 sweep record was captured at 2026-09-26T04:52:58Z. Commit `411b2b6` followed six minutes later. Both closures are retained. Full-parameter parity, native host qualification, and release acceptance remain open.
 
 ### Daily review, 2026-09-25
 
@@ -169,7 +187,7 @@ The Standalone page advertises `0.11.2`. Support for that version remains unveri
 - Affected scope: current-authority exports using landscape filtering and the kit's unrestricted compatibility declaration.
 - Expected behavior: compatibility claims identify the accepted authority and reject unsupported exports before delivery.
 - Historical behavior: the audited bundle rejected `renderLandscape3d(filtering: isosurface)`.
-- Qualifying behavior: bundle `8f640b46027d9efe13f33fb9db627cbc3ead79e2c26c252e2267d827ea836d7f` at source `f214871b48fc7352c142c369ab44f320910e914c`, authority runtime `noisemaker@8eeb7b5a` (core `092c3b776003bc1539bed91aa86f421f839b40b1aa8b81ea09a5ec5e6b7bd3c7`). Both filtering choices are accepted, and both modes match the declared authority.
+- Qualifying behavior: bundle `8f640b46027d9efe13f33fb9db627cbc3ead79e2c26c252e2267d827ea836d7f` at the executed source `7fe3b1627251a916d380124a46f6dac14c5192aa`, authority runtime `noisemaker@8eeb7b5a` (core `092c3b776003bc1539bed91aa86f421f839b40b1aa8b81ea09a5ec5e6b7bd3c7`). Both filtering choices are accepted, and both modes match the declared authority.
 - Recorded hashes: `differential.json` records the bundle, authority, op-bundle, and vendor-lock SHA-256 values; `authority-comparison.json` records the authority comparison.
 - Raw evidence: `evidence/gap-001-20260926/` holds the executed-run logs (`compiler-parity.log`, `unit.log`, `vendor.log`, `browser.log`, all exit 0), the per-case comparison JSON, and the raw reference and adapter frames (PNG) for both landscape cases, produced by `tools/landscape-evidence.mjs`.
 - Required starting check: `node --test test/polymorphic-parity.test.js` passes 35 of 35 tests at this source, exit 0 (2026-09-26).
@@ -264,16 +282,14 @@ The Standalone page advertises `0.11.2`. Support for that version remains unveri
 
 ## 5. Ordered next actions
 
-Current first action: Run the existing landscape fixture through the native Cables Program op with immutable reference input. Compare actual pixels at the existing tolerance and at zero tolerance. Then test an exported patch with parameter changes, resize, a failing program, and recovery. Require useful output and a visible diagnostic.
-Subsequent historical actions remain dependent on that evidence. No implementation is authorized by this audit.
+Current first action: root-cause the adapter's overlay-texture update path for the three classified effects (GAP-007) in the separate implementation job. Require repeated rendered comparisons with zero differing channels at the existing checkpoint. Native editor qualification (GAP-003) needs a Cables Standalone host. This audit environment has none.
 
-1. Record GAP-001's updated authority and bundle hashes. Run `node --test test/polymorphic-parity.test.js`. Require all 35 checks to pass.
-   Compare default, voxel, and isosurface outputs with the declared authority. Preserve tolerances and include both projection modes.
-2. Run `npm run test:standalone` with the declared `CABLES_APP` after the bundle change. Preserve both earlier native attempts.
-   Require visible output, media binding, resize, rejection recovery, reset, and recreation. Record saved-project reload separately.
-3. GAP-002's matrix is defined and measured at the existing checkpoint (`parity/coverage-matrix.json`, `evidence/gap-002-20260926/`). Root-cause GAP-007's adapter nondeterminism in the separate implementation job, then remove the classification.
-4. Correct GAP-004 in the separate implementation job. Preserve last-good rendering and error codes.
-5. Assess GAP-005 against the actual distribution and the declared host/platform matrix.
+1. Close GAP-007. Remove the nondeterministic classification from `parity/coverage-matrix.json` and the harness. Assert the zero-mismatch ceiling for all 209 rendered effects on repeated runs.
+2. Correct GAP-004 in the separate implementation job. Preserve last-good rendering and error codes. Require a visible structured diagnostic for an invalid effect.
+3. Run `npm run test:standalone` with a declared `CABLES_APP` host when one is available. Preserve both earlier native attempts.
+   Require visible output, media binding, resize, rejection recovery, reset, recreation, and saved-project reload.
+4. Implement GAP-006's builder-side rejection in the scaffold export-kit builder. Narrow or annotate the kit declaration to the accepted authority.
+5. Define GAP-005's release acceptance after GAP-003, GAP-004, and GAP-007 pass. Attach exact-source runtime and host evidence through existing systems.
 
 Affected implementation areas are the vendor boundary, compatibility declaration, controller diagnostics, host harness, and release evidence.
 These actions are handoff criteria, not permission to change those files in this audit.
@@ -283,8 +299,11 @@ The operator does not authorize additional effects or parity checkpoint advancem
 
 2026-09-25 daily review at `6a5a9048471621a86cb8025bc10ce650b7efa842`: source freshness and bounded evidence reviewed. Open qualification limits retained. [Retained review evidence](/Users/alex/.codex/automations/noisemaker-port-completion-audit/review-20260925-053200/cables-current-probe.json). No new closure claimed.
 
+2026-09-26 review at `411b2b646bb6692918c17d705f0afdaf837f6e48`: no new worker audit result arrived since the last review. The review checked the implementation commits `ec4b95b..411b2b6` and their closure claims. Both new closures (GAP-001 rendered qualification, GAP-002 defined matrix) were independently rechecked and retained. The GAP-001 qualifying source was corrected to the executed SHA. Served kit `0.1.27` verified. Full parity, native host, diagnostics, builder rejection, overlay nondeterminism, and release acceptance remain open.
+
 | Date | Reviewed source | Change | Tested scope | Remaining limits |
 | --- | --- | --- | --- | --- |
 | 2026-09-22 | `0d860724f5305b854c6ffa64aed3de701157d2da` | Initial audit and README link. Five stable gaps recorded. | Unit checks, locked files, current compiler differential, package installation, published player recovery, native editor retry, bundle reproduction, artifact hashes, exact-source CI. | Broad parity, wider host qualification, actionable diagnostics, and release acceptance remain incomplete. |
 | 2026-09-23 | `a911c39a69c78ec13606019eeacdf7b680468872` | Corrected the stale landscape rejection. Added executable qualification actions. | Reviewed worker raw logs. Passed 13 compiler tests and 12 independent graph comparisons. Checked current kit changes and exact-source CI. | Five gaps remain. Current-bundle rendered and host qualification remains incomplete. No closure. |
 | 2026-09-26 | `7fe3b1627251a916d380124a46f6dac14c5192aa` | Closed GAP-001's rendered qualification; residual pre-delivery rejection tracked as GAP-006. Added source-bound compiler comparison and rendered fixtures for both `renderLandscape3d` filtering modes; recorded bundle and authority hashes in `differential.json` and `authority-comparison.json`; committed raw run logs and rendered frames under `evidence/gap-001-20260926/`, re-executed at this exact source: 35 compiler tests pass; unit suite 245 pass, 0 fail; browser suites pass with zero differing channels for `landscape-voxel` and `landscape-isosurface`; vendor verification 210/210. | Standalone player and native editor qualification remains under GAP-003. Builder-side pre-delivery rejection for the unrestricted kit declaration remains open under GAP-006. |
+| 2026-09-26 | `411b2b646bb6692918c17d705f0afdaf837f6e48` | Implementation measured and closed GAP-002 for the defined matrix (`parity/coverage-matrix.json`, `evidence/gap-002-20260926/`): 210-effect sweep, 209 rendered, 208 zero-mismatch, `filter/fibers` 1174 differing channels, `filter/octaveWarp` compile-only. Opened GAP-007 for the overlay nondeterminism. Added the upstream texture-policy compiler test. | Review rerun at this source: vendor 210/210, unit 246 pass, compiler parity 36 pass, browser suites, bundle reproduction, kit `0.1.27` hashes. | GAP-003 host, GAP-004 diagnostics, GAP-006 builder rejection, GAP-007 overlay nondeterminism, GAP-005 release acceptance. Full parity unverified. |
