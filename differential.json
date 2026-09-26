@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-09-26",
+  "source": {
+    "repository": "noisefactorllc/noisemaker-for-cables",
+    "commit": "69beff8ae5ef5954ee85cd70674f66a659c08bd9"
+  },
+  "authority": {
+    "vendorLock": "vendor.lock.json",
+    "vendorLockSha256": "61a2cae487b1a7ab11f0a04d735e0d9cd5048b6c5671a2fa321cc93429eca169",
+    "engineBundle": {
+      "path": "vendor-cache/noisemaker-shaders-core.esm.js",
+      "sha256": "092c3b776003bc1539bed91aa86f421f839b40b1aa8b81ea09a5ec5e6b7bd3c7",
+      "bytes": 858616,
+      "url": "https://shaders.noisedeck.app/1/noisemaker-shaders-core.esm.js"
+    },
+    "upstreamEngine": "noisemaker@8eeb7b5a"
+  },
+  "opBundle": {
+    "path": "Ops.Extension.Noisemaker/Ops.Extension.Noisemaker.Program/lib_noisemaker-cablesgl.js",
+    "sha256": "8f640b46027d9efe13f33fb9db627cbc3ead79e2c26c252e2267d827ea836d7f"
+  },
+  "compilerDifferential": {
+    "method": "Port facade src/browser.js compileProgram versus the vendored reference compiler (vendor-cache/noisemaker-shaders-core.esm.js) for both landscape filtering modes; graphs normalized by removing only compiledAt.",
+    "programs": [
+      {
+        "id": "landscape-voxel",
+        "filtering": "voxel",
+        "expectedDefines": { "FILTERING": 1 },
+        "graphMatched": true,
+        "warningsMatched": true
+      },
+      {
+        "id": "landscape-isosurface",
+        "filtering": "isosurface",
+        "expectedDefines": { "FILTERING": 0 },
+        "graphMatched": true,
+        "warningsMatched": true
+      }
+    ],
+    "evidence": "test/polymorphic-parity.test.js: renderLandscape3d filtering modes match the vendored reference compiler and select expected defines (35 of 35 tests pass, node --test exit 0)"
+  },
+  "renderedDifferential": {
+    "method": "Browser harness (test/browser) renders both landscape filtering modes through the reference WebGL2 backend and the public Cables adapter backend (CablesWebGL2Backend) at 64x48 with deterministic inputs; frames compared after common float readback.",
+    "gate": "Zero differing float channels between reference and adapter frames; adapter internal output copies exactly to the presented CGL texture; readback finite.",
+    "cases": [
+      { "id": "landscape-voxel@0", "filtering": "voxel", "mismatchedChannels": 0, "copyExact": true, "finite": true },
+      { "id": "landscape-isosurface@0", "filtering": "isosurface", "mismatchedChannels": 0, "copyExact": true, "finite": true }
+    ],
+    "evidence": "test/browser/pixel-parity.spec.js landscape-voxel and landscape-isosurface cases; npm run test:browser passes 3 of 3 suites (210/210 compile+link, 209 rendered catalog effects, 26 representative frame comparisons, state hygiene)",
+    "limits": "The standalone Cables player boundary requires the native host harness (CABLES_APP) and remains under GAP-003 host qualification; this record covers the op runtime boundary in the browser harness."
+  },
+  "vendorVerification": {
+    "command": "npm run vendor:verify",
+    "result": "210/210 effects verified, 212 artifacts"
+  }
+}

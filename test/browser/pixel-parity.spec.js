@@ -26,6 +26,8 @@ const channelCeilings = Object.freeze({
   'audio-waveform@0': 0,
   'audio-spectrum@0': 0,
   'midi-grid@0': 0,
+  'landscape-voxel@0': 0,
+  'landscape-isosurface@0': 0,
   'six-cubemap-faces@0': 0,
 })
 

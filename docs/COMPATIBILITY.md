@@ -243,7 +243,7 @@ Missing effects remain visible toward the full-parity goal. Contract exclusions 
 | `render/render3d` | all | unverified |
 | `render/renderCubemap3d` | all | unverified |
 | `render/renderCubemapSurface` | all | unverified |
-| `render/renderLandscape3d` | all | unverified |
+| `render/renderLandscape3d` | all | partial: both filtering modes measured (GAP-001) |
 | `render/renderLit3d` | all | unverified |
 | `synth/bitwise` | all | unverified |
 | `synth/cell` | all | unverified |

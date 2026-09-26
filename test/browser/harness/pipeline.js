@@ -93,6 +93,38 @@ render(o0)`,
     id: 'midi-grid',
   },
   {
+    dsl: `search synth, synth3d, render
+
+noise(seed: 4, ridges: true)
+  .write(o1)
+
+solid(color: #2a9d8f, alpha: 1)
+  .write(o2)
+
+heightmap3d(heightTex: read(o1), tex: read(o2))
+  .renderLandscape3d(filtering: voxel)
+  .write(o0)
+
+render(o0)`,
+    id: 'landscape-voxel',
+  },
+  {
+    dsl: `search synth, synth3d, render
+
+noise(seed: 4, ridges: true)
+  .write(o1)
+
+solid(color: #2a9d8f, alpha: 1)
+  .write(o2)
+
+heightmap3d(heightTex: read(o1), tex: read(o2))
+  .renderLandscape3d(filtering: isosurface)
+  .write(o0)
+
+render(o0)`,
+    id: 'landscape-isosurface',
+  },
+  {
     captureMode: 'cubemap',
     dsl: `search synth3d, render
 

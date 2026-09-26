@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-09-26",
+  "source": {
+    "repository": "noisefactorllc/noisemaker-for-cables",
+    "commit": "69beff8ae5ef5954ee85cd70674f66a659c08bd9"
+  },
+  "authorityComparison": {
+    "method": "The locked vendored artifacts are verified byte-for-byte against the published authority CDN recorded in vendor.lock.json, and the committed op bundle is identified by SHA-256.",
+    "verifiedArtifacts": {
+      "command": "npm run vendor:verify",
+      "exitCode": 0,
+      "effects": 210,
+      "artifacts": 212
+    },
+    "authorityRuntime": {
+      "sourceBaseUrl": "https://shaders.noisedeck.app/1/",
+      "engineBundle": {
+        "path": "vendor-cache/noisemaker-shaders-core.esm.js",
+        "sha256": "092c3b776003bc1539bed91aa86f421f839b40b1aa8b81ea09a5ec5e6b7bd3c7",
+        "bytes": 858616
+      }
+    },
+    "opBundle": {
+      "path": "Ops.Extension.Noisemaker/Ops.Extension.Noisemaker.Program/lib_noisemaker-cablesgl.js",
+      "sha256": "8f640b46027d9efe13f33fb9db627cbc3ead79e2c26c252e2267d827ea836d7f"
+    },
+    "landscapeEffects": [
+      {
+        "effectId": "render/renderLandscape3d",
+        "artifactSha256": "3858642240d677560f23d78ced736899ed02ba6e2e43a0586c5a8751529e1011",
+        "url": "https://shaders.noisedeck.app/1/effects/render/renderLandscape3d.js"
+      },
+      {
+        "effectId": "synth3d/heightmap3d",
+        "artifactSha256": "9c9e2a18a7485a582d49760b94e60749cb546957fc167d1787e1794f3a3ce55d",
+        "url": "https://shaders.noisedeck.app/1/effects/synth3d/heightmap3d.js"
+      }
+    ],
+    "compatDeclaration": {
+      "file": "export-kit/kit.config.json",
+      "mode": "all",
+      "note": "The kit still ships the unrestricted compatibility declaration; the pre-delivery rejection behavior for unsupported exports remains a builder-side implementation outside this repository."
+    }
+  }
+}

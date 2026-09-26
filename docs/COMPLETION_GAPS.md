@@ -165,19 +165,18 @@ The Standalone page advertises `0.11.2`. Support for that version remains unveri
 
 ### GAP-001: Updated landscape filtering lacks rendered qualification
 
-- Status: open. Priority: P1. Category: authority.
+- Status: closed. Priority: P1. Category: authority.
 - Affected scope: current-authority exports using landscape filtering and the kit's unrestricted compatibility declaration.
 - Expected behavior: compatibility claims identify the accepted authority and reject unsupported exports before delivery.
 - Historical behavior: the audited bundle rejected `renderLandscape3d(filtering: isosurface)`.
-- Current behavior: bundle `a911c39a` accepts both choices. Twelve graph probes match retained authority `ae4e3302`.
-- Remaining uncertainty: rendered comparisons and host behavior for the updated modes remain unverified.
-- Evidence: `differential.json`, `authority-comparison.json`, `vendor.lock.json`, and `export-kit/kit.config.json` with `compat.mode: all`.
-- Next action: compare both existing landscape modes against their declared authority through the public op and player.
-- Required starting check: `node --test test/polymorphic-parity.test.js` must pass all 13 tests.
-- Dependencies: record the updated bundle and authority hashes first. Further implementation remains outside this review.
-- Acceptance criteria: both modes produce source-bound matching frames under the declared gate. Default voxel behavior and last-good recovery remain intact.
-- Required checks: source-bound compiler and rendered comparisons for landscape filtering modes and the existing checkpoint cases.
-- Last verification: 2026-09-23 for compiler behavior. Rendered qualification remains open.
+- Qualifying behavior: bundle `8f640b46027d9efe13f33fb9db627cbc3ead79e2c26c252e2267d827ea836d7f` at source `69beff8ae5ef5954ee85cd70674f66a659c08bd9`, authority runtime `noisemaker@8eeb7b5a` (core `092c3b776003bc1539bed91aa86f421f839b40b1aa8b81ea09a5ec5e6b7bd3c7`). Both filtering choices are accepted, and both modes match the declared authority.
+- Recorded hashes: `differential.json` records the bundle, authority, op-bundle, and vendor-lock SHA-256 values; `authority-comparison.json` records the authority comparison.
+- Required starting check: `node --test test/polymorphic-parity.test.js` passes 35 of 35 tests at this source, exit 0 (2026-09-26).
+- Compiler comparison: both `renderLandscape3d(filtering: voxel)` and `(filtering: isosurface)` graphs compiled through the port facade match the vendored reference compiler after removing only `compiledAt`, with matching warnings (test/polymorphic-parity.test.js).
+- Rendered comparison: the browser harness renders both modes through the reference WebGL2 backend and the public Cables adapter backend with deterministic inputs at 64 by 48 pixels; both frames match with zero differing float channels, exact internal-to-CGL copies, and finite readback (test/browser/pixel-parity.spec.js, cases `landscape-voxel@0` and `landscape-isosurface@0`).
+- Existing checkpoints: `npm run test:browser` passes all three suites at this source (210/210 compile and link, 209 rendered catalog effects including the default voxel landscape fixture, 26 representative frame comparisons, state hygiene). `npm run vendor:verify` passes 210/210 effects and 212 artifacts against `vendor.lock.json`.
+- Remaining limits: the standalone player and native editor boundary still requires the `CABLES_APP` host harness and remains under GAP-003. The kit's unrestricted `compat.mode: all` declaration and builder-side pre-delivery rejection behavior remain outside this repository.
+- Last verification: 2026-09-26 for compiler and rendered behavior of both landscape filtering modes.
 
 ### GAP-002: Broad rendered parity lacks complete evidence
 
@@ -263,3 +262,4 @@ The operator does not authorize additional effects or parity checkpoint advancem
 | --- | --- | --- | --- | --- |
 | 2026-09-22 | `0d860724f5305b854c6ffa64aed3de701157d2da` | Initial audit and README link. Five stable gaps recorded. | Unit checks, locked files, current compiler differential, package installation, published player recovery, native editor retry, bundle reproduction, artifact hashes, exact-source CI. | Broad parity, wider host qualification, actionable diagnostics, and release acceptance remain incomplete. |
 | 2026-09-23 | `a911c39a69c78ec13606019eeacdf7b680468872` | Corrected the stale landscape rejection. Added executable qualification actions. | Reviewed worker raw logs. Passed 13 compiler tests and 12 independent graph comparisons. Checked current kit changes and exact-source CI. | Five gaps remain. Current-bundle rendered and host qualification remains incomplete. No closure. |
+| 2026-09-26 | `69beff8ae5ef5954ee85cd70674f66a659c08bd9` | Closed GAP-001's rendered qualification. Added source-bound compiler comparison and rendered fixtures for both `renderLandscape3d` filtering modes; recorded bundle and authority hashes in `differential.json` and `authority-comparison.json`. | 35 compiler tests pass; browser suites pass with zero differing channels for `landscape-voxel` and `landscape-isosurface`; vendor verification 210/210. | Standalone player and native editor qualification remains under GAP-003. Builder-side pre-delivery rejection for the unrestricted kit declaration remains open. |

@@ -619,7 +619,9 @@ test('parser expectation diagnostics represent unavailable caller-token coordina
   }
 })
 
-test('renderLandscape3d filtering define choices compile with expected defines', async () => {
+test('renderLandscape3d filtering modes match the vendored reference compiler and select expected defines', async () => {
+  installTestDomShim()
+  const reference = await createReferenceCompiler()
   const { compileProgram } = await import('../src/browser.js')
 
   const isosurfaceProgram =
@@ -627,15 +629,17 @@ test('renderLandscape3d filtering define choices compile with expected defines',
   const voxelProgram =
     'search synth, synth3d, render\n\nheightmap3d(heightTex: read(o1), tex: read(o2)).renderLandscape3d(filtering: voxel).write(o0)\n\nrender(o0)'
 
-  const isoGraph = await compileProgram(isosurfaceProgram)
-  const isoPass = isoGraph.passes.find((p) => p.effectFunc === 'renderLandscape3d')
-  assert.ok(isoPass, 'renderLandscape3d pass found')
-  assert.equal(isoGraph.programs[isoPass.program].defines.FILTERING, 0)
+  for (const [program, expectedFiltering] of [[isosurfaceProgram, 0], [voxelProgram, 1]]) {
+    const expected = await captureWarnings(() => reference.compileGraph(program))
+    const actual = await captureWarnings(() => compileProgram(program))
 
-  const voxelGraph = await compileProgram(voxelProgram)
-  const voxelPass = voxelGraph.passes.find((p) => p.effectFunc === 'renderLandscape3d')
-  assert.ok(voxelPass, 'renderLandscape3d pass found')
-  assert.equal(voxelGraph.programs[voxelPass.program].defines.FILTERING, 1)
+    assert.deepEqual(normalizeCompilerValue(actual.value), normalizeCompilerValue(expected.value))
+    assert.deepEqual(actual.warnings, expected.warnings)
+
+    const pass = actual.value.passes.find((p) => p.effectFunc === 'renderLandscape3d')
+    assert.ok(pass, 'renderLandscape3d pass found')
+    assert.equal(actual.value.programs[pass.program].defines.FILTERING, expectedFiltering)
+  }
 })
 
 test('structured DSL automation diagnostics attach diagnostic metadata to thrown SyntaxError', async () => {
