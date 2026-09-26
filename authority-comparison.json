@@ -41,8 +41,8 @@
     ],
     "compatDeclaration": {
       "file": "export-kit/kit.config.json",
-      "mode": "all",
-      "note": "The kit still ships the unrestricted compatibility declaration; the pre-delivery rejection behavior for unsupported exports remains a builder-side implementation outside this repository."
+      "mode": "list",
+      "note": "At this commit the declaration is narrowed to the tested authority scope: compat.mode \"list\" with the explicit 209 effect IDs the recorded rendered parity qualifies (210 catalog ids minus the compile-only filter/octaveWarp; the three GAP-007 overlay effects are settled at zero mismatched channels). tools/compat-gate.mjs rejects any declaration claiming more before delivery, with negative identity controls in test/compat-gate.test.js. The scaffold export-kit builder and its consuming host remain outside this repository; the served kit's compat.json must still be verified against this declaration at the published source SHA before GAP-006 closes."
     }
   }
 }
