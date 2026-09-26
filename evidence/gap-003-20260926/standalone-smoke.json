@@ -1,0 +1,162 @@
+{
+  "cablesStandalone": {
+    "platform": "linux",
+    "appDirectory": "/state/cache/scratch/squashfs-root",
+    "appUpdate": {
+      "owner": null,
+      "repo": null,
+      "provider": null
+    },
+    "asarIntegrity": {
+      "algorithm": "SHA256",
+      "asarPath": "/state/cache/scratch/squashfs-root/resources/app.asar",
+      "expectedSha256": null,
+      "actualSha256": "20812ac5a2d26cf324db602f6c0892eff50accda0c2f19219e7d1459a5894918",
+      "headerByteLength": 8343048,
+      "headerOffset": 16,
+      "wholeFileSha256": "08dd16648c7155d5d8799ee2916e059e124b927d126ffd58833dc2f1880c29cb"
+    },
+    "expectedVersion": "0.11.3",
+    "executablePath": "/state/cache/scratch/squashfs-root/cables",
+    "executableSha256": "84e1078c8f38659f3785fec90b68ff47dcb7b5ed94e97e4e4cc6dd3290758991",
+    "version": "0.11.3"
+  },
+  "canvasResize": {
+    "canvas": {
+      "height": 270,
+      "width": 480
+    },
+    "cgl": {
+      "canvasHeight": 270,
+      "canvasWidth": 480,
+      "drawingBufferHeight": 270,
+      "drawingBufferWidth": 480,
+      "viewPort": [
+        0,
+        0,
+        480,
+        270
+      ]
+    },
+    "error": "",
+    "height": 270,
+    "mode": "Canvas",
+    "programId": "noisemaker-program-op",
+    "ready": true,
+    "replacedTexture": true,
+    "stableProgram": true,
+    "texture": true,
+    "width": 480
+  },
+  "canvasResizeBefore": {
+    "canvasHeight": 320,
+    "canvasWidth": 640,
+    "height": 320,
+    "mode": "Canvas",
+    "programId": "noisemaker-program-op",
+    "width": 640,
+    "requestedCss": {
+      "height": 270,
+      "width": 480
+    },
+    "target": {
+      "height": 270,
+      "width": 480
+    }
+  },
+  "consoleErrors": [],
+  "facade": {
+    "effectCount": 210,
+    "effectIds": 210,
+    "issues": [],
+    "packageVersion": "0.1.0",
+    "supported": true
+  },
+  "finalState": {
+    "dsl": "search synth\nnoise(seed: 1, scaleX: 50, scaleY: 50).write(o0)\nrender(o0)",
+    "error": "",
+    "height": 270,
+    "ready": true,
+    "texture": true,
+    "width": 480
+  },
+  "initial": {
+    "dsl": "search synth\n\nnoise(seed: 1, scaleX: 50, scaleY: 50, ridges: true)\n  .write(o0)\n\nrender(o0)",
+    "error": "",
+    "height": 320,
+    "ready": true,
+    "texture": true,
+    "width": 640
+  },
+  "keyboardFocus": {
+    "after": "IFRAME",
+    "hasFocus": true,
+    "pageActive": "IFRAME",
+    "tags": [
+      "CANVAS",
+      "CANVAS",
+      "A"
+    ]
+  },
+  "mediaProbe": {
+    "bindCount": 2,
+    "hostHandle": true,
+    "readPixelsCount": 0
+  },
+  "pageErrors": [],
+  "pixels": {
+    "animated": {
+      "first": {
+        "hash": "8debbdc5",
+        "height": 96,
+        "maximum": 1,
+        "mean": 0.6546932431786748,
+        "minimum": 0.0001214742660522461,
+        "width": 128
+      },
+      "second": {
+        "hash": "a2433dc5",
+        "height": 96,
+        "maximum": 1,
+        "mean": 0.6551626989761038,
+        "minimum": 0.000038564205169677734,
+        "width": 128
+      }
+    },
+    "invalidRetainedHash": "1e4b9dc5",
+    "solid": {
+      "hash": "1e4b9dc5",
+      "height": 96,
+      "maximum": 1,
+      "mean": 0.557891845703125,
+      "minimum": 0.1490478515625,
+      "width": 128
+    }
+  },
+  "recreated": {
+    "id": "ij8q2lw6x",
+    "oldId": "noisemaker-program-op"
+  },
+  "reloadTerminalGlErrors": [],
+  "resize": {
+    "error": "",
+    "height": 180,
+    "ready": true,
+    "stableTexture": true,
+    "width": 320
+  },
+  "savedProjectReload": {
+    "patchSha256": "da418ac3ed14974baddc763491047253517ea6df9581e9088b77574f963bc978",
+    "ready": true,
+    "size": {
+      "height": 320,
+      "width": 640
+    }
+  },
+  "screenshot": "test-report/standalone-smoke.png",
+  "screenshotSha256": "1fc523313ff2e7e3fe1c8f0ece3180e75758dd7568efff3e62d0be53db99fdcb",
+  "time": {
+    "first": 99.897883561,
+    "second": 99.94289986399998
+  }
+}

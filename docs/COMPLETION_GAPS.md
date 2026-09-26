@@ -47,10 +47,10 @@ The review does not qualify every upstream change after the recorded port author
 | --- | --- | --- | --- | --- |
 | CLAIM-001 | README.md and docs/architecture.md | Complete locked effect catalog | supported | The lock verifies 210 effects and 212 artifacts. Both current and pinned manifests contain 210 IDs. |
 | CLAIM-002 | README.md | Pixel-level parity and complete programs | partial | The 2026-09-26 sweep rendered 209 of 210 effects at 64 by 48. 208 matched the reference with zero differing channels. One overlay effect mismatched. One case is compile-only. Full-parameter parity remains incomplete. |
-| CLAIM-003 | docs/installation.md | Native editor installation, media, resize, reset, and recovery | supported | The retry passes on macOS arm64 with Standalone 0.11.0. The first welcome-dialog timeout remains recorded. See GAP-003 for limits. |
+| CLAIM-003 | docs/installation.md | Native editor installation, media, resize, reset, and recovery | supported | The retry passes on macOS arm64 with Standalone 0.11.0, and the full editor smoke (media, resize, recovery, reset, recreation, keyboard focus, saved-project reload) passes on Linux x64 with Standalone 0.11.3 on 2026-09-26 (`evidence/gap-003-20260926/`). The first welcome-dialog timeout remains recorded. Windows, macOS Intel, and physical-GPU hosts remain untested. See GAP-003 for limits. |
 | CLAIM-004 | docs/installation.md and export README template | Last-good rendering and recovery | supported | The player preserves rejected-edit pixels. Recovery renders the replacement color. |
 | CLAIM-005 | examples/README.md and Error port documentation | Useful error reporting | partial | The user sees a generic compile failure. The compiler's diagnostic does not reach that message. See GAP-004. |
-| CLAIM-006 | Project-local op directory and self-contained bundle | Ecosystem fit | partial | The directory layout follows official Cables guidance. Isolated package installation succeeds. The declared editor passes on macOS arm64. |
+| CLAIM-006 | Project-local op directory and self-contained bundle | Ecosystem fit | partial | The directory layout follows official Cables guidance. Isolated package installation succeeds. The declared editor passes on macOS arm64 (Standalone 0.11.0) and Linux x64 (Standalone 0.11.3, including a project-local op-directory reload from a copied project tree). |
 | CLAIM-007 | Export-kit workflow and published kit | Release readiness | partial | Kit `0.1.27` at source `69beff8ae5ef5954ee85cd70674f66a659c08bd9`: all 17 inventory hashes verified 2026-09-26. Exact-source export dispatch succeeded at that source. It does not execute the repository's runtime or host suites. See GAP-005. |
 
 ## 3. Methods and evidence
@@ -243,20 +243,20 @@ The Standalone page advertises `0.11.2`. Support for that version remains unveri
 - Required checks: repeated independent rendered comparisons at the existing checkpoint — executed via `tools/overlay-settle-evidence.mjs` (4 adapter runs per effect) and asserted by the full catalog sweep.
 - Last verification: 2026-09-26.
 
-### GAP-003: Host qualification covers one environment
+### GAP-003: Host qualification covers two of four declared environments
 
 - Status: open. Priority: P2. Category: ecosystem.
 - Affected scope: supported platforms, host versions, accessibility, and saved-project upgrades.
 - Expected behavior: qualification covers the declared release environments and ordinary saved-project lifecycle.
-- Observed behavior: the retry passes in Standalone `0.11.0` on macOS arm64. Other platforms and newer versions remain untested.
-- Evidence: `standalone-retry.log`, `host-retry-evidence/standalone-smoke.json`, and its screenshot.
-- The first attempt times out at the welcome-dialog Close control. `standalone.log` preserves that failure.
-- Next action: define the supported platform matrix and qualify saved-project reload, upgrades, and accessible editor controls.
-- Dependencies: declared host versions and available target machines. Other-platform qualification remains unavailable in this run.
+- Supported platform matrix (declared release artifacts of [`cables-gl/cables_electron`](https://github.com/cables-gl/cables_electron/releases)): macOS arm64 `.dmg`, macOS Intel `.dmg`, Windows x64 `.zip`, Linux x64 `.AppImage`; releases `0.11.0` and `0.11.3` are the accepted standalone versions (`SUPPORTED_CABLES_STANDALONE_VERSIONS` in `tools/lib/cables-standalone-identity.js`).
+- Observed behavior: macOS arm64 Standalone `0.11.0` passes the retry (`standalone-retry.log` in the retained host-retry evidence; the first attempt timed out at the welcome-dialog Close control and `standalone.log` preserves that failure). Linux x64 Standalone `0.11.3` passes the full editor smoke 2026-09-26 in this environment: identity-attested AppImage, visible animated output, media texture binding without CPU readback, invalid-DSL recovery with retained last-good pixels, canvas and manual resize, reset, op delete/recreate, keyboard focus traversal, and a saved-project reload into a second editor instance from a freshly copied project directory. The run rendered through SwiftShader ANGLE (no physical GPU here).
+- Evidence: `evidence/gap-003-20260926/standalone-smoke.log`, `standalone-smoke.json`, and `standalone-smoke.png` (screenshot SHA-256 `1fc523313ff2e7e3fe1c8f0ece3180e75758dd7568efff3e62d0be53db99fdcb`); retained `standalone-retry.log`, `host-retry-evidence/standalone-smoke.json`, and its screenshot for macOS arm64.
+- Next action: qualify Windows x64, macOS Intel, and macOS arm64 on `0.11.3`, and re-run on a host with a physical GPU driver, using the same harness (`CABLES_APP=<standalone> npm run test:standalone`).
+- Dependencies: available target machines. Windows and macOS qualification remains unavailable in this Linux run.
 - Acceptance criteria: each declared environment passes installation, visible output, external input, recovery, reset, and saved-project removal or upgrade.
-- Required checks: real editor interactions, screenshots, cleanup, keyboard/focus checks, and saved-project reload.
-- Retain Windows, Linux, newer Cables releases, and untested GPU drivers as unsupported evidence dimensions.
-- Last verification: 2026-09-22.
+- Required checks: real editor interactions, screenshots, cleanup, keyboard/focus checks, and saved-project reload — executed on Linux x64 `0.11.3` (2026-09-26) and macOS arm64 `0.11.0` (earlier retry); not yet executed on Windows, macOS Intel, or physical GPUs.
+- Retain Windows, macOS Intel, newer Cables releases beyond `0.11.3`, and untested GPU drivers as unsupported evidence dimensions.
+- Last verification: 2026-09-26 (Linux x64 `0.11.3`; macOS arm64 `0.11.0` last verified 2026-09-22).
 
 ### GAP-004: Compiler diagnostics do not reach the user
 
@@ -302,11 +302,10 @@ The Standalone page advertises `0.11.2`. Support for that version remains unveri
 
 ## 5. Ordered next actions
 
-Current first action: correct GAP-004 in the separate implementation job. Preserve last-good rendering and error codes. Require a visible structured diagnostic for an invalid effect. Native editor qualification (GAP-003) needs a Cables Standalone host. This audit environment has none.
+Current first action: correct GAP-004 in the separate implementation job. Preserve last-good rendering and error codes. Require a visible structured diagnostic for an invalid effect. GAP-003's Linux x64 host qualification is done (2026-09-26, Standalone 0.11.3, SwiftShader); its Windows, macOS Intel, and physical-GPU qualification still needs those target machines.
 
 1. Correct GAP-004 in the separate implementation job. Preserve last-good rendering and error codes. Require a visible structured diagnostic for an invalid effect.
-2. Run `npm run test:standalone` with a declared `CABLES_APP` host when one is available. Preserve both earlier native attempts.
-   Require visible output, media binding, resize, rejection recovery, reset, recreation, and saved-project reload.
+2. Run `npm run test:standalone` with a declared `CABLES_APP` host on the remaining GAP-003 environments (Windows x64, macOS Intel, macOS arm64 on `0.11.3`, and a physical-GPU host). The Linux x64 `0.11.3` environment passed the full smoke on 2026-09-26 (`evidence/gap-003-20260926/`).
 3. Implement GAP-006's builder-side rejection in the scaffold export-kit builder. Narrow or annotate the kit declaration to the accepted authority.
 4. Define GAP-005's release acceptance after GAP-003 and GAP-004 pass. Attach exact-source runtime and host evidence through existing systems.
 
@@ -326,3 +325,4 @@ The operator does not authorize additional effects or parity checkpoint advancem
 | 2026-09-23 | `a911c39a69c78ec13606019eeacdf7b680468872` | Corrected the stale landscape rejection. Added executable qualification actions. | Reviewed worker raw logs. Passed 13 compiler tests and 12 independent graph comparisons. Checked current kit changes and exact-source CI. | Five gaps remain. Current-bundle rendered and host qualification remains incomplete. No closure. |
 | 2026-09-26 | `7fe3b1627251a916d380124a46f6dac14c5192aa` | Closed GAP-001's rendered qualification; residual pre-delivery rejection tracked as GAP-006. Added source-bound compiler comparison and rendered fixtures for both `renderLandscape3d` filtering modes; recorded bundle and authority hashes in `differential.json` and `authority-comparison.json`; committed raw run logs and rendered frames under `evidence/gap-001-20260926/`, re-executed at this exact source: 35 compiler tests pass; unit suite 245 pass, 0 fail; browser suites pass with zero differing channels for `landscape-voxel` and `landscape-isosurface`; vendor verification 210/210. | Standalone player and native editor qualification remains under GAP-003. Builder-side pre-delivery rejection for the unrestricted kit declaration remains open under GAP-006. |
 | 2026-09-26 | `411b2b646bb6692918c17d705f0afdaf837f6e48` | Implementation measured and closed GAP-002 for the defined matrix (`parity/coverage-matrix.json`, `evidence/gap-002-20260926/`): 210-effect sweep, 209 rendered, 208 zero-mismatch, `filter/fibers` 1174 differing channels, `filter/octaveWarp` compile-only. Opened GAP-007 for the overlay nondeterminism. Added the upstream texture-policy compiler test. | Review rerun at this source: vendor 210/210, unit 246 pass, compiler parity 36 pass, browser suites, bundle reproduction, kit `0.1.27` hashes. | GAP-003 host, GAP-004 diagnostics, GAP-006 builder rejection, GAP-007 overlay nondeterminism, GAP-005 release acceptance. Full parity unverified. |
+| 2026-09-26 | this record commit | GAP-003: defined the supported platform matrix (cables_electron release artifacts for macOS arm64/Intel, Windows x64, Linux x64; standalone versions 0.11.0/0.11.3) and qualified Linux x64 Standalone `0.11.3` with the full editor smoke: identity-attested AppImage, animated output, media binding, invalid-DSL recovery, canvas and manual resize, reset, op delete/recreate, keyboard focus traversal, and saved-project reload in a second editor instance from a copied project directory. Harness now supports Linux AppImage identity, Linux launch flags, a keyboard/focus check, and the saved-project reload; evidence in `evidence/gap-003-20260926/` (`standalone-smoke.log` exit 0, `standalone-smoke.json`, screenshot). Unit suite 250 pass, 0 fail. | Rendered through SwiftShader ANGLE on a GPU-less Linux container; no physical GPU. | GAP-003 remains open for Windows x64, macOS Intel, macOS arm64 on `0.11.3`, and physical-GPU hosts. GAP-004, GAP-006, GAP-005 unchanged. |

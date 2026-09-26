@@ -3,7 +3,7 @@
 import assert from 'node:assert/strict'
 import { spawn } from 'node:child_process'
 import { createHash } from 'node:crypto'
-import { mkdir, mkdtemp, writeFile } from 'node:fs/promises'
+import { cp, mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -29,15 +29,21 @@ if (!executableInput) {
 const cablesStandalone = await inspectCablesStandalone(executableInput)
 const executable = cablesStandalone.executablePath
 assert.equal(cablesStandalone.asarIntegrity.algorithm, 'SHA256')
-assert.equal(
-  cablesStandalone.asarIntegrity.asarPath,
-  join(cablesStandalone.appBundlePath, 'Contents/Resources/app.asar'),
-)
 assert.match(cablesStandalone.asarIntegrity.actualSha256, /^[0-9a-f]{64}$/)
-assert.equal(
-  cablesStandalone.asarIntegrity.actualSha256,
-  cablesStandalone.asarIntegrity.expectedSha256,
-)
+if (cablesStandalone.platform === 'linux') {
+  // Linux bundles ship no ElectronAsarIntegrity manifest; the identity check
+  // records the computed header and whole-file digests instead.
+  assert.equal(cablesStandalone.asarIntegrity.expectedSha256, null)
+} else {
+  assert.equal(
+    cablesStandalone.asarIntegrity.asarPath,
+    join(cablesStandalone.appBundlePath, 'Contents/Resources/app.asar'),
+  )
+  assert.equal(
+    cablesStandalone.asarIntegrity.actualSha256,
+    cablesStandalone.asarIntegrity.expectedSha256,
+  )
+}
 
 const sleep = (milliseconds) => new Promise((resolveSleep) => setTimeout(resolveSleep, milliseconds))
 const digest = (bytes) => createHash('sha256').update(bytes).digest('hex')
@@ -70,6 +76,12 @@ try {
     `--patch=${patchPath}`,
     `--remote-debugging-port=${cdpPort}`,
     `--user-data-dir=${userDataDirectory}`,
+    // Linux Electron bundles in CI-like environments cannot use the SUID
+    // chrome-sandbox helper, and Cables' editor needs WebGL, which on
+    // GPU-less hosts only initializes through the SwiftShader ANGLE backend.
+    ...(process.platform === 'linux'
+      ? ['--no-sandbox', '--use-angle=swiftshader', '--enable-unsafe-swiftshader']
+      : []),
   ], {
     env: { ...process.env, ELECTRON_DISABLE_SECURITY_WARNINGS: 'true' },
     stdio: ['ignore', 'pipe', 'pipe'],
@@ -101,9 +113,45 @@ try {
     () => frame.evaluate(() => Boolean(globalThis.gui?.corePatch)),
     'Cables patch runtime did not initialize',
   )
-  const introClose = frame.getByText('Close', { exact: true }).first()
-  await introClose.waitFor({ state: 'visible', timeout: 2_000 }).catch(() => {})
-  if (await introClose.isVisible().catch(() => false)) await introClose.click()
+  const introClose = frame.locator('.introjs-skipbutton', { hasText: 'Close' }).first()
+  await introClose.waitFor({ state: 'visible', timeout: 15_000 }).catch(() => {})
+  if (await introClose.isVisible().catch(() => false)) {
+    await introClose.click({ timeout: 5_000 }).catch(() => {})
+  }
+
+  const keyboardFocus = await (async () => {
+    await page.evaluate(() => {
+      const canvas = document.querySelector('canvas')
+      ;(canvas ?? document.body).focus()
+    })
+    const pageState = await page.evaluate(() => ({
+      activeElement: document.activeElement?.tagName ?? null,
+      hasFocus: document.hasFocus(),
+    }))
+    const tags = [await frame.evaluate(() => document.activeElement?.tagName ?? null)]
+    for (const press of [1, 2]) {
+      await page.keyboard.press('Tab')
+      await sleep(150)
+      tags.push(await frame.evaluate(() => document.activeElement?.tagName ?? null))
+    }
+    const after = await page.evaluate(() => document.activeElement?.tagName ?? null)
+    await page.keyboard.press('Escape')
+    return { after, hasFocus: pageState.hasFocus, pageActive: pageState.activeElement, tags }
+  })()
+  assert.equal(
+    keyboardFocus.hasFocus,
+    true,
+    'the editor page did not own keyboard focus',
+  )
+  assert.equal(
+    keyboardFocus.after,
+    'IFRAME',
+    'Tab did not move host focus into the editor frame',
+  )
+  assert.ok(
+    keyboardFocus.tags.some((tag, index) => index > 0 && tag !== keyboardFocus.tags[index - 1]),
+    `Tab did not traverse editor focus: ${JSON.stringify(keyboardFocus.tags)}`,
+  )
 
   const readProgramState = () => frame.evaluate(() => {
     const program = gui.corePatch().getOpsByObjName('Ops.Extension.Noisemaker.Program')[0]
@@ -574,6 +622,87 @@ try {
   }, 'recreated Program op did not render successfully')
   assert.equal(finalState.ready, true)
 
+  // Saved-project reload: copy the committed project (patch file plus the op
+  // directory it references) into a fresh location and open it in a second
+  // Standalone instance. This exercises the ordinary saved-project lifecycle:
+  // the project loads after a full editor restart and renders again.
+  const reloadRoot = await mkdtemp(join(tmpdir(), 'noisemaker-cables-reload-'))
+  const reloadProjectDirectory = join(reloadRoot, 'project')
+  const reloadPatchPath = join(reloadProjectDirectory, 'noisemaker-program.cables')
+  await cp(patchPath, reloadPatchPath)
+  await cp(
+    resolve(projectRoot, 'Ops.Extension.Noisemaker'),
+    join(reloadRoot, 'Ops.Extension.Noisemaker'),
+    { recursive: true },
+  )
+  const reloadPatchSha256 = digest(await readFile(reloadPatchPath))
+  const reloadProfile = await mkdtemp(join(tmpdir(), 'noisemaker-cables-reload-profile-'))
+  const reloadTerminalLines = []
+  const reloadCdpPort = cdpPort + 1
+  const reloadCdpUrl = `http://127.0.0.1:${reloadCdpPort}`
+  const reloadChild = spawn(executable, [
+    `--patch=${reloadPatchPath}`,
+    `--remote-debugging-port=${reloadCdpPort}`,
+    `--user-data-dir=${reloadProfile}`,
+    ...(process.platform === 'linux'
+      ? ['--no-sandbox', '--use-angle=swiftshader', '--enable-unsafe-swiftshader']
+      : []),
+  ], {
+    env: { ...process.env, ELECTRON_DISABLE_SECURITY_WARNINGS: 'true' },
+    stdio: ['ignore', 'pipe', 'pipe'],
+  })
+  for (const stream of [reloadChild.stdout, reloadChild.stderr]) {
+    stream.setEncoding('utf8')
+    stream.on('data', (chunk) => reloadTerminalLines.push(...chunk.split(/\r?\n/).filter(Boolean)))
+  }
+  let reloadBrowser
+  let savedProjectReload
+  try {
+    await waitFor(async () => {
+      const response = await fetch(`${reloadCdpUrl}/json/version`)
+      return response.ok
+    }, 'reloaded saved project did not expose CDP')
+    reloadBrowser = await chromium.connectOverCDP(reloadCdpUrl)
+    const reloadPage = await waitFor(
+      () => reloadBrowser.contexts()[0].pages()[0],
+      'reloaded editor page did not open',
+    )
+    const reloadFrame = await waitFor(
+      () => reloadPage.frames().find((candidate) => candidate.url().includes('/dist/ui/')),
+      'reloaded editor frame did not load',
+    )
+    await waitFor(
+      () => reloadFrame.evaluate(() => Boolean(globalThis.gui?.corePatch)),
+      'reloaded patch runtime did not initialize',
+    )
+    const reloadedState = await waitFor(async () => {
+      const state = await reloadFrame.evaluate(() => {
+        const program = gui.corePatch().getOpsByObjName('Ops.Extension.Noisemaker.Program')[0]
+        const texture = program?.getPort('Texture')?.get()
+        return program ? {
+          dsl: program.getPort('DSL').get(),
+          error: program.getPort('Error').get(),
+          height: texture?.height,
+          ready: program.getPort('Ready').get(),
+          texture: Boolean(texture?.tex),
+          width: texture?.width,
+        } : null
+      })
+      return state?.ready && state.texture && state.error === '' ? state : null
+    }, 'reloaded saved project did not render the committed Program op')
+    assert.match(reloadedState.dsl, /noise\(seed:\s*1/)
+    savedProjectReload = {
+      patchSha256: reloadPatchSha256,
+      ready: reloadedState.ready,
+      size: { height: reloadedState.height, width: reloadedState.width },
+    }
+  } finally {
+    if (reloadBrowser) await reloadBrowser.close().catch(() => {})
+    await stopChild(reloadChild)
+    await removeTemporaryDirectory(reloadProfile)
+    await removeTemporaryDirectory(reloadRoot)
+  }
+
   const screenshot = await page.screenshot({ path: screenshotPath })
   const glOrPromiseErrors = [...consoleErrors, ...pageErrors].filter((message) =>
     /webgl|gl_invalid|\bgl error\b|unhandled|uncaught.*promise|promise rejection/i.test(message))
@@ -591,6 +720,7 @@ try {
     facade,
     finalState,
     initial,
+    keyboardFocus,
     mediaProbe,
     pageErrors,
     pixels: {
@@ -599,11 +729,15 @@ try {
       solid: solidPixels,
     },
     recreated,
+    reloadTerminalGlErrors: reloadTerminalLines.filter((line) =>
+      /webgl|gl_invalid|\bgl error\b|unhandled|uncaught.*promise|promise rejection/i.test(line)),
     resize,
+    savedProjectReload,
     screenshot: 'test-report/standalone-smoke.png',
     screenshotSha256: digest(screenshot),
     time: { first: firstTime, second: secondTime },
   }
+  assert.deepEqual(report.reloadTerminalGlErrors, [], 'reloaded saved project logged GL errors')
   await writeFile(reportPath, `${JSON.stringify(report, null, 2)}\n`)
   console.log(JSON.stringify(report, null, 2))
 } finally {

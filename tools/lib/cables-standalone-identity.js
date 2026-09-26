@@ -8,9 +8,11 @@ import {
   stat as statFile,
 } from 'node:fs/promises'
 import { basename, dirname, join } from 'node:path'
+import { readFile as readFileUtf8Default } from 'node:fs/promises'
 import { promisify } from 'node:util'
 
 export const EXPECTED_CABLES_STANDALONE_VERSION = '0.11.0'
+export const SUPPORTED_CABLES_STANDALONE_VERSIONS = ['0.11.0', '0.11.3']
 
 const CABLES_STANDALONE_BUNDLE_IDENTIFIER = 'gl.cables.standalone'
 const SHA256_PATTERN = /^[0-9a-f]{64}$/
@@ -277,6 +279,101 @@ export async function sha256AsarHeader(
   }
 }
 
+export async function readLinuxAppVersion(desktopEntryPath, { readFile: readFileUtf8 = readFileUtf8Default } = {}) {
+  let text
+  try {
+    text = await readFileUtf8(desktopEntryPath, 'utf8')
+  } catch (error) {
+    throw new Error(`Cables Standalone desktop entry is required at ${desktopEntryPath}`, { cause: error })
+  }
+  const entry = {}
+  for (const line of text.split(/\r?\n/)) {
+    const match = /^([^=#\s][^=]*)=(.*)$/.exec(line.trim())
+    if (match) entry[match[1].trim()] = match[2].trim()
+  }
+  const version = entry['X-AppImage-Version']
+  if (typeof version !== 'string' || version === '') {
+    throw new Error(
+      `Cables Standalone desktop entry at ${desktopEntryPath} must declare X-AppImage-Version`,
+    )
+  }
+  if (!SUPPORTED_CABLES_STANDALONE_VERSIONS.includes(version)) {
+    throw new Error(
+      `Cables Standalone version ${SUPPORTED_CABLES_STANDALONE_VERSIONS.join(' or ')} is required; ` +
+      `desktop entry reports ${version}`,
+    )
+  }
+  if (!isCablesProductName(entry.Name)) {
+    throw new Error(
+      `Cables Standalone desktop entry Name must identify Cables; received ${String(entry.Name)}`,
+    )
+  }
+  return { version, entry }
+}
+
+export async function inspectLinuxCablesStandalone({
+  executablePath,
+  executableSha256,
+  access,
+  hashAsarHeader,
+  hashFile,
+  readLinuxAppVersion: readLinuxAppVersionDependency,
+}) {
+  const appDirectory = dirname(executablePath)
+  const desktopEntryPath = join(appDirectory, 'cables.desktop')
+  const { version, entry } = await readLinuxAppVersionDependency(desktopEntryPath)
+  const asarPath = join(appDirectory, 'resources', 'app.asar')
+  try {
+    await access(asarPath, constants.R_OK)
+  } catch (error) {
+    throw new Error(
+      `Cables Standalone app.asar is required at ${asarPath}`,
+      { cause: error },
+    )
+  }
+  const headerIntegrity = await hashAsarHeader(asarPath)
+  if (!SHA256_PATTERN.test(headerIntegrity?.actualSha256)) {
+    throw new Error(
+      `app.asar actual header SHA-256 is invalid: ${String(headerIntegrity?.actualSha256)}`,
+    )
+  }
+  if (
+    headerIntegrity.headerOffset !== ASAR_HEADER_OFFSET ||
+    !Number.isSafeInteger(headerIntegrity.headerByteLength) ||
+    headerIntegrity.headerByteLength <= 0
+  ) {
+    throw new Error('app.asar header SHA-256 byte range is invalid')
+  }
+  const wholeFileSha256 = await hashFile(asarPath)
+  if (!SHA256_PATTERN.test(wholeFileSha256)) {
+    throw new Error(`app.asar whole-file SHA-256 is invalid: ${String(wholeFileSha256)}`)
+  }
+
+  return deepFreeze({
+    platform: 'linux',
+    appDirectory,
+    appUpdate: deepFreeze({
+      owner: entry['X-AppImage-Version'] !== undefined ? entry['owner'] ?? null : null,
+      repo: entry['repo'] ?? null,
+      provider: entry['provider'] ?? null,
+    }),
+    asarIntegrity: deepFreeze({
+      // Linux bundles ship no ElectronAsarIntegrity manifest, so the computed
+      // header and whole-file digests are recorded as identity fingerprints
+      // without an embedded expectation.
+      algorithm: 'SHA256',
+      asarPath,
+      expectedSha256: null,
+      ...headerIntegrity,
+      wholeFileSha256,
+    }),
+    expectedVersion: version,
+    executablePath,
+    executableSha256,
+    version,
+  })
+}
+
 export async function inspectCablesStandalone(
   inputPath,
   {
@@ -294,15 +391,36 @@ export async function inspectCablesStandalone(
   const executablePath = await realpath(inputPath)
   await access(executablePath, constants.X_OK)
 
-  const { appBundlePath, contentsPath, macOsPath } = requireMacAppExecutable(executablePath)
-  const plist = await readInfoPlist(join(contentsPath, 'Info.plist'))
-  validateInfoPlist(plist, executablePath, macOsPath)
-  const asarIntegrity = requireAsarIntegrity(plist, contentsPath)
+  const isMacAppBundle = (() => {
+    const macOsPath = dirname(executablePath)
+    const contentsPath = dirname(macOsPath)
+    return (
+      basename(macOsPath) === 'MacOS' &&
+      basename(contentsPath) === 'Contents' &&
+      basename(dirname(contentsPath)).endsWith('.app')
+    )
+  })()
 
   const executableSha256 = await hashFile(executablePath)
   if (!SHA256_PATTERN.test(executableSha256)) {
     throw new Error(`Executable SHA-256 is invalid: ${String(executableSha256)}`)
   }
+
+  if (!isMacAppBundle) {
+    return inspectLinuxCablesStandalone({
+      executablePath,
+      executableSha256,
+      access,
+      hashAsarHeader,
+      hashFile,
+      readLinuxAppVersion,
+    })
+  }
+
+  const { appBundlePath, contentsPath, macOsPath } = requireMacAppExecutable(executablePath)
+  const plist = await readInfoPlist(join(contentsPath, 'Info.plist'))
+  validateInfoPlist(plist, executablePath, macOsPath)
+  const asarIntegrity = requireAsarIntegrity(plist, contentsPath)
 
   try {
     await access(asarIntegrity.asarPath, constants.R_OK)

@@ -3,7 +3,7 @@
 The source package is `@noisefactor/noisemaker-for-cables`. Its installed op
 and bundle identifiers remain stable for compatibility with existing patches.
 
-## Cables Standalone 0.11.0
+## Cables Standalone 0.11.0 / 0.11.3
 
 Keep the package directory intact. In Cables Standalone, add
 `Ops.Extension.Noisemaker` as a project op directory, or keep the shipped

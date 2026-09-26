@@ -94,11 +94,11 @@ test('attests the resolved Cables Standalone 0.11.0 app identity', async () => {
   assert.deepEqual(calls, [
     ['realpath', '/Applications/cables'],
     ['access', executablePath, constants.X_OK],
+    ['hashFile', executablePath],
     [
       'readInfoPlist',
       '/fixture/cables.app/Contents/Info.plist',
     ],
-    ['hashFile', executablePath],
     ['access', asarPath, constants.R_OK],
     ['hashAsarHeader', asarPath],
     ['hashFile', asarPath],
@@ -347,15 +347,69 @@ test('rejects a non-Cables bundle product name', async () => {
   )
 })
 
-test('rejects an executable outside an app Contents/MacOS directory', async () => {
-  const nonAppExecutable = '/tmp/cables'
+test('rejects a Linux bundle whose desktop entry is missing', async () => {
+  const linuxExecutable = '/fixture/cables-linux/cables'
 
   await assert.rejects(
-    inspectCablesStandalone(nonAppExecutable, dependencies({
-      realpath: async () => nonAppExecutable,
+    inspectCablesStandalone(linuxExecutable, dependencies({
+      realpath: async () => linuxExecutable,
     })),
-    /\.app\/Contents\/MacOS/i,
+    /desktop entry is required/i,
   )
+})
+
+test('rejects a Linux bundle whose desktop entry omits the AppImage version', async () => {
+  const linuxExecutable = '/fixture/cables-linux/cables'
+  const readInfoPlist = await import('../tools/lib/cables-standalone-identity.js')
+
+  await assert.rejects(
+    readInfoPlist.readLinuxAppVersion('/fixture/cables-linux/cables.desktop', {
+      readFile: async () => '[Desktop Entry]\nName=cables\nExec=AppRun --no-sandbox %U\n',
+    }),
+    /must declare X-AppImage-Version/i,
+  )
+})
+
+test('rejects a Linux bundle with an unsupported AppImage version', async () => {
+  const readInfoPlist = await import('../tools/lib/cables-standalone-identity.js')
+
+  await assert.rejects(
+    readInfoPlist.readLinuxAppVersion('/fixture/cables-linux/cables.desktop', {
+      readFile: async () => '[Desktop Entry]\nName=cables\nX-AppImage-Version=0.9.9\n',
+    }),
+    /version 0\.11\.0 or 0\.11\.3 is required; desktop entry reports 0\.9\.9/i,
+  )
+})
+
+test('rejects a Linux bundle whose desktop entry name is not Cables', async () => {
+  const readInfoPlist = await import('../tools/lib/cables-standalone-identity.js')
+
+  await assert.rejects(
+    readInfoPlist.readLinuxAppVersion('/fixture/cables-linux/cables.desktop', {
+      readFile: async () => '[Desktop Entry]\nName=Other\nX-AppImage-Version=0.11.3\n',
+    }),
+    /desktop entry Name must identify Cables/i,
+  )
+})
+
+test('attests the resolved Linux AppImage bundle identity without an embedded asar expectation', async () => {
+  const readInfoPlist = await import('../tools/lib/cables-standalone-identity.js')
+  const version = await readInfoPlist.readLinuxAppVersion('/fixture/cables-linux/cables.desktop', {
+    readFile: async () => [
+      '[Desktop Entry]',
+      'Name=cables',
+      'X-AppImage-Version=0.11.3',
+      'Comment=cables standalone version',
+    ].join('\n'),
+  })
+  assert.deepEqual(version, {
+    version: '0.11.3',
+    entry: {
+      Comment: 'cables standalone version',
+      Name: 'cables',
+      'X-AppImage-Version': '0.11.3',
+    },
+  })
 })
 
 test('reads XML or binary app plists through plutil JSON conversion', async () => {

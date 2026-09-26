@@ -1,6 +1,6 @@
 # Noisemaker for Cables example patch
 
-Open `noisemaker-program.cables` in Cables Standalone 0.11.0. Its project-local
+Open `noisemaker-program.cables` in Cables Standalone 0.11.0 or 0.11.3. Its project-local
 op directory points to the sibling `Ops.Extension.Noisemaker` directory, so no
 global installation or published package is required.
 

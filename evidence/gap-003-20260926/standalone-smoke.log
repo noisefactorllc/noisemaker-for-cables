@@ -1,0 +1,23 @@
+$ DISPLAY=:97 CABLES_APP=<extracted cables-0.11.3-linux-x64 AppImage> npm run test:standalone
+host: Linux x86_64, Debian 12 container, headless Xvfb 1.21.1.7, SwiftShader ANGLE, Node v26.5.1
+exit code: 0
+
+> @noisefactor/noisemaker-for-cables@0.1.0 test:standalone
+> node tools/standalone-smoke.mjs
+
+{
+  "cablesStandalone": {
+    "platform": "linux",
+    "appDirectory": "/state/cache/scratch/squashfs-root",
+    "appUpdate": {
+      "owner": null,
+      "repo": null,
+      "provider": null
+    },
+    "asarIntegrity": {
+      "algorithm": "SHA256",
+      "asarPath": "/state/cache/scratch/squashfs-root/resources/app.asar",
+      "expectedSha256": null,
+      "actualSha256": "20812ac5a2d26cf324db602f6c0892eff50accda0c2f19219e7d1459a5894918",
+      "headerByteLength": 8343048,
+      "headerOffset": 16,
