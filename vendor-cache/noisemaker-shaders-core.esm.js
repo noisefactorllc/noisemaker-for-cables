@@ -3,8 +3,8 @@
  * Includes: CanvasRenderer + UIController + EffectSelect
  * Copyright (c) 2017-2026 Noise Factor LLC. https://noisefactor.io/
  * SPDX-License-Identifier: MIT
- * Build: 6a0af04d
- * Date: 2026-09-26T01:49:01.443Z
+ * Build: 9f85687d
+ * Date: 2026-09-26T22:11:55.686Z
  */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
@@ -2266,6 +2266,10 @@ function registerParamAliases(opName, aliases) {
     registry[opName] = /* @__PURE__ */ Object.create(null);
   }
   Object.assign(registry[opName], aliases);
+}
+function getParamAliases(opName) {
+  const aliases = registry[opName];
+  return aliases ? { ...aliases } : {};
 }
 function resolveParamAliases(opName, kwargs) {
   const warnings = [];
@@ -4818,6 +4822,21 @@ function applyParameterUpdates(originalDsl, compileFn, parameterUpdates) {
   return unparse(compiled, parameterUpdates, {});
 }
 
+// shaders/src/runtime/registry.js
+var effects = /* @__PURE__ */ new Map();
+function registerEffect(name, definition) {
+  effects.set(name, definition);
+}
+function unregisterEffect(name) {
+  return effects.delete(name);
+}
+function getEffect(name) {
+  return effects.get(name);
+}
+function getAllEffects() {
+  return effects;
+}
+
 // shaders/src/lang/transform.js
 function deepClone2(obj) {
   if (obj === null || typeof obj !== "object") {
@@ -4864,6 +4883,201 @@ function getEffectSpec(effectName, searchOrder = []) {
     }
   }
   return null;
+}
+function getEffectInstance(resolvedName) {
+  return getEffect(resolvedName) || null;
+}
+function runtimeRegistryPopulated() {
+  return getAllEffects().size > 0;
+}
+function typeMatches(value, type) {
+  if (value === null || value === void 0) return true;
+  switch (type) {
+    case "float":
+    case "int":
+    case "number":
+      return typeof value === "number";
+    case "color":
+      return typeof value === "string" && value.startsWith("#");
+    case "bool":
+    case "boolean":
+      return typeof value === "boolean";
+    case "surface":
+    case "tex":
+      return typeof value === "string";
+    default:
+      return true;
+  }
+}
+function collectAcceptedArgNames(spec, instance, aliases) {
+  const accepted = /* @__PURE__ */ new Set();
+  for (const def of spec?.args || []) {
+    if (def?.name) accepted.add(def.name);
+  }
+  if (instance?.globals) {
+    for (const key of Object.keys(instance.globals)) accepted.add(key);
+  }
+  for (const name of Object.keys(aliases)) accepted.add(name);
+  for (const name of Object.values(aliases)) accepted.add(name);
+  return accepted;
+}
+function aliasMapFor(resolvedName) {
+  return getParamAliases(resolvedName);
+}
+function predictBackendSupport(instance, resolvedName, manifest) {
+  if (!manifest || !instance || !instance.passes) return void 0;
+  const namespace = instance.namespace || resolvedName.split(".")[0];
+  const candidates = [instance.name, instance.func, resolvedName.split(".").pop()];
+  let entry = null;
+  for (const displayName of candidates) {
+    if (displayName && manifest[`${namespace}/${displayName}`]) {
+      entry = manifest[`${namespace}/${displayName}`];
+      break;
+    }
+  }
+  if (!entry) return { webgl2: false, webgpu: false };
+  const programs = instance.passes.map((p) => p?.program).filter(Boolean);
+  const cover = (table) => {
+    if (!table) return false;
+    if (programs.length === 0) return void 0;
+    const hits = programs.filter((p) => p in table).length;
+    if (hits === 0) return false;
+    return hits === programs.length ? true : "partial";
+  };
+  return { webgl2: cover(entry.glsl), webgpu: cover(entry.wgsl) };
+}
+function predictSamplerTopology(instance) {
+  if (!instance) return void 0;
+  const internalTextures = instance.textures ? Object.keys(instance.textures) : [];
+  const passInputs = [];
+  for (const pass of instance.passes || []) {
+    for (const value of Object.values(pass?.inputs || {})) {
+      if (typeof value === "string" && !passInputs.includes(value)) {
+        passInputs.push(value);
+      }
+    }
+  }
+  return { internalTextures, passInputs };
+}
+function predictPassesAndOutputs(instance) {
+  if (!instance) return void 0;
+  const passes = (instance.passes || []).map((pass) => ({
+    name: pass?.name,
+    program: pass?.program,
+    inputs: pass?.inputs ? { ...pass.inputs } : {},
+    outputs: pass?.outputs ? { ...pass.outputs } : {},
+    drawBuffers: pass?.drawBuffers
+  }));
+  const outputs = {
+    geo: instance.outputGeo ?? null,
+    tex3d: instance.outputTex3d ?? null
+  };
+  return { passes, outputs };
+}
+function predictReplacement(resolvedName, spec, newArgs, oldInstance, options = {}) {
+  const instance = getEffectInstance(resolvedName);
+  const prediction = {
+    effect: resolvedName,
+    available: void 0,
+    arguments: { unknown: [], missing: [] },
+    types: [],
+    ranges: [],
+    passes: void 0,
+    outputs: void 0,
+    samplerTopology: void 0,
+    backendSupport: void 0,
+    issues: []
+  };
+  if (instance) {
+    prediction.available = true;
+  } else if (runtimeRegistryPopulated()) {
+    prediction.available = false;
+    prediction.issues.push({
+      dimension: "shader-availability",
+      message: `No registered effect definition for '${resolvedName}'`
+    });
+  }
+  const aliases = aliasMapFor(resolvedName);
+  const accepted = collectAcceptedArgNames(spec, instance, aliases);
+  const provided = newArgs || {};
+  const providedCanonical = new Set(Object.keys(provided).map((key) => aliases[key] || key));
+  for (const key of Object.keys(provided)) {
+    const canonical = aliases[key] || key;
+    if (!accepted.has(canonical)) {
+      prediction.arguments.unknown.push(key);
+    }
+  }
+  const knownDefs = /* @__PURE__ */ new Map();
+  for (const def of spec?.args || []) knownDefs.set(def.name, def);
+  if (instance?.globals) {
+    for (const [key, def] of Object.entries(instance.globals)) {
+      if (!knownDefs.has(key)) knownDefs.set(key, def);
+    }
+  }
+  for (const [key, def] of knownDefs) {
+    if (def?.default === void 0 && !providedCanonical.has(key)) {
+      prediction.arguments.missing.push(key);
+    }
+  }
+  if (prediction.arguments.unknown.length > 0) {
+    prediction.issues.push({
+      dimension: "arguments",
+      message: `Unknown argument(s) for '${resolvedName}': ${prediction.arguments.unknown.join(", ")}`
+    });
+  }
+  for (const [key, value] of Object.entries(provided)) {
+    const canonical = aliases[key] || key;
+    const def = knownDefs.get(canonical);
+    if (!def) continue;
+    const declaredType = def.type === "color" ? "color" : def.type;
+    if (!typeMatches(value, declaredType)) {
+      prediction.types.push({ arg: key, expected: declaredType, actual: typeof value });
+    }
+    if (typeof value === "number") {
+      if (def.min !== void 0 && value < def.min) {
+        prediction.ranges.push({ arg: canonical, value, min: def.min, max: def.max });
+      }
+      if (def.max !== void 0 && value > def.max) {
+        prediction.ranges.push({ arg: canonical, value, min: def.min, max: def.max });
+      }
+    }
+    if (def.choices && typeof value === "number") {
+      const allowed = Object.values(def.choices);
+      if (!allowed.includes(value)) {
+        prediction.ranges.push({ arg: canonical, value, choices: allowed });
+      }
+    }
+  }
+  if (prediction.types.length > 0) {
+    prediction.issues.push({
+      dimension: "types",
+      message: prediction.types.map((t) => `Argument '${t.arg}' for '${resolvedName}' expects ${t.expected}, got ${t.actual}`).join("; ")
+    });
+  }
+  if (prediction.ranges.length > 0) {
+    prediction.issues.push({
+      dimension: "ranges",
+      message: prediction.ranges.map((r) => {
+        if (r.choices) {
+          return `Argument '${r.arg}' for '${resolvedName}' value ${r.value} is not one of ${r.choices.join(", ")}`;
+        }
+        return `Argument '${r.arg}' for '${resolvedName}' value ${r.value} outside range [${r.min}, ${r.max}]`;
+      }).join("; ")
+    });
+  }
+  prediction.passes = predictPassesAndOutputs(instance);
+  prediction.samplerTopology = predictSamplerTopology(instance);
+  if (prediction.samplerTopology && oldInstance) {
+    const oldTopology = predictSamplerTopology(oldInstance);
+    if (oldTopology) {
+      prediction.samplerTopology.changedFrom = {
+        internalTextures: oldTopology.internalTextures,
+        passInputs: oldTopology.passInputs
+      };
+    }
+  }
+  prediction.backendSupport = predictBackendSupport(instance, resolvedName, options.manifest);
+  return prediction;
 }
 function replaceEffect(compiled, stepIndex, newEffectName, newArgs = {}, options = {}) {
   if (!compiled?.plans) {
@@ -4937,6 +5151,21 @@ function replaceEffect(compiled, stepIndex, newEffectName, newArgs = {}, options
       }
     }
   }
+  const prediction = predictReplacement(
+    resolvedNewName,
+    newSpec,
+    newArgs,
+    getEffectInstance(oldEffectName),
+    options
+  );
+  if (options.preflight === true && prediction.issues.length > 0) {
+    const messages = prediction.issues.map((issue) => issue.message);
+    return {
+      success: false,
+      error: `Replacement preflight failed: ${messages.join("; ")}`,
+      prediction
+    };
+  }
   if (effectNamespace && !newProgram.searchNamespaces.includes(effectNamespace)) {
     newProgram.searchNamespaces = [...newProgram.searchNamespaces, effectNamespace];
   }
@@ -4944,7 +5173,7 @@ function replaceEffect(compiled, stepIndex, newEffectName, newArgs = {}, options
   newStep.op = resolvedNewName;
   newStep.args = finalArgs;
   newStep.namespace = effectNamespace ? { resolved: effectNamespace } : null;
-  return { success: true, program: newProgram };
+  return { success: true, program: newProgram, prediction };
 }
 function listSteps(compiled, options = {}) {
   if (!compiled?.plans) return [];
@@ -4985,20 +5214,59 @@ function getCompatibleReplacements(compiled, stepIndex, options = {}) {
   const { chainIndex, step } = location;
   const currentIsStarter = checkIsStarter(step.op, searchOrder);
   const isStarterPosition = chainIndex === 0 || currentIsStarter && (step.from === null || step.from === void 0);
+  const oldInstance = getEffectInstance(step.op);
   const starters = [];
   const nonStarters = [];
+  const predictions = {};
   for (const opName of Object.keys(ops)) {
     const isStarter = checkIsStarter(opName, searchOrder);
+    predictions[opName] = predictReplacement(
+      opName,
+      ops[opName],
+      {},
+      oldInstance,
+      options
+    );
     if (isStarter) {
       starters.push(opName);
     } else {
       nonStarters.push(opName);
     }
   }
+  if (options.preflight === true) {
+    const blocked = [];
+    const filterIssues = (names) => {
+      const ok = [];
+      for (const name of names) {
+        if (predictions[name].issues.length > 0) {
+          blocked.push({ effect: name, issues: predictions[name].issues });
+        } else {
+          ok.push(name);
+        }
+      }
+      return ok;
+    };
+    if (isStarterPosition) {
+      return {
+        success: true,
+        compatible: filterIssues(starters),
+        incompatible: nonStarters,
+        blocked,
+        predictions
+      };
+    }
+    return {
+      success: true,
+      compatible: filterIssues(nonStarters),
+      incompatible: starters,
+      blocked,
+      predictions
+    };
+  }
   if (isStarterPosition) {
-    return { success: true, compatible: starters, incompatible: nonStarters };
+    return { success: true, compatible: starters, incompatible: nonStarters, predictions };
   } else {
-    return { success: true, compatible: nonStarters, incompatible: starters };
+    return { success: true, compatible: nonStarters, incompatible: starters, predictions };
   }
 }
 
@@ -5169,21 +5437,6 @@ function groupGlobalsByCategory(globals, options = {}) {
 }
 function getCategories(globals) {
   return Object.keys(groupGlobalsByCategory(globals));
-}
-
-// shaders/src/runtime/registry.js
-var effects = /* @__PURE__ */ new Map();
-function registerEffect(name, definition) {
-  effects.set(name, definition);
-}
-function unregisterEffect(name) {
-  return effects.delete(name);
-}
-function getEffect(name) {
-  return effects.get(name);
-}
-function getAllEffects() {
-  return effects;
 }
 
 // shaders/src/runtime/palette-expansion.js
@@ -23639,6 +23892,7 @@ export {
   mergeIntoEnums,
   needsInputTex3d,
   parse,
+  predictReplacement,
   recompile,
   registerEffect,
   registerNamespace,
