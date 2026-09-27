@@ -1,0 +1,46 @@
+node --test test/polymorphic-parity.test.js
+✔ legacy noiseType parameter compiles with the pinned reference diagnostic (606.159921ms)
+✔ canonical parameters win over legacy aliases while retaining the native warning (197.643784ms)
+✔ legacy aliases do not leak into a same-named effect in another namespace (147.985887ms)
+✔ every pinned legacy parameter alias matches the independently registered reference (295.072512ms)
+✔ every pinned deprecated effect emits the reference deprecation diagnostic (182.730753ms)
+✔ full Polymorphic corpus matches the separately instantiated pinned compiler (199.270182ms)
+✔ public compiler rejects output surfaces outside o0-o7 in every DSL position (1.66033ms)
+✔ mutation introspection excludes builtin pipeline steps (123.373378ms)
+✔ diagnostic locations preserve source columns (155.79122ms)
+✔ structured DSL lexer diagnostics attach diagnostic metadata to thrown SyntaxError (159.947127ms)
+✔ structured DSL parser expectation diagnostics attach diagnostic metadata to thrown SyntaxError (151.435287ms)
+✔ parser expectation diagnostics represent unavailable caller-token coordinates explicitly (121.78922ms)
+✔ renderLandscape3d filtering modes match the vendored reference compiler and select expected defines (132.651477ms)
+✔ structured DSL automation diagnostics attach diagnostic metadata to thrown SyntaxError (122.740843ms)
+✔ parser automation diagnostics preserve unavailable caller-token coordinates (118.272898ms)
+✔ valid automation invocations retain AST defaults and keys (123.227026ms)
+✔ structured DSL search directive diagnostics attach diagnostic metadata to thrown SyntaxError (135.280298ms)
+✔ parser search diagnostics preserve unavailable caller-token coordinates (117.709426ms)
+✔ valid search directives retain namespace order, keyword namespaces, and compiled indexes (114.185532ms)
+✔ structured DSL output validation diagnostics attach diagnostic metadata to thrown SyntaxError (124.148767ms)
+✔ parser output diagnostics preserve unavailable caller-token coordinates (128.065228ms)
+✔ structured DSL subchain validation diagnostics attach diagnostic metadata to thrown SyntaxError (124.373182ms)
+✔ parser subchain diagnostics preserve unavailable caller-token coordinates (118.616207ms)
+✔ valid subchains preserve permissive arguments, defaults, body and compiled indexes (123.630235ms)
+✔ subchain syntax preserves shared expectation diagnostic precedence (118.554704ms)
+✔ structured DSL call form diagnostics attach diagnostic metadata to thrown SyntaxError (119.460687ms)
+✔ parser call form diagnostics preserve unavailable caller-token coordinates (125.448377ms)
+✔ structured DSL remaining expectation diagnostics attach diagnostic metadata to thrown SyntaxError (124.457884ms)
+✔ parser remaining expectation diagnostics preserve unavailable caller-token coordinates (117.383388ms)
+✔ number coercion diagnostics represent unavailable locations explicitly and preserve available locations (127.436583ms)
+✔ valid call forms retain from override namespaces and mixed automation arguments (127.068115ms)
+✔ GAP-027: subchain argument validation contract exposes P008, P009, P010 diagnostics in permissive mode (123.451801ms)
+✔ upstream texture-policy fields (mipmaps/persistent/3D filter) propagate from effect definitions into compiled texture specs (122.734234ms)
+✔ GAP-027: strict opt-in mode rejects subchain argument violations with SyntaxError (116.898625ms)
+✔ parser diagnostic source coordinates survive scanner drift (121.106725ms)
+✔ caller tokens lacking position attributes preserve null spans in subchain reporting (124.517965ms)
+ℹ tests 36
+ℹ suites 0
+ℹ pass 36
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 5426.679988
+exit=0

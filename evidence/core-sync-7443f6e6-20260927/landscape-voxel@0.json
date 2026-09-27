@@ -1,0 +1,9 @@
+{
+  "copyExact": true,
+  "finite": true,
+  "firstDivergences": [],
+  "id": "landscape-voxel@0",
+  "maxChannelError": 0,
+  "meanChannelError": 0,
+  "mismatchedChannels": 0
+}
