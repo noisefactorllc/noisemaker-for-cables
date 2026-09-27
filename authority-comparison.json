@@ -3,7 +3,7 @@
   "recordedAt": "2026-09-27",
   "source": {
     "repository": "noisefactorllc/noisemaker-for-cables",
-    "commit": "a28b1ea265ea1c28532c970c1743af149eea8c67"
+    "commit": "f7d77212cf163403de94e866cc8dbe6f1ac7028e"
   },
   "authorityComparison": {
     "method": "The locked vendored artifacts are verified byte-for-byte against the published authority CDN recorded in vendor.lock.json, and the committed op bundle is identified by SHA-256.",
@@ -17,16 +17,16 @@
       "sourceBaseUrl": "https://shaders.noisedeck.app/1/",
       "engineBundle": {
         "path": "vendor-cache/noisemaker-shaders-core.esm.js",
-        "sha256": "6d149231be2e9d9c83e01280ba0b69f5b2f9905a234ca0898d9d2306da228ade",
+        "sha256": "004e1169b8654c1ac0020d14da016d6412158015e5214928eaa23c5834df257b",
         "bytes": 879173
       },
-      "upstreamEngine": "noisemaker@7443f6e61803",
-      "buildHeader": "Build: 7443f6e6",
-      "vendorLockSha256": "1fe9dad3c0a3526563cc350d4910f624cc22e53d3d47aa70c712239f3ca4519e"
+      "upstreamEngine": "noisemaker@e73a44a37f0c",
+      "buildHeader": "Build: e73a44a3",
+      "vendorLockSha256": "5835e1f0f1216cf291993ecfa72042b108fab6aec05af23f2404963f5898cd51"
     },
     "opBundle": {
       "path": "Ops.Extension.Noisemaker/Ops.Extension.Noisemaker.Program/lib_noisemaker-cablesgl.js",
-      "sha256": "2b1ad4815f98350aa072d68b9674006cfac906709d0c9628a4fbd572d68e806c"
+      "sha256": "b3cdf5d6fc086fd714d7b1b174c99cbd9b1477723067909577b6e585f1ae93da"
     },
     "landscapeEffects": [
       {
