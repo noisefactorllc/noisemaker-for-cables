@@ -3,8 +3,8 @@
  * Includes: CanvasRenderer + UIController + EffectSelect
  * Copyright (c) 2017-2026 Noise Factor LLC. https://noisefactor.io/
  * SPDX-License-Identifier: MIT
- * Build: e73a44a3
- * Date: 2026-09-27T05:44:01.890Z
+ * Build: 12b4d74f
+ * Date: 2026-09-27T09:58:46.458Z
  */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
@@ -12603,6 +12603,126 @@ function faceBasisMat3(face) {
 }
 var CUBE_FACE_BASES = [0, 1, 2, 3, 4, 5].map(faceBasisMat3);
 
+// shaders/src/runtime/preflight.js
+var GLSL_ONLY_HINT = "#version";
+function mrtFormatBytes(format) {
+  switch (format) {
+    case "rgba32f":
+    case "rgba32float":
+      return 16;
+    case "rgba8":
+    case "rgba8unorm":
+      return 4;
+    default:
+      return 8;
+  }
+}
+function isGLSLSource(text) {
+  return typeof text === "string" && text.includes(GLSL_ONLY_HINT);
+}
+function isWGSLBucket(bucket) {
+  if (!bucket) return false;
+  if (bucket.wgsl) return true;
+  if (bucket.source && !isGLSLSource(bucket.source)) return true;
+  if (bucket.fragment && !isGLSLSource(bucket.fragment)) return true;
+  return false;
+}
+function isGLSLBucket(bucket) {
+  if (!bucket) return false;
+  if (bucket.glsl || bucket.fragment || bucket.vertex) return true;
+  if (bucket.source && !isWGSLBucket(bucket)) return true;
+  return false;
+}
+function definitionPasses(definition) {
+  if (!definition || typeof definition !== "object") return [];
+  if (Array.isArray(definition.passes)) return definition.passes;
+  return [];
+}
+function definitionTextures(definition) {
+  if (!definition || typeof definition !== "object") return null;
+  if (definition.textures instanceof Map) return definition.textures;
+  if (definition.textures && typeof definition.textures === "object") {
+    return new Map(Object.entries(definition.textures));
+  }
+  return null;
+}
+function preflightEffect(definition, capabilities, shaders) {
+  const caps = capabilities || {};
+  const shadersArg = shaders || definition && definition.shaders;
+  const hasShaderInfo = shadersArg && typeof shadersArg === "object" && Object.keys(shadersArg).length > 0;
+  const buckets = hasShaderInfo ? shadersArg : {};
+  const passes = definitionPasses(definition);
+  const textures = definitionTextures(definition);
+  const webgl2Reasons = [];
+  const webgpuReasons = [];
+  const formatChanges = [];
+  const clamps = [];
+  const budget = caps.maxColorBytesPerSample;
+  const maxDrawBuffers = caps.maxDrawBuffers;
+  const maxTextureSize = caps.maxTextureSize;
+  for (const pass of passes) {
+    const program = pass && pass.program;
+    if (!program) continue;
+    const bucket = buckets[program];
+    if (hasShaderInfo) {
+      if (!isGLSLBucket(bucket)) {
+        webgl2Reasons.push(`program '${program}' has no GLSL source (pass '${pass.name || program}')`);
+      }
+      if (!isWGSLBucket(bucket)) {
+        webgpuReasons.push(`program '${program}' has no WGSL source (pass '${pass.name || program}')`);
+      }
+    }
+    const outputCount = pass.outputs ? Object.keys(pass.outputs).length : 0;
+    if (typeof maxDrawBuffers === "number" && outputCount > maxDrawBuffers) {
+      const reason = `pass '${pass.name || program}' writes ${outputCount} color attachments, device allows ${maxDrawBuffers}`;
+      webgl2Reasons.push(reason);
+      webgpuReasons.push(reason);
+    }
+    if (budget && outputCount > 1) {
+      const entries = Object.values(pass.outputs).map((texId) => ({
+        texId,
+        spec: textures ? textures.get(texId) : void 0
+      }));
+      let total = entries.reduce((sum, entry) => sum + mrtFormatBytes(entry.spec && entry.spec.format), 0);
+      if (total > budget) {
+        for (let i = entries.length - 1; i >= 0 && total > budget; i--) {
+          const spec = entries[i].spec;
+          if (!spec) continue;
+          if (spec.format === "rgba32f" || spec.format === "rgba32float") {
+            formatChanges.push({
+              texture: entries[i].texId,
+              pass: pass.name || pass.id || program,
+              from: spec.format,
+              to: "rgba16f",
+              budget
+            });
+            total -= 8;
+          }
+        }
+      }
+    }
+  }
+  if (textures && typeof maxTextureSize === "number") {
+    for (const [texId, spec] of textures) {
+      if (!spec || typeof spec !== "object") continue;
+      for (const field of ["width", "height", "depth"]) {
+        const value = spec[field];
+        if (typeof value === "number" && value > maxTextureSize) {
+          clamps.push({ texture: texId, field, requested: value, limit: maxTextureSize });
+        }
+      }
+    }
+  }
+  return {
+    backends: {
+      webgl2: { authorable: webgl2Reasons.length === 0, reasons: webgl2Reasons },
+      webgpu: { authorable: webgpuReasons.length === 0, reasons: webgpuReasons }
+    },
+    formatChanges,
+    clamps
+  };
+}
+
 // shaders/src/runtime/pipeline.js
 var TAU2 = Math.PI * 2;
 function oscSine(t) {
@@ -13487,21 +13607,38 @@ var Pipeline = class {
   /**
    * Byte cost per sample of a color attachment format, for the MRT
    * attachment budget. Unlisted formats (including defaulted rgba16f
-   * surfaces) cost 8.
+   * surfaces) cost 8. Delegates to the shared preflight implementation so
+   * Pipeline.applyMrtFormatBudget() and preflightEffect() stay in lockstep.
    * @param {string|undefined} format - Texture format name
    * @returns {number} Bytes per sample
    */
   mrtFormatBytes(format) {
-    switch (format) {
-      case "rgba32f":
-      case "rgba32float":
-        return 16;
-      case "rgba8":
-      case "rgba8unorm":
-        return 4;
-      default:
-        return 8;
+    return mrtFormatBytes(format);
+  }
+  /**
+   * Static preflight of this pipeline's effect graph against device
+   * capabilities (GAP-016). Runs the same analysis as
+   * preflightEffect() — per-backend authorability, predicted MRT
+   * format demotions, and predicted maxTextureSize clamps — before any
+   * program is compiled. Read-only; never mutates the graph.
+   * @param {object} [capabilities] - Defaults to the active backend's
+   *   capabilities (Pipeline.getCapabilities()).
+   * @returns {{ backends: {webgl2: {authorable: boolean, reasons: string[]}, webgpu: {authorable: boolean, reasons: string[]}}, formatChanges: Array, clamps: Array }}
+   */
+  preflight(capabilities) {
+    const caps = capabilities || this.getCapabilities();
+    const shaders = {};
+    for (const pass of this.graph?.passes || []) {
+      if (!pass.program) continue;
+      const spec = this.resolveProgramSpec(pass);
+      if (spec) shaders[pass.program] = spec;
     }
+    const definition = {
+      passes: this.graph?.passes || [],
+      textures: this.graph?.textures,
+      shaders
+    };
+    return preflightEffect(definition, caps, Object.keys(shaders).length ? shaders : void 0);
   }
   /**
    * Demote trailing rgba32f attachments of over-budget MRT passes to
