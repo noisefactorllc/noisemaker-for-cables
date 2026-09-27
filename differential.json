@@ -3,32 +3,33 @@
   "recordedAt": "2026-09-27",
   "source": {
     "repository": "noisefactorllc/noisemaker-for-cables",
-    "commit": "b3a3fd37fb4e52a29617c185c88ac17e8a3458ea"
+    "commit": "2dea47e16670fec3afbdc684e28ebcc49d9c3863"
   },
   "upstreamRangeAudit": {
-    "declaredRange": "noisefactorllc/noisemaker 12b4d74fb4f28d5f00bb1dde107fa8673814d8b9..93229933b102ba82e713402be19db57207698850",
+    "declaredRange": "noisefactorllc/noisemaker 12b4d74fb4f28d5f00bb1dde107fa8673814d8b9..a912749fab5c3819e56a8abde664ff30e40870f4",
     "forcePushOrNonContiguous": false,
-    "audit": "Audited in a local upstream checkout (/state/cache/noisemaker, a fresh clone of noisefactorllc/noisemaker) rather than assuming the declared range: the trigger reported a forced/non-contiguous delivery with an observed range 8fe3ccaf2cc8..93229933b102, but in the checkout git merge-base --is-ancestor 12b4d74fb4f28d5f00bb1dde107fa8673814d8b9 93229933b102ba82e713402be19db57207698850 exits 0, so the declared range is contiguous after the force-push and 8fe3ccaf2cc8 is also an ancestor of 93229933b102. Audited diff in that checkout: git diff 12b4d74f..93229933 --stat shows llms-full.txt, LEDGER.md, scripts/run-js-tests.js and shaders/tests only (definition-schema.js new, test-harness.js extended, test_definition_schema.js new). Every shaders/ change is under shaders/tests (GAP-017 definition-schema introspection harness); there is no change to shaders/effects, shaders/lang, shaders/src or the renderer, so the effect catalog and engine runtime behavior are unchanged.",
-    "rangeCommitsTouchingShaders": 1,
-    "shadersDiffStat": "3 files changed, 439 insertions(+), 2 deletions(-), all under shaders/tests: shaders/tests/definition-schema.js (+220, new), shaders/tests/test-harness.js (+60/-2), shaders/tests/test_definition_schema.js (+161, new). No effect-definition files changed, so the effect catalog is unchanged at 210 locked effects; node tools/generate-effect-entry.mjs regenerated identical static imports and vendor:update refreshed only the core bundle artifact entry in vendor.lock.json (all 210 effect artifacts byte-identical). The refreshed served core bundle is Build: 93229933, 884620 bytes, sha256 c8cf35cf19319572bdf40410c8f93bcf5e0f2eba83d917015fbee96ad7ebe0c1. The tests-only upstream change is not part of the published core runtime artifact's behavior; the bundle refresh re-identifies the pinned source commit.",
+    "audit": "Audited in a local upstream checkout (/state/cache/noisemaker, a fresh clone of noisefactorllc/noisemaker) rather than assuming the declared range: the trigger reported a forced/non-contiguous delivery with observed ranges 7c5f17658d8c..a912749fab5c and 11d7c69922f3..296e0138c474, but in the checkout git merge-base --is-ancestor confirms 12b4d74fb4f2 is an ancestor of a912749fab5c and a912749fab5c is an ancestor of 296e0138c474 (origin/main, the head of the second observed delivery), so both deliveries are contiguous and cumulative. Audited diff in that checkout: git diff 12b4d74f..296e0138 --stat shows LEDGER.md, llms-full.txt, scripts/run-js-tests.js and shaders/tests only (GAP-019 passthrough-input harness at a912749fab5c, GAP-021 frame-resolution reporting at 296e0138c474, plus the already-synced GAP-017 files). Every shaders/ change is under shaders/tests; there is no change to shaders/effects, shaders/lang, shaders/src or the renderer, so the effect catalog and engine runtime behavior are unchanged.",
+    "rangeCommitsTouchingShaders": 2,
+    "shadersDiffStat": "git diff 12b4d74f..296e0138 -- shaders/: 7 files changed, 1574 insertions(+), 3 deletions(-), all under shaders/tests: passthrough-input.js (+489, new), test_passthrough_input.js (+259, new), frame-resolution.js (+95, new), test_frame_resolution.js (+189, new), test-harness.js (+164/-3), definition-schema.js and test_definition_schema.js (carried from the already-synced 93229933). No effect-definition files changed, so the effect catalog is unchanged at 210 locked effects; node tools/generate-effect-entry.mjs regenerated identical static imports and vendor:update refreshed only the core bundle artifact entry in vendor.lock.json (all 210 effect artifacts byte-identical). The refreshed served core bundle is Build: 296e0138, 884620 bytes, sha256 e81783901a06deea19bc53f5aa3d9c58dd286a6d772925a49ed7c5b803a0f5df; the served build is byte-identical to the previous 93229933 core except the Build/Date header lines. The tests-only upstream change is not part of the published core runtime artifact's behavior; the bundle refresh re-identifies the pinned source commit.",
     "keyShadersSrcCommits": [
-      "93229933 feat(harness): complete, lossless definition-schema introspection with an upstream-loss audit (GAP-017)"
+      "a912749fab5c feat(harness): true input-passthrough probe with a live write-blit control (GAP-019)",
+      "296e0138c474 feat(harness): report requested-vs-returned frame resolution on every renderEffectFrame result (GAP-021)"
     ]
   },
   "authority": {
     "vendorLock": "vendor.lock.json",
-    "vendorLockSha256": "ed02b171c43c5fce31d90bca26442f16aa707f5a7cb97564c8832978eaa35ae5",
+    "vendorLockSha256": "bfe5bb9617cc260e5da4a590003f5eb3291ecbf3517c76847c6cbc82e7e78821",
     "engineBundle": {
       "path": "vendor-cache/noisemaker-shaders-core.esm.js",
-      "sha256": "c8cf35cf19319572bdf40410c8f93bcf5e0f2eba83d917015fbee96ad7ebe0c1",
+      "sha256": "e81783901a06deea19bc53f5aa3d9c58dd286a6d772925a49ed7c5b803a0f5df",
       "bytes": 884620,
       "url": "https://shaders.noisedeck.app/1/noisemaker-shaders-core.esm.js"
     },
-    "upstreamEngine": "noisemaker@93229933b102"
+    "upstreamEngine": "noisemaker@296e0138c474"
   },
   "opBundle": {
     "path": "Ops.Extension.Noisemaker/Ops.Extension.Noisemaker.Program/lib_noisemaker-cablesgl.js",
-    "sha256": "ef7fe26abee6a4e6398589e0cb910cdac86c9815ad11530f3dc5aa252e644bd2"
+    "sha256": "9acc8b40982f7bbfc5fb36127aa953c018964331c80a76685b9d58aa493b0812"
   },
   "compilerDifferential": {
     "method": "Port facade src/browser.js compileProgram versus the vendored reference compiler (vendor-cache/noisemaker-shaders-core.esm.js) for both landscape filtering modes; graphs normalized by removing only compiledAt.",
@@ -52,7 +53,7 @@
         "warningsMatched": true
       }
     ],
-    "evidence": "test/polymorphic-parity.test.js: renderLandscape3d filtering modes match the vendored reference compiler and select expected defines (36 of 36 tests pass, node --test exit 0, at the refreshed 93229933 core)"
+    "evidence": "test/polymorphic-parity.test.js: renderLandscape3d filtering modes match the vendored reference compiler and select expected defines (36 of 36 tests pass, node --test exit 0, at the refreshed 296e0138 core)"
   },
   "renderedDifferential": {
     "method": "Browser harness (test/browser) renders both landscape filtering modes through the reference WebGL2 backend and the public Cables adapter backend (CablesWebGL2Backend) at 64x48 with deterministic inputs; frames compared after common float readback.",
@@ -73,7 +74,7 @@
         "finite": true
       }
     ],
-    "rawEvidence": "evidence/evidence/core-sync-93229933-20260927/ holds the executed-run logs (compiler-parity.log, unit.log, vendor.log, browser.log, landscape-run.log), the per-case comparison JSON (landscape-voxel@0.json, landscape-isosurface@0.json), and the raw reference and adapter frames (PNG) for both cases, produced by tools/landscape-evidence.mjs at the refreshed 93229933 core.",
+    "rawEvidence": "evidence/core-sync-296e0138-20260927/ holds the executed-run logs (compiler-parity.log, unit.log, vendor.log, browser.log, landscape-run.log, pack.log), the per-case comparison JSON (landscape-voxel@0.json, landscape-isosurface@0.json), and the raw reference and adapter frames (PNG) for both cases, produced by tools/landscape-evidence.mjs at the refreshed 296e0138 core.",
     "evidence": "test/browser/pixel-parity.spec.js landscape-voxel and landscape-isosurface cases; npm run test:browser passes 3 of 3 suites (210/210 compile+link, 209 rendered catalog effects, 26 representative frame comparisons, state hygiene)",
     "limits": "The standalone Cables player boundary requires the native host harness (CABLES_APP) and remains under GAP-003 host qualification; this record covers the op runtime boundary in the browser harness."
   },
@@ -82,26 +83,26 @@
       "command": "node --test test/polymorphic-parity.test.js",
       "exitCode": 0,
       "result": "36 pass, 0 fail",
-      "log": "evidence/core-sync-93229933-20260927/compiler-parity.log"
+      "log": "evidence/core-sync-296e0138-20260927/compiler-parity.log"
     },
     {
       "command": "npm test",
       "exitCode": 0,
       "result": "265 pass, 0 fail, 0 skipped",
-      "log": "evidence/core-sync-93229933-20260927/unit.log"
+      "log": "evidence/core-sync-296e0138-20260927/unit.log"
     },
     {
       "command": "npm run vendor:verify",
       "exitCode": 0,
       "result": "210/210 effects verified, 212 artifacts",
-      "log": "evidence/core-sync-93229933-20260927/vendor.log"
+      "log": "evidence/core-sync-296e0138-20260927/vendor.log"
     },
     {
       "command": "npm run test:browser",
       "exitCode": 0,
       "result": "3 suites passed",
-      "log": "evidence/core-sync-93229933-20260927/browser.log"
+      "log": "evidence/core-sync-296e0138-20260927/browser.log"
     }
   ],
-  "recordNote": "The recorded checks and frame evidence were executed at this exact source (sha recorded in source.commit), the sync commit that ships the refreshed 93229933 core (Build: 93229933; upstream range is tests-only: GAP-017 definition-schema introspection under shaders/tests), refreshed lock, and rebuilt op bundle. The commit changes no port source code; the upstream range 12b4d74fb4f2..93229933b102 touches only shaders/tests and upstream docs/scripts, so the effect catalog is unchanged and all 210 locked effect artifacts are byte-identical to the previous core. Browser suites and landscape frame evidence were executed with PLAYWRIGHT_BROWSERS_PATH=/state/cache/ms-playwright (chromium + headless shell installed there; HOME is noexec tmpfs). The single shipped commit is flattened from the intermediate sync commits per the delivery procedure: source.commit names the immediate pre-binding sync commit b3a3fd37fb4e52a29617c185c88ac17e8a3458ea, whose source artifacts (core bundle, lock, op bundle, evidence logs) are byte-identical to the shipped commit; only the differential.json/authority-comparison.json record files differ, so every recorded check and frame evidence applies to the shipped source."
+  "recordNote": "The recorded checks and frame evidence were executed at this exact source (sha recorded in source.commit), the sync commit that ships the refreshed 296e0138 core (Build: 296e0138; upstream range is tests-only: GAP-019 input-passthrough probe and GAP-021 frame-resolution reporting under shaders/tests, served by the authority CDN at origin/main 296e0138c474 which includes the declared end a912749fab5c), refreshed lock, and rebuilt op bundle. The commit changes no port source code; the upstream range 12b4d74fb4f2..296e0138c474 touches only shaders/tests and upstream docs/scripts, so the effect catalog is unchanged at 210 effects and all 210 locked effect artifacts are byte-identical to the previous core, and the refreshed core bundle itself is byte-identical to the 93229933 core except its Build/Date header lines. Browser suites and landscape frame evidence were executed with PLAYWRIGHT_BROWSERS_PATH=/state/cache/ms-playwright (chromium + headless shell installed there; HOME is noexec tmpfs). npm pack --dry-run also exited 0 (16 files). The single shipped commit is flattened from the intermediate sync commits per the delivery procedure: source.commit names the immediate pre-binding sync commit 2dea47e16670fec3afbdc684e28ebcc49d9c3863, whose source artifacts (core bundle, lock, op bundle, evidence logs) are byte-identical to the shipped commit; only the differential.json/authority-comparison.json record files differ, so every recorded check and frame evidence applies to the shipped source."
 }
