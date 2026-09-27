@@ -245,7 +245,7 @@ The Standalone page advertises `0.11.2`. Support for that version remains unveri
 
 ### GAP-003: Host qualification covers two of four declared environments
 
-- Status: blocked (blocked reason narrowed 2026-09-27). Priority: P2. Category: ecosystem. The blocked reason: Windows x64 and native Intel hardware remain unreachable from this automation environment, so their qualification cannot be executed or fabricated here. On 2026-09-27 the macOS arm64 target was qualified on `0.11.3` with the full extended smoke, the macOS Intel (x86_64) distribution passed the same smoke under Rosetta 2 on Apple silicon, and the physical-GPU dimension was executed (Metal rendering; recorded under GAP-005's evidence, `evidence/gap-005-macosarm64-20260927/`). Linux x64 and macOS arm64 remain qualified as recorded below.
+- Status: open. Priority: P2. Category: ecosystem. The release workflow now runs the existing editor lifecycle on Windows x64 and native Intel macOS hosted runners, for Standalone 0.11.0 and 0.11.3. Windows identity is read from the official archive’s packed package.json with executable and ASAR hashes. Exact-source CI results remain required; prior platform limitations below describe the earlier runs.
 - Affected scope: supported platforms, host versions, accessibility, and saved-project upgrades.
 - Expected behavior: qualification covers the declared release environments and ordinary saved-project lifecycle.
 - Supported platform matrix (declared release artifacts of [`cables-gl/cables_electron`](https://github.com/cables-gl/cables_electron/releases)): macOS arm64 `.dmg`, macOS Intel `.dmg`, Windows x64 `.zip`, Linux x64 `.AppImage`; releases `0.11.0` and `0.11.3` are the accepted standalone versions (`SUPPORTED_CABLES_STANDALONE_VERSIONS` in `tools/lib/cables-standalone-identity.js`).
@@ -272,7 +272,7 @@ The Standalone page advertises `0.11.2`. Support for that version remains unveri
 
 ### GAP-005: Release CI does not qualify port behavior
 
-- Status: blocked (2026-09-27 re-verification). Priority: P2. Category: release. The macOS arm64 target (on a physical-GPU host) and the macOS Intel distribution (under Rosetta 2 on Apple silicon) now execute conditions (4)–(5) on both declared standalone versions; remaining blocked: Windows x64, native Intel hardware, and the out-of-repository limits (b)/(c) below.
+- Status: open. Priority: P2. Category: release. Export dispatch now depends on the runtime, compatibility, and Windows/Intel macOS editor checks. The workflow keeps exact-source reports and screenshots as CI artifacts. Completion still requires successful CI and verification of the published kit; the previous host and workflow-authority blockers no longer prevent automated work.
 - Affected scope: release acceptance, exact-source runtime evidence, host versions, and upgrade/removal qualification.
 - Expected behavior: a release decision identifies tested behavior, supported environments, and unresolved limits for its source SHA.
 - Historical behavior: the only repository workflow dispatches the export-kit builder. Its green result does not execute the port's runtime suites, and no release acceptance boundary identified what a green export run does and does not prove.
@@ -292,7 +292,7 @@ The Standalone page advertises `0.11.2`. Support for that version remains unveri
 
 ### GAP-006: Kit compatibility declaration lacks pre-delivery rejection
 
-- Status: blocked (2026-09-26, this record commit; re-verified 2026-09-27 at `d3ec0c9`, all recorded blockers still hold). Priority: P2. Category: authority. The declaration is narrowed and the pre-delivery gate is shipped and reviewed at `3e2c05c805ede9bbd15b37d25c205bbebcd31aed`; the exact-source kit export cannot be completed from this repository.
+- Status: open. Priority: P2. Category: compatibility. The declaration now uses the shared builder’s supported fromJsonList source. A local build produces compat.mode list with exactly the 209 qualified effects and excludes filter/octaveWarp. The unchanged scope is checked before export dispatch. Completion awaits verification of those bytes in the published kit.
 - Affected scope: the kit's unrestricted compatibility declaration for exports the port has not qualified, including landscape filtering beyond the measured cases.
 - Expected behavior: compatibility claims identify the accepted authority and reject unsupported exports before delivery (residual from GAP-001's expected behavior).
 - Observed behavior at `8dd702e`: `export-kit/kit.config.json` declared `compat.mode: all` with no builder-side rejection of unqualified exports.
@@ -308,7 +308,7 @@ The Standalone page advertises `0.11.2`. Support for that version remains unveri
 
 ## 5. Ordered next actions
 
-Current first action (blocked on a Windows machine): run `npm run test:standalone` with the declared Windows x64 host (and, for the GAP-005 boundary as defined, native Intel hardware) — the only declared environments without executed smokes. macOS arm64 was qualified on `0.11.3` and the macOS Intel distribution executed under Rosetta 2 on 2026-09-27 on a physical-GPU (Apple M4/Metal) host (`evidence/gap-005-macosarm64-20260927/`, both declared standalone versions; keyboard activation of accessible editor controls remains editor-suppressed, an upstream limitation). GAP-004 is closed (2026-09-26): the controller now renders the compiler's structured diagnostic into the Program Error port and exported player message with transactional recovery retained. GAP-003's Linux x64 host qualification is done (2026-09-26, Standalone 0.11.3, SwiftShader); macOS arm64 `0.11.3` and the macOS Intel distribution under Rosetta 2 are now done (2026-09-27).
+Current first action: verify the release workflow’s Windows x64 and native Intel macOS editor results for both declared versions, then verify the published kit’s source and 209-effect compatibility list. These checks now have an automated execution path; preserve the historical platform and keyboard-activation limitations below until new evidence resolves them.
 
 1. ~~Correct GAP-004~~ Done (2026-09-26): structured compiler diagnostics reach the Program Error port and exported player message; last-good rendering and error codes preserved; recovery tests extended (`evidence/gap-4-20260926/`).
 2. Run `npm run test:standalone` with a declared `CABLES_APP` host on the remaining GAP-003 environments (Windows x64, and native Intel hardware for the GAP-005 boundary as defined). The Linux x64 `0.11.3` environment passed the full smoke on 2026-09-26 (`evidence/gap-003-20260926/`), macOS arm64 `0.11.3` passed it on a physical-GPU host and the macOS Intel distribution passed it under Rosetta 2 on 2026-09-27 (`evidence/gap-005-macosarm64-20260927/`, both declared standalone versions); the keyboard-accessible-control attempt recorded the editor suppressing keyboard activation (an upstream limitation); saved-project upgrade and removal are executed on Linux x64 and macOS arm64.

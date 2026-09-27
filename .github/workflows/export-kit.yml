@@ -16,13 +16,97 @@ on:
       - "LICENSE"
       - "Ops.Extension.Noisemaker/**"
       - "examples/noisemaker-program.cables"
+      - "src/**"
+      - "tools/**"
+      - "test/**"
+      - "parity/**"
+      - "vendor-cache/**"
+      - "vendor.lock.json"
+      - "package*.json"
+      - "playwright.config.*"
 
 concurrency:
   group: export-kit-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
+  runtime:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run verify
+      - run: node tools/compat-gate.mjs
+      - run: git diff --exit-code -- Ops.Extension.Noisemaker
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always()
+        with:
+          name: runtime-${{ github.sha }}
+          path: |
+            playwright-report/
+            test-results/
+
+  standalone:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-2025, macos-15-intel]
+        version: ['0.11.0', '0.11.3']
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Download the declared Windows distribution
+        if: runner.os == 'Windows'
+        shell: pwsh
+        env:
+          CABLES_VERSION: ${{ matrix.version }}
+        run: |
+          $archive = Join-Path $env:RUNNER_TEMP 'cables.zip'
+          $directory = Join-Path $env:RUNNER_TEMP 'cables'
+          Invoke-WebRequest "https://github.com/cables-gl/cables_electron/releases/download/v$env:CABLES_VERSION/cables-$env:CABLES_VERSION-win-x64.zip" -OutFile $archive
+          Expand-Archive $archive $directory
+          "CABLES_APP=$(Join-Path $directory 'cables.exe')" >> $env:GITHUB_ENV
+      - name: Mount the declared Intel macOS distribution
+        if: runner.os == 'macOS'
+        shell: bash
+        env:
+          CABLES_VERSION: ${{ matrix.version }}
+        run: |
+          test "$(uname -m)" = x86_64
+          test "$(sysctl -in sysctl.proc_translated 2>/dev/null || true)" != 1
+          curl --fail --location --retry 3 \
+            "https://github.com/cables-gl/cables_electron/releases/download/v${CABLES_VERSION}/cables-${CABLES_VERSION}-mac-x64.dmg" \
+            --output "$RUNNER_TEMP/cables.dmg"
+          hdiutil attach "$RUNNER_TEMP/cables.dmg" -readonly -nobrowse -mountpoint "$RUNNER_TEMP/cables-volume"
+          echo "CABLES_APP=$RUNNER_TEMP/cables-volume/cables.app/Contents/MacOS/cables" >> "$GITHUB_ENV"
+      - name: Exercise the native editor and saved-project lifecycle
+        run: npm run test:standalone
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always()
+        with:
+          name: standalone-${{ matrix.os }}-${{ matrix.version }}-${{ github.sha }}
+          path: test-report/
+      - name: Detach the Intel macOS distribution
+        if: always() && runner.os == 'macOS'
+        run: hdiutil detach "$RUNNER_TEMP/cables-volume" || true
+
   dispatch:
+    needs: [runtime, standalone]
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:

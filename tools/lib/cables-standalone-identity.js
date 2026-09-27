@@ -10,6 +10,7 @@ import {
 import { basename, dirname, join } from 'node:path'
 import { readFile as readFileUtf8Default } from 'node:fs/promises'
 import { promisify } from 'node:util'
+import { readWindowsAsarIntegrity } from './windows-asar-integrity.js'
 
 export const EXPECTED_CABLES_STANDALONE_VERSION = '0.11.0'
 export const SUPPORTED_CABLES_STANDALONE_VERSIONS = ['0.11.0', '0.11.3']
@@ -311,18 +312,70 @@ export async function readLinuxAppVersion(desktopEntryPath, { readFile: readFile
   return { version, entry }
 }
 
-export async function inspectLinuxCablesStandalone({
+export async function readWindowsAppVersion(asarPath) {
+  // The official Windows archives disable executable metadata editing. Read
+  // their packed package.json; the executable's ASAR resource is checked below.
+  const handle = await openFile(asarPath, 'r')
+  try {
+    const { size } = await handle.stat()
+    async function readExact(length, position) {
+      const bytes = Buffer.alloc(length)
+      const result = await handle.read(bytes, 0, length, position)
+      if (result.bytesRead !== length) throw new Error('app.asar package metadata is truncated')
+      return bytes
+    }
+    const prefix = await readExact(16, 0)
+    const headerPickleSize = prefix.readUInt32LE(4)
+    const payloadSize = prefix.readUInt32LE(8)
+    const jsonSize = prefix.readUInt32LE(12)
+    const padding = payloadSize - 4 - jsonSize
+    const dataOffset = 8 + headerPickleSize
+    if (prefix.readUInt32LE(0) !== 4 || headerPickleSize !== payloadSize + 4 ||
+        payloadSize % 4 !== 0 || padding < 0 || padding > 3 ||
+        jsonSize === 0 || jsonSize > 16 * 1024 * 1024 || dataOffset > size) {
+      throw new Error('app.asar package header framing is invalid')
+    }
+    const header = JSON.parse(utf8Decoder.decode(await readExact(jsonSize, 16)))
+    const entry = header?.files?.['package.json']
+    const offset = Number(entry?.offset)
+    if (!entry || entry.link !== undefined || entry.unpacked ||
+        typeof entry.offset !== 'string' || !/^\d+$/.test(entry.offset) ||
+        !Number.isSafeInteger(offset) || offset < 0 ||
+        !Number.isSafeInteger(entry.size) || entry.size <= 0 || entry.size > 1024 * 1024 ||
+        !Number.isSafeInteger(dataOffset + offset + entry.size) ||
+        dataOffset + offset + entry.size > size) {
+      throw new Error('app.asar must contain a bounded, packed package.json')
+    }
+    const pkg = JSON.parse(utf8Decoder.decode(await readExact(entry.size, dataOffset + offset)))
+    if (pkg.name !== 'cables_electron') {
+      throw new Error(`app.asar package name must identify cables_electron; received ${String(pkg.name)}`)
+    }
+    if (!SUPPORTED_CABLES_STANDALONE_VERSIONS.includes(pkg.version)) {
+      throw new Error(`Unsupported Cables Standalone package version: ${String(pkg.version)}`)
+    }
+    return { version: pkg.version, packageName: pkg.name }
+  } finally {
+    await handle.close()
+  }
+}
+
+async function inspectDirectoryCablesStandalone({
   executablePath,
   executableSha256,
   access,
   hashAsarHeader,
   hashFile,
   readLinuxAppVersion: readLinuxAppVersionDependency,
+  readWindowsAppVersion: readWindowsAppVersionDependency,
+  readWindowsAsarIntegrity: readWindowsAsarIntegrityDependency,
+  platform,
 }) {
   const appDirectory = dirname(executablePath)
   const desktopEntryPath = join(appDirectory, 'cables.desktop')
-  const { version, entry } = await readLinuxAppVersionDependency(desktopEntryPath)
   const asarPath = join(appDirectory, 'resources', 'app.asar')
+  const { version, entry, packageName } = platform === 'windows'
+    ? await readWindowsAppVersionDependency(asarPath)
+    : await readLinuxAppVersionDependency(desktopEntryPath)
   try {
     await access(asarPath, constants.R_OK)
   } catch (error) {
@@ -332,6 +385,13 @@ export async function inspectLinuxCablesStandalone({
     )
   }
   const headerIntegrity = await hashAsarHeader(asarPath)
+  const expectedSha256 = platform === 'windows'
+    ? await readWindowsAsarIntegrityDependency(executablePath)
+    : null
+  if (platform === 'windows' && (!SHA256_PATTERN.test(expectedSha256) ||
+      headerIntegrity.actualSha256 !== expectedSha256)) {
+    throw new Error(`app.asar SHA-256 mismatch: expected ${expectedSha256}; actual ${headerIntegrity.actualSha256}`)
+  }
   if (!SHA256_PATTERN.test(headerIntegrity?.actualSha256)) {
     throw new Error(
       `app.asar actual header SHA-256 is invalid: ${String(headerIntegrity?.actualSha256)}`,
@@ -350,20 +410,18 @@ export async function inspectLinuxCablesStandalone({
   }
 
   return deepFreeze({
-    platform: 'linux',
+    platform,
     appDirectory,
-    appUpdate: deepFreeze({
+    ...(platform === 'windows' ? { packageName } : { appUpdate: deepFreeze({
       owner: entry['X-AppImage-Version'] !== undefined ? entry['owner'] ?? null : null,
       repo: entry['repo'] ?? null,
       provider: entry['provider'] ?? null,
-    }),
+    }) }),
     asarIntegrity: deepFreeze({
-      // Linux bundles ship no ElectronAsarIntegrity manifest, so the computed
-      // header and whole-file digests are recorded as identity fingerprints
-      // without an embedded expectation.
+      // Linux has no embedded expectation. Windows verifies its PE resource.
       algorithm: 'SHA256',
       asarPath,
-      expectedSha256: null,
+      expectedSha256,
       ...headerIntegrity,
       wholeFileSha256,
     }),
@@ -382,6 +440,8 @@ export async function inspectCablesStandalone(
     hashFile = sha256File,
     readInfoPlist = readMacAppInfoPlist,
     readLinuxAppVersion: readLinuxAppVersionDependency = readLinuxAppVersion,
+    readWindowsAppVersion: readWindowsAppVersionDependency = readWindowsAppVersion,
+    readWindowsAsarIntegrity: readWindowsAsarIntegrityDependency = readWindowsAsarIntegrity,
     realpath = resolveRealpath,
   } = {},
 ) {
@@ -408,19 +468,16 @@ export async function inspectCablesStandalone(
   }
 
   if (!isMacAppBundle) {
-    if (basename(executablePath).toLowerCase().endsWith('.exe')) {
-      throw new Error(
-        'Windows Cables Standalone inspection is not implemented; add a Windows ' +
-        'identity branch before qualifying the Windows x64 environment',
-      )
-    }
-    return inspectLinuxCablesStandalone({
+    return inspectDirectoryCablesStandalone({
+      platform: basename(executablePath).toLowerCase().endsWith('.exe') ? 'windows' : 'linux',
       executablePath,
       executableSha256,
       access,
       hashAsarHeader,
       hashFile,
       readLinuxAppVersion: readLinuxAppVersionDependency,
+      readWindowsAppVersion: readWindowsAppVersionDependency,
+      readWindowsAsarIntegrity: readWindowsAsarIntegrityDependency,
     })
   }
 

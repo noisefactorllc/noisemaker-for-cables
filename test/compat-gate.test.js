@@ -5,15 +5,19 @@ import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
 import { test } from 'node:test'
 
-import { loadQualifiedScope, validateDeclaration } from '../tools/compat-gate.mjs'
+import { loadDeclaration, loadQualifiedScope, validateDeclaration } from '../tools/compat-gate.mjs'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 
-const committed = () => {
-  const config = JSON.parse(
-    readFileSync(join(root, 'export-kit/kit.config.json'), 'utf8'))
-  return config.compat
-}
+const committed = () => loadDeclaration()
+
+test('the builder reads the same qualified list that the delivery gate validates', () => {
+  const { compat } = JSON.parse(readFileSync(join(root, 'export-kit/kit.config.json'), 'utf8'))
+  assert.deepEqual(compat, { mode: 'list', fromJsonList: 'export-kit/compat-effects.json' })
+  const effects = JSON.parse(readFileSync(join(root, compat.fromJsonList), 'utf8'))
+  assert.deepEqual(effects, loadQualifiedScope().qualified)
+  assert.deepEqual(committed(), { mode: 'list', effects })
+})
 
 test('qualified scope covers the full catalog with only the compile-only exclusion', () => {
   const scope = loadQualifiedScope()

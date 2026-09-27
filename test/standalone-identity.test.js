@@ -1,15 +1,19 @@
 import assert from 'node:assert/strict'
 import { createHash } from 'node:crypto'
 import { constants } from 'node:fs'
-import { readFile } from 'node:fs/promises'
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { Readable } from 'node:stream'
 import { test } from 'node:test'
 
 import * as identityModule from '../tools/lib/cables-standalone-identity.js'
+import { readWindowsAsarIntegrity } from '../tools/lib/windows-asar-integrity.js'
 
 const {
   inspectCablesStandalone,
   readMacAppInfoPlist,
+  readWindowsAppVersion,
   sha256AsarHeader,
   sha256File,
 } = identityModule
@@ -509,15 +513,117 @@ test('rejects a Linux app.asar with invalid header framing', async () => {
   )
 })
 
-test('rejects a Windows executable instead of misreading it as a Linux AppImage', async () => {
+test('attests Windows from the bundled package and verifies the embedded ASAR digest', async () => {
   const windowsExecutable = '/fixture/cables-win/Cables.exe'
+  const identity = await inspectCablesStandalone(windowsExecutable, dependencies({
+    realpath: async () => windowsExecutable,
+    readWindowsAppVersion: async (path) => {
+      assert.equal(path, '/fixture/cables-win/resources/app.asar')
+      return { version: '0.11.3', packageName: 'cables_electron' }
+    },
+    readLinuxAppVersion: async () => assert.fail('Windows is not a Linux AppImage'),
+    readWindowsAsarIntegrity: async () => asarSha256,
+  }))
+  assert.equal(identity.platform, 'windows')
+  assert.equal(identity.version, '0.11.3')
+  assert.equal(identity.packageName, 'cables_electron')
+  assert.equal(identity.asarIntegrity.expectedSha256, asarSha256)
+  assert.equal(identity.asarIntegrity.actualSha256, asarSha256)
+  assert.equal(Object.isFrozen(identity), true)
+})
 
-  await assert.rejects(
-    inspectCablesStandalone(windowsExecutable, dependencies({
-      realpath: async () => windowsExecutable,
-    })),
-    /Windows Cables Standalone inspection is not implemented/i,
-  )
+test('rejects Windows ASAR bytes that differ from the executable integrity record', async () => {
+  await assert.rejects(inspectCablesStandalone('/fixture/cables.exe', dependencies({
+    realpath: async () => '/fixture/cables.exe',
+    readWindowsAppVersion: async () => ({ version: '0.11.3', packageName: 'cables_electron' }),
+    readWindowsAsarIntegrity: async () => 'd'.repeat(64),
+  })), /app.asar SHA-256 mismatch/)
+})
+
+test('reads the Windows PE integrity resource and rejects missing, ambiguous, and corrupt records', async (context) => {
+  const root = await mkdtemp(join(tmpdir(), 'cables-pe-'))
+  context.after(() => rm(root, { recursive: true, force: true }))
+  const path = join(root, 'cables.exe')
+  const record = { file: 'resources\\app.asar', alg: 'SHA256', value: asarSha256 }
+  function image(records = [record]) {
+    const b = Buffer.alloc(1536)
+    b.write('MZ'); b.writeUInt32LE(64, 60)
+    b.writeUInt32LE(0x4550, 64); b.writeUInt16LE(0x8664, 68)
+    b.writeUInt16LE(1, 70); b.writeUInt16LE(240, 84)
+    b.writeUInt16LE(0x20b, 88); b.writeUInt32LE(16, 196)
+    b.writeUInt32LE(4096, 216); b.writeUInt32LE(1024, 220)
+    b.writeUInt32LE(4096, 340); b.writeUInt32LE(1024, 344); b.writeUInt32LE(512, 348)
+    const r = b.subarray(512)
+    r.writeUInt16LE(1, 12); r.writeUInt32LE(0x80000080, 16); r.writeUInt32LE(0x80000018, 20)
+    r.writeUInt16LE(1, 36); r.writeUInt32LE(0x80000096, 40); r.writeUInt32LE(0x80000030, 44)
+    r.writeUInt16LE(1, 62); r.writeUInt32LE(1033, 64); r.writeUInt32LE(88, 68)
+    r.writeUInt16LE(9, 128); r.write('INTEGRITY', 130, 'utf16le')
+    r.writeUInt16LE(12, 150); r.write('ELECTRONASAR', 152, 'utf16le')
+    const data = Buffer.from(JSON.stringify(records))
+    r.writeUInt32LE(4352, 88); r.writeUInt32LE(data.length, 92); data.copy(r, 256)
+    return b
+  }
+  await writeFile(path, image())
+  assert.equal(await readWindowsAsarIntegrity(path), asarSha256)
+  for (const records of [[], [record, record], [{ ...record, value: 'bad' }],
+    [{ ...record, alg: 'MD5' }], [{ ...record, file: 'other.asar' }]]) {
+    await writeFile(path, image(records))
+    await assert.rejects(readWindowsAsarIntegrity(path), /integrity record is invalid/)
+  }
+  for (const mutate of [
+    (b) => b.write('XX', 0),
+    (b) => b.writeUInt16LE(0x14c, 68),
+    (b) => b.writeUInt32LE(0xffffffff, 220),
+    (b) => b.writeUInt32LE(0xffffffff, 532),
+    (b) => b.writeUInt32LE(0xffffffff, 600),
+  ]) {
+    const bytes = image(); mutate(bytes); await writeFile(path, bytes)
+    await assert.rejects(readWindowsAsarIntegrity(path))
+  }
+})
+
+test('reads Windows package identity from a framed ASAR and rejects invalid metadata', async (context) => {
+  const root = await mkdtemp(join(tmpdir(), 'cables-asar-'))
+  context.after(() => rm(root, { recursive: true, force: true }))
+  const path = join(root, 'app.asar')
+  function archive({ pkg = { name: 'cables_electron', version: '0.11.3' }, entry = {}, corrupt } = {}) {
+    const body = Buffer.from(JSON.stringify(pkg))
+    const header = Buffer.from(JSON.stringify({ files: {
+      'package.json': { offset: '0', size: body.length, ...entry },
+    } }))
+    const padded = Math.ceil((4 + header.length) / 4) * 4
+    const prefix = Buffer.alloc(16)
+    prefix.writeUInt32LE(4, 0)
+    prefix.writeUInt32LE(padded + 4, 4)
+    prefix.writeUInt32LE(padded, 8)
+    prefix.writeUInt32LE(header.length, 12)
+    if (corrupt) corrupt(prefix)
+    return Buffer.concat([prefix, header, Buffer.alloc(padded - 4 - header.length), body])
+  }
+  for (const version of ['0.11.0', '0.11.3']) {
+    await writeFile(path, archive({ pkg: { name: 'cables_electron', version } }))
+    assert.deepEqual(await readWindowsAppVersion(path), { version, packageName: 'cables_electron' })
+  }
+  const cases = [
+    [{ pkg: { name: 'different', version: '0.11.3' } }, /package name/],
+    [{ pkg: { name: 'cables_electron', version: '99.0.0' } }, /Unsupported.*version/],
+    [{ entry: { unpacked: true } }, /bounded, packed/],
+    [{ entry: { link: 'other' } }, /bounded, packed/],
+    [{ entry: { offset: '-1' } }, /bounded, packed/],
+    [{ entry: { offset: 0 } }, /bounded, packed/],
+    [{ entry: { offset: '9999999999999999999999' } }, /bounded, packed/],
+    [{ entry: { size: 0 } }, /bounded, packed/],
+    [{ entry: { size: 1024 * 1024 + 1 } }, /bounded, packed/],
+    [{ entry: { size: 300 } }, /bounded, packed/],
+    [{ corrupt: (prefix) => prefix.writeUInt32LE(8, 0) }, /header framing/],
+    [{ corrupt: (prefix) => prefix.writeUInt32LE(0xffffffff, 12) }, /header framing/],
+  ]
+  for (const [options, error] of cases) {
+    await writeFile(path, archive(options))
+    await assert.rejects(readWindowsAppVersion(path), error)
+  }
+  await writeFile(path, archive().subarray(0, 10))
+  await assert.rejects(readWindowsAppVersion(path), /truncated/)
 })
 
 test('reads XML or binary app plists through plutil JSON conversion', async () => {

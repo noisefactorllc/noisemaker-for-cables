@@ -89,6 +89,15 @@ export function validateDeclaration(declaration, scope) {
   return problems
 }
 
+export function loadDeclaration({ root = ROOT } = {}) {
+  const { compat } = JSON.parse(readFileSync(join(root, 'export-kit/kit.config.json'), 'utf8'))
+  if (compat?.mode !== 'list' || compat.fromJsonList !== 'export-kit/compat-effects.json' ||
+      Object.keys(compat).some((key) => !['mode', 'fromJsonList'].includes(key))) {
+    throw new Error('kit compatibility must use the builder-supported export-kit/compat-effects.json list')
+  }
+  return { mode: compat.mode, effects: JSON.parse(readFileSync(join(root, compat.fromJsonList), 'utf8')) }
+}
+
 function main() {
   const scope = loadQualifiedScope()
   if (process.argv.includes('--print')) {
@@ -96,8 +105,7 @@ function main() {
       JSON.stringify({ mode: 'list', effects: scope.qualified }, null, 2) + '\n')
     return 0
   }
-  const declaration = JSON.parse(
-    readFileSync(join(ROOT, 'export-kit/kit.config.json'), 'utf8')).compat
+  const declaration = loadDeclaration()
   const problems = validateDeclaration(declaration, scope)
   if (problems.length) {
     process.stderr.write(

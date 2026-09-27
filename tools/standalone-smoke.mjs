@@ -4,7 +4,7 @@ import assert from 'node:assert/strict'
 import { spawn } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import { cp, mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises'
-import { tmpdir } from 'node:os'
+import { arch, cpus, platform, release, tmpdir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -37,7 +37,9 @@ if (cablesStandalone.platform === 'linux') {
 } else {
   assert.equal(
     cablesStandalone.asarIntegrity.asarPath,
-    join(cablesStandalone.appBundlePath, 'Contents/Resources/app.asar'),
+    cablesStandalone.platform === 'windows'
+      ? join(cablesStandalone.appDirectory, 'resources/app.asar')
+      : join(cablesStandalone.appBundlePath, 'Contents/Resources/app.asar'),
   )
   assert.equal(
     cablesStandalone.asarIntegrity.actualSha256,
@@ -990,6 +992,22 @@ try {
 
   const report = {
     cablesStandalone,
+    host: {
+      platform: platform(),
+      architecture: arch(),
+      release: release(),
+      cpu: cpus()[0]?.model,
+      sourceSha: process.env.GITHUB_SHA ?? null,
+      graphics: await frame.evaluate(() => {
+        const gl = gui.corePatch().cgl.gl
+        const debug = gl.getExtension('WEBGL_debug_renderer_info')
+        return {
+          renderer: gl.getParameter(debug ? debug.UNMASKED_RENDERER_WEBGL : gl.RENDERER),
+          vendor: gl.getParameter(debug ? debug.UNMASKED_VENDOR_WEBGL : gl.VENDOR),
+          version: gl.getParameter(gl.VERSION),
+        }
+      }),
+    },
     canvasResize,
     canvasResizeBefore,
     consoleErrors,
