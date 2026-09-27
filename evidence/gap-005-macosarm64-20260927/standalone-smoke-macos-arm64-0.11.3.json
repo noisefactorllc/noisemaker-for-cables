@@ -1,0 +1,199 @@
+{
+  "cablesStandalone": {
+    "platform": "macos",
+    "expectedVersion": "0.11.3",
+    "appBundlePath": "/Users/alex/.local/state/scaffold-cloud/office/jobs/83f36a98-66cf-420b-8438-f9294648b977/repos/noisemaker-for-cables/scratch/cables-dmg/cables-0.11.3.app",
+    "asarIntegrity": {
+      "algorithm": "SHA256",
+      "asarPath": "/Users/alex/.local/state/scaffold-cloud/office/jobs/83f36a98-66cf-420b-8438-f9294648b977/repos/noisemaker-for-cables/scratch/cables-dmg/cables-0.11.3.app/Contents/Resources/app.asar",
+      "expectedSha256": "b414794a1ab54d13099bc1ca105a26e9def62994160416b613c5809a560b5a17",
+      "actualSha256": "b414794a1ab54d13099bc1ca105a26e9def62994160416b613c5809a560b5a17",
+      "headerByteLength": 8344091,
+      "headerOffset": 16,
+      "wholeFileSha256": "090aed3e888ec1c5a008f4374577c6bdd2eedc66f6ceb057157eca16bb022ac7"
+    },
+    "executablePath": "/Users/alex/.local/state/scaffold-cloud/office/jobs/83f36a98-66cf-420b-8438-f9294648b977/repos/noisemaker-for-cables/scratch/cables-dmg/cables-0.11.3.app/Contents/MacOS/cables",
+    "executableSha256": "1848362c77a164ec56f70d25cb690540539566d2750c7c60e133398b1546ca79",
+    "infoPlist": {
+      "CFBundleDisplayName": "cables",
+      "CFBundleExecutable": "cables",
+      "CFBundleIdentifier": "gl.cables.standalone",
+      "CFBundleName": "cables",
+      "CFBundleShortVersionString": "0.11.3",
+      "CFBundleVersion": "0.11.3",
+      "ElectronAsarIntegrity": {
+        "Resources/app.asar": {
+          "hash": "b414794a1ab54d13099bc1ca105a26e9def62994160416b613c5809a560b5a17",
+          "algorithm": "SHA256"
+        }
+      }
+    }
+  },
+  "canvasResize": {
+    "canvas": {
+      "height": 540,
+      "width": 960
+    },
+    "cgl": {
+      "canvasHeight": 540,
+      "canvasWidth": 960,
+      "drawingBufferHeight": 540,
+      "drawingBufferWidth": 960,
+      "viewPort": [
+        0,
+        0,
+        960,
+        540
+      ]
+    },
+    "error": "",
+    "height": 540,
+    "mode": "Canvas",
+    "programId": "noisemaker-program-op",
+    "ready": true,
+    "replacedTexture": true,
+    "stableProgram": true,
+    "texture": true,
+    "width": 960
+  },
+  "canvasResizeBefore": {
+    "canvasHeight": 640,
+    "canvasWidth": 1280,
+    "height": 640,
+    "mode": "Canvas",
+    "programId": "noisemaker-program-op",
+    "width": 1280,
+    "requestedCss": {
+      "height": 270,
+      "width": 480
+    },
+    "target": {
+      "height": 540,
+      "width": 960
+    }
+  },
+  "consoleErrors": [],
+  "facade": {
+    "effectCount": 210,
+    "effectIds": 210,
+    "issues": [],
+    "packageVersion": "0.1.0",
+    "supported": true
+  },
+  "finalState": {
+    "dsl": "search synth\nnoise(seed: 1, scaleX: 50, scaleY: 50).write(o0)\nrender(o0)",
+    "error": "",
+    "height": 540,
+    "ready": true,
+    "texture": true,
+    "width": 960
+  },
+  "initial": {
+    "dsl": "search synth\n\nnoise(seed: 1, scaleX: 50, scaleY: 50, ridges: true)\n  .write(o0)\n\nrender(o0)",
+    "error": "",
+    "height": 640,
+    "ready": true,
+    "texture": true,
+    "width": 1280
+  },
+  "keyboardFocus": {
+    "accessibleControls": {
+      "activationClicks": [],
+      "activationDefaultPrevented": true,
+      "focusedControl": {
+        "className": "iconbutton info eleAsButton",
+        "id": "btn_analyze_patch",
+        "role": "a",
+        "text": ""
+      },
+      "hostPageActivation": {
+        "activated": true,
+        "clicks": [
+          "noisemaker-kb-probe",
+          "noisemaker-kb-probe"
+        ]
+      },
+      "keyboardEnterSpaceReachesControl": true
+    },
+    "after": "IFRAME",
+    "hasFocus": true,
+    "pageActive": "IFRAME",
+    "tags": [
+      "BODY",
+      "CANVAS",
+      "CANVAS"
+    ]
+  },
+  "mediaProbe": {
+    "bindCount": 47,
+    "hostHandle": true,
+    "readPixelsCount": 0
+  },
+  "pageErrors": [],
+  "pixels": {
+    "animated": {
+      "first": {
+        "hash": "abbdfdc5",
+        "height": 96,
+        "maximum": 1,
+        "mean": 0.6160743236153697,
+        "minimum": 0.000025033950805664062,
+        "width": 128
+      },
+      "second": {
+        "hash": "8fef7dc5",
+        "height": 96,
+        "maximum": 1,
+        "mean": 0.6315445672783729,
+        "minimum": 0.000012159347534179688,
+        "width": 128
+      }
+    },
+    "invalidRetainedHash": "cd6f9dc5",
+    "solid": {
+      "hash": "cd6f9dc5",
+      "height": 96,
+      "maximum": 1,
+      "mean": 0.557708740234375,
+      "minimum": 0.14892578125,
+      "width": 128
+    }
+  },
+  "recreated": {
+    "id": "6w5uf8dqu",
+    "oldId": "noisemaker-program-op"
+  },
+  "resize": {
+    "error": "",
+    "height": 180,
+    "ready": true,
+    "stableTexture": true,
+    "width": 320
+  },
+  "savedProjectRemoval": {
+    "noisemakerOps": 0,
+    "mainLoop": 1
+  },
+  "savedProjectReload": {
+    "patchSha256": "da418ac3ed14974baddc763491047253517ea6df9581e9088b77574f963bc978",
+    "ready": true,
+    "size": {
+      "height": 640,
+      "width": 1280
+    }
+  },
+  "savedProjectUpgrade": {
+    "ready": true,
+    "rendered": true,
+    "size": {
+      "height": 640,
+      "width": 1280
+    }
+  },
+  "screenshot": "test-report/standalone-smoke.png",
+  "screenshotSha256": "c26162298127610ee528c92eefcd3352718830b057bac0babbccf0e2ad737a92",
+  "time": {
+    "first": 1.8595350840000002,
+    "second": 1.9555499170000001
+  }
+}

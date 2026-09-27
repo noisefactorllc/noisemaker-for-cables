@@ -1,0 +1,204 @@
+[smoke] booting reload instance
+[smoke] booting reduced instance
+[smoke] booting legacy-parameter instance
+[smoke] removing reload tree
+[smoke] screenshot
+{
+  "cablesStandalone": {
+    "platform": "macos",
+    "expectedVersion": "0.11.0",
+    "appBundlePath": "/Users/alex/.local/state/scaffold-cloud/office/jobs/83f36a98-66cf-420b-8438-f9294648b977/repos/noisemaker-for-cables/scratch/cables-dmg/cables-0.11.0-x64.app",
+    "asarIntegrity": {
+      "algorithm": "SHA256",
+      "asarPath": "/Users/alex/.local/state/scaffold-cloud/office/jobs/83f36a98-66cf-420b-8438-f9294648b977/repos/noisemaker-for-cables/scratch/cables-dmg/cables-0.11.0-x64.app/Contents/Resources/app.asar",
+      "expectedSha256": "4f6aa76bd0a60bc47af2594902be98997fa926a6361da8afd203fe8aab9f734f",
+      "actualSha256": "4f6aa76bd0a60bc47af2594902be98997fa926a6361da8afd203fe8aab9f734f",
+      "headerByteLength": 8261227,
+      "headerOffset": 16,
+      "wholeFileSha256": "1a2be013839dd51ea5634240171365d616ab0fd21e2c58e4d35c57a9e44bac5f"
+    },
+    "executablePath": "/Users/alex/.local/state/scaffold-cloud/office/jobs/83f36a98-66cf-420b-8438-f9294648b977/repos/noisemaker-for-cables/scratch/cables-dmg/cables-0.11.0-x64.app/Contents/MacOS/cables",
+    "executableSha256": "b7b9842b3126c2b26ed2fca0e20a225988cfae67a7d30b08263bfe291784a044",
+    "infoPlist": {
+      "CFBundleDisplayName": "cables",
+      "CFBundleExecutable": "cables",
+      "CFBundleIdentifier": "gl.cables.standalone",
+      "CFBundleName": "cables",
+      "CFBundleShortVersionString": "0.11.0",
+      "CFBundleVersion": "0.11.0",
+      "ElectronAsarIntegrity": {
+        "Resources/app.asar": {
+          "hash": "4f6aa76bd0a60bc47af2594902be98997fa926a6361da8afd203fe8aab9f734f",
+          "algorithm": "SHA256"
+        }
+      }
+    }
+  },
+  "canvasResize": {
+    "canvas": {
+      "height": 540,
+      "width": 960
+    },
+    "cgl": {
+      "canvasHeight": 540,
+      "canvasWidth": 960,
+      "drawingBufferHeight": 540,
+      "drawingBufferWidth": 960,
+      "viewPort": [
+        0,
+        0,
+        960,
+        540
+      ]
+    },
+    "error": "",
+    "height": 540,
+    "mode": "Canvas",
+    "programId": "noisemaker-program-op",
+    "ready": true,
+    "replacedTexture": true,
+    "stableProgram": true,
+    "texture": true,
+    "width": 960
+  },
+  "canvasResizeBefore": {
+    "canvasHeight": 640,
+    "canvasWidth": 1280,
+    "height": 640,
+    "mode": "Canvas",
+    "programId": "noisemaker-program-op",
+    "width": 1280,
+    "requestedCss": {
+      "height": 270,
+      "width": 480
+    },
+    "target": {
+      "height": 540,
+      "width": 960
+    }
+  },
+  "consoleErrors": [],
+  "facade": {
+    "effectCount": 210,
+    "effectIds": 210,
+    "issues": [],
+    "packageVersion": "0.1.0",
+    "supported": true
+  },
+  "finalState": {
+    "dsl": "search synth\nnoise(seed: 1, scaleX: 50, scaleY: 50).write(o0)\nrender(o0)",
+    "error": "",
+    "height": 540,
+    "ready": true,
+    "texture": true,
+    "width": 960
+  },
+  "initial": {
+    "dsl": "search synth\n\nnoise(seed: 1, scaleX: 50, scaleY: 50, ridges: true)\n  .write(o0)\n\nrender(o0)",
+    "error": "",
+    "height": 640,
+    "ready": true,
+    "texture": true,
+    "width": 1280
+  },
+  "keyboardFocus": {
+    "accessibleControls": {
+      "activationClicks": [],
+      "activationDefaultPrevented": false,
+      "focusedControl": {
+        "className": "iconbutton info eleAsButton",
+        "id": "btn_analyze_patch",
+        "role": "a",
+        "text": ""
+      },
+      "hostPageActivation": {
+        "activated": true,
+        "clicks": [
+          "noisemaker-kb-probe",
+          "noisemaker-kb-probe"
+        ]
+      },
+      "keyboardEnterSpaceReachesControl": true
+    },
+    "after": "IFRAME",
+    "hasFocus": true,
+    "pageActive": "IFRAME",
+    "tags": [
+      "BODY",
+      "CANVAS",
+      "CANVAS"
+    ]
+  },
+  "mediaProbe": {
+    "bindCount": 47,
+    "hostHandle": true,
+    "readPixelsCount": 0
+  },
+  "pageErrors": [],
+  "pixels": {
+    "animated": {
+      "first": {
+        "hash": "ee26fdc5",
+        "height": 96,
+        "maximum": 1,
+        "mean": 0.6238230038070469,
+        "minimum": 0.0001049041748046875,
+        "width": 128
+      },
+      "second": {
+        "hash": "2ff93dc5",
+        "height": 96,
+        "maximum": 1,
+        "mean": 0.6507010106603653,
+        "minimum": 0.00007915496826171875,
+        "width": 128
+      }
+    },
+    "invalidRetainedHash": "cd6f9dc5",
+    "solid": {
+      "hash": "cd6f9dc5",
+      "height": 96,
+      "maximum": 1,
+      "mean": 0.557708740234375,
+      "minimum": 0.14892578125,
+      "width": 128
+    }
+  },
+  "recreated": {
+    "id": "j6lo9a06m",
+    "oldId": "noisemaker-program-op"
+  },
+  "resize": {
+    "error": "",
+    "height": 180,
+    "ready": true,
+    "stableTexture": true,
+    "width": 320
+  },
+  "savedProjectRemoval": {
+    "noisemakerOps": 0,
+    "mainLoop": 1
+  },
+  "savedProjectReload": {
+    "patchSha256": "da418ac3ed14974baddc763491047253517ea6df9581e9088b77574f963bc978",
+    "ready": true,
+    "size": {
+      "height": 640,
+      "width": 1280
+    }
+  },
+  "savedProjectUpgrade": {
+    "ready": true,
+    "rendered": true,
+    "size": {
+      "height": 640,
+      "width": 1280
+    }
+  },
+  "screenshot": "test-report/standalone-smoke.png",
+  "screenshotSha256": "62aeb51333b47990e597646deefd5ccaa8b6c7521d82535df8f48e7315499d14",
+  "time": {
+    "first": 5.016416042,
+    "second": 5.05127275
+  }
+}

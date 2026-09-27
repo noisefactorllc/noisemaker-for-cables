@@ -76,11 +76,13 @@ try {
     `--patch=${patchPath}`,
     `--remote-debugging-port=${cdpPort}`,
     `--user-data-dir=${userDataDirectory}`,
-    // Linux Electron bundles in CI-like environments cannot use the SUID
-    // chrome-sandbox helper, and Cables' editor needs WebGL, which on
-    // GPU-less hosts only initializes through the SwiftShader ANGLE backend.
+    // Chromium helper processes (renderer, GPU) refuse to start inside
+    // sandboxed automation hosts when their own sandbox cannot initialize,
+    // which kills the GPU process on macOS hosts; --no-sandbox is also
+    // required for the Linux CI container's chrome-sandbox SUID helper.
+    '--no-sandbox',
     ...(process.platform === 'linux'
-      ? ['--no-sandbox', '--use-angle=swiftshader', '--enable-unsafe-swiftshader',
+      ? ['--use-angle=swiftshader', '--enable-unsafe-swiftshader',
         // The container's /dev/shm is 64 MiB; additional editor instances
         // crash their renderers without this flag.
         '--disable-dev-shm-usage']
@@ -775,8 +777,9 @@ try {
       `--patch=${patchPath}`,
       `--remote-debugging-port=${cdpPort}`,
       `--user-data-dir=${profile}`,
+      '--no-sandbox',
       ...(process.platform === 'linux'
-        ? ['--no-sandbox', '--use-angle=swiftshader', '--enable-unsafe-swiftshader',
+        ? ['--use-angle=swiftshader', '--enable-unsafe-swiftshader',
           // The container's /dev/shm is 64 MiB; additional editor instances
           // crash their renderers without this flag.
           '--disable-dev-shm-usage']
@@ -795,7 +798,7 @@ try {
       await waitFor(async () => {
         const response = await fetch(`${url}/json/version`)
         return response.ok
-      }, 'reloaded saved project did not expose CDP')
+      }, 'reloaded saved project did not expose CDP', 90_000)
       browser = await chromium.connectOverCDP(url)
       const page = await waitFor(
         () => browser.contexts()[0].pages()[0],
@@ -824,6 +827,9 @@ try {
       })
       return { browser, child, frame, profile, readProgramState, terminalLines }
     } catch (error) {
+      // Sandboxed or cold-start hosts can exceed the default 30 s CDP wait;
+      // surface the instance's own output before failing.
+      console.error(`[smoke] project instance terminal tail:\n${terminalLines.slice(-30).join('\n')}`)
       if (browser) await browser.close().catch(() => {})
       await stopChild(child)
       await removeTemporaryDirectory(profile)
