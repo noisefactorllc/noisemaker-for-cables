@@ -3,7 +3,7 @@
   "recordedAt": "2026-09-28",
   "source": {
     "repository": "noisefactorllc/noisemaker-for-cables",
-    "commit": "226e4555c7db3e2b2175a49197642659e56b0300"
+    "commit": "030d344f61219c2ef9da53bc692c91898987c830"
   },
   "authorityComparison": {
     "method": "The locked vendored artifacts are verified byte-for-byte against the published authority CDN recorded in vendor.lock.json, and the committed op bundle is identified by SHA-256.",

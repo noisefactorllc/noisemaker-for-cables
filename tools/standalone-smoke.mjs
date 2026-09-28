@@ -111,7 +111,12 @@ try {
         // The container's /dev/shm is 64 MiB; additional editor instances
         // crash their renderers without this flag.
         '--disable-dev-shm-usage']
-    : []),
+      // CI macOS runners expose no usable GPU; without a software GL path
+      // the editor's WebGL context creation returns null and the renderer
+      // fails with "Cannot read properties of null (reading 'createBuffer')".
+      : process.platform === 'darwin'
+        ? ['--use-angle=swiftshader', '--enable-unsafe-swiftshader']
+      : []),
   ], {
     env: { ...process.env, ELECTRON_DISABLE_SECURITY_WARNINGS: 'true' },
     stdio: ['ignore', 'pipe', 'pipe'],
@@ -794,72 +799,81 @@ try {
   // Noisemaker op can be removed from the saved project and the reduced project
   // still loads cleanly, and a legacy-parameter saved project (deprecated
   // parameter aliases) still loads and renders through the current op.
+  // CDP websocket connects on CI runners can hang after a successful
+  // /json/version poll (observed on windows-2025); boot the instance again
+  // once before giving up.
   const bootProjectInstance = async (patchPath, cdpPort) => {
-    const profile = await mkdtemp(join(tmpdir(), 'noisemaker-cables-project-profile-'))
-    const terminalLines = []
-    const url = `http://127.0.0.1:${cdpPort}`
-    const child = spawn(executable, [
-      `--patch=${patchPath}`,
-      `--remote-debugging-port=${cdpPort}`,
-      `--user-data-dir=${profile}`,
-      '--no-sandbox',
-      ...(process.platform === 'linux'
-        ? ['--use-angle=swiftshader', '--enable-unsafe-swiftshader',
-          // The container's /dev/shm is 64 MiB; additional editor instances
-          // crash their renderers without this flag.
-          '--disable-dev-shm-usage']
-        : []),
-    ], {
-      env: { ...process.env, ELECTRON_DISABLE_SECURITY_WARNINGS: 'true' },
-      stdio: ['ignore', 'pipe', 'pipe'],
-    })
-    for (const stream of [child.stdout, child.stderr]) {
-      stream.setEncoding('utf8')
-      stream.on('data', (chunk) => terminalLines.push(...chunk.split(/\r?\n/).filter(Boolean)))
-    }
-    let browser
-    let frame
-    try {
-      await waitFor(async () => {
-        const response = await fetch(`${url}/json/version`)
-        return response.ok
-      }, 'reloaded saved project did not expose CDP', 90_000)
-      browser = await chromium.connectOverCDP(url)
-      const page = await waitFor(
-        () => browser.contexts()[0].pages()[0],
-        'reloaded editor page did not open',
-      )
-      frame = await waitFor(
-        () => page.frames().find((candidate) => candidate.url().includes('/dist/ui/')),
-        'reloaded editor frame did not load',
-      )
-      await waitFor(
-        () => frame.evaluate(() => Boolean(globalThis.gui?.corePatch)),
-        'reloaded patch runtime did not initialize',
-      )
-      const readProgramState = async () => frame.evaluate(() => {
-        const program = gui.corePatch().getOpsByObjName('Ops.Extension.Noisemaker.Program')[0]
-        if (!program) return null
-        const texture = program.getPort('Texture')?.get()
-        return {
-          dsl: program.getPort('DSL').get(),
-          error: program.getPort('Error').get(),
-          height: texture?.height,
-          ready: program.getPort('Ready').get(),
-          texture: Boolean(texture?.tex),
-          width: texture?.width,
-        }
+    let lastError
+    for (let attempt = 1; attempt <= 2; attempt += 1) {
+      const profile = await mkdtemp(join(tmpdir(), 'noisemaker-cables-project-profile-'))
+      const terminalLines = []
+      const url = `http://127.0.0.1:${cdpPort}`
+      const child = spawn(executable, [
+        `--patch=${patchPath}`,
+        `--remote-debugging-port=${cdpPort}`,
+        `--user-data-dir=${profile}`,
+        '--no-sandbox',
+        ...(process.platform === 'linux'
+          ? ['--use-angle=swiftshader', '--enable-unsafe-swiftshader',
+            // The container's /dev/shm is 64 MiB; additional editor instances
+            // crash their renderers without this flag.
+            '--disable-dev-shm-usage']
+          : process.platform === 'darwin'
+            ? ['--use-angle=swiftshader', '--enable-unsafe-swiftshader']
+            : []),
+      ], {
+        env: { ...process.env, ELECTRON_DISABLE_SECURITY_WARNINGS: 'true' },
+        stdio: ['ignore', 'pipe', 'pipe'],
       })
-      return { browser, child, frame, profile, readProgramState, terminalLines }
-    } catch (error) {
-      // Sandboxed or cold-start hosts can exceed the default 30 s CDP wait;
-      // surface the instance's own output before failing.
-      console.error(`[smoke] project instance terminal tail:\n${terminalLines.slice(-30).join('\n')}`)
-      if (browser) await browser.close().catch(() => {})
-      await stopChild(child)
-      await removeTemporaryDirectory(profile)
-      throw error
+      for (const stream of [child.stdout, child.stderr]) {
+        stream.setEncoding('utf8')
+        stream.on('data', (chunk) => terminalLines.push(...chunk.split(/\r?\n/).filter(Boolean)))
+      }
+      let browser
+      let frame
+      try {
+        await waitFor(async () => {
+          const response = await fetch(`${url}/json/version`)
+          return response.ok
+        }, 'reloaded saved project did not expose CDP', 90_000)
+        browser = await chromium.connectOverCDP(url)
+        const page = await waitFor(
+          () => browser.contexts()[0].pages()[0],
+          'reloaded editor page did not open',
+        )
+        frame = await waitFor(
+          () => page.frames().find((candidate) => candidate.url().includes('/dist/ui/')),
+          'reloaded editor frame did not load',
+        )
+        await waitFor(
+          () => frame.evaluate(() => Boolean(globalThis.gui?.corePatch)),
+          'reloaded patch runtime did not initialize',
+        )
+        const readProgramState = async () => frame.evaluate(() => {
+          const program = gui.corePatch().getOpsByObjName('Ops.Extension.Noisemaker.Program')[0]
+          if (!program) return null
+          const texture = program.getPort('Texture')?.get()
+          return {
+            dsl: program.getPort('DSL').get(),
+            error: program.getPort('Error').get(),
+            height: texture?.height,
+            ready: program.getPort('Ready').get(),
+            texture: Boolean(texture?.tex),
+            width: texture?.width,
+          }
+        })
+        return { browser, child, frame, profile, readProgramState, terminalLines }
+      } catch (error) {
+        // Sandboxed or cold-start hosts can exceed the default 30 s CDP wait;
+        // surface the instance's own output before failing or retrying.
+        console.error(`[smoke] project instance attempt ${attempt} terminal tail:\n${terminalLines.slice(-30).join('\n')}`)
+        lastError = error
+        if (browser) await browser.close().catch(() => {})
+        await stopChild(child)
+        await removeTemporaryDirectory(profile)
+      }
     }
+    throw lastError
   }
 
   const reloadRoot = await mkdtemp(join(tmpdir(), 'noisemaker-cables-reload-'))
