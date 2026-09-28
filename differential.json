@@ -1,35 +1,36 @@
 {
   "schemaVersion": 1,
-  "recordedAt": "2026-09-27",
+  "recordedAt": "2026-09-28",
   "source": {
     "repository": "noisefactorllc/noisemaker-for-cables",
-    "commit": "2dea47e16670fec3afbdc684e28ebcc49d9c3863"
+    "commit": "77fdb7707bfc73fa8b8cf5ee1cc01634682e54b9"
   },
   "upstreamRangeAudit": {
-    "declaredRange": "noisefactorllc/noisemaker 12b4d74fb4f28d5f00bb1dde107fa8673814d8b9..a912749fab5c3819e56a8abde664ff30e40870f4",
-    "forcePushOrNonContiguous": false,
-    "audit": "Audited in a local upstream checkout (/state/cache/noisemaker, a fresh clone of noisefactorllc/noisemaker) rather than assuming the declared range: the trigger reported a forced/non-contiguous delivery with observed ranges 7c5f17658d8c..a912749fab5c and 11d7c69922f3..296e0138c474, but in the checkout git merge-base --is-ancestor confirms 12b4d74fb4f2 is an ancestor of a912749fab5c and a912749fab5c is an ancestor of 296e0138c474 (origin/main, the head of the second observed delivery), so both deliveries are contiguous and cumulative. Audited diff in that checkout: git diff 12b4d74f..296e0138 --stat shows LEDGER.md, llms-full.txt, scripts/run-js-tests.js and shaders/tests only (GAP-019 passthrough-input harness at a912749fab5c, GAP-021 frame-resolution reporting at 296e0138c474, plus the already-synced GAP-017 files). Every shaders/ change is under shaders/tests; there is no change to shaders/effects, shaders/lang, shaders/src or the renderer, so the effect catalog and engine runtime behavior are unchanged.",
-    "rangeCommitsTouchingShaders": 2,
-    "shadersDiffStat": "git diff 12b4d74f..296e0138 -- shaders/: 7 files changed, 1574 insertions(+), 3 deletions(-), all under shaders/tests: passthrough-input.js (+489, new), test_passthrough_input.js (+259, new), frame-resolution.js (+95, new), test_frame_resolution.js (+189, new), test-harness.js (+164/-3), definition-schema.js and test_definition_schema.js (carried from the already-synced 93229933). No effect-definition files changed, so the effect catalog is unchanged at 210 locked effects; node tools/generate-effect-entry.mjs regenerated identical static imports and vendor:update refreshed only the core bundle artifact entry in vendor.lock.json (all 210 effect artifacts byte-identical). The refreshed served core bundle is Build: 296e0138, 884620 bytes, sha256 e81783901a06deea19bc53f5aa3d9c58dd286a6d772925a49ed7c5b803a0f5df; the served build is byte-identical to the previous 93229933 core except the Build/Date header lines. The tests-only upstream change is not part of the published core runtime artifact's behavior; the bundle refresh re-identifies the pinned source commit.",
+    "declaredRange": "noisefactorllc/noisemaker a912749fab5c3819e56a8abde664ff30e40870f4..73c15be00d6888f4b5d2835d8e242ee9e840df45",
+    "forcePushOrNonContiguous": true,
+    "audit": "Audited in a local upstream checkout (/state/cache/noisemaker, a fresh clone of noisefactorllc/noisemaker) rather than assuming the declared range: the trigger reported a forced/non-contiguous delivery with observed ranges 04e8582c1db4..c28e8fdb9218, c28e8fdb9218..7aff843a4e33 and 7aff843a4e33..73c15be00d68, but in the checkout git merge-base --is-ancestor confirms a912749fab5c is an ancestor of 73c15be00d68 and each observed range is contiguous and cumulative (73c15be00d68 is origin/main). The previous sync shipped core 296e0138c474, already an ancestor inside the declared range, so the effective new range is 296e0138..73c15be0 (3 commits). Audited diff in that checkout: git diff 296e0138..73c15be0 -- shaders/ shows 8 files changed, 1486 insertions, 14 deletions: the GAP-026 production lifecycle hooks (shaders/src/runtime/pipeline.js +129, compiler.js +3 calling pipeline.initLifecycleEffects?.() in recompile), the c28e8fdb webgl2 mesh-target fix (shaders/src/runtime/backends/webgl2.js +2: rebind the FBO after ensureDepthBuffer, which unbinds it), and GAP-024 harness identity machinery (shaders/tests/session-identity.js, test_session_identity.js, test-harness.js, test_lifecycle_hooks.js, test_mesh_first_frame.mjs \u2014 all under shaders/tests). No change to shaders/effects, shaders/lang or effect definitions, so the effect catalog is unchanged at 210 locked effects.",
+    "rangeCommitsTouchingShaders": 3,
+    "shadersDiffStat": "git diff 296e0138..73c15be0 -- shaders/: 8 files changed, 1486 insertions(+), 14 deletions(-). Source (consumed by the core bundle): pipeline.js (+129/-1 lifecycle hooks), compiler.js (+3 initLifecycleEffects?.() in recompile), webgl2.js (+2 framebuffer rebind after depth allocation). Tests (upstream harness only, not consumed by the port): session-identity.js (+237, new), test-harness.js (+251/-13), test_lifecycle_hooks.js (+407, new), test_mesh_first_frame.mjs (+61, new), test_session_identity.js (+410, new). node tools/generate-effect-entry.mjs regenerated identical static imports and vendor:update changed only the core bundle entry in vendor.lock.json (all 210 effect artifacts byte-identical).",
     "keyShadersSrcCommits": [
-      "a912749fab5c feat(harness): true input-passthrough probe with a live write-blit control (GAP-019)",
-      "296e0138c474 feat(harness): report requested-vs-returned frame resolution on every renderEffectFrame result (GAP-021)"
+      "c28e8fdb9218 fix(webgl2): preserve mesh target after depth allocation",
+      "7aff843a4e33 feat(harness): bind browser readiness and backend switching to requested effect, compiled graph, and actual backend identity (GAP-024; tests-only)",
+      "73c15be00d68 feat(runtime): invoke onInit/onUpdate/onDestroy lifecycle hooks in the production renderer (GAP-026)"
     ]
   },
   "authority": {
     "vendorLock": "vendor.lock.json",
-    "vendorLockSha256": "bfe5bb9617cc260e5da4a590003f5eb3291ecbf3517c76847c6cbc82e7e78821",
+    "vendorLockSha256": "ab59fd04d906fb8b5c82bda9632c0429c282dfdbafe433060e39c59537a8299d",
     "engineBundle": {
       "path": "vendor-cache/noisemaker-shaders-core.esm.js",
-      "sha256": "e81783901a06deea19bc53f5aa3d9c58dd286a6d772925a49ed7c5b803a0f5df",
-      "bytes": 884620,
+      "sha256": "da996c7f50de7de16759cb17ec00522c4f79abe4e56d1b2d1d065825f4e01d25",
+      "bytes": 888834,
       "url": "https://shaders.noisedeck.app/1/noisemaker-shaders-core.esm.js"
     },
-    "upstreamEngine": "noisemaker@296e0138c474"
+    "upstreamEngine": "noisemaker@73c15be00d68"
   },
   "opBundle": {
     "path": "Ops.Extension.Noisemaker/Ops.Extension.Noisemaker.Program/lib_noisemaker-cablesgl.js",
-    "sha256": "9acc8b40982f7bbfc5fb36127aa953c018964331c80a76685b9d58aa493b0812"
+    "sha256": "bf017004e47ad656fd9017e27a85eb37a033f05cb0937bd5a4431a6c8bbbd79c"
   },
   "compilerDifferential": {
     "method": "Port facade src/browser.js compileProgram versus the vendored reference compiler (vendor-cache/noisemaker-shaders-core.esm.js) for both landscape filtering modes; graphs normalized by removing only compiledAt.",
@@ -53,7 +54,7 @@
         "warningsMatched": true
       }
     ],
-    "evidence": "test/polymorphic-parity.test.js: renderLandscape3d filtering modes match the vendored reference compiler and select expected defines (36 of 36 tests pass, node --test exit 0, at the refreshed 296e0138 core)"
+    "evidence": "test/polymorphic-parity.test.js: renderLandscape3d filtering modes match the vendored reference compiler and select expected defines (36 of 36 tests pass, node --test exit 0, at the refreshed 73c15be0 core)"
   },
   "renderedDifferential": {
     "method": "Browser harness (test/browser) renders both landscape filtering modes through the reference WebGL2 backend and the public Cables adapter backend (CablesWebGL2Backend) at 64x48 with deterministic inputs; frames compared after common float readback.",
@@ -74,7 +75,7 @@
         "finite": true
       }
     ],
-    "rawEvidence": "evidence/core-sync-296e0138-20260927/ holds the executed-run logs (compiler-parity.log, unit.log, vendor.log, browser.log, landscape-run.log, pack.log), the per-case comparison JSON (landscape-voxel@0.json, landscape-isosurface@0.json), and the raw reference and adapter frames (PNG) for both cases, produced by tools/landscape-evidence.mjs at the refreshed 296e0138 core.",
+    "rawEvidence": "evidence/core-sync-73c15be0-20260928/ holds the executed-run logs (compiler-parity.log, unit.log, vendor.log, browser.log, landscape-run.log, pack.log), the per-case comparison JSON (landscape-voxel@0.json, landscape-isosurface@0.json), and the raw reference and adapter frames (PNG) for both cases, produced by tools/landscape-evidence.mjs at the refreshed 73c15be0 core.",
     "evidence": "test/browser/pixel-parity.spec.js landscape-voxel and landscape-isosurface cases; npm run test:browser passes 3 of 3 suites (210/210 compile+link, 209 rendered catalog effects, 26 representative frame comparisons, state hygiene)",
     "limits": "The standalone Cables player boundary requires the native host harness (CABLES_APP) and remains under GAP-003 host qualification; this record covers the op runtime boundary in the browser harness."
   },
@@ -83,26 +84,26 @@
       "command": "node --test test/polymorphic-parity.test.js",
       "exitCode": 0,
       "result": "36 pass, 0 fail",
-      "log": "evidence/core-sync-296e0138-20260927/compiler-parity.log"
+      "log": "evidence/core-sync-73c15be0-20260928/compiler-parity.log"
     },
     {
       "command": "npm test",
       "exitCode": 0,
-      "result": "265 pass, 0 fail, 0 skipped",
-      "log": "evidence/core-sync-296e0138-20260927/unit.log"
+      "result": "269 pass, 0 fail, 0 skipped",
+      "log": "evidence/core-sync-73c15be0-20260928/unit.log"
     },
     {
       "command": "npm run vendor:verify",
       "exitCode": 0,
       "result": "210/210 effects verified, 212 artifacts",
-      "log": "evidence/core-sync-296e0138-20260927/vendor.log"
+      "log": "evidence/core-sync-73c15be0-20260928/vendor.log"
     },
     {
       "command": "npm run test:browser",
       "exitCode": 0,
       "result": "3 suites passed",
-      "log": "evidence/core-sync-296e0138-20260927/browser.log"
+      "log": "evidence/core-sync-73c15be0-20260928/browser.log"
     }
   ],
-  "recordNote": "The recorded checks and frame evidence were executed at this exact source (sha recorded in source.commit), the sync commit that ships the refreshed 296e0138 core (Build: 296e0138; upstream range is tests-only: GAP-019 input-passthrough probe and GAP-021 frame-resolution reporting under shaders/tests, served by the authority CDN at origin/main 296e0138c474 which includes the declared end a912749fab5c), refreshed lock, and rebuilt op bundle. The commit changes no port source code; the upstream range 12b4d74fb4f2..296e0138c474 touches only shaders/tests and upstream docs/scripts, so the effect catalog is unchanged at 210 effects and all 210 locked effect artifacts are byte-identical to the previous core, and the refreshed core bundle itself is byte-identical to the 93229933 core except its Build/Date header lines. Browser suites and landscape frame evidence were executed with PLAYWRIGHT_BROWSERS_PATH=/state/cache/ms-playwright (chromium + headless shell installed there; HOME is noexec tmpfs). npm pack --dry-run also exited 0 (16 files). The single shipped commit is flattened from the intermediate sync commits per the delivery procedure: source.commit names the immediate pre-binding sync commit 2dea47e16670fec3afbdc684e28ebcc49d9c3863, whose source artifacts (core bundle, lock, op bundle, evidence logs) are byte-identical to the shipped commit; only the differential.json/authority-comparison.json record files differ, so every recorded check and frame evidence applies to the shipped source."
+  "recordNote": "The recorded checks and frame evidence were executed at this exact source (sha recorded in source.commit), the sync commit that ships the refreshed 73c15be0 core (Build: 73c15be0; the declared range a912749fab5c..73c15be00d68 is contiguous in a fresh upstream clone despite the forced-delivery flag, and the effective new range vs the previously synced 296e0138 is 296e0138..73c15be0), refreshed lock, and rebuilt op bundle. The commit changes no port source code: the upstream source delta is inside the vendored core bundle (GAP-026 production lifecycle hooks in pipeline.js/compiler.js and the c28e8fdb webgl2 framebuffer rebind after depth allocation; GAP-024 is tests-only upstream harness work not consumed by the port), the effect catalog is unchanged at 210 effects, and all 210 locked effect artifacts are byte-identical to the previous core. The upstream webgl2 fix (rebinding the FBO after ensureDepthBuffer unbinds it) and the lifecycle hooks (initLifecycleEffects in Pipeline.initLifecycleEffects and recompile, onUpdate uniform binding under FALLBACK semantics, onDestroy at dispose) are present in the refreshed bundle (verified by symbol inspection: 'ensureDepthBuffer(fbo, vpWidth, vpHeight);' followed by 'gl.bindFramebuffer(gl.FRAMEBUFFER, fbo)' and initLifecycleEffects definitions). Browser suites and landscape frame evidence were executed with PLAYWRIGHT_BROWSERS_PATH=/state/cache/ms-playwright (chromium headless shell v1243 installed there; HOME is noexec tmpfs). npm pack --dry-run also exited 0 (16 files). The single shipped commit is flattened from the intermediate sync commit 77fdb7707bfc73fa8b8cf5ee1cc01634682e54b9 per the delivery procedure; source.commit names that intermediate commit, whose source artifacts (core bundle, lock, op bundle, evidence logs) are byte-identical to the shipped commit; only the differential.json/authority-comparison.json record files differ, so every recorded check and frame evidence applies to the shipped source."
 }

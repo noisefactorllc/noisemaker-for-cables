@@ -3,8 +3,8 @@
  * Includes: CanvasRenderer + UIController + EffectSelect
  * Copyright (c) 2017-2026 Noise Factor LLC. https://noisefactor.io/
  * SPDX-License-Identifier: MIT
- * Build: 296e0138
- * Date: 2026-09-27T16:20:33.073Z
+ * Build: 73c15be0
+ * Date: 2026-09-28T02:26:39.446Z
  */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
@@ -8346,6 +8346,7 @@ var WebGL2Backend = class _WebGL2Backend extends Backend {
       const vpHeight = viewportTex?.height || gl.drawingBufferHeight;
       if (fbo) {
         this.ensureDepthBuffer(fbo, vpWidth, vpHeight);
+        gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
       }
       gl.enable(gl.DEPTH_TEST);
       gl.depthFunc(gl.LESS);
@@ -12741,6 +12742,12 @@ function oscSawInv(t) {
 function oscSquare(t) {
   return t - Math.floor(t) >= 0.5 ? 1 : 0;
 }
+function hasLifecycleHook(effectDef, hook) {
+  if (!effectDef) return false;
+  const configKey = "_config" + hook.charAt(0).toUpperCase() + hook.slice(1);
+  if (typeof effectDef[configKey] === "function") return true;
+  return typeof effectDef[hook] === "function" && effectDef[hook] !== Effect.prototype[hook];
+}
 function hash21(px, py, s) {
   let x = (px * 234.34 + s) % 1;
   let y = (py * 435.345 + s) % 1;
@@ -13249,6 +13256,11 @@ var Pipeline = class {
       // AudioState instance
     };
     this._asyncRenders = /* @__PURE__ */ new Map();
+    this._lifecycleEffects = /* @__PURE__ */ new Map();
+    this._initLifecycleDone = /* @__PURE__ */ new Set();
+    this._runtimeUniforms = /* @__PURE__ */ new Map();
+    this._hasRuntimeUniforms = false;
+    this._updateContext = { time: 0, delta: 0, uniforms: null };
   }
   /**
    * Register an output sink for the selected render surface.
@@ -13371,6 +13383,67 @@ var Pipeline = class {
     const defaultUniforms = this.collectDefaultUniforms();
     this.recreateTextures(defaultUniforms);
     this.initAsyncEffects();
+    this.initLifecycleEffects();
+  }
+  /**
+   * Production lifecycle hooks (GAP-026).
+   * Called after texture allocation, on resize, and on hot recompile (the
+   * same sites as initAsyncEffects()). Rebuilds the managed-effect map from
+   * the current graph and calls onInit() once per effect instance per
+   * pipeline lifetime — effects are registry singletons shared by nodes,
+   * and recompiles must not re-run onInit.
+   */
+  initLifecycleEffects() {
+    if (!this.graph || !this.graph.passes) return;
+    this._lifecycleEffects.clear();
+    const seen = /* @__PURE__ */ new Set();
+    for (const pass of this.graph.passes) {
+      if (!pass.effectKey || seen.has(pass.effectKey)) continue;
+      seen.add(pass.effectKey);
+      const effectDef = getEffect(pass.effectKey);
+      if (!effectDef) continue;
+      if (!hasLifecycleHook(effectDef, "onInit") && !hasLifecycleHook(effectDef, "onUpdate") && !hasLifecycleHook(effectDef, "onDestroy")) continue;
+      this._lifecycleEffects.set(pass.effectKey, effectDef);
+      if (hasLifecycleHook(effectDef, "onInit") && !this._initLifecycleDone.has(pass.effectKey)) {
+        this._initLifecycleDone.add(pass.effectKey);
+        effectDef.onInit();
+      }
+    }
+  }
+  /**
+   * Invoke the onUpdate hook of every managed effect once per frame and
+   * collect the uniforms each hook returns. Context mirrors the test
+   * harness: { time, delta, uniforms } with the pipeline's global uniforms.
+   */
+  _invokeUpdateHooks(time, deltaTime) {
+    this._hasRuntimeUniforms = false;
+    if (this._runtimeUniforms.size > 0) this._runtimeUniforms.clear();
+    for (const [effectKey, effectDef] of this._lifecycleEffects) {
+      if (!hasLifecycleHook(effectDef, "onUpdate")) continue;
+      this._updateContext.time = time;
+      this._updateContext.delta = deltaTime;
+      this._updateContext.uniforms = this.globalUniforms;
+      const runtimeUniforms = effectDef.onUpdate(this._updateContext);
+      if (runtimeUniforms && typeof runtimeUniforms === "object") {
+        this._runtimeUniforms.set(effectKey, runtimeUniforms);
+        this._hasRuntimeUniforms = true;
+      }
+    }
+  }
+  /**
+   * Overlay onUpdate-returned uniforms onto a pass's resolved uniforms.
+   * Fallback semantics: a hook's uniform binds only when the pass does not
+   * already resolve that key, so DSL/step-provided values — including
+   * shipped effects' authored defaults (synth/media's imageSize) — keep
+   * priority and existing behavior is preserved. Rare path: only taken
+   * when an effect's onUpdate hook returned uniforms.
+   */
+  _withRuntimeUniforms(pass, runtimeUniforms) {
+    const merged = Object.assign({}, pass.uniforms);
+    for (const key in runtimeUniforms) {
+      if (merged[key] === void 0) merged[key] = runtimeUniforms[key];
+    }
+    return Object.assign({}, pass, { uniforms: merged });
   }
   /**
    * Initialize effects that have asyncInit handlers.
@@ -14425,6 +14498,7 @@ var Pipeline = class {
     }
     this.lastTime = time;
     this.updateGlobalUniforms(time, deltaTime);
+    this._invokeUpdateHooks(time, deltaTime);
     this.frameReadTextures.clear();
     this.frameWriteTextures.clear();
     for (const [name, surface] of this.surfaces.entries()) {
@@ -14440,9 +14514,15 @@ var Pipeline = class {
           if (originalPass.viewport !== void 0) {
             this.resolvePassViewport(originalPass);
           }
-          const pass = this.resolvePassUniforms(originalPass, time);
+          let pass = this.resolvePassUniforms(originalPass, time);
           if (originalPass.viewport !== void 0) {
             this.resolvePassViewport(pass, originalPass);
+          }
+          if (this._hasRuntimeUniforms && pass.effectKey !== void 0) {
+            const runtimeUniforms = this._runtimeUniforms.get(pass.effectKey);
+            if (runtimeUniforms) {
+              pass = this._withRuntimeUniforms(pass, runtimeUniforms);
+            }
           }
           if (this.shouldSkipPass(pass)) {
             continue;
@@ -14864,6 +14944,17 @@ var Pipeline = class {
     const captureError = (error) => {
       if (!firstError2) firstError2 = error;
     };
+    if (this._lifecycleEffects && this._lifecycleEffects.size > 0) {
+      for (const effectDef of this._lifecycleEffects.values()) {
+        if (!hasLifecycleHook(effectDef, "onDestroy")) continue;
+        try {
+          effectDef.onDestroy();
+        } catch (error) {
+          captureError(error);
+        }
+      }
+      this._lifecycleEffects.clear();
+    }
     for (const cancel of this._asyncRenders.values()) {
       try {
         cancel();
@@ -16318,6 +16409,7 @@ function recompile(pipeline, newSource, options = {}) {
     const defaultUniforms = pipeline.collectDefaultUniforms();
     pipeline.recreateTextures(defaultUniforms);
     pipeline.initAsyncEffects();
+    pipeline.initLifecycleEffects?.();
     return newGraph;
   } catch (error) {
     console.error("Recompilation failed:", formatError(error));

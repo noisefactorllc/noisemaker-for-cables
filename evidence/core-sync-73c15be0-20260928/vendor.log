@@ -1,0 +1,10 @@
+
+> @noisefactor/noisemaker-for-cables@0.1.0 vendor:update
+> node tools/vendor.mjs update
+
+Updated 210 effects (212 artifacts)
+
+> @noisefactor/noisemaker-for-cables@0.1.0 vendor:verify
+> node tools/vendor.mjs verify
+
+210/210 effects verified (212 artifacts)
