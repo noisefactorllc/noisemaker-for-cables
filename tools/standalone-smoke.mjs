@@ -26,6 +26,52 @@ if (!executableInput) {
   throw new Error('Set CABLES_APP to the Cables Standalone executable')
 }
 
+const sleep = (milliseconds) => new Promise((resolveSleep) => setTimeout(resolveSleep, milliseconds))
+const digest = (bytes) => createHash('sha256').update(bytes).digest('hex')
+
+async function waitFor(check, message, timeout = 30_000) {
+  const started = Date.now()
+  let lastError
+  while (Date.now() - started < timeout) {
+    try {
+      const value = await check()
+      if (value) return value
+    } catch (error) {
+      lastError = error
+    }
+    await sleep(100)
+  }
+  throw new Error(`${message}${lastError ? `: ${lastError.message}` : ''}`)
+}
+
+const terminalLines = []
+const consoleErrors = []
+const pageErrors = []
+
+// CI diagnostics: the standalone runners cannot serve job logs to this
+// automation's read-only credentials, so any smoke failure must surface its
+// state through GitHub workflow-command annotations and the uploaded
+// test-report/ artifacts.
+const emitErrorAnnotations = (error) => {
+  const detail = [
+    `error: ${error && error.message ? error.message : String(error)}`,
+    `stack: ${error && error.stack ? error.stack.split('\n').slice(0, 4).join(' | ') : 'none'}`,
+    `terminalLines: ${JSON.stringify(terminalLines.slice(-40))}`,
+    `consoleErrors: ${JSON.stringify(consoleErrors.slice(-10))}`,
+    `pageErrors: ${JSON.stringify(pageErrors.slice(-10))}`,
+  ]
+  for (const line of detail) {
+    // Keep each annotation under the ~3.5KB limit.
+    for (let i = 0; i < line.length; i += 3000) {
+      console.error(`::error::${line.slice(i, i + 3000).replace(/%/g, '%25')}`)
+    }
+  }
+}
+let browser
+let child
+
+await (async () => {
+
 const cablesStandalone = await inspectCablesStandalone(executableInput)
 const executable = cablesStandalone.executablePath
 assert.equal(cablesStandalone.asarIntegrity.algorithm, 'SHA256')
@@ -47,30 +93,7 @@ if (cablesStandalone.platform === 'linux') {
   )
 }
 
-const sleep = (milliseconds) => new Promise((resolveSleep) => setTimeout(resolveSleep, milliseconds))
-const digest = (bytes) => createHash('sha256').update(bytes).digest('hex')
-
-async function waitFor(check, message, timeout = 30_000) {
-  const started = Date.now()
-  let lastError
-  while (Date.now() - started < timeout) {
-    try {
-      const value = await check()
-      if (value) return value
-    } catch (error) {
-      lastError = error
-    }
-    await sleep(100)
-  }
-  throw new Error(`${message}${lastError ? `: ${lastError.message}` : ''}`)
-}
-
 const userDataDirectory = await mkdtemp(join(tmpdir(), 'noisemaker-cables-smoke-'))
-const terminalLines = []
-const consoleErrors = []
-const pageErrors = []
-let browser
-let child
 
 try {
   await mkdir(reportRoot, { recursive: true })
@@ -1038,3 +1061,15 @@ try {
   if (child) await stopChild(child)
   await removeTemporaryDirectory(userDataDirectory)
 }
+})().catch(async (error) => {
+  emitErrorAnnotations(error)
+  try {
+    await mkdir(reportRoot, { recursive: true })
+    await writeFile(join(reportRoot, 'standalone-smoke-failure.json'), `${JSON.stringify({
+      error: error && error.message ? error.message : String(error),
+      stack: error && error.stack ? error.stack : null,
+      consoleErrors, pageErrors, terminalLines: terminalLines.slice(-200),
+    }, null, 2)}\n`)
+  } catch {}
+  process.exitCode = 1
+})
