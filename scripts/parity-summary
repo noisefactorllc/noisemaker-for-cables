@@ -1,0 +1,211 @@
+#!/usr/bin/env node
+// Rendered-parity summary entrypoint for noisemaker-for-cables.
+//
+// Renders cases of the current authority's effect catalog (the vendored
+// noisemaker manifest, parity authority = vendor-cache/effects/manifest.json)
+// through the port's browser harness and compares each frame with the
+// independent reference rendering of the same core, exactly as the Task 9
+// full-catalog sweep does. Given case ids as arguments it renders and counts
+// only those ids; with no arguments it renders the whole catalog.
+//
+// Counting contract (PARITY-SUMMARY line):
+//   expected  cases requested (whole catalog when no ids are given)
+//   executed  cases that produced a definitive result (exact+strict+near+skip+fail)
+//   exact     rendered frames byte-identical to the reference readback at the
+//             published zero-channel ceiling
+//   strict    rendered passes within the port's numerical contract that are
+//             not byte-identical (empty at the zero-channel ceiling)
+//   near      tolerated mismatches beyond the contract (none: the contract is
+//             zero-channel, so any mismatch is a fail)
+//   defer     cases intentionally deferred (reserved; none today)
+//   skip      compile-only cases with a visible, recorded exclusion
+//   fail      rendered cases outside the contract or failing copy/finite gates
+//   missing   requested ids absent from the authority catalog
+//
+// The last output line is always PARITY-SUMMARY {...}; the exit code is 0
+// when fail, missing, and harness sweep failures are all zero, and non-zero
+// otherwise (including when the run itself aborts mid-sweep).
+import { spawn } from 'node:child_process'
+import { readFile } from 'node:fs/promises'
+import { fileURLToPath } from 'node:url'
+
+const projectRoot = new URL('..', import.meta.url)
+const MANIFEST_PATH = new URL('vendor-cache/effects/manifest.json', projectRoot)
+const BASE_URL = 'http://127.0.0.1:4173/test/browser/fixture.html'
+const BATCH_OVERHEAD_WAIT_MS = 100
+
+const requestedIds = process.argv.slice(2)
+
+const manifest = JSON.parse(await readFile(MANIFEST_PATH, 'utf8'))
+const catalogIds = Object.keys(manifest).sort()
+
+const unknownIds = requestedIds.filter((id) => !catalogIds.includes(id))
+if (unknownIds.length > 0) {
+  // Unknown ids are reported through the summary's `missing` count, but a
+  // request that matches nothing at all is a usage error.
+  if (unknownIds.length === requestedIds.length) {
+    console.error('no requested case id exists in the authority catalog:', unknownIds.join(', '))
+    console.log(`PARITY-SUMMARY ${JSON.stringify({
+      defer: 0, exact: 0, expected: requestedIds.length, executed: 0,
+      fail: 0, missing: requestedIds.length, near: 0, skip: 0, strict: 0,
+    })}`)
+    process.exit(1)
+  }
+  console.error(`warning: requested ids absent from the authority catalog: ${unknownIds.join(', ')}`)
+}
+
+const server = spawn(process.execPath, ['test/browser/server.mjs'], {
+  cwd: fileURLToPath(projectRoot),
+  stdio: 'inherit',
+})
+let browser
+try {
+  await new Promise((resolve, reject) => {
+    const deadline = Date.now() + 30_000
+    const poll = async () => {
+      try {
+        const response = await fetch(BASE_URL)
+        if (response.ok) return resolve()
+      } catch {}
+      if (Date.now() > deadline) return reject(new Error('dev server did not start'))
+      setTimeout(poll, 250)
+    }
+    poll()
+  })
+
+  let counts
+  try {
+    const { chromium } = await import('playwright')
+    browser = await chromium.launch({ headless: true })
+    const page = await browser.newPage()
+    await page.goto(BASE_URL)
+    await page.evaluate(() => window.task9Harness.ready)
+
+    // Sorted catalog order as the harness itself sees it, so batch windows line
+    // up with the sweep implementation.
+    const pageCatalogIds = await page.evaluate(async () => {
+      const meta = await window.task9Harness.runFullCatalog({ start: 0, end: 0 })
+      return meta.effectNames
+    })
+    if (JSON.stringify(pageCatalogIds) !== JSON.stringify(catalogIds)) {
+      throw new Error('authority catalog and harness catalog disagree')
+    }
+
+    const targetIds = requestedIds.length > 0 ? [...new Set(requestedIds)] : catalogIds
+    counts = {
+      defer: 0,
+      exact: 0,
+      expected: targetIds.length,
+      executed: 0,
+      fail: 0,
+      missing: 0,
+      near: 0,
+      skip: 0,
+      strict: 0,
+    }
+    const indices = targetIds
+      .map((id) => pageCatalogIds.indexOf(id))
+      .filter((index) => index >= 0)
+      .sort((a, b) => a - b)
+
+    // Coalesce only exactly consecutive indices into half-open [start, end)
+    // batch windows, so a filtered run renders exactly the requested
+    // consecutive runs of ids and nothing else.
+    const windows = []
+    for (const index of indices) {
+      const last = windows[windows.length - 1]
+      if (last && index === last.end) {
+        last.end = index + 1
+      } else {
+        windows.push({ start: index, end: index + 1 })
+      }
+    }
+
+    const resultsById = new Map()
+    const sweepFailures = []
+    for (const window of windows) {
+      const batch = await page.evaluate(
+        ({ end, start }) => window.task9Harness.runFullCatalog({ end, start }),
+        window,
+      )
+      sweepFailures.push(...batch.failures)
+      for (const result of batch.results) resultsById.set(result.id, result)
+      await page.waitForTimeout(BATCH_OVERHEAD_WAIT_MS)
+    }
+
+    for (const id of targetIds) {
+      const result = resultsById.get(id)
+      if (!result) {
+        counts.missing += 1
+        console.log(JSON.stringify({ id, status: 'missing' }))
+        continue
+      }
+      if (result.rendered === false) {
+        counts.executed += 1
+        counts.skip += 1
+        console.log(JSON.stringify({
+          classification: result.classification ?? null,
+          compiled: result.compiled === true,
+          id,
+          linked: result.linked === true,
+          reason: result.reason ?? null,
+          status: 'skip',
+        }))
+        continue
+      }
+      const withinCeiling = (result.mismatchedChannels ?? Number.POSITIVE_INFINITY)
+        <= (result.channelCeiling ?? 0)
+      // The published contract requires every rendered case to satisfy all
+      // three gates: zero-ceiling channel match, exact internal→CGL output
+      // copy, and finite readback (test/browser/full-catalog.spec.js,
+      // parity/coverage-matrix.json checkpoint). Any unmet gate is a fail —
+      // within-ceiling cases that miss the copy/finite gates are NOT strict
+      // passes, so a closure could never hide a broken copy or non-finite
+      // readback behind exact+strict.
+      const gatesPass = withinCeiling && result.copyExact === true && result.finite === true
+      const status = gatesPass
+        ? (result.mismatchedChannels === 0 ? 'exact' : 'strict')
+        : 'fail'
+      counts.executed += 1
+      counts[status] += 1
+      console.log(JSON.stringify({
+        comparedChannels: result.comparedChannels,
+        copyExact: result.copyExact === true,
+        finite: result.finite === true,
+        firstDivergences: result.firstDivergences ?? [],
+        id,
+        maxChannelError: result.maxChannelError ?? null,
+        mismatchedChannels: result.mismatchedChannels ?? null,
+        status,
+      }))
+    }
+
+    for (const failure of sweepFailures) {
+      console.error('sweep failure:', JSON.stringify(failure).slice(0, 400))
+    }
+
+    console.log(`PARITY-SUMMARY ${JSON.stringify(counts)}`)
+    if (counts.fail > 0 || counts.missing > 0 || sweepFailures.length > 0) {
+      process.exitCode = 1
+    }
+  } catch (error) {
+    counts ??= {
+      defer: 0,
+      exact: 0,
+      expected: requestedIds.length,
+      executed: 0,
+      fail: 0,
+      missing: 0,
+      near: 0,
+      skip: 0,
+      strict: 0,
+    }
+    counts.fail += 1
+    console.error('parity-summary aborted:', error && error.message ? error.message : String(error))
+    console.log(`PARITY-SUMMARY ${JSON.stringify(counts)}`)
+    process.exitCode = 1
+  }
+} finally {
+  if (browser) await browser.close().catch(() => {})
+  server.kill()
+}
