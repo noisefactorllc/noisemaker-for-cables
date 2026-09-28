@@ -52,6 +52,18 @@ const pageErrors = []
 // automation's read-only credentials, so any smoke failure must surface its
 // state through GitHub workflow-command annotations and the uploaded
 // test-report/ artifacts.
+const assertNoRenderErrors = (matches, label) => {
+  if (matches.length > 0) {
+    for (const line of matches.slice(0, 20)) {
+      console.error(`::error::${label}: ${String(line).slice(0, 400).replace(/%/g, '%25')}`)
+    }
+  }
+  assert.deepEqual(
+    matches,
+    [],
+    `${label}: ${JSON.stringify(matches.map((line) => String(line).slice(0, 300)))}`,
+  )
+}
 const emitErrorAnnotations = (error) => {
   const detail = [
     `error: ${error && error.message ? error.message : String(error)}`,
@@ -971,7 +983,7 @@ try {
     assert.equal(reducedState.mainLoop, 1, 'reduced saved project lost its other ops')
     const reducedTerminalErrors = reducedInstance.terminalLines.filter((line) =>
       /webgl|gl_invalid|\bgl error\b|unhandled|uncaught.*promise|promise rejection/i.test(line))
-    assert.deepEqual(reducedTerminalErrors, [], 'the reduced saved project logged errors on reload')
+    assertNoRenderErrors(reducedTerminalErrors, 'the reduced saved project logged errors on reload')
     savedProjectRemoval = { noisemakerOps: reducedState.noisemakerOps, mainLoop: reducedState.mainLoop, opCount: reducedState.opCount }
   } finally {
     if (reducedInstance.browser) await reducedInstance.browser.close().catch(() => {})
@@ -1003,7 +1015,7 @@ try {
     assert.match(upgradedState.dsl, /cellSmooth:/)
     const upgradeTerminalErrors = upgradeInstance.terminalLines.filter((line) =>
       /webgl|gl_invalid|\bgl error\b|unhandled|uncaught.*promise|promise rejection/i.test(line))
-    assert.deepEqual(upgradeTerminalErrors, [], 'the legacy-parameter saved project logged errors on reload')
+    assertNoRenderErrors(upgradeTerminalErrors, 'the legacy-parameter saved project logged errors on reload')
     savedProjectUpgrade = {
       ready: upgradedState.ready,
       rendered: upgradedState.texture,
@@ -1021,11 +1033,11 @@ try {
   const screenshot = await page.screenshot({ path: screenshotPath })
   const glOrPromiseErrors = [...consoleErrors, ...pageErrors].filter((message) =>
     /webgl|gl_invalid|\bgl error\b|unhandled|uncaught.*promise|promise rejection/i.test(message))
-  assert.deepEqual(glOrPromiseErrors, [])
+  assertNoRenderErrors(glOrPromiseErrors, 'the editor session logged console or page errors')
 
   const terminalGlErrors = terminalLines.filter((line) =>
     /webgl|gl_invalid|\bgl error\b|unhandled|uncaught.*promise|promise rejection/i.test(line))
-  assert.deepEqual(terminalGlErrors, [])
+  assertNoRenderErrors(terminalGlErrors, 'the editor session logged terminal errors')
 
   const report = {
     cablesStandalone,
