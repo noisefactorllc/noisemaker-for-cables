@@ -3,8 +3,8 @@
  * Includes: CanvasRenderer + UIController + EffectSelect
  * Copyright (c) 2017-2026 Noise Factor LLC. https://noisefactor.io/
  * SPDX-License-Identifier: MIT
- * Build: 68273906
- * Date: 2026-09-29T03:15:55.776Z
+ * Build: 4f5e0d28
+ * Date: 2026-09-29T09:11:33.330Z
  */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
@@ -16324,6 +16324,18 @@ var AudioInputManager = class _AudioInputManager {
     capture.stream?.getTracks?.().forEach((track) => track.stop());
     capture.source?.disconnect();
   }
+  /**
+   * Unmet message when an already-captured device cannot supply the
+   * requested channel (its capture exposes fewer channels than the graph
+   * selects). Without this the channel lookup returns null and the binding
+   * would silently evaluate to `min` with no diagnostic.
+   */
+  _channelShortfall(capture, requirement) {
+    const available = capture?.channels?.length ?? 0;
+    if (requirement.channel <= available) return null;
+    const label = requirement.name || requirement.id || "default input";
+    return `${label} channel ${requirement.channel} (captured device only exposes ${available} channel(s))`;
+  }
   /** Enumerate audio input devices (empty when enumeration is unavailable). */
   async _enumerateInputDevices() {
     try {
@@ -16410,6 +16422,23 @@ var AudioInputManager = class _AudioInputManager {
         console.warn(`[Noisemaker] failed to open audio input device ${deviceName || deviceId}:`, err);
         unmet.push(`${deviceName || deviceId} (failed to open)`);
       }
+    }
+    for (const requirement of selected) {
+      let capture = null;
+      if (requirement.id === null && requirement.name === null) {
+        capture = this._captures.get(this._deviceId) ?? null;
+      } else if (requirement.id) {
+        capture = this._captures.get(requirement.id) ?? null;
+      } else {
+        const matches = inventory.filter((device) => device.name === requirement.name);
+        if (matches.length === 1) {
+          capture = this._captures.get(matches[0].id) ?? null;
+        } else {
+          capture = [...this._captures.values()].find((entry) => entry.deviceName === requirement.name) ?? null;
+        }
+      }
+      const shortfall = capture ? this._channelShortfall(capture, requirement) : null;
+      if (shortfall) unmet.push(shortfall);
     }
     if (unmet.length) {
       const message = `[Noisemaker] ${unmet.length} selected-device audio binding(s) could not be captured (${unmet.join(", ")}); they evaluate to min.`;
