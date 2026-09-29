@@ -3,32 +3,32 @@
   "recordedAt": "2026-09-29",
   "source": {
     "repository": "noisefactorllc/noisemaker-for-cables",
-    "commit": "e1b8ddff43403d63df62c7362ed2712df3b4c9ee"
+    "commit": "58cb90e29c185792476da96df279f14f2147bedd"
   },
   "upstreamRangeAudit": {
-    "declaredRange": "noisefactorllc/noisemaker 73c15be00d6888f4b5d2835d8e242ee9e840df45..a5059106ea7510b839e70c5c9c33ba1f5ccbc043",
+    "declaredRange": "noisefactorllc/noisemaker 73c15be00d6888f4b5d2835d8e242ee9e840df45..682739066d3b74962febbdcdae85b5aa4d2e19f3",
     "forcePushOrNonContiguous": true,
-    "audit": "Audited in a local upstream checkout (/state/cache/noisemaker, a fresh clone of noisefactorllc/noisemaker) rather than assuming the declared range: git merge-base --is-ancestor confirms 73c15be00d68 is an ancestor of a5059106ea75 and the observed range 3e21906e4f6f..a5059106ea75 is contiguous and cumulative, so the declared range is contiguous despite the forced-delivery flag. The previous sync shipped core 73c15be00d68, so the effective new range is 73c15be00d68..a5059106ea75 (7 range commits, 1 touching shaders/). Audited diff in that checkout: git diff 73c15be00d68..a5059106ea75 -- shaders/ shows 2 files changed, 297 insertions, 8 deletions: the GAP-032 audio fix in shaders/src/runtime/external-input.js — AudioInputManager identifies the browser-selected input device and channel count from the track settings, registers the default-input channels and the captured device on the audio state, splits the captured stream into per-channel analysers, updates each default/device channel state with bands and a bipolar time-domain raw mean, and warns when the graph requires selected-device audio bindings the built-in capture cannot supply — plus upstream tests under shaders/tests (test_external_input.js +187, upstream harness only, not consumed by the port). No change to shaders/effects, shaders/lang or effect definitions, so the effect catalog is unchanged at 210 locked effects. The port vendors the served CDN core: at job start the CDN served Build: 6b05a270 (header-only vs the shipped 73c15be0 body, byte-diff 6 lines), and the CDN rebuilt to Build: a5059106 during the job, so this sync refreshed the vendored core to the a5059106 rebuild; symbol inspection of the refreshed bundle confirms the GAP-032 machinery (_checkSelectedRequirements, channelCaptures, registerDefaultChannels/registerDevice present).",
+    "audit": "Audited in a local upstream checkout (/state/cache/noisemaker, a fresh clone of noisefactorllc/noisemaker) rather than assuming the declared range: git merge-base --is-ancestor confirms 73c15be00d68 is an ancestor of 682739066d3b and the observed range a5059106ea75..682739066d3b is contiguous and cumulative, so the declared range is contiguous despite the forced-delivery flag. The previous sync shipped core a5059106ea75, so the effective new range is a5059106ea75..682739066d3b (8 commits in 73c15be00d68..682739066d3b, 2 touching shaders/ — a5059106ea75 already shipped by the previous sync, and 682739066d3b new). Audited diff in that checkout: git diff a5059106ea75..682739066d3b -- shaders/ shows 2 files changed, 400 insertions(+), 131 deletions(-): the second GAP-032 audio fix in shaders/src/runtime/external-input.js — AudioInputManager now resolves the compiled graph's audio capture needs via Pipeline.getAudioInputRequirements(), registers the browser-selected capture device and its default channels, opens one additional getUserMedia stream per selected-device requirement resolved against enumerateDevices() (exact id authoritative, name must match exactly one device, re-synced at enable and every 60 update ticks), analyzes each captured channel independently through a ChannelSplitterNode, marks the aggregate and every captured channel rawReady each tick from the bipolar time-domain mean, tears all captures down through the public reset paths on disable, and warns-and-evaluates-to-min on uncapturable requirements — plus upstream tests under shaders/tests (test_external_input.js, upstream harness only, not consumed by the port). No change to shaders/effects, shaders/lang or effect definitions, so the effect catalog is unchanged at 210 locked effects. The port vendors the served CDN core: the CDN rebuilt to Build: 68273906 during the job, and this sync refreshed the vendored core to that rebuild; symbol inspection of the refreshed bundle confirms the new multi-device capture machinery (_syncCaptures present, the removed _channelCaptures gone).",
     "rangeCommitsTouchingShaders": 1,
-    "shadersDiffStat": "git diff 73c15be00d68..a5059106ea75 -- shaders/: 2 files changed, 297 insertions(+), 8 deletions(-). Source (consumed by the core bundle): external-input.js (+110/-8 in AudioInputManager). Tests (upstream harness only, not consumed by the port): test_external_input.js (+187/-0). node tools/generate-effect-entry.mjs regenerated identical static imports (src/generated unchanged) and vendor:update changed only the core bundle entry in vendor.lock.json (all 210 effect artifacts byte-identical).",
+    "shadersDiffStat": "git diff a5059106ea75..682739066d3b -- shaders/: 2 files changed, 400 insertions(+), 131 deletions(-). Source (consumed by the core bundle): external-input.js (+226/-82). Tests (upstream harness only, not consumed by the port): test_external_input.js (+174/-49). node tools/generate-effect-entry.mjs regenerated identical static imports (src/generated unchanged) and vendor:update changed only the core bundle entry in vendor.lock.json (all 210 effect artifacts byte-identical).",
     "keyShadersSrcCommits": [
-      "a5059106ea75 fix(audio): populate captured-device and default-channel audio state with raw readiness (GAP-032)"
+      "682739066d3b fix(audio): capture every selected-device audio binding the graph requires (GAP-032)"
     ]
   },
   "authority": {
     "vendorLock": "vendor.lock.json",
-    "vendorLockSha256": "601abaeac61795b048981abc1e0e3a5a1cb27122c12ce1014ff5a04c153e3f15",
+    "vendorLockSha256": "14ffd1a0e6870f30a5cb6a5cca69d81c2ac9991260277d9f196475cca42837df",
     "engineBundle": {
       "path": "vendor-cache/noisemaker-shaders-core.esm.js",
-      "sha256": "0047ea270d9ec5ba4f3125dd10ef89f9c746f4d87201922fa23b50990b621188",
-      "bytes": 893284,
+      "sha256": "e4ff3c663b22a74bcef68b78d28848edc4a7ae1ca61180cb0e491428baa3066f",
+      "bytes": 898266,
       "url": "https://shaders.noisedeck.app/1/noisemaker-shaders-core.esm.js"
     },
-    "upstreamEngine": "noisemaker@a5059106ea75"
+    "upstreamEngine": "noisemaker@682739066d3b"
   },
   "opBundle": {
     "path": "Ops.Extension.Noisemaker/Ops.Extension.Noisemaker.Program/lib_noisemaker-cablesgl.js",
-    "sha256": "4ce58b1674bb1c0ae1b8f2682bf5b1f5907e5fe6e73af27e9390eaac0a690ad3"
+    "sha256": "489386e931570ea3e296bc5ac5636e92d82147032b98459e6e9cfd384081a495"
   },
   "compilerDifferential": {
     "method": "Port facade src/browser.js compileProgram versus the vendored reference compiler (vendor-cache/noisemaker-shaders-core.esm.js) for both landscape filtering modes; graphs normalized by removing only compiledAt.",
@@ -52,7 +52,7 @@
         "warningsMatched": true
       }
     ],
-    "evidence": "test/polymorphic-parity.test.js: renderLandscape3d filtering modes match the vendored reference compiler and select expected defines (executed inside npm test at the refreshed a5059106 core, 36 of 36 parity tests pass)"
+    "evidence": "test/polymorphic-parity.test.js: renderLandscape3d filtering modes match the vendored reference compiler and select expected defines (executed inside npm test at the refreshed 68273906 core, 36 of 36 parity tests pass)"
   },
   "renderedDifferential": {
     "method": "Browser harness (test/browser) renders both landscape filtering modes through the reference WebGL2 backend and the public Cables adapter backend (CablesWebGL2Backend) at 64x48 with deterministic inputs; frames compared after common float readback.",
@@ -73,47 +73,47 @@
         "finite": true
       }
     ],
-    "rawEvidence": "/workspace/evidence/core-sync-a5059106-20260929/ holds the executed-run logs and landscape comparison output (landscape-run.log: both cases mismatchedChannels 0, copyExact true, finite true; reference/adapter PNGs and per-case comparison JSON alongside) produced at the refreshed a5059106 core.",
-    "evidence": "test/browser/pixel-parity.spec.js landscape-voxel and landscape-isosurface cases; npm run test:browser passes 3 of 3 suites (210/210 compile+link, 209 rendered catalog effects, 26 representative frame comparisons, state hygiene) at the refreshed a5059106 core",
+    "rawEvidence": "/workspace/evidence/core-sync-68273906-20260929/ holds the executed-run logs and landscape comparison output (landscape-run.log: both cases mismatchedChannels 0, copyExact true, finite true; reference/adapter PNGs and per-case comparison JSON alongside) produced at the refreshed 68273906 core.",
+    "evidence": "test/browser/pixel-parity.spec.js landscape-voxel and landscape-isosurface cases; npm run test:browser passes 3 of 3 suites (210/210 compile+link, 209 rendered catalog effects, 26 representative frame comparisons, state hygiene) at the refreshed 68273906 core",
     "limits": "The standalone Cables player boundary requires the native host harness (CABLES_APP) and remains under GAP-003 host qualification; this record covers the op runtime boundary in the browser harness."
   },
   "executedChecks": [
     {
       "command": "node --test test/polymorphic-parity.test.js",
       "exitCode": 0,
-      "result": "36 pass, 0 fail (executed within npm test at the refreshed a5059106 core)",
-      "log": "/workspace/evidence/core-sync-a5059106-20260929/unit.log"
+      "result": "36 pass, 0 fail (executed within npm test at the refreshed 68273906 core)",
+      "log": "/workspace/evidence/core-sync-68273906-20260929/compiler-parity.log"
     },
     {
       "command": "npm test",
       "exitCode": 0,
       "result": "269 pass, 0 fail, 0 skipped",
-      "log": "/workspace/evidence/core-sync-a5059106-20260929/unit.log"
+      "log": "/workspace/evidence/core-sync-68273906-20260929/unit.log"
     },
     {
       "command": "npm run vendor:verify",
       "exitCode": 0,
       "result": "210/210 effects verified, 212 artifacts",
-      "log": "/workspace/evidence/core-sync-a5059106-20260929/vendor.log"
+      "log": "/workspace/evidence/core-sync-68273906-20260929/vendor.log"
     },
     {
       "command": "npm run test:browser",
       "exitCode": 0,
       "result": "3 suites passed",
-      "log": "/workspace/evidence/core-sync-a5059106-20260929/browser.log"
+      "log": "/workspace/evidence/core-sync-68273906-20260929/browser.log"
     },
     {
       "command": "scripts/parity-summary",
       "exitCode": 0,
       "result": "PARITY-SUMMARY {\"defer\":0,\"exact\":209,\"expected\":210,\"executed\":210,\"fail\":0,\"missing\":0,\"near\":0,\"skip\":1,\"strict\":0} — 209 rendered catalog effects byte-identical to the independent reference at the zero-channel ceiling; the single skip is the recorded compile-only exclusion filter/octaveWarp; unchanged from the previous core, so open GAP-009 is unaffected by this sync",
-      "log": "/workspace/evidence/core-sync-a5059106-20260929/parity-summary.log"
+      "log": "/workspace/evidence/core-sync-68273906-20260929/parity-summary.log"
     },
     {
       "command": "npm pack --dry-run",
       "exitCode": 0,
       "result": "exit 0 (noisefactor-noisemaker-for-cables-0.1.0.tgz)",
-      "log": "/workspace/evidence/core-sync-a5059106-20260929/pack.log"
+      "log": "/workspace/evidence/core-sync-68273906-20260929/pack.log"
     }
   ],
-  "recordNote": "The recorded checks and frame evidence were executed at this exact source (sha recorded in source.commit), the sync commit that ships the refreshed a5059106 core (Build: a5059106; the declared range 73c15be00d68..a5059106ea75 is contiguous in a fresh upstream clone despite the forced-delivery flag, and the effective new range vs the previously synced 73c15be00d68 is 73c15be00d68..a5059106ea75), refreshed lock, and rebuilt op bundle. The commit changes no port source code: the upstream source delta is inside the vendored core bundle (the GAP-032 audio fix in AudioInputManager: captured-device and default-channel registration, per-channel analysers with bands and bipolar raw readiness, and the periodic selected-device requirements diagnostic), the effect catalog is unchanged at 210 effects, and all 210 locked effect artifacts are byte-identical to the previous core. The GAP-032 machinery was verified in the refreshed bundle by symbol inspection. Browser suites and landscape frame evidence were executed with PLAYWRIGHT_BROWSERS_PATH=/state/cache/ms-playwright (chromium headless shell v1243 installed there; HOME is a noexec tmpfs). Raw run output is not committed to the repository; it lives in /workspace/evidence/core-sync-a5059106-20260929/ (vendor.log, unit.log, build.log, browser.log, landscape-run.log plus per-case PNG/JSON, parity-summary.log, pack.log), archived by the supervisor with this job. scripts/parity-summary at this source returns PARITY-SUMMARY exact 209 / expected 210, skip 1 — unchanged from the previous core, so open GAP-009 is unaffected. source.commit names the pre-rebind candidate e1b8ddff43403d63df62c7362ed2712df3b4c9ee; the shipped candidate differs from it only by the source.commit/recordNote rebind in this file."
+  "recordNote": "The recorded checks and frame evidence were executed at this exact source (sha recorded in source.commit), the sync commit that ships the refreshed 68273906 core (Build: 68273906; the declared range 73c15be00d68..682739066d3b is contiguous in a fresh upstream clone despite the forced-delivery flag, and the effective new range vs the previously synced a5059106ea75 is a5059106ea75..682739066d3b), refreshed lock, and rebuilt op bundle. The commit changes no port source code: the upstream source delta is inside the vendored core bundle (the second GAP-032 audio fix in AudioInputManager: multi-device capture — requirements-driven additional getUserMedia streams keyed by deviceId via Pipeline.getAudioInputRequirements()/enumerateDevices with re-sync and full teardown, per-channel analysers, and rawReady from the bipolar time-domain mean with warn-and-min on uncapturable requirements), the effect catalog is unchanged at 210 effects, and all 210 locked effect artifacts are byte-identical to the previous core. The multi-device capture machinery was verified in the refreshed bundle by symbol inspection. Browser suites and landscape frame evidence were executed with PLAYWRIGHT_BROWSERS_PATH=/state/cache/ms-playwright (chromium headless shell v1243 installed there; HOME is a noexec tmpfs). Raw run output is not committed to the repository; it lives in /workspace/evidence/core-sync-68273906-20260929/ (vendor.log, unit.log, compiler-parity.log, build.log, browser.log, landscape-run.log plus per-case PNG/JSON, parity-summary.log, pack.log), archived by the supervisor with this job. scripts/parity-summary at this source returns PARITY-SUMMARY exact 209 / expected 210, skip 1 — unchanged from the previous core, so open GAP-009 is unaffected. source.commit names the pre-rebind candidate; the shipped candidate differs from it only by the source.commit/recordNote rebind in this file."
 }
