@@ -44,6 +44,26 @@ async function waitFor(check, message, timeout = 30_000) {
   throw new Error(`${message}${lastError ? `: ${lastError.message}` : ''}`)
 }
 
+// The DevTools endpoint can answer /json/version while the electron main
+// process is still starting up (a cold CI runner's first-run op cache rewrite
+// took >25s in cables 0.11.3 on windows-2025), which strands the websocket
+// handshake inside connectOverCDP until its own timeout fires. Retry the
+// connect so a slow startup cannot fail an otherwise healthy smoke run.
+const connectOverCDPWithRetry = async (url, message, attempts = 3, timeout = 60_000) => {
+  let lastError
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    try {
+      return await chromium.connectOverCDP(url, { timeout })
+    } catch (error) {
+      lastError = error
+      if (attempt < attempts) await sleep(2_000)
+    }
+  }
+  throw new Error(
+    `${message}: ${lastError && lastError.message ? lastError.message : String(lastError)}`,
+  )
+}
+
 const terminalLines = []
 const consoleErrors = []
 const pageErrors = []
@@ -144,7 +164,10 @@ try {
     return response.ok
   }, 'Cables Standalone did not expose CDP')
 
-  browser = await chromium.connectOverCDP(cdpUrl)
+  browser = await connectOverCDPWithRetry(
+    cdpUrl,
+    'Cables Standalone DevTools endpoint did not accept the CDP connection',
+  )
   const context = browser.contexts()[0]
   const page = await waitFor(() => context.pages()[0], 'Cables editor page did not open')
   page.on('console', (message) => {
@@ -848,7 +871,10 @@ try {
           const response = await fetch(`${url}/json/version`)
           return response.ok
         }, 'reloaded saved project did not expose CDP', 90_000)
-        browser = await chromium.connectOverCDP(url)
+        browser = await connectOverCDPWithRetry(
+          url,
+          'reloaded saved project DevTools endpoint did not accept the CDP connection',
+        )
         const page = await waitFor(
           () => browser.contexts()[0].pages()[0],
           'reloaded editor page did not open',
