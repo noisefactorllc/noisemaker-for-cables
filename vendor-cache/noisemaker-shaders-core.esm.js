@@ -3,8 +3,8 @@
  * Includes: CanvasRenderer + UIController + EffectSelect
  * Copyright (c) 2017-2026 Noise Factor LLC. https://noisefactor.io/
  * SPDX-License-Identifier: MIT
- * Build: 4f5e0d28
- * Date: 2026-09-29T09:11:33.330Z
+ * Build: ed478159
+ * Date: 2026-09-30T21:42:16.328Z
  */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
@@ -7182,8 +7182,28 @@ var DIAGNOSTIC_CODES = Object.freeze({
   COMPILE: "ERR_SHADER_COMPILE",
   LINK: "ERR_SHADER_LINK",
   MISSING_SOURCE: "ERR_SHADER_MISSING",
-  NO_SOURCE: "ERR_NO_WGSL_SOURCE"
+  NO_SOURCE: "ERR_NO_WGSL_SOURCE",
+  UNIFORM_BLOCK: "ERR_UNIFORM_BLOCK_TOO_LARGE",
+  UNKNOWN_FORMAT_FALLBACK: "ERR_UNKNOWN_FORMAT_FALLBACK",
+  DIMENSION_FALLBACK: "ERR_DIMENSION_FALLBACK",
+  MISSING_RENDER_TARGET: "ERR_MISSING_RENDER_TARGET",
+  GL_ERROR: "ERR_GL_ERROR",
+  DEVICE_VALIDATION: "ERR_DEVICE_VALIDATION"
 });
+var DiagnosticCollector = class {
+  constructor(cap = 64) {
+    this.cap = cap;
+    this.records = [];
+  }
+  add(record) {
+    this.records.push(record);
+    if (this.records.length > this.cap) this.records.shift();
+    return record;
+  }
+  clear() {
+    this.records.length = 0;
+  }
+};
 var ShaderDiagnostic = class extends Error {
   /**
    * @param {Object} spec
@@ -7291,6 +7311,8 @@ var WebGL2Backend = class _WebGL2Backend extends Backend {
     this.maxTextureUnits = 16;
     this.glErrorCheckFrames = 0;
     this._glCheckThisFrame = false;
+    this.diagnostics = new DiagnosticCollector();
+    this._warnedFormatFallbacks = /* @__PURE__ */ new Set();
     this._vec2Buf = new Float32Array(2);
     this._vec3Buf = new Float32Array(3);
     this._vec4Buf = new Float32Array(4);
@@ -8132,6 +8154,26 @@ var WebGL2Backend = class _WebGL2Backend extends Backend {
     }
     return uniforms;
   }
+  /**
+   * Record a missing render target (FBO or MRT attachment) as a structured
+   * diagnostic (GAP-007). The legacy console warning is unchanged and still
+   * fires on every occurrence; the record is deduplicated per
+   * kind|output|pass so per-frame rendering cannot grow it unboundedly.
+   */
+  _recordMissingRenderTarget(kind, outputId, passId) {
+    if (!this._warnedMissingRenderTargets) this._warnedMissingRenderTargets = /* @__PURE__ */ new Set();
+    const key = `${kind}|${outputId}|${passId}`;
+    if (this._warnedMissingRenderTargets.has(key)) return;
+    this._warnedMissingRenderTargets.add(key);
+    this.diagnostics.add({
+      code: DIAGNOSTIC_CODES.MISSING_RENDER_TARGET,
+      backend: "webgl2",
+      stage: "render",
+      kind,
+      pass: passId,
+      output: outputId
+    });
+  }
   extractUniformBlocks(program, spec) {
     const gl = this.gl;
     const blocks = [];
@@ -8145,11 +8187,14 @@ var WebGL2Backend = class _WebGL2Backend extends Backend {
       const layoutSize = this.getPackedUniformLayoutSize(spec.uniformLayout);
       const size = Math.max(declaredSize, layoutSize);
       if (size > maxBlockSize) {
-        throw {
-          code: "ERR_UNIFORM_BLOCK_TOO_LARGE",
+        throw new ShaderDiagnostic({
+          code: DIAGNOSTIC_CODES.UNIFORM_BLOCK,
+          backend: "webgl2",
+          stage: "uniform-block",
           detail: `Uniform block ${name} requires ${size} bytes; device limit is ${maxBlockSize}`,
+          messages: parseGLSLInfoLog(`Uniform block ${name} requires ${size} bytes; device limit is ${maxBlockSize}`),
           program
-        };
+        });
       }
       const bindingPoint = blocks.length;
       const buffer = gl.createBuffer();
@@ -8229,6 +8274,7 @@ var WebGL2Backend = class _WebGL2Backend extends Backend {
           if (!viewportTex) viewportTex = tex;
         } else {
           console.warn(`[executePass MRT] Texture not found for ${currentOutputId} in pass ${effectivePass.id}`);
+          this._recordMissingRenderTarget("mrt", currentOutputId, effectivePass.id);
         }
       }
       if (textures.length > 0) {
@@ -8247,6 +8293,7 @@ var WebGL2Backend = class _WebGL2Backend extends Backend {
       fbo = this.fbos.get(outputId);
       if (!fbo && outputId !== "screen") {
         console.warn(`[executePass] FBO not found for ${outputId} in pass ${effectivePass.id}`);
+        this._recordMissingRenderTarget("fbo", outputId, effectivePass.id);
       }
       viewportTex = this.textures.get(outputId);
     }
@@ -8408,6 +8455,16 @@ var WebGL2Backend = class _WebGL2Backend extends Backend {
         const outputId2 = effectivePass.outputs?.color || Object.values(effectivePass.outputs || {})[0] || "unknown";
         const inputIds = effectivePass.inputs ? Object.entries(effectivePass.inputs).map(([k, v]) => `${k}=${v}`).join(", ") : "none";
         console.error(`WebGL Error ${error} in pass ${effectivePass.id} (effect: ${effectivePass.effectKey || "unknown"}, program: ${effectivePass.program}, output: ${outputId2}, inputs: ${inputIds})`);
+        this.diagnostics.add({
+          code: DIAGNOSTIC_CODES.GL_ERROR,
+          backend: "webgl2",
+          stage: "render",
+          pass: effectivePass.id,
+          effect: effectivePass.effectKey || "unknown",
+          program: effectivePass.program,
+          output: outputId2,
+          error
+        });
         error = gl.getError();
       }
     }
@@ -8782,7 +8839,23 @@ var WebGL2Backend = class _WebGL2Backend extends Backend {
         type: gl.FLOAT
       }
     };
-    return formats[format] || formats["rgba8"];
+    const resolved = formats[format];
+    if (resolved) return resolved;
+    if (format !== void 0 && format !== null) {
+      const key = String(format);
+      if (!this._warnedFormatFallbacks.has(key)) {
+        this._warnedFormatFallbacks.add(key);
+        console.warn(`[WebGL2] Unknown texture format '${key}'; falling back to rgba8`);
+        this.diagnostics.add({
+          code: DIAGNOSTIC_CODES.UNKNOWN_FORMAT_FALLBACK,
+          backend: "webgl2",
+          stage: "texture-create",
+          format: key,
+          fallback: "rgba8"
+        });
+      }
+    }
+    return formats["rgba8"];
   }
   /**
    * Convert blend factor string to GL constant
@@ -9338,8 +9411,16 @@ var WebGPUBackend = class _WebGPUBackend extends Backend {
     this._uniformBufferData = new ArrayBuffer(512);
     this._uniformDataView = new DataView(this._uniformBufferData);
     this._uniformBufferSize = 512;
+    this.diagnostics = new DiagnosticCollector();
     this.device.addEventListener("uncapturederror", (event) => {
-      console.error("WebGPU uncaptured error:", event.error?.message || event.error);
+      const detail = event.error?.message || String(event.error);
+      console.error("WebGPU uncaptured error:", detail);
+      this.diagnostics.add({
+        code: DIAGNOSTIC_CODES.DEVICE_VALIDATION,
+        backend: "webgpu",
+        stage: "device-validation",
+        detail
+      });
     });
   }
   createFrameExportQueue(options = {}) {
@@ -13219,6 +13300,8 @@ var Pipeline = class {
       this.sinkManager.add(new CanvasSink(backend));
     }
     this._disposed = false;
+    this.diagnostics = new DiagnosticCollector();
+    this._warnedDimensionFallbacks = /* @__PURE__ */ new Set();
     this.frameIndex = 0;
     this.lastTime = 0;
     this.surfaces = /* @__PURE__ */ new Map();
@@ -14433,7 +14516,7 @@ var Pipeline = class {
     if (typeof spec === "number") {
       return Math.max(1, Math.floor(spec));
     }
-    if (spec === "screen" || spec === "auto") {
+    if (spec === "screen" || spec === "auto" || spec === "input" || spec === "resolution") {
       return screenSize;
     }
     if (typeof spec === "string" && spec.endsWith("%")) {
@@ -14471,6 +14554,27 @@ var Pipeline = class {
           }
         }
         return Math.max(1, computed);
+      }
+    }
+    if (spec !== void 0 && spec !== null) {
+      let key = typeof spec === "object" ? null : String(spec);
+      if (key === null) {
+        try {
+          key = JSON.stringify(spec);
+        } catch {
+          key = "[unserializable]";
+        }
+      }
+      if (!this._warnedDimensionFallbacks.has(key)) {
+        this._warnedDimensionFallbacks.add(key);
+        console.warn(`[Pipeline] Unknown dimension spec ${key}; falling back to screen size (${screenSize})`);
+        this.diagnostics.add({
+          code: "ERR_DIMENSION_FALLBACK",
+          backend: this.backend && typeof this.backend.getName === "function" ? this.backend.getName() : "unknown",
+          stage: "dimension",
+          spec: key,
+          fallback: "screen"
+        });
       }
     }
     return screenSize;

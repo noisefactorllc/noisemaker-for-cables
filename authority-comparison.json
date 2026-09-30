@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "recordedAt": "2026-09-29",
+  "recordedAt": "2026-09-30",
   "source": {
     "repository": "noisefactorllc/noisemaker-for-cables",
-    "commit": "58cb90e29c185792476da96df279f14f2147bedd"
+    "commit": "ac161e2c316d0c9082e9b90088f34187d42dd9b2"
   },
   "authorityComparison": {
     "method": "The locked vendored artifacts are verified byte-for-byte against the published authority CDN recorded in vendor.lock.json, and the committed op bundle is identified by SHA-256.",
@@ -17,16 +17,16 @@
       "sourceBaseUrl": "https://shaders.noisedeck.app/1/",
       "engineBundle": {
         "path": "vendor-cache/noisemaker-shaders-core.esm.js",
-        "sha256": "e4ff3c663b22a74bcef68b78d28848edc4a7ae1ca61180cb0e491428baa3066f",
-        "bytes": 898266
+        "sha256": "e406603e2aa9c3bb202264b74968e5c55c13df655c7e5fe968a299757f3ecb02",
+        "bytes": 903581
       },
-      "upstreamEngine": "noisemaker@682739066d3b",
-      "buildHeader": "Build: 68273906",
-      "vendorLockSha256": "14ffd1a0e6870f30a5cb6a5cca69d81c2ac9991260277d9f196475cca42837df"
+      "upstreamEngine": "noisemaker@ed478159e5a3",
+      "buildHeader": "Build: ed478159",
+      "vendorLockSha256": "cafc817a44971be174548c23b50828f9870b384ce39dcbd3bc22551a8c8a9683"
     },
     "opBundle": {
       "path": "Ops.Extension.Noisemaker/Ops.Extension.Noisemaker.Program/lib_noisemaker-cablesgl.js",
-      "sha256": "489386e931570ea3e296bc5ac5636e92d82147032b98459e6e9cfd384081a495"
+      "sha256": "c654e46d6b450e5afdc646ce157c3388ff4e82e1f069198e34c18c24e0ab6e43"
     },
     "landscapeEffects": [
       {
@@ -43,7 +43,7 @@
     "compatDeclaration": {
       "file": "export-kit/kit.config.json",
       "mode": "list",
-      "note": "At 3e2c05c8 the declaration is narrowed to the tested authority scope: compat.mode \"list\" with the explicit 209 effect IDs the recorded rendered parity qualifies (210 catalog ids minus the compile-only filter/octaveWarp; the three GAP-007 overlay effects are settled at zero mismatched channels). tools/compat-gate.mjs rejects any declaration claiming more before delivery, with negative identity controls in test/compat-gate.test.js. The exact-source kit export is blocked: the dispatch workflow ran successfully at 3e2c05c8 (run 36258122499) but the scaffold export-kit build did not publish — kits.noisedeck.app/cables/0 still served version 0.1.30 at git_hash 8dd702e5 with compat.json {\"mode\":\"all\"} through 2026-09-26T19:38:01Z. The scaffold repository is private and unreachable with this job's credentials; GAP-006 records the blocked state and the unblocking action for the scaffold owner."
+      "note": "The declaration is narrowed to the tested authority scope: compat.mode \"list\" with the explicit 209 effect IDs the recorded rendered parity qualifies (210 catalog ids minus the compile-only filter/octaveWarp). tools/compat-gate.mjs rejects any declaration claiming more before delivery, with negative identity controls in test/compat-gate.test.js. The earlier exact-source kit-publication blocker is cleared (2026-09-30): kit 0.1.31 at source 7615588 is published and verified (17/17 inventory files, list declaration served; see GAP-006), so the served compat declaration matches this repo's narrowed scope."
     }
   }
 }
