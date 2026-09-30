@@ -95,7 +95,7 @@ The GAP-001 qualifying evidence is executed at source `7fe3b1627251a916d380124a4
 
 ### Daily review, 2026-09-25
 
-31 compiler tests pass at the current source. They do not render the native Cables op or qualify updated landscape filtering. The prior highest-priority rendered finding remains open. Current full parity and the native host workflow are stale and unverified. [Raw evidence](/Users/alex/.codex/automations/noisemaker-port-completion-audit/review-20260925-053200/cables-current-probe.json).
+31 compiler tests pass at the current source. They do not render the native Cables op or qualify updated landscape filtering. The prior highest-priority rendered finding remains open. Current full parity and the native host workflow are stale and unverified. Raw evidence (audit evidence `review-20260925-053200/cables-current-probe.json`).
 The review checked source changes, worker evidence, source-bound CI where present, and current served inventories. Full installed-host and platform qualification remains incomplete.
 
 Evidence belongs to run `20260922-cables-03` in the designated automation store.
@@ -335,7 +335,7 @@ The operator does not authorize additional effects or parity checkpoint advancem
 
 ## 6. Pass history
 
-2026-09-25 daily review at `6a5a9048471621a86cb8025bc10ce650b7efa842`: source freshness and bounded evidence reviewed. Open qualification limits retained. [Retained review evidence](/Users/alex/.codex/automations/noisemaker-port-completion-audit/review-20260925-053200/cables-current-probe.json). No new closure claimed.
+2026-09-25 daily review at `6a5a9048471621a86cb8025bc10ce650b7efa842`: source freshness and bounded evidence reviewed. Open qualification limits retained. Retained review evidence (audit evidence `review-20260925-053200/cables-current-probe.json`). No new closure claimed.
 
 2026-09-26 review at `411b2b646bb6692918c17d705f0afdaf837f6e48`: no new worker audit result arrived since the last review. The review checked the implementation commits `ec4b95b..411b2b6` and their closure claims. Both new closures (GAP-001 rendered qualification, GAP-002 defined matrix) were independently rechecked and retained. The GAP-001 qualifying source was corrected to the executed SHA. Served kit `0.1.27` verified. Full parity, native host, diagnostics, builder rejection, overlay nondeterminism, and release acceptance remain open.
 

@@ -2,17 +2,17 @@
   "cablesStandalone": {
     "platform": "macos",
     "expectedVersion": "0.11.3",
-    "appBundlePath": "/Users/alex/.local/state/scaffold-cloud/office/jobs/83f36a98-66cf-420b-8438-f9294648b977/repos/noisemaker-for-cables/scratch/cables-dmg/cables-0.11.3.app",
+    "appBundlePath": "scratch/cables-dmg/cables-0.11.3.app",
     "asarIntegrity": {
       "algorithm": "SHA256",
-      "asarPath": "/Users/alex/.local/state/scaffold-cloud/office/jobs/83f36a98-66cf-420b-8438-f9294648b977/repos/noisemaker-for-cables/scratch/cables-dmg/cables-0.11.3.app/Contents/Resources/app.asar",
+      "asarPath": "scratch/cables-dmg/cables-0.11.3.app/Contents/Resources/app.asar",
       "expectedSha256": "b414794a1ab54d13099bc1ca105a26e9def62994160416b613c5809a560b5a17",
       "actualSha256": "b414794a1ab54d13099bc1ca105a26e9def62994160416b613c5809a560b5a17",
       "headerByteLength": 8344091,
       "headerOffset": 16,
       "wholeFileSha256": "090aed3e888ec1c5a008f4374577c6bdd2eedc66f6ceb057157eca16bb022ac7"
     },
-    "executablePath": "/Users/alex/.local/state/scaffold-cloud/office/jobs/83f36a98-66cf-420b-8438-f9294648b977/repos/noisemaker-for-cables/scratch/cables-dmg/cables-0.11.3.app/Contents/MacOS/cables",
+    "executablePath": "scratch/cables-dmg/cables-0.11.3.app/Contents/MacOS/cables",
     "executableSha256": "1848362c77a164ec56f70d25cb690540539566d2750c7c60e133398b1546ca79",
     "infoPlist": {
       "CFBundleDisplayName": "cables",
