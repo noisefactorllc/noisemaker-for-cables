@@ -3,8 +3,8 @@
  * Includes: CanvasRenderer + UIController + EffectSelect
  * Copyright (c) 2017-2026 Noise Factor LLC. https://noisefactor.io/
  * SPDX-License-Identifier: MIT
- * Build: ed478159
- * Date: 2026-09-30T21:42:16.328Z
+ * Build: cb22a05e
+ * Date: 2026-10-01T12:52:45.396Z
  */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
@@ -17810,6 +17810,90 @@ var CanvasRenderer = class {
       }
     }
     await Promise.all(shaderPromises);
+  }
+  /**
+   * Register a Portable definition whose shader sources have already been loaded.
+   * Registries are shared within a JavaScript realm. Use a fresh realm when
+   * verifying a replacement; duplicate names must not change accepted effects.
+   * This checks registration inputs, not shader compilation or backend support.
+   * @param {object} definition - Raw Portable JSON plus shaders[program].glsl/wgsl
+   * @returns {Promise<object>} Cached user effect with an Effect instance
+   */
+  async registerPortableEffect(definition) {
+    const isRecord = (value) => value !== null && typeof value === "object" && !Array.isArray(value);
+    const fail = (message) => {
+      throw new Error(`Portable effect: ${message}`);
+    };
+    if (!isRecord(definition)) fail("expected a definition object");
+    const { namespace, passes, shaders, globals, starter } = definition;
+    const func = definition.func ?? definition.name;
+    if (typeof func !== "string" || !isValidIdentifier(func)) fail("func must be a DSL identifier");
+    const reserved = [...Object.getOwnPropertyNames(Object.prototype), "prototype"];
+    if (reserved.includes(func)) fail(`reserved func ${func}`);
+    const pending = [definition];
+    const visited = /* @__PURE__ */ new Set();
+    while (pending.length) {
+      const value = pending.pop();
+      if (!value || typeof value !== "object" || visited.has(value)) continue;
+      visited.add(value);
+      for (const [key, child] of Object.entries(value)) {
+        if (reserved.includes(key)) fail(`reserved metadata key ${key}`);
+        if (child && typeof child === "object") pending.push(child);
+      }
+    }
+    if (namespace !== void 0 && namespace !== "user") fail("namespace must be user");
+    if (starter !== void 0 && typeof starter !== "boolean") fail("starter must be boolean");
+    if (!Array.isArray(passes) || passes.length === 0) fail("passes must be a nonempty array");
+    if (!isRecord(shaders)) fail("loaded shaders are required");
+    const hasSource = (source) => typeof source === "string" && source.trim().length > 0;
+    for (const pass of passes) {
+      if (!isRecord(pass) || typeof pass.program !== "string" || !pass.program) fail("each pass must name a program");
+      for (const field of ["inputs", "outputs"]) {
+        if (pass[field] !== void 0 && (!isRecord(pass[field]) || Object.values(pass[field]).some((value) => !hasSource(value)))) {
+          fail(`pass ${field} must map names to nonempty texture references`);
+        }
+      }
+      const source = shaders[pass.program];
+      if (!isRecord(source) || ![source.glsl, source.wgsl].some(hasSource)) {
+        fail(`missing shader source for ${pass.program}`);
+      }
+    }
+    for (const language of ["glsl", "wgsl"]) {
+      if (passes.some((pass) => hasSource(shaders[pass.program][language]))) {
+        for (const pass of passes) {
+          if (!hasSource(shaders[pass.program][language])) fail(`missing ${language} shader source for ${pass.program}`);
+        }
+      }
+    }
+    if (globals !== void 0 && (!isRecord(globals) || Object.values(globals).some((spec) => !isRecord(spec)))) {
+      fail("globals must contain parameter objects");
+    }
+    for (const [key, spec] of Object.entries(globals || {})) {
+      if (spec.choices !== void 0 && (!isRecord(spec.choices) || Object.values(spec.choices).some((value) => value !== null && (spec.type === "string" ? typeof value !== "string" : !Number.isFinite(value))))) {
+        fail(`choices for ${key} must map names to ${spec.type === "string" ? "strings" : "numbers"} or null`);
+      }
+    }
+    if (definition.paramAliases !== void 0 && (!isRecord(definition.paramAliases) || Object.values(definition.paramAliases).some((target) => typeof target !== "string" || !Object.hasOwn(globals || {}, target)))) {
+      fail("paramAliases must map names to declared globals");
+    }
+    if (getEffect(`user.${func}`) || getEffect(`user/${func}`)) fail(`user.${func} is already registered`);
+    const instance = new Effect({ ...definition, func, namespace: "user" });
+    instance.shaders = shaders;
+    const pipelineInputs = ["inputTex", "inputTex3d", "inputGeo", "inputXyz", "inputVel", "inputRgba", "src", "o0", "o1", "o2", "o3", "o4", "o5", "o6", "o7"];
+    instance.starter = starter ?? !passes.some((pass) => Object.values(pass.inputs || {}).some((input) => pipelineInputs.includes(input)));
+    const effect = { namespace: "user", name: func, instance };
+    const previousBare = getEffect(func);
+    let choices;
+    try {
+      choices = this.registerEffectWithRuntime(effect);
+    } finally {
+      if (previousBare === void 0) unregisterEffect(func);
+      else registerEffect(func, previousBare);
+    }
+    this._enums = await mergeIntoEnums(choices);
+    if (instance.starter) registerStarterOps([`user.${func}`]);
+    this._loadedEffects.set(`user/${func}`, effect);
+    return effect;
   }
   /**
    * Register effect with the runtime

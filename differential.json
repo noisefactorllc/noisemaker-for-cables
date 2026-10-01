@@ -1,38 +1,34 @@
 {
   "schemaVersion": 1,
-  "recordedAt": "2026-09-30",
+  "recordedAt": "2026-10-01",
   "source": {
     "repository": "noisefactorllc/noisemaker-for-cables",
-    "commit": "9c23ccab57a26705381fd617d3a64b064562e200"
+    "commit": "869911f41b9e37bbafe22bd523355a4c7db3ac44"
   },
   "upstreamRangeAudit": {
-    "declaredRange": "noisefactorllc/noisemaker 4f5e0d28bdc155700393c314e9a5aafcc4da91fd..e24c844f8dada85551ab084f41db8944fbc176c8 (force-pushed delivery; observed ranges c2a19c70eae7..dd4606eaa034, dd4606eaa034..a0e9bbffc038, a0e9bbffc038..e24c844f8dad, e105344b4a2b..16c1997cd551, 16c1997cd551..ed478159e5a3)",
+    "declaredRange": "noisefactorllc/noisemaker e24c844f8dada85551ab084f41db8944fbc176c8..cb22a05eff9afed99fcf22a482b944c26f43e814 (forced-delivery flag; observed range f5ca07cda9e4..cb22a05eff9a)",
     "forcePushOrNonContiguous": true,
-    "audit": "Audited in a local upstream checkout (/state/cache/noisemaker, a fresh clone of noisefactorllc/noisemaker) against the job's actual delivered SHAs, not trusting the summary: the raw audit (remote URL, resolved shas, merge-base --is-ancestor checks, git log --stat and the complete shaders/ diff) is retained in upstream-audit.log in this job's evidence archive, and every command in it re-runs verbatim against a fresh clone of the public repository to reproduce the audit. All delivered SHAs resolve. git merge-base --is-ancestor confirms 4f5e0d28bdc1 is an ancestor of e24c844f8dad, so the declared range is one contiguous line despite the forced-delivery flag, and e24c844f8dad is in turn an ancestor of ed478159e5a3, the head the served CDN core was rebuilt at (Build: ed478159) — the two observed delivery legs (the GAP-007 runtime leg c2a19c70 -> dd4606ea -> a0e9bbff -> e24c844f and the GAP-010 harness leg e105344b -> 16c1997c -> ed478159) are cumulative, not disjoint. The previously synced head is 4f5e0d28bdc1, so the effective new range is 4f5e0d28bdc1..ed478159e5a3: 5 commits touching shaders/, of which 3 are shipped runtime source (GAP-007 backend diagnostics: the uniform-block throw joins the ShaderDiagnostic union with a structured stage; the historically silent WebGL unknown-texture-format rgba8 fallback and Pipeline unknown-dimension-form screen fallback gain deduplicated structured diagnostics plus the validator-accepted 'input'/'resolution' dimension keywords recognized as known forms; missing render-target and gl.getError failures and WebGPU uncaptured device errors are recorded in capped DiagnosticCollector instances on the backend and pipeline) and 2 are upstream test-harness-only changes (GAP-010 resolveUniformGateStatus in shaders/tests, not consumed by the port). No change to shaders/effects, shaders/lang or effect definitions, so the effect catalog is unchanged at 210 locked effects. Symbol inspection of the refreshed bundle confirms the new machinery (DiagnosticCollector, _warnedFormatFallbacks, _warnedDimensionFallbacks, _recordMissingRenderTarget and the new diagnostic codes ERR_UNIFORM_BLOCK_TOO_LARGE, ERR_UNKNOWN_FORMAT_FALLBACK, ERR_DIMENSION_FALLBACK, ERR_MISSING_RENDER_TARGET, ERR_GL_ERROR, ERR_DEVICE_VALIDATION all present; the harness-only resolveUniformGateStatus correctly absent from the core bundle).",
-    "rangeCommitsTouchingShaders": 5,
-    "shadersDiffStat": "git diff 4f5e0d28bdc1..ed478159e5a3 -- shaders/src/: 4 files changed, 151 insertions(+), 9 deletions(-) (diagnostics.js, webgl2.js, webgpu.js, pipeline.js). Tests (upstream harness only, not consumed by the port): test_backend_diagnostics.js (+282), test_uniform_status.js (+71), uniform-status.js (+24), test-harness.js (+4/-2). node tools/generate-effect-entry.mjs regenerated identical static imports (src/generated unchanged); vendor:update changed only the core bundle entry in vendor.lock.json (all 210 effect artifacts byte-identical).",
+    "audit": "Audited in a local upstream checkout (/state/cache/noisemaker, a fresh clone of noisefactorllc/noisemaker) against the job's actual delivered SHAs, not trusting the summary: the raw audit (remote URL, resolved shas, merge-base --is-ancestor checks, git log --stat and the complete shaders/ diff) is retained in upstream-audit.log in this job's evidence archive, and every command in it re-runs verbatim against a fresh clone of the public repository to reproduce the audit. All delivered SHAs resolve; git merge-base --is-ancestor confirms e24c844f8dad is an ancestor of cb22a05eff9a, so the declared range is one contiguous line despite the forced-delivery flag. The previously synced head is ed478159e5a3 (shipped by the prior sync commit 9c23cca), and the served CDN core was rebuilt to Build: cb22a05e during this job (polled at 2026-10-01T12:53Z; the intermediate polls at 12:49-12:52Z still served Build: ed478159, so the refresh is directly observed, not assumed). The effective new range versus the previously synced head is therefore ed478159e5a3..cb22a05eff9a: 3 commits touch shaders/, of which 1 is shipped runtime source (cb22a05eff9a: CanvasRenderer.registerPortableEffect — a new additive registration path for Portable definitions with preloaded GLSL/WGSL sources: definition validation including prototype-pollution reserved-key rejection, passes/shaders/globals/paramAliases contract checks, duplicate-name rejection, namespace forced to user.*, starter inference from pipeline inputs, shared operator/enum registry registration with built-in bare-lookup preservation) and 2 are upstream test-harness-only changes (16c1997cd551 resolveUniformGateStatus --strict-uniforms gate mirror, ed478159e5a3 unrecognized outer-status classification — the harness gate code these touch already shipped with the previous sync's core). No change to shaders/effects, shaders/lang or effect definitions, so the effect catalog is unchanged at 210 locked effects. Symbol inspection of the refreshed bundle confirms registerPortableEffect is present and the upstream-harness-only resolveUniformGateStatus remains absent; the port has no Portable registration surface of its own (no Portable references in src/, test/, tools/), so the additive core method requires no adapter change.",
+    "rangeCommitsTouchingShaders": 3,
+    "shadersDiffStat": "git diff ed478159e5a3..cb22a05eff9a -- shaders/: 5 files changed, 335 insertions(+), 3 deletions(-) (src/renderer/canvas.js +93/-1; tests test_portable_registration.js +146, test_uniform_status.js +71, uniform-status.js +24, test-harness.js +4/-2 — upstream harness only, not consumed by the port). No change to shaders/src/effects, shaders/src/lang or shaders/src/runtime. node tools/generate-effect-entry.mjs regenerated identical static imports (src/generated unchanged); vendor:update changed only the core bundle entry in vendor.lock.json (all 210 effect artifacts byte-identical).",
     "keyShadersSrcCommits": [
-      "dd4606eaa034 feat(backends): close GAP-007 — uniform-block throw joins the ShaderDiagnostic union; silent format/dimension fallbacks gain structured diagnostics",
-      "a0e9bbffc038 fix(backends): recognize the validator-accepted 'input'/'resolution' dimension keywords in resolveDimension (GAP-007 follow-up)",
-      "e24c844f8dad feat(backends): record runtime resource and device-validation failures in backend.diagnostics (GAP-007 final leg)",
-      "16c1997cd551 feat(tests): pin the harness --strict-uniforms gate through a mirrored resolveUniformGateStatus (GAP-010; upstream harness only)",
-      "ed478159e5a3 fix(tests): classify unrecognized testUniformResponsiveness outer statuses as error (GAP-010; upstream harness only)"
+      "cb22a05eff9a feat(renderer): register Portable effects through the shared canvas renderer (CanvasRenderer.registerPortableEffect)"
     ]
   },
   "authority": {
     "vendorLock": "vendor.lock.json",
-    "vendorLockSha256": "cafc817a44971be174548c23b50828f9870b384ce39dcbd3bc22551a8c8a9683",
+    "vendorLockSha256": "cdba8171084f5ecbf3b85820fba6c1744ec5bf7d27dbe1c31e242225c89d78f7",
     "engineBundle": {
       "path": "vendor-cache/noisemaker-shaders-core.esm.js",
-      "sha256": "e406603e2aa9c3bb202264b74968e5c55c13df655c7e5fe968a299757f3ecb02",
-      "bytes": 903581,
+      "sha256": "c6dd9d8119abb526ce92e3f63b7498d4a96dcf4241e6006de1df80ac77783b2e",
+      "bytes": 908465,
       "url": "https://shaders.noisedeck.app/1/noisemaker-shaders-core.esm.js"
     },
-    "upstreamEngine": "noisemaker@ed478159e5a3"
+    "upstreamEngine": "noisemaker@cb22a05eff9a"
   },
   "opBundle": {
     "path": "Ops.Extension.Noisemaker/Ops.Extension.Noisemaker.Program/lib_noisemaker-cablesgl.js",
-    "sha256": "c654e46d6b450e5afdc646ce157c3388ff4e82e1f069198e34c18c24e0ab6e43"
+    "sha256": "9daec88062d7a8350f888887be28a985be80ac2123bf45aab156c9630ab8d8c9"
   },
   "compilerDifferential": {
     "method": "Port facade src/browser.js compileProgram versus the vendored reference compiler (vendor-cache/noisemaker-shaders-core.esm.js) for both landscape filtering modes; graphs normalized by removing only compiledAt.",
@@ -56,7 +52,7 @@
         "warningsMatched": true
       }
     ],
-    "evidence": "test/polymorphic-parity.test.js: renderLandscape3d filtering modes match the vendored reference compiler and select expected defines (executed inside npm test at the refreshed ed478159 core, 36 of 36 parity tests pass)"
+    "evidence": "test/polymorphic-parity.test.js: renderLandscape3d filtering modes match the vendored reference compiler and select expected defines (executed inside npm test at the refreshed cb22a05e core, 36 of 36 parity tests pass)"
   },
   "renderedDifferential": {
     "method": "Browser harness (test/browser) renders both landscape filtering modes through the reference WebGL2 backend and the public Cables adapter backend (CablesWebGL2Backend) at 64x48 with deterministic inputs; frames compared after common float readback.",
@@ -77,47 +73,47 @@
         "finite": true
       }
     ],
-    "rawEvidence": "/workspace/evidence/core-sync-ed478159-20260930/ holds the executed-run logs and landscape comparison output (landscape-run.log: both cases mismatchedChannels 0, copyExact true, finite true; reference/adapter PNGs and per-case comparison JSON alongside) produced at the refreshed ed478159 core; the archive also carries upstream-audit.log (raw delivered-SHA ancestry and shaders diff, re-runnable verbatim against a fresh upstream clone); raw output is kept out of the repository and archived by the supervisor with this job.",
-    "evidence": "test/browser/pixel-parity.spec.js landscape-voxel and landscape-isosurface cases; npm run test:browser passes 3 of 3 suites (210/210 compile+link, 209 rendered catalog effects, 26 representative frame comparisons, state hygiene) at the refreshed ed478159 core",
+    "rawEvidence": "/workspace/evidence/core-sync-cb22a05e-20261001/ holds the executed-run logs and landscape comparison output (landscape-run.log: both cases mismatchedChannels 0, copyExact true, finite true; reference/adapter PNGs and per-case comparison JSON alongside) produced at the refreshed cb22a05e core; the archive also carries upstream-audit.log (raw delivered-SHA ancestry and shaders diff, re-runnable verbatim against a fresh upstream clone); raw output is kept out of the repository and archived by the supervisor with this job.",
+    "evidence": "test/browser/pixel-parity.spec.js landscape-voxel and landscape-isosurface cases; npm run test:browser passes 3 of 3 suites (210/210 compile+link, 209 rendered catalog effects, 26 representative frame comparisons, state hygiene) at the refreshed cb22a05e core",
     "limits": "The standalone Cables player boundary requires the native host harness (CABLES_APP) and remains under GAP-003 host qualification; this record covers the op runtime boundary in the browser harness."
   },
   "executedChecks": [
     {
       "command": "node --test test/polymorphic-parity.test.js",
       "exitCode": 0,
-      "result": "36 pass, 0 fail (executed inside npm test and standalone at the refreshed ed478159 core)",
-      "log": "/workspace/evidence/core-sync-ed478159-20260930/compiler-parity.log"
+      "result": "36 pass, 0 fail (executed inside npm test and standalone at the refreshed cb22a05e core)",
+      "log": "/workspace/evidence/core-sync-cb22a05e-20261001/compiler-parity.log"
     },
     {
       "command": "npm test",
       "exitCode": 0,
       "result": "269 pass, 0 fail, 0 skipped",
-      "log": "/workspace/evidence/core-sync-ed478159-20260930/unit.log"
+      "log": "/workspace/evidence/core-sync-cb22a05e-20261001/unit.log"
     },
     {
       "command": "npm run vendor:verify",
       "exitCode": 0,
       "result": "210/210 effects verified, 212 artifacts",
-      "log": "/workspace/evidence/core-sync-ed478159-20260930/vendor-verify.log"
+      "log": "/workspace/evidence/core-sync-cb22a05e-20261001/vendor-verify.log"
     },
     {
       "command": "npm run test:browser",
       "exitCode": 0,
       "result": "3 suites passed",
-      "log": "/workspace/evidence/core-sync-ed478159-20260930/browser.log"
+      "log": "/workspace/evidence/core-sync-cb22a05e-20261001/browser.log"
     },
     {
       "command": "scripts/parity-summary",
       "exitCode": 0,
       "result": "PARITY-SUMMARY {\"defer\":0,\"exact\":209,\"expected\":210,\"executed\":210,\"fail\":0,\"missing\":0,\"near\":0,\"skip\":1,\"strict\":0} — 209 rendered catalog effects byte-identical to the independent reference at the zero-channel ceiling; the single skip is the recorded compile-only exclusion filter/octaveWarp; unchanged from the previous core, so open GAP-009 is unaffected by this sync",
-      "log": "/workspace/evidence/core-sync-ed478159-20260930/parity-summary.log"
+      "log": "/workspace/evidence/core-sync-cb22a05e-20261001/parity-summary.log"
     },
     {
       "command": "npm pack --dry-run",
       "exitCode": 0,
       "result": "exit 0 (noisefactor-noisemaker-for-cables-0.1.0.tgz)",
-      "log": "/workspace/evidence/core-sync-ed478159-20260930/pack.log"
+      "log": "/workspace/evidence/core-sync-cb22a05e-20261001/pack.log"
     }
   ],
-  "recordNote": "The recorded checks and frame evidence were executed at this exact source (sha recorded in source.commit), the sync commit that ships the refreshed ed478159 core (Build: ed478159; the declared range 4f5e0d28bdc1..e24c844f8dad is contiguous in a fresh upstream clone despite the forced-delivery flag, and the served CDN head ed478159e5a3 additionally contains it; the effective range versus the previously synced 4f5e0d28bdc1 is 4f5e0d28bdc1..ed478159e5a3), refreshed lock, and rebuilt op bundle. The commit changes no port source code: the upstream source delta is inside the vendored core bundle (GAP-007 backend diagnostics — the uniform-block throw joins the ShaderDiagnostic union, the historically silent unknown-format and unknown-dimension fallbacks gain deduplicated structured diagnostics with the 'input'/'resolution' keywords recognized as known forms, and missing render-target, gl.getError and WebGPU uncaptured device failures are recorded in capped DiagnosticCollector instances), the effect catalog is unchanged at 210 effects, and all 210 locked effect artifacts are byte-identical to the previous core. The new machinery was verified in the refreshed bundle by symbol inspection (DiagnosticCollector, _warnedFormatFallbacks, _warnedDimensionFallbacks, _recordMissingRenderTarget and the six new diagnostic codes present; the upstream-harness-only resolveUniformGateStatus absent). Browser suites and landscape frame evidence were executed with PLAYWRIGHT_BROWSERS_PATH=/state/cache/ms-playwright (chromium 1243 installed there; HOME is a noexec tmpfs). Raw run output (upstream-audit.log, vendor.log, vendor-verify.log, unit.log, compiler-parity.log, browser.log, landscape PNG/JSON, parity-summary.log, pack.log) is not committed to the repository; it lives in /workspace/evidence/core-sync-ed478159-20260930/ and is archived by the supervisor with this job. scripts/parity-summary at this source returns PARITY-SUMMARY exact 209 / expected 210, skip 1 — unchanged from the previous core, so open GAP-009 is unaffected. Final-acceptance correction (2026-09-30): the first review flagged that the archived pre-review test logs copied into evidence/core-sync-ed478159-20260930/ by the supervisor's own pre-review run reported 35 compiler-parity and 245 unit passes, inconsistent with this record's 36/269. The archived copies for these two suites were superseded by source-bound re-execution at the exact published candidate (sha-stamped headers, same commands): node --test test/polymorphic-parity.test.js = 36 pass / 0 fail and npm test = 269 pass / 0 fail, matching the recorded counts; the other archived logs are unchanged. Deployment evidence was also re-bound: kits.noisedeck.app/cables/0/deployment-meta.json serves version 0.1.32 at git_hash 9c23ccab57a26705381fd617d3a64b064562e200, all 17 served kit inventory files byte-match kit.json sha256+bytes, and the served op bundle sha256 equals this record's opBundle — recorded in /workspace/evidence/scaffold-export-kit-deployment-0.1.32-9c23cca.json (the downstream scaffold run_id is not retrievable with this job's read-only credentials; the served exact-source deployment is the downstream success evidence). source.commit names the sync candidate at which every recorded check and evidence artifact was executed; the shipped record commit differs from that candidate only in this file's source.commit field and this recordNote correction (verifiable as git diff <source.commit>..<this commit> -- differential.json — no other file, including no shipped artifact, differs)."
+  "recordNote": "The recorded checks and frame evidence were executed at this exact source (sha recorded in source.commit), the sync commit that ships the refreshed cb22a05e core (Build: cb22a05e; the declared range e24c844f8dad..cb22a05eff9a is contiguous in a fresh upstream clone despite the forced-delivery flag, and the effective range versus the previously synced ed478159e5a3 is ed478159e5a3..cb22a05eff9a), refreshed lock, and rebuilt op bundle. The commit changes no port source code: the upstream source delta is inside the vendored core bundle (CanvasRenderer.registerPortableEffect — an additive registration path for Portable definitions with preloaded GLSL/WGSL sources: definition validation including prototype-pollution reserved-key rejection, passes/shaders/globals/paramAliases contract checks, duplicate-name rejection, namespace forced to user.*, starter inference, shared operator/enum registry registration with built-in bare-lookup preservation; the two other shaders/ commits in the range are the upstream test-harness-only GAP-010 legs whose gate code already shipped with the previous core), the effect catalog is unchanged at 210 effects, and all 210 locked effect artifacts are byte-identical to the previous core. The new machinery was verified in the refreshed bundle by symbol inspection (registerPortableEffect present; the upstream-harness-only resolveUniformGateStatus absent); the port has no Portable registration surface of its own, so no adapter change is required. Browser suites and landscape frame evidence were executed with PLAYWRIGHT_BROWSERS_PATH=/state/cache/ms-playwright (chromium 1243 installed there; HOME is a noexec tmpfs). Raw run output (upstream-audit.log, vendor.log, vendor-verify.log, unit.log, compiler-parity.log, browser.log, landscape PNG/JSON and landscape-run.log, parity-summary.log, pack.log) is not committed to the repository; it lives in /workspace/evidence/core-sync-cb22a05e-20261001/ and is archived by the supervisor with this job. scripts/parity-summary at this source returns PARITY-SUMMARY exact 209 / expected 210, skip 1 — unchanged from the previous core, so open GAP-009 (octaveWarp GPU-execution defect pending the upstream shader fix) is unaffected by this sync. source.commit names the sync candidate at which every recorded check and evidence artifact was executed; if this record was squashed with the sync commit for single-commit publication, the shipped record commit differs from that candidate only in this source.commit field and this recordNote (verifiable as git diff <source.commit>..<this commit> — no other file, including no shipped artifact, differs)."
 }
