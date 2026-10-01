@@ -652,7 +652,17 @@ try {
   assert.equal(mediaProbe.readPixelsCount, 0, 'media path performed a CPU readback')
 
   const canvasResizeRequest = { height: 270, width: 480 }
-  const canvasResizeBefore = await frame.evaluate(({ height, width }) => {
+  // One bounded retry for the whole resize probe: a runner relayout race can
+  // revert the CGL canvas to the window CSS size between setSize and the
+  // texture re-render (run 36868533880, standalone macos-15-intel/0.11.0:
+  // canvas, cgl and texture all back at the initial 640x320 while the probe
+  // requested 480x270). Re-issuing setSize + Render is idempotent; a real
+  // regression still fails after the second attempt.
+  let canvasResizeBefore
+  let canvasResize
+  let canvasResizeTarget
+  for (let canvasResizeAttempt = 1; canvasResizeAttempt <= 2 && !canvasResize; canvasResizeAttempt += 1) {
+    canvasResizeBefore = await frame.evaluate(({ height, width }) => {
     const patch = gui.corePatch()
     const program = patch.getOpsByObjName('Ops.Extension.Noisemaker.Program')[0]
     const texture = program.getPort('Texture').get()
@@ -673,17 +683,16 @@ try {
       target: { height: patch.cgl.canvasHeight, width: patch.cgl.canvasWidth },
     }
   }, canvasResizeRequest)
-  const canvasResizeTarget = canvasResizeBefore.target
-  assert.equal(canvasResizeBefore.mode, 'Canvas')
-  assert.notDeepEqual(
-    { height: canvasResizeBefore.height, width: canvasResizeBefore.width },
-    canvasResizeTarget,
-    'Canvas resize target must differ from the initial Program texture size',
-  )
+    canvasResizeTarget = canvasResizeBefore.target
+    assert.equal(canvasResizeBefore.mode, 'Canvas')
+    assert.notDeepEqual(
+      { height: canvasResizeBefore.height, width: canvasResizeBefore.width },
+      canvasResizeTarget,
+      'Canvas resize target must differ from the initial Program texture size',
+    )
 
-  let canvasResize
-  try {
-    canvasResize = await waitFor(async () => frame.evaluate(({ height, width }) => {
+    try {
+      canvasResize = await waitFor(async () => frame.evaluate(({ height, width }) => {
     const patch = gui.corePatch()
     const program = patch.getOpsByObjName('Ops.Extension.Noisemaker.Program')[0]
     const texture = program?.getPort('Texture')?.get()
@@ -720,8 +729,9 @@ try {
     delete globalThis.__noisemakerCanvasResizeProbe
     return result
     }, canvasResizeTarget), 'Canvas-mode Program texture did not follow the CGL canvas resize')
-  } catch (error) {
-    const diagnostics = await frame.evaluate(() => {
+    } catch (error) {
+      if (canvasResizeAttempt >= 2) {
+        const diagnostics = await frame.evaluate(() => {
       const patch = gui.corePatch()
       const program = patch.getOpsByObjName('Ops.Extension.Noisemaker.Program')[0]
       const texture = program?.getPort('Texture')?.get()
@@ -748,8 +758,10 @@ try {
         },
       }
     })
-    error.message += `: ${JSON.stringify(diagnostics)}`
-    throw error
+        error.message += `: ${JSON.stringify(diagnostics)}`
+        throw error
+      }
+    }
   }
   assert.deepEqual(canvasResize, {
     canvas: canvasResizeTarget,
