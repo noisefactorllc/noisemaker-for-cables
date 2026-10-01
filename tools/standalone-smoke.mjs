@@ -49,19 +49,41 @@ async function waitFor(check, message, timeout = 30_000) {
 // took >25s in cables 0.11.3 on windows-2025), which strands the websocket
 // handshake inside connectOverCDP until its own timeout fires. Retry the
 // connect so a slow startup cannot fail an otherwise healthy smoke run.
-const connectOverCDPWithRetry = async (url, message, attempts = 3, timeout = 60_000) => {
+// attemptTimeouts lets call sites escalate: a busy main thread can hold the
+// /json/version fetch Playwright uses to find the websocket URL past a fixed
+// 60s window for minutes (run 36870464219, reloaded saved project on
+// windows-2025/0.11.0: /json/version answered the poll but three 60s connects
+// all timed out at 'retrieving websocket url'), so later attempts get more
+// time rather than repeating the same window.
+const connectOverCDPWithRetry = async (url, message, attemptTimeouts = [60_000, 60_000, 60_000], sleepMs = 2_000) => {
   let lastError
-  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+  for (let attempt = 1; attempt <= attemptTimeouts.length; attempt += 1) {
     try {
-      return await chromium.connectOverCDP(url, { timeout })
+      return await chromium.connectOverCDP(url, { timeout: attemptTimeouts[attempt - 1] })
     } catch (error) {
       lastError = error
-      if (attempt < attempts) await sleep(2_000)
+      if (attempt < attemptTimeouts.length) await sleep(sleepMs)
     }
   }
   throw new Error(
     `${message}: ${lastError && lastError.message ? lastError.message : String(lastError)}`,
   )
+}
+
+// The editor window can lag the DevTools HTTP endpoint: /json/version answers
+// before the page target exists, and connectOverCDP against a target-less
+// endpoint can strand. Wait for a page target to appear before connecting.
+const waitForCdpPageTarget = async (url, message, timeout = 90_000) => {
+  await waitFor(async () => {
+    try {
+      const response = await fetch(`${url}/json/list`, { signal: AbortSignal.timeout(5_000) })
+      if (!response.ok) return false
+      const targets = await response.json()
+      return Array.isArray(targets) && targets.some((target) => target.type === 'page')
+    } catch {
+      return false
+    }
+  }, message, timeout)
 }
 
 const terminalLines = []
@@ -163,6 +185,7 @@ try {
     const response = await fetch(`${cdpUrl}/json/version`)
     return response.ok
   }, 'Cables Standalone did not expose CDP')
+  await waitForCdpPageTarget(cdpUrl, 'Cables Standalone did not expose an editor page target')
 
   browser = await connectOverCDPWithRetry(
     cdpUrl,
@@ -883,9 +906,12 @@ try {
           const response = await fetch(`${url}/json/version`)
           return response.ok
         }, 'reloaded saved project did not expose CDP', 90_000)
+        await waitForCdpPageTarget(url, 'reloaded saved project did not expose an editor page target')
         browser = await connectOverCDPWithRetry(
           url,
           'reloaded saved project DevTools endpoint did not accept the CDP connection',
+          [60_000, 120_000, 120_000],
+          10_000,
         )
         const page = await waitFor(
           () => browser.contexts()[0].pages()[0],
