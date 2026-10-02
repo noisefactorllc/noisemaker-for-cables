@@ -60,6 +60,7 @@ const server = spawn(process.execPath, ['test/browser/server.mjs'], {
   stdio: 'inherit',
 })
 let browser
+let counts
 try {
   await new Promise((resolve, reject) => {
     const deadline = Date.now() + 30_000
@@ -74,7 +75,6 @@ try {
     poll()
   })
 
-  let counts
   try {
     const { chromium } = await import('playwright')
     browser = await chromium.launch({ headless: true })
@@ -140,7 +140,13 @@ try {
     counts ??= {
       defer: 0,
       exact: 0,
-      expected: requestedIds.length,
+      // The denominator is the requested id count, or the full authority
+      // catalog for a no-argument run, so an abort before or during the
+      // browser work still reports the authority's expected case count
+      // instead of 0.
+      expected: requestedIds.length > 0
+        ? requestedIds.length
+        : (catalogIds?.length ?? 0),
       executed: 0,
       fail: 0,
       missing: 0,
