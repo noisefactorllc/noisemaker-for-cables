@@ -28,6 +28,7 @@
 import { spawn } from 'node:child_process'
 import { readFile } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
+import { countCases } from './parity-summary-counting.mjs'
 
 const projectRoot = new URL('..', import.meta.url)
 const MANIFEST_PATH = new URL('vendor-cache/effects/manifest.json', projectRoot)
@@ -92,17 +93,6 @@ try {
     }
 
     const targetIds = requestedIds.length > 0 ? [...new Set(requestedIds)] : catalogIds
-    counts = {
-      defer: 0,
-      exact: 0,
-      expected: targetIds.length,
-      executed: 0,
-      fail: 0,
-      missing: 0,
-      near: 0,
-      skip: 0,
-      strict: 0,
-    }
     const indices = targetIds
       .map((id) => pageCatalogIds.indexOf(id))
       .filter((index) => index >= 0)
@@ -133,51 +123,9 @@ try {
       await page.waitForTimeout(BATCH_OVERHEAD_WAIT_MS)
     }
 
-    for (const id of targetIds) {
-      const result = resultsById.get(id)
-      if (!result) {
-        counts.missing += 1
-        console.log(JSON.stringify({ id, status: 'missing' }))
-        continue
-      }
-      if (result.rendered === false) {
-        counts.executed += 1
-        counts.skip += 1
-        console.log(JSON.stringify({
-          classification: result.classification ?? null,
-          compiled: result.compiled === true,
-          id,
-          linked: result.linked === true,
-          reason: result.reason ?? null,
-          status: 'skip',
-        }))
-        continue
-      }
-      const withinCeiling = (result.mismatchedChannels ?? Number.POSITIVE_INFINITY)
-        <= (result.channelCeiling ?? 0)
-      // The published contract requires every rendered case to satisfy all
-      // three gates: zero-ceiling channel match, exact internal→CGL output
-      // copy, and finite readback (test/browser/full-catalog.spec.js,
-      // parity/coverage-matrix.json checkpoint). Any unmet gate is a fail —
-      // within-ceiling cases that miss the copy/finite gates are NOT strict
-      // passes, so a closure could never hide a broken copy or non-finite
-      // readback behind exact+strict.
-      const gatesPass = withinCeiling && result.copyExact === true && result.finite === true
-      const status = gatesPass
-        ? (result.mismatchedChannels === 0 ? 'exact' : 'strict')
-        : 'fail'
-      counts.executed += 1
-      counts[status] += 1
-      console.log(JSON.stringify({
-        comparedChannels: result.comparedChannels,
-        copyExact: result.copyExact === true,
-        finite: result.finite === true,
-        firstDivergences: result.firstDivergences ?? [],
-        id,
-        maxChannelError: result.maxChannelError ?? null,
-        mismatchedChannels: result.mismatchedChannels ?? null,
-        status,
-      }))
+    const { counts, records } = countCases(targetIds, resultsById, sweepFailures)
+    for (const record of records) {
+      console.log(JSON.stringify(record))
     }
 
     for (const failure of sweepFailures) {

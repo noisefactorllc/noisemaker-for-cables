@@ -867,11 +867,6 @@ export async function runFullCatalog({ end, start = 0 } = {}) {
             result.firstDivergences = comparison.firstDivergences
           }
         }
-        results.push(result)
-        if (
-          result.rendered &&
-          (!result.copyExact || !result.finite || (result.mismatchedChannels ?? 1) > 0)
-        ) failures.push(result)
         const resourceChecks = {
           adapter: {
             after: context.resourceCounts(),
@@ -892,7 +887,17 @@ export async function runFullCatalog({ end, start = 0 } = {}) {
               }])),
         )
         if (Object.keys(leakedResources).length > 0) {
-          failures.push({ effectId, id: `${effectId}:resource-leak`, leakedResources })
+          result.resourceLeak = leakedResources
+        }
+        results.push(result)
+        if (
+          result.rendered &&
+          (!result.copyExact || !result.finite ||
+            (result.mismatchedChannels ?? 1) > 0 ||
+            result.resourceLeak !== undefined)
+        ) failures.push(result)
+        if (result.resourceLeak !== undefined) {
+          failures.push({ effectId, id: `${effectId}:resource-leak`, leakedResources: result.resourceLeak })
           break
         }
       } catch (error) {
