@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "sourceBaseUrl": "https://shaders.noisedeck.app/1/",
-  "generatedAt": "2026-10-01T12:53:18.990Z",
+  "generatedAt": "2026-10-03T09:54:32.678Z",
   "effectCount": 210,
   "artifacts": [
     {
@@ -1007,9 +1007,9 @@
       "url": "https://shaders.noisedeck.app/1/effects/render/pointsBillboardRender.js"
     },
     {
-      "bytes": 15363,
+      "bytes": 15564,
       "path": "effects/render/pointsEmit.js",
-      "sha256": "28bc8f9e2a6736addb8b035d5160a3f76c313692f346d40b15d3d3bea213fd64",
+      "sha256": "f4dbd36320816f5a5499517c9b176cc0b30f9b8975a4e44160968d287c3c58be",
       "url": "https://shaders.noisedeck.app/1/effects/render/pointsEmit.js"
     },
     {
@@ -1229,9 +1229,9 @@
       "url": "https://shaders.noisedeck.app/1/effects/synth3d/cell3d.js"
     },
     {
-      "bytes": 22548,
+      "bytes": 22713,
       "path": "effects/synth3d/cellularAutomata3d.js",
-      "sha256": "eac5251ad8a576501c21af5e51a0243eb4c927ab96e1bff4b76b5b1fbef9af32",
+      "sha256": "49b02b8a99cc94e920dd35b2ce4cefaecfd397e0a4f40fe1c40ebe875972c7bb",
       "url": "https://shaders.noisedeck.app/1/effects/synth3d/cellularAutomata3d.js"
     },
     {
@@ -1271,9 +1271,9 @@
       "url": "https://shaders.noisedeck.app/1/effects/synth3d/shape3d.js"
     },
     {
-      "bytes": 908465,
+      "bytes": 910200,
       "path": "noisemaker-shaders-core.esm.js",
-      "sha256": "c6dd9d8119abb526ce92e3f63b7498d4a96dcf4241e6006de1df80ac77783b2e",
+      "sha256": "e88b3fdf0fab88b8b7af18f6daff5a030c495baf17a7ce9b45cfb46df5ab6cb7",
       "url": "https://shaders.noisedeck.app/1/noisemaker-shaders-core.esm.js"
     }
   ]

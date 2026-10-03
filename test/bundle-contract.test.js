@@ -148,6 +148,37 @@ test('engine facade loads the pinned catalog and compiles with the reference Pol
   assert.match(program.glsl || program.fragment, /void\s+main/)
 })
 
+test('pinned engine preserves choice precedence and renamed pass uniforms', async () => {
+  installTestDomShim()
+  const engine = await import('../src/runtime/engine.js')
+  await engine.loadEngine()
+  const core = await import('../vendor-cache/noisemaker-shaders-core.esm.js')
+
+  const choices = await engine.compileProgram(`search synth, filter
+sacredGeometry(geometry: seed).channel(channel: a).write(o0)
+render(o0)`)
+  assert.equal(
+    choices.passes.find(({ effectKey }) => effectKey === 'synth.sacredGeometry').uniforms.geometry,
+    core.getEffect('synth.sacredGeometry').globals.geometry.choices.seed,
+  )
+  assert.equal(
+    choices.passes.find(({ effectKey }) => effectKey === 'filter.channel').uniforms.channel,
+    3,
+  )
+
+  const particles = await engine.compileProgram(`search synth, render
+noise().pointsEmit().pointsRender().write(o0)
+render(o0)`)
+  const initPass = particles.passes.find(
+    ({ effectKey, uniformAliases }) => effectKey === 'render.pointsEmit' && uniformAliases,
+  )
+  assert.deepEqual(initPass.uniformAliases, { layoutMode: 'layout' })
+  assert.equal(initPass.uniforms.layoutMode, initPass.uniforms.layout)
+  assert.equal(core.getEffect('render.pointsEmit').globals.layout.ui.resetOnChange, true)
+  assert.equal(core.getEffect('render.pointsEmit').globals.seed.ui.resetOnChange, true)
+  assert.equal(core.getEffect('synth3d.cellularAutomata3d').globals.density.ui.resetOnChange, true)
+})
+
 test('pinned core exposes renderer sinks and bounded WebGL2 frame export', async () => {
   installTestDomShim()
   const core = await import('../vendor-cache/noisemaker-shaders-core.esm.js')
@@ -658,4 +689,3 @@ test('pinned core Pipeline delegates shouldDeferRender to its sinkManager', asyn
   unregister()
   assert.equal(p.shouldDeferRender(), false)
 })
-

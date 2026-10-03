@@ -3,8 +3,8 @@
  * Includes: CanvasRenderer + UIController + EffectSelect
  * Copyright (c) 2017-2026 Noise Factor LLC. https://noisefactor.io/
  * SPDX-License-Identifier: MIT
- * Build: cb22a05e
- * Date: 2026-10-01T12:52:45.396Z
+ * Build: d143cb51
+ * Date: 2026-10-03T04:59:18.778Z
  */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
@@ -2513,6 +2513,13 @@ function validate(ast) {
     if (cur && (cur.type === "Number" || cur.type === "Boolean")) return cur.value;
     return cur;
   }
+  function isOwnChoice(def, name) {
+    if (def.choices && typeof def.choices[name] === "number") return true;
+    const enumPath = def.enumPath || def.enum;
+    if (!enumPath) return false;
+    const resolved = resolveEnum(applyEnumPrefix([name], normalizeMemberPath(enumPath)));
+    return typeof resolved === "number";
+  }
   function clone(node) {
     return node && typeof node === "object" ? JSON.parse(JSON.stringify(node)) : node;
   }
@@ -3565,7 +3572,7 @@ function validate(ast) {
             } else if (node && (node.type === "Number" || node.type === "Boolean")) {
               args[argKey] = node.type === "Boolean" ? node.value ? 1 : 0 : node.value;
               continue;
-            } else if (node && node.type === "Ident" && stateValues.has(node.name)) {
+            } else if (node && node.type === "Ident" && stateValues.has(node.name) && !isOwnChoice(def, node.name)) {
               const key = node.name;
               args[argKey] = { fn: (state) => state[key] };
               continue;
@@ -3748,7 +3755,7 @@ function validate(ast) {
                 pushDiag("S001", node, `Cannot resolve enum value for '${def.name}': '${node?.path?.join(".") || node?.name || "unknown"}'`);
                 value = def.default;
               }
-            } else if (node && node.type === "Ident" && stateValues.has(node.name)) {
+            } else if (node && node.type === "Ident" && stateValues.has(node.name) && !isOwnChoice(def, node.name)) {
               const key = node.name;
               value = { fn: (state) => state[key], min: def.min, max: def.max, _ast: node };
             } else if (node && node.type === "Ident" && def.enum) {
@@ -6112,6 +6119,10 @@ function expand(compilationResult, options = {}) {
             if (typeof globalRef === "number") {
               pass.uniforms[uniformName] = globalRef;
               continue;
+            }
+            if (globalRef !== uniformName) {
+              if (!pass.uniformAliases) pass.uniformAliases = {};
+              pass.uniformAliases[uniformName] = globalRef;
             }
             if (pipelineUniforms[uniformName] !== void 0) {
               pass.uniforms[uniformName] = pipelineUniforms[uniformName];
@@ -16757,6 +16768,19 @@ function recompile(pipeline, newSource, options = {}) {
   }
 }
 
+// shaders/src/runtime/uniform-aliases.js
+function writeUniformAliases(pass, paramName, uniformName, value) {
+  const aliases = pass?.uniformAliases;
+  if (!aliases || !pass.uniforms) return false;
+  let wrote = false;
+  for (const [shaderName, globalName] of Object.entries(aliases)) {
+    if (globalName !== paramName && globalName !== uniformName) continue;
+    pass.uniforms[shaderName] = Array.isArray(value) ? value.slice() : value;
+    wrote = true;
+  }
+  return wrote;
+}
+
 // shaders/src/renderer/canvas.js
 function isAutomationControlled(value) {
   if (!value || typeof value !== "object") return false;
@@ -18372,6 +18396,19 @@ var CanvasRenderer = class {
     return value;
   }
   /**
+   * Whether a graph pass belongs to `effect` (same func, and same namespace
+   * when both are known).
+   * @private
+   */
+  _isEffectPass(pass, effect) {
+    if (!pass) return false;
+    const passFunc = pass.effectFunc || pass.effectKey || null;
+    if (!passFunc || passFunc !== effect.instance.func) return false;
+    const targetNamespace = effect.instance.namespace || effect.namespace || null;
+    const passNamespace = pass.effectNamespace || null;
+    return !(targetNamespace && passNamespace && passNamespace !== targetNamespace);
+  }
+  /**
    * Build uniform bindings for the current effect
    * @param {object} effect - Effect object
    */
@@ -18394,14 +18431,8 @@ var CanvasRenderer = class {
         }
       }
     }
-    const targetFunc = effect.instance.func;
-    const targetNamespace = effect.instance.namespace || effect.namespace || null;
     this._pipeline.graph.passes.forEach((pass, index) => {
-      if (!pass) return;
-      const passFunc = pass.effectFunc || pass.effectKey || null;
-      const passNamespace = pass.effectNamespace || null;
-      if (!passFunc || passFunc !== targetFunc) return;
-      if (targetNamespace && passNamespace && passNamespace !== targetNamespace) return;
+      if (!this._isEffectPass(pass, effect)) return;
       for (const [paramName, spec] of Object.entries(effect.instance.globals)) {
         if (spec.type === "surface") continue;
         if (!pass.uniforms) continue;
@@ -18461,6 +18492,10 @@ var CanvasRenderer = class {
       }
       if (isAutomationControlled(currentValue)) continue;
       const converted = this.convertParameterForUniform(currentValue, spec);
+      for (const pass of this._pipeline.graph.passes) {
+        if (!this._isEffectPass(pass, effect)) continue;
+        writeUniformAliases(pass, paramName, spec.uniform || paramName, converted);
+      }
       for (const binding of bindings) {
         const pass = this._pipeline.graph.passes[binding.passIndex];
         if (!pass || !pass.uniforms) {
@@ -18513,10 +18548,15 @@ var CanvasRenderer = class {
         if (!spec || spec.type === "surface") continue;
         const uniformName = spec.uniform || paramName;
         if (colorModeControlledUniforms.has(uniformName)) continue;
-        if (!pass.uniforms || !(uniformName in pass.uniforms)) continue;
+        if (!pass.uniforms) continue;
+        if (!(uniformName in pass.uniforms)) {
+          writeUniformAliases(pass, paramName, uniformName, this.convertParameterForUniform(value, spec));
+          continue;
+        }
         if (uniformName === "volumeSize" && pass.inheritsVolumeSize) continue;
         const converted = this.convertParameterForUniform(value, spec);
         pass.uniforms[uniformName] = Array.isArray(converted) ? converted.slice() : converted;
+        writeUniformAliases(pass, paramName, uniformName, converted);
         if (pass.scopedParams && pass.scopedParams[uniformName]) {
           const scopedName = pass.scopedParams[uniformName];
           pass.uniforms[scopedName] = pass.uniforms[uniformName];
@@ -19456,6 +19496,7 @@ var ProgramState = class extends Emitter {
           if (this._renderer.convertParameterForUniform) {
             converted = this._renderer.convertParameterForUniform(value, spec);
           }
+          writeUniformAliases(pass, paramName, uniformName, converted);
           if (uniformName in pass.uniforms) {
             if (uniformName === "volumeSize" && pass.inheritsVolumeSize) continue;
             pass.uniforms[uniformName] = Array.isArray(converted) ? converted.slice() : converted;
