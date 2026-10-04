@@ -13,6 +13,7 @@
 // Exit 0: declaration matches the qualified scope exactly. Exit 1: rejection.
 
 import { readFileSync } from 'node:fs'
+import { createHash } from 'node:crypto'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
 
@@ -23,7 +24,13 @@ export function loadQualifiedScope({ root = ROOT } = {}) {
     readFileSync(join(root, 'vendor-cache/effects/manifest.json'), 'utf8'))
   const catalog = Object.keys(manifest)
   const sweep = JSON.parse(
-    readFileSync(join(root, 'evidence/gap-002-20260926/catalog-parity.json'), 'utf8'))
+    readFileSync(join(root, 'evidence/gap-002-20261004/catalog-parity.json'), 'utf8'))
+  const coreDigest = createHash('sha256')
+    .update(readFileSync(join(root, 'vendor-cache/noisemaker-shaders-core.esm.js')))
+    .digest('hex')
+  if (sweep.coreSha256 !== coreDigest) {
+    throw new Error('catalog sweep core digest does not match vendored core')
+  }
   const overlay = JSON.parse(
     readFileSync(join(root, 'evidence/gap-007-20260926/overlay-settle.json'), 'utf8'))
 

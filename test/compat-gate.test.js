@@ -1,8 +1,9 @@
 import assert from 'node:assert/strict'
 import { execFileSync } from 'node:child_process'
-import { readFileSync } from 'node:fs'
+import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
+import { tmpdir } from 'node:os'
 import { test } from 'node:test'
 
 import { loadDeclaration, loadQualifiedScope, validateDeclaration } from '../tools/compat-gate.mjs'
@@ -19,13 +20,36 @@ test('the builder reads the same qualified list that the delivery gate validates
   assert.deepEqual(committed(), { mode: 'list', effects })
 })
 
-test('qualified scope covers the full catalog with only the compile-only exclusion', () => {
+test('qualified scope covers all 210 rendered catalog effects', () => {
   const scope = loadQualifiedScope()
   assert.equal(scope.catalog.length, 210)
-  assert.equal(scope.qualified.length, 209)
-  assert.deepEqual(Object.keys(scope.unqualified), ['filter/octaveWarp'])
+  assert.equal(scope.qualified.length, 210)
+  assert.deepEqual(Object.keys(scope.unqualified), [])
   assert.ok(scope.qualified.includes('filter/fibers'))
-  assert.ok(!scope.qualified.includes('filter/octaveWarp'))
+  assert.ok(scope.qualified.includes('filter/octaveWarp'))
+})
+
+test('qualified sweep rejects evidence for different vendored core bytes', () => {
+  const fixture = mkdtempSync(join(tmpdir(), 'cables-compat-'))
+  try {
+    const paths = [
+      'vendor-cache/effects/manifest.json',
+      'vendor-cache/noisemaker-shaders-core.esm.js',
+      'evidence/gap-002-20261004/catalog-parity.json',
+      'evidence/gap-007-20260926/overlay-settle.json',
+    ]
+    for (const path of paths) {
+      mkdirSync(dirname(join(fixture, path)), { recursive: true })
+      copyFileSync(join(root, path), join(fixture, path))
+    }
+    const sweepPath = join(fixture, paths[2])
+    const sweep = JSON.parse(readFileSync(sweepPath, 'utf8'))
+    sweep.coreSha256 = '0'.repeat(64)
+    writeFileSync(sweepPath, JSON.stringify(sweep))
+    assert.throws(() => loadQualifiedScope({ root: fixture }), /core digest/)
+  } finally {
+    rmSync(fixture, { recursive: true, force: true })
+  }
 })
 
 test('the committed kit declaration matches the qualified scope exactly', () => {
@@ -43,7 +67,7 @@ test('pre-delivery rejection: mode "all" is rejected', () => {
 
 test('pre-delivery rejection: an unqualified id in the declaration is rejected', () => {
   const scope = loadQualifiedScope()
-  const extra = { mode: 'list', effects: [...scope.qualified, 'filter/octaveWarp'] }
+  const extra = { mode: 'list', effects: [...scope.qualified, 'filter/unknown'] }
   assert.ok(validateDeclaration(extra, scope).some((p) => p.includes('unqualified')))
 })
 

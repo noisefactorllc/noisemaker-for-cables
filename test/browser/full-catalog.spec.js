@@ -11,6 +11,23 @@ const coverageMatrix = JSON.parse(readFileSync(
 ))
 
 test.describe.serial('Task 9 full catalog sorted sweep', () => {
+  test('octaveWarp renders and matches the independent reference', async ({ page }) => {
+    test.setTimeout(120_000)
+    expect(await loadHarness(page)).toBe('object')
+    const catalog = await page.evaluate(async () =>
+      (await window.task9Harness.runFullCatalog({ start: 0, end: 0 })).effectNames)
+    const index = catalog.indexOf('filter/octaveWarp')
+    expect(index).toBeGreaterThanOrEqual(0)
+    const batch = await page.evaluate(({ start, end }) =>
+      window.task9Harness.runFullCatalog({ start, end }), { start: index, end: index + 1 })
+    const result = batch.results[0]
+    expect(batch.failures).toEqual([])
+    expect(result).toMatchObject({
+      id: 'filter/octaveWarp', rendered: true, compared: true,
+      finite: true, copyExact: true, mismatchedChannels: 0,
+    })
+  })
+
   test('all 210 effects compile and link; executable effects render finite pixels that match the independent reference and copy exactly', async ({ page }, testInfo) => {
     test.setTimeout(1_800_000)
     const report = {

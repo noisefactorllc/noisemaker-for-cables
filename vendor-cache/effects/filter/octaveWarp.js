@@ -41,9 +41,9 @@ uvec3 pcg(uvec3 v) {
 
 float hash21(vec2 p) {
     uvec3 v = uvec3(
-        uint(p.x >= 0.0 ? p.x * 2.0 : -p.x * 2.0 + 1.0),
-        uint(p.y >= 0.0 ? p.y * 2.0 : -p.y * 2.0 + 1.0),
-        uint(seed)
+        uint(abs(p.x) * 2.0) + uint(p.x < 0.0),
+        uint(abs(p.y) * 2.0) + uint(p.y < 0.0),
+        uint(abs(seed))
     );
     return float(pcg(v).x) / float(0xffffffffu);
 }
@@ -201,9 +201,9 @@ fn pcg(seed: vec3<u32>) -> vec3<u32> {
 
 fn hash21(p: vec2<f32>) -> f32 {
     let v = pcg(vec3<u32>(
-        u32(select(-p.x * 2.0 + 1.0, p.x * 2.0, p.x >= 0.0)),
-        u32(select(-p.y * 2.0 + 1.0, p.y * 2.0, p.y >= 0.0)),
-        u32(uniforms.seed),
+        u32(abs(p.x) * 2.0) + select(1u, 0u, p.x >= 0.0),
+        u32(abs(p.y) * 2.0) + select(1u, 0u, p.y >= 0.0),
+        u32(abs(uniforms.seed)),
     ));
     return f32(v.x) / f32(0xffffffffu);
 }
@@ -355,4 +355,4 @@ noise(seed: 1, ridges: true)
 
 render(o0)
 \`\`\`
-`;if(n&&Object.keys(i).length>0){n.shaders||(n.shaders={});for(let[a,e]of Object.entries(i))n.shaders[a]={...e}}n&&r&&(n.help=r);var p="filter/octaveWarp",c="filter",u="octaveWarp",d=n;export{d as default,p as effectId,u as effectName,r as help,c as namespace};
+`;if(n&&Object.keys(i).length>0){n.shaders||(n.shaders={});for(let[a,e]of Object.entries(i))n.shaders[a]={...e}}n&&r&&(n.help=r);var c="filter/octaveWarp",p="filter",u="octaveWarp",d=n;export{d as default,c as effectId,u as effectName,r as help,p as namespace};

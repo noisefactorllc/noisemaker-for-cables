@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "sourceBaseUrl": "https://shaders.noisedeck.app/1/",
-  "generatedAt": "2026-10-03T09:54:32.678Z",
+  "generatedAt": "2026-10-04T02:34:19.416Z",
   "effectCount": 210,
   "artifacts": [
     {
@@ -215,9 +215,9 @@
       "url": "https://shaders.noisedeck.app/1/effects/filter/crt.js"
     },
     {
-      "bytes": 25689,
+      "bytes": 28464,
       "path": "effects/filter/degauss.js",
-      "sha256": "58a56bf279d7bdf921dfe830073b9a601f48821539f591db2ab3a2fddd42d290",
+      "sha256": "6709e548cbb0387d5aef6944ac1bfec56c2a8403c5bce636a3b007d948415c43",
       "url": "https://shaders.noisedeck.app/1/effects/filter/degauss.js"
     },
     {
@@ -413,9 +413,9 @@
       "url": "https://shaders.noisedeck.app/1/effects/filter/normalize.js"
     },
     {
-      "bytes": 13856,
+      "bytes": 13840,
       "path": "effects/filter/octaveWarp.js",
-      "sha256": "9a89c0b109cd8508fa798635fab71e85a38d6d16fd820015170b1ea01a0c48c6",
+      "sha256": "660b315e9c10a56dabe9aac0366cba2bcd6e188702fc74bb479c84d25e626805",
       "url": "https://shaders.noisedeck.app/1/effects/filter/octaveWarp.js"
     },
     {
@@ -1273,7 +1273,7 @@
     {
       "bytes": 910200,
       "path": "noisemaker-shaders-core.esm.js",
-      "sha256": "e88b3fdf0fab88b8b7af18f6daff5a030c495baf17a7ce9b45cfb46df5ab6cb7",
+      "sha256": "8ba3c3132b32515d5c12e09da8612f5ccdabe435ed01bcabe8621d81a900777b",
       "url": "https://shaders.noisedeck.app/1/noisemaker-shaders-core.esm.js"
     }
   ]

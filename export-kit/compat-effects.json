@@ -67,6 +67,7 @@
   "filter/motionBlur",
   "filter/normalMap",
   "filter/normalize",
+  "filter/octaveWarp",
   "filter/oilPaint",
   "filter/osd",
   "filter/outline",

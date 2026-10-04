@@ -3,8 +3,8 @@
  * Includes: CanvasRenderer + UIController + EffectSelect
  * Copyright (c) 2017-2026 Noise Factor LLC. https://noisefactor.io/
  * SPDX-License-Identifier: MIT
- * Build: d143cb51
- * Date: 2026-10-03T04:59:18.778Z
+ * Build: 058d15dc
+ * Date: 2026-10-04T02:33:07.779Z
  */
 var NoisemakerCablesGL=(()=>{var Ra=Object.defineProperty;var Iy=Object.getOwnPropertyDescriptor;var Dy=Object.getOwnPropertyNames;var Py=Object.prototype.hasOwnProperty;var b=(e,t,o)=>()=>{if(o)throw o[0];try{return e&&(t=e(e=0)),t}catch(r){throw o=[r],r}};var Ia=(e,t)=>{for(var o in t)Ra(e,o,{get:t[o],enumerable:!0})},Ey=(e,t,o,r)=>{if(t&&typeof t=="object"||typeof t=="function")for(let i of Dy(t))!Py.call(e,i)&&i!==o&&Ra(e,i,{get:()=>t[i],enumerable:!(r=Iy(t,i))||r.enumerable});return e};var ky=e=>Ey(Ra({},"__esModule",{value:!0}),e);function Es(e){let t=[],o=[],r=[],i=[],s=[],a=[],n=e.split(`
 `);for(let f of n){let h=f.trim();if(h.length===0||h.startsWith("#"))continue;let x=h.split(/\s+/);switch(x[0]){case"v":{let _=parseFloat(x[1])||0,O=parseFloat(x[2])||0,u=parseFloat(x[3])||0;t.push([_,O,u]);break}case"vn":{let _=parseFloat(x[1])||0,O=parseFloat(x[2])||0,u=parseFloat(x[3])||0;o.push([_,O,u]);break}case"vt":{let _=parseFloat(x[1])||0,O=parseFloat(x[2])||0;r.push([_,O]);break}case"f":{let _=[];for(let O=1;O<x.length;O++){let u=x[O].split("/"),S=parseInt(u[0],10)-1,P=u[1]?parseInt(u[1],10)-1:-1,g=u[2]?parseInt(u[2],10)-1:-1;_.push({vIdx:S,vtIdx:P,vnIdx:g})}for(let O=1;O<_.length-1;O++){let u=_[0],S=_[O],P=_[O+1];l(u),l(P),l(S)}break}}}function l(f){f.vIdx>=0&&f.vIdx<t.length?i.push(...t[f.vIdx]):i.push(0,0,0),f.vnIdx>=0&&f.vnIdx<o.length?s.push(...o[f.vnIdx]):s.push(0,0,1),f.vtIdx>=0&&f.vtIdx<r.length?a.push(...r[f.vtIdx]):a.push(0,0)}let c=i.length/3;return o.length===0&&c>0&&gb(i,s),{positions:new Float32Array(i),normals:new Float32Array(s),uvs:new Float32Array(a),vertexCount:c}}function gb(e,t){let o=e.length/3,r=o/3,i=new Float32Array(r*3);for(let n=0;n<r;n++){let l=n*9,c=l+3,f=l+6,h=e[l],x=e[l+1],m=e[l+2],_=e[c],O=e[c+1],u=e[c+2],S=e[f],P=e[f+1],g=e[f+2],E=_-h,H=O-x,re=u-m,W=S-h,ue=P-x,le=g-m,ae=H*le-re*ue,fe=re*W-E*le,me=E*ue-H*W,B=Math.sqrt(ae*ae+fe*fe+me*me);B>1e-4?(ae/=B,fe/=B,me/=B):(ae=0,fe=0,me=1),i[n*3]=ae,i[n*3+1]=fe,i[n*3+2]=me}let s=new Map,a=n=>Math.round(n*1e4)/1e4;for(let n=0;n<o;n++){let l=e[n*3],c=e[n*3+1],f=e[n*3+2],h=`${a(l)},${a(c)},${a(f)}`,x=Math.floor(n/3),m=i[x*3],_=i[x*3+1],O=i[x*3+2];s.has(h)||s.set(h,{nx:0,ny:0,nz:0,count:0});let u=s.get(h);u.nx+=m,u.ny+=_,u.nz+=O,u.count++}for(let n of s.values()){let l=Math.sqrt(n.nx*n.nx+n.ny*n.ny+n.nz*n.nz);l>1e-4?(n.nx/=l,n.ny/=l,n.nz/=l):(n.nx=0,n.ny=0,n.nz=1)}for(let n=0;n<o;n++){let l=e[n*3],c=e[n*3+1],f=e[n*3+2],h=`${a(l)},${a(c)},${a(f)}`,x=s.get(h);t[n*3]=x.nx,t[n*3+1]=x.ny,t[n*3+2]=x.nz}}async function xb(e){let t=await fetch(e);if(!t.ok)throw new Error(`Failed to load OBJ: ${t.status} ${t.statusText}`);let o=await t.text();return Es(o)}function yb(e,t,o,r,i){let s=r*i,a=e.length/3;a>s&&console.warn(`[OBJ] Mesh has ${a} vertices, but texture can only hold ${s}. Truncating.`);let n=Math.min(a,s),l=r*i,c=new Float32Array(l*4),f=new Float32Array(l*4),h=new Float32Array(l*4);for(let x=0;x<n;x++){let m=x*4,_=x*3,O=x*2;c[m]=e[_],c[m+1]=e[_+1],c[m+2]=e[_+2],c[m+3]=1,f[m]=t[_],f[m+1]=t[_+1],f[m+2]=t[_+2],f[m+3]=0,h[m]=o[O],h[m+1]=o[O+1],h[m+2]=0,h[m+3]=0}for(let x=n;x<l;x++){let m=x*4;c[m+3]=0}return{positionData:c,normalData:f,uvData:h,vertexCount:n}}function wb(e){let t=[],o=0,r=1,i=1,s=1,a=1,n=0;function l(m,_,O,u,S){for(let H=n;H<o;H++)e[H]===`
@@ -23955,7 +23955,7 @@ noise(seed: 1, ridges: true)
 
 render(o0)
 \`\`\`
-`;if(Dt&&Object.keys(cf).length>0){Dt.shaders||(Dt.shaders={});for(let[e,t]of Object.entries(cf))Dt.shaders[e]={...t}}Dt&&ff&&(Dt.help=ff);uf=Dt});var Nw,Pt,pf,mf,hf,vf=b(()=>{Nw=class{constructor(e={}){this.state={},this.uniforms={},e.name&&(this.name=e.name),e.namespace&&(this.namespace=e.namespace),e.func&&(this.func=e.func),e.description&&(this.description=e.description),e.tags&&(this.tags=e.tags),e.globals&&(this.globals=e.globals),e.passes&&(this.passes=e.passes),e.textures&&(this.textures=e.textures),e.outputTex3d&&(this.outputTex3d=e.outputTex3d),e.outputGeo&&(this.outputGeo=e.outputGeo),e.uniformLayout&&(this.uniformLayout=e.uniformLayout),e.uniformLayouts&&(this.uniformLayouts=e.uniformLayouts),e.paramAliases&&(this.paramAliases=e.paramAliases),e.openCategories&&(this.openCategories=e.openCategories),e.defaultProgram&&(this.defaultProgram=e.defaultProgram),e.hidden&&(this.hidden=!0),e.deprecatedBy&&(this.deprecatedBy=e.deprecatedBy),e.onInit&&(this._configOnInit=e.onInit),e.onUpdate&&(this._configOnUpdate=e.onUpdate),e.onDestroy&&(this._configOnDestroy=e.onDestroy),e.asyncInit&&(this._configAsyncInit=e.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(e){return this._configOnUpdate?this._configOnUpdate.call(this,e):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(e){return this._configAsyncInit?this._configAsyncInit.call(this,e):Promise.resolve()}},Pt=new Nw({name:"Degauss",namespace:"filter",func:"degauss",tags:["distort"],description:"CRT degauss effect",globals:{displacement:{type:"float",default:.0625,uniform:"displacement",min:0,max:.25,step:.001,ui:{label:"displacement",control:"slider"}},direction:{type:"float",default:0,uniform:"direction",min:-180,max:180,ui:{label:"direction",control:"slider"}},seed:{type:"int",default:1,uniform:"seed",min:1,max:100,step:1,ui:{label:"seed",control:"slider"}},speed:{type:"float",default:1,uniform:"speed",min:0,max:2,step:.1,ui:{label:"speed",control:"slider"}}},defaultProgram:`search filter, synth
+`;if(Dt&&Object.keys(cf).length>0){Dt.shaders||(Dt.shaders={});for(let[e,t]of Object.entries(cf))Dt.shaders[e]={...t}}Dt&&ff&&(Dt.help=ff);uf=Dt});var Nw,Pt,pf,mf,hf,vf=b(()=>{Nw=class{constructor(e={}){this.state={},this.uniforms={},e.name&&(this.name=e.name),e.namespace&&(this.namespace=e.namespace),e.func&&(this.func=e.func),e.description&&(this.description=e.description),e.tags&&(this.tags=e.tags),e.globals&&(this.globals=e.globals),e.passes&&(this.passes=e.passes),e.textures&&(this.textures=e.textures),e.outputTex3d&&(this.outputTex3d=e.outputTex3d),e.outputGeo&&(this.outputGeo=e.outputGeo),e.uniformLayout&&(this.uniformLayout=e.uniformLayout),e.uniformLayouts&&(this.uniformLayouts=e.uniformLayouts),e.paramAliases&&(this.paramAliases=e.paramAliases),e.openCategories&&(this.openCategories=e.openCategories),e.defaultProgram&&(this.defaultProgram=e.defaultProgram),e.hidden&&(this.hidden=!0),e.deprecatedBy&&(this.deprecatedBy=e.deprecatedBy),e.onInit&&(this._configOnInit=e.onInit),e.onUpdate&&(this._configOnUpdate=e.onUpdate),e.onDestroy&&(this._configOnDestroy=e.onDestroy),e.asyncInit&&(this._configAsyncInit=e.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(e){return this._configOnUpdate?this._configOnUpdate.call(this,e):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(e){return this._configAsyncInit?this._configAsyncInit.call(this,e):Promise.resolve()}},Pt=new Nw({name:"Degauss",namespace:"filter",func:"degauss",tags:["distort"],description:"CRT degauss effect",uniformLayout:{resolution:{slot:0,components:"xy"},displacement:{slot:0,components:"z"},time:{slot:0,components:"w"},speed:{slot:1,components:"x"},seed:{slot:1,components:"y"},direction:{slot:1,components:"z"},tileOffset:{slot:2,components:"xy"},fullResolution:{slot:2,components:"zw"}},globals:{displacement:{type:"float",default:.0625,uniform:"displacement",min:0,max:.25,step:.001,ui:{label:"displacement",control:"slider"}},direction:{type:"float",default:0,uniform:"direction",min:-180,max:180,ui:{label:"direction",control:"slider"}},seed:{type:"int",default:1,uniform:"seed",min:1,max:100,step:1,ui:{label:"seed",control:"slider"}},speed:{type:"float",default:1,uniform:"speed",min:0,max:2,step:.1,ui:{label:"speed",control:"slider"}}},defaultProgram:`search filter, synth
 
 testPattern()
 .degauss()
@@ -24267,7 +24267,12 @@ float warped_channel_value(
     float noise_value = compute_noise_value(coord, width, height, freq, time, speed, channel);
     float centered = (noise_value * 2.0 - 1.0) * mask;
     float angle = centered * TAU;
-    vec2 offset = vec2(cos(angle), sin(angle)) * displacement * vec2(resolution.x, resolution.y);
+    // Offset in GLOBAL pixel space (fullResolution), not tile resolution:
+    // the untiled reference and every tile must displace by the same
+    // absolute print-pixel amount or the tiled wobble is renderScale× too
+    // small and tiles seam against the full render. width/height are the
+    // full-resolution dims passed by main().
+    vec2 offset = vec2(cos(angle), sin(angle)) * displacement * vec2(width, height);
 
     // Rotate offset by direction
     float dirRad = direction * TAU / 360.0;
@@ -24314,8 +24319,14 @@ void main() {
 
     float renderScale = fullResolution.x > 0.0 ? fullResolution.x / max(resolution.x, 1.0) : 1.0;
     bool isTiling = renderScale > 1.01;
+    // Tiling: bound the (global-pixel) offset to the 256px tile-overlap
+    // budget, measured against the full-resolution dims the offset now
+    // scales with. Untiled: keep the historical clamp exactly (fullRes ==
+    // resolution there, so this is the same formula it always was).
     float maxOffsetPixels = isTiling ? 256.0 : max(resolution.x, resolution.y);
-    float maxAllowedDisplacement = maxOffsetPixels / max(resolution.x, 1.0);
+    float maxAllowedDisplacement = isTiling
+        ? maxOffsetPixels / max(width_f, height_f)
+        : maxOffsetPixels / max(resolution.x, 1.0);
     float clampedDisplacement = min(displacement, maxAllowedDisplacement);
 
     vec2 freq = freq_for_shape(2.0, width_f, height_f);
@@ -24372,6 +24383,7 @@ const TAU : f32 = 6.28318530717958647692;
 struct DegaussParams {
     dims0 : vec4<f32>, // (width, height, displacement, time)
     dims1 : vec4<f32>, // (speed, seed, direction, _pad)
+    dims2 : vec4<f32>, // (tileOffset.x, tileOffset.y, fullRes.x, fullRes.y)
 };
 
 @group(0) @binding(0) var inputTex : texture_2d<f32>;
@@ -24653,6 +24665,8 @@ fn warped_channel_value(
     base_pos : vec2<f32>,
     width : f32,
     height : f32,
+    tile_width : f32,
+    tile_height : f32,
     freq : vec2<f32>,
     displacement : f32,
     mask : f32,
@@ -24662,6 +24676,9 @@ fn warped_channel_value(
     let noise_value : f32 = compute_noise_value(coord, width, height, freq, time, speed, channel);
     let centered : f32 = (noise_value * 2.0 - 1.0) * mask;
     let angle : f32 = centered * TAU;
+    // Offset in GLOBAL pixel space (width/height are fullResolution dims):
+    // every tile and the untiled reference must displace by the same
+    // absolute print-pixel amount.
     var offset : vec2<f32> = vec2<f32>(cos(angle), sin(angle)) * displacement * vec2<f32>(width, height);
 
     // Rotate offset by direction
@@ -24669,7 +24686,8 @@ fn warped_channel_value(
     let dc : f32 = cos(dirRad);
     let ds : f32 = sin(dirRad);
     offset = vec2<f32>(offset.x * dc - offset.y * ds, offset.x * ds + offset.y * dc);
-    let sample : vec4<f32> = sample_bilinear(base_pos + offset, width, height);
+    // Sample the tile-local input texture with tile dims.
+    let sample : vec4<f32> = sample_bilinear(base_pos + offset, tile_width, tile_height);
 
     switch channel {
         case 0u: {
@@ -24693,13 +24711,13 @@ fn store_pixel(base_index : u32, value : vec4<f32>) {
 
 @compute @workgroup_size(8, 8, 1)
 fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
-    let width : u32 = as_u32(params.dims0.x);
-    let height : u32 = as_u32(params.dims0.y);
-    if (gid.x >= width || gid.y >= height) {
+    let tile_w : u32 = as_u32(params.dims0.x);
+    let tile_h : u32 = as_u32(params.dims0.y);
+    if (gid.x >= tile_w || gid.y >= tile_h) {
         return;
     }
 
-    let pixel_index : u32 = gid.y * width + gid.x;
+    let pixel_index : u32 = gid.y * tile_w + gid.x;
     let base_index : u32 = pixel_index * 4u;
     let coords : vec2<i32> = vec2<i32>(i32(gid.x), i32(gid.y));
     let original : vec4<f32> = textureLoad(inputTex, coords, 0);
@@ -24710,19 +24728,44 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
         return;
     }
 
-    let width_f : f32 = params.dims0.x;
-    let height_f : f32 = params.dims0.y;
-    let uv : vec2<f32> = (vec2<f32>(f32(gid.x), f32(gid.y)) + vec2<f32>(0.5, 0.5))
-        / vec2<f32>(max(width_f, 1.0), max(height_f, 1.0));
-    let mask : f32 = singularity_mask(uv, width_f, height_f);
+    let tile_w_f : f32 = params.dims0.x;
+    let tile_h_f : f32 = params.dims0.y;
+    let tile_offset : vec2<f32> = params.dims2.xy;
+    // fullResolution defaults to the tile size when not tiling (unity
+    // invariant: tileOffset = 0 and fullRes == tile dims).
+    let full_res : vec2<f32> = select(
+        vec2<f32>(tile_w_f, tile_h_f),
+        params.dims2.zw,
+        params.dims2.z > 0.0
+    );
+    // Global pixel coords keep the noise field, mask and offset identical
+    // in every tile and in the untiled reference.
+    let global_px : vec2<f32> = vec2<f32>(f32(gid.x), f32(gid.y)) + tile_offset;
+    let uv : vec2<f32> = (global_px + vec2<f32>(0.5, 0.5))
+        / vec2<f32>(max(full_res.x, 1.0), max(full_res.y, 1.0));
+    let mask : f32 = singularity_mask(uv, full_res.x, full_res.y);
     if (mask <= 0.0) {
         store_pixel(base_index, original);
         return;
     }
 
-    let freq : vec2<f32> = freq_for_shape(2.0, width_f, height_f);
+    let render_scale : f32 = full_res.x / max(tile_w_f, 1.0);
+    let is_tiling : bool = render_scale > 1.01;
+    // Tiling: bound the (global-pixel) offset to the 256px tile-overlap
+    // budget, measured against the full-resolution dims the offset scales
+    // with. Untiled: keep the historical clamp exactly (full_res == tile
+    // dims there, so this is the same formula it always was).
+    let max_offset_pixels : f32 = select(max(tile_w_f, tile_h_f), 256.0, is_tiling);
+    let max_allowed_displacement : f32 = select(
+        max_offset_pixels / max(tile_w_f, 1.0),
+        max_offset_pixels / max(full_res.x, full_res.y),
+        is_tiling
+    );
+    let clamped_displacement : f32 = min(displacement, max_allowed_displacement);
+
+    let freq : vec2<f32> = freq_for_shape(2.0, full_res.x, full_res.y);
     let base_pos : vec2<f32> = vec2<f32>(f32(gid.x), f32(gid.y));
-    let coord : vec2<u32> = gid.xy;
+    let coord : vec2<u32> = vec2<u32>(global_px);
 
     let time : f32 = params.dims0.w;
     let speed : f32 = params.dims1.x;
@@ -24731,10 +24774,12 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
         0u,
         coord,
         base_pos,
-        width_f,
-        height_f,
+        full_res.x,
+        full_res.y,
+        tile_w_f,
+        tile_h_f,
         freq,
-        displacement,
+        clamped_displacement,
         mask,
         time,
         speed,
@@ -24743,10 +24788,12 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
         1u,
         coord,
         base_pos,
-        width_f,
-        height_f,
+        full_res.x,
+        full_res.y,
+        tile_w_f,
+        tile_h_f,
         freq,
-        displacement,
+        clamped_displacement,
         mask,
         time,
         speed,
@@ -24755,10 +24802,12 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
         2u,
         coord,
         base_pos,
-        width_f,
-        height_f,
+        full_res.x,
+        full_res.y,
+        tile_w_f,
+        tile_h_f,
         freq,
-        displacement,
+        clamped_displacement,
         mask,
         time,
         speed,
@@ -39057,9 +39106,9 @@ uvec3 pcg(uvec3 v) {
 
 float hash21(vec2 p) {
     uvec3 v = uvec3(
-        uint(p.x >= 0.0 ? p.x * 2.0 : -p.x * 2.0 + 1.0),
-        uint(p.y >= 0.0 ? p.y * 2.0 : -p.y * 2.0 + 1.0),
-        uint(seed)
+        uint(abs(p.x) * 2.0) + uint(p.x < 0.0),
+        uint(abs(p.y) * 2.0) + uint(p.y < 0.0),
+        uint(abs(seed))
     );
     return float(pcg(v).x) / float(0xffffffffu);
 }
@@ -39217,9 +39266,9 @@ fn pcg(seed: vec3<u32>) -> vec3<u32> {
 
 fn hash21(p: vec2<f32>) -> f32 {
     let v = pcg(vec3<u32>(
-        u32(select(-p.x * 2.0 + 1.0, p.x * 2.0, p.x >= 0.0)),
-        u32(select(-p.y * 2.0 + 1.0, p.y * 2.0, p.y >= 0.0)),
-        u32(uniforms.seed),
+        u32(abs(p.x) * 2.0) + select(1u, 0u, p.x >= 0.0),
+        u32(abs(p.y) * 2.0) + select(1u, 0u, p.y >= 0.0),
+        u32(abs(uniforms.seed)),
     ));
     return f32(v.x) / f32(0xffffffffu);
 }

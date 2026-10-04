@@ -613,26 +613,6 @@ export async function runAdapterCase(caseDefinition, context) {
   return runSide(caseDefinition, 'adapter', context)
 }
 
-async function runAdapterCompileOnly(caseDefinition, context) {
-  const graph = await compileProgram(caseDefinition.dsl)
-  const backend = new CablesWebGL2Backend(context.cgl, context.canvas)
-  const pipeline = new Pipeline(graph, backend)
-  try {
-    await guardedPromiseCapture(context, backend, () => backend.init())
-    await compileAdapterPrograms({
-      backend,
-      context,
-      dsl: caseDefinition.dsl,
-      graph,
-      pipeline,
-      sideId: `${caseDefinition.id}:adapter-compile-only`,
-    })
-  } finally {
-    guarded(context, backend, () => pipeline.dispose())
-    context.gl.finish()
-  }
-}
-
 function quietPeriodForEffect(effectId) {
   if (new Set(['filter/fibers', 'filter/scratches', 'filter/strayHair']).has(effectId)) {
     return 3000
@@ -820,52 +800,39 @@ export async function runFullCatalog({ end, start = 0 } = {}) {
             : SPECIAL_CATALOG_DSL[effectId] ??
               createCatalogProgram({ effectId, definition, metadata: manifest[effectId] }),
           id: effectId,
-          height: effectId === 'filter/octaveWarp' ? 1 : HEIGHT,
+          height: HEIGHT,
           quietMs: quietPeriodForEffect(effectId),
-          width: effectId === 'filter/octaveWarp' ? 1 : WIDTH,
+          width: WIDTH,
         }
-        let result
-        if (effectId === 'filter/octaveWarp') {
-          await runAdapterCompileOnly(caseDefinition, context)
-          result = {
-            artifacts: {},
-            classification: 'headless-swiftshader-execution-pathology',
-            compiled: true,
-            id: effectId,
-            linked: true,
-            rendered: false,
-          }
-        } else {
-          const reference = await runSide(caseDefinition, 'reference', referenceContext)
-          const adapter = await runSide(caseDefinition, 'adapter', context)
-          const referenceReadback = reference.captures.get(`${effectId}@0`)
-          const internal = adapter.captures.get(`${effectId}@0`)
-          const copied = adapter.copies.get(`${effectId}@0`)
-          const comparison = compareReadbacks(effectId, referenceReadback, internal, 0)
-          comparison.artifacts = createComparisonArtifacts(
-            referenceReadback,
-            internal,
-            comparison,
-          )
-          result = {
-            artifacts: comparison.artifacts,
-            channelCeiling: comparison.channelCeiling,
-            compared: true,
-            comparisonMethod: COMPARISON_METHOD,
-            comparedChannels: comparison.comparedChannels,
-            compiled: true,
-            copyExact: exactReadbacks(internal, copied),
-            finite: comparison.finite,
-            id: effectId,
-            linked: true,
-            maxChannelError: comparison.maxChannelError,
-            meanChannelError: comparison.meanChannelError,
-            mismatchedChannels: comparison.mismatchedChannels,
-            rendered: true,
-          }
-          if (comparison.firstDivergences.length > 0) {
-            result.firstDivergences = comparison.firstDivergences
-          }
+        const reference = await runSide(caseDefinition, 'reference', referenceContext)
+        const adapter = await runSide(caseDefinition, 'adapter', context)
+        const referenceReadback = reference.captures.get(`${effectId}@0`)
+        const internal = adapter.captures.get(`${effectId}@0`)
+        const copied = adapter.copies.get(`${effectId}@0`)
+        const comparison = compareReadbacks(effectId, referenceReadback, internal, 0)
+        comparison.artifacts = createComparisonArtifacts(
+          referenceReadback,
+          internal,
+          comparison,
+        )
+        const result = {
+          artifacts: comparison.artifacts,
+          channelCeiling: comparison.channelCeiling,
+          compared: true,
+          comparisonMethod: COMPARISON_METHOD,
+          comparedChannels: comparison.comparedChannels,
+          compiled: true,
+          copyExact: exactReadbacks(internal, copied),
+          finite: comparison.finite,
+          id: effectId,
+          linked: true,
+          maxChannelError: comparison.maxChannelError,
+          meanChannelError: comparison.meanChannelError,
+          mismatchedChannels: comparison.mismatchedChannels,
+          rendered: true,
+        }
+        if (comparison.firstDivergences.length > 0) {
+          result.firstDivergences = comparison.firstDivergences
         }
         const resourceChecks = {
           adapter: {
