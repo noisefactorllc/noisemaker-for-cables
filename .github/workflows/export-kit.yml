@@ -25,6 +25,8 @@ on:
       - "package*.json"
       - "playwright.config.*"
 
+permissions: {}
+
 concurrency:
   group: export-kit-${{ github.ref }}
   cancel-in-progress: false
