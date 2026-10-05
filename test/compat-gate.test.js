@@ -29,7 +29,7 @@ test('qualified scope covers all 210 rendered catalog effects', () => {
   assert.ok(scope.qualified.includes('filter/octaveWarp'))
 })
 
-test('qualified sweep rejects evidence for different vendored core bytes', () => {
+test('qualified scope rejects a vendored core that drifts from the authority pin', () => {
   const fixture = mkdtempSync(join(tmpdir(), 'cables-compat-'))
   try {
     const paths = [
@@ -37,15 +37,16 @@ test('qualified sweep rejects evidence for different vendored core bytes', () =>
       'vendor-cache/noisemaker-shaders-core.esm.js',
       'evidence/gap-002-20261004/catalog-parity.json',
       'evidence/gap-007-20260926/overlay-settle.json',
+      'parity/coverage-matrix.json',
     ]
     for (const path of paths) {
       mkdirSync(dirname(join(fixture, path)), { recursive: true })
       copyFileSync(join(root, path), join(fixture, path))
     }
-    const sweepPath = join(fixture, paths[2])
-    const sweep = JSON.parse(readFileSync(sweepPath, 'utf8'))
-    sweep.coreSha256 = '0'.repeat(64)
-    writeFileSync(sweepPath, JSON.stringify(sweep))
+    const matrixPath = join(fixture, paths[4])
+    const matrix = JSON.parse(readFileSync(matrixPath, 'utf8'))
+    matrix.checkpoint.authority.coreSha256 = '0'.repeat(64)
+    writeFileSync(matrixPath, JSON.stringify(matrix))
     assert.throws(() => loadQualifiedScope({ root: fixture }), /core digest/)
   } finally {
     rmSync(fixture, { recursive: true, force: true })

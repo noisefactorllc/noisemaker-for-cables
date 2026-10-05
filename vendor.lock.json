@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "sourceBaseUrl": "https://shaders.noisedeck.app/1/",
-  "generatedAt": "2026-10-04T02:34:19.416Z",
+  "generatedAt": "2026-10-05T07:50:01.663Z",
   "effectCount": 210,
   "artifacts": [
     {
@@ -1271,9 +1271,9 @@
       "url": "https://shaders.noisedeck.app/1/effects/synth3d/shape3d.js"
     },
     {
-      "bytes": 910200,
+      "bytes": 913906,
       "path": "noisemaker-shaders-core.esm.js",
-      "sha256": "8ba3c3132b32515d5c12e09da8612f5ccdabe435ed01bcabe8621d81a900777b",
+      "sha256": "4017958a5ae52284365b1e43094bef35f73ba1dac26262fb564b3a7e62d01b20",
       "url": "https://shaders.noisedeck.app/1/noisemaker-shaders-core.esm.js"
     }
   ]

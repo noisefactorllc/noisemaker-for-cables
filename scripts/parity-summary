@@ -61,18 +61,61 @@ const server = spawn(process.execPath, ['test/browser/server.mjs'], {
 })
 let browser
 let counts
+// Any abort — dev-server startup or browser work — reports the same summary:
+// the denominator is the requested id count, or the full authority catalog for
+// a no-argument run, instead of 0, with the abort itself counted as one fail.
+const reportAbort = (error) => {
+  counts ??= {
+    defer: 0,
+    exact: 0,
+    expected: requestedIds.length > 0
+      ? requestedIds.length
+      : (catalogIds?.length ?? 0),
+    executed: 0,
+    fail: 0,
+    missing: 0,
+    near: 0,
+    skip: 0,
+    strict: 0,
+  }
+  counts.fail += 1
+  console.error('parity-summary aborted:', error && error.message ? error.message : String(error))
+  console.log(`PARITY-SUMMARY ${JSON.stringify(counts)}`)
+  process.exitCode = 1
+}
+// A dev server that exits before readiness (sandboxed environments may forbid
+// binding sockets) must abort immediately instead of waiting out the full
+// readiness deadline.
+const serverExited = new Promise((resolve) => {
+  server.once('exit', (code, signal) => resolve(
+    new Error(`fixture dev server exited before readiness (code ${code ?? 'null'}, signal ${signal ?? 'null'})`)
+  ))
+})
 try {
   await new Promise((resolve, reject) => {
     const deadline = Date.now() + 30_000
+    let settled = false
     const poll = async () => {
+      if (settled) return
       try {
         const response = await fetch(BASE_URL)
-        if (response.ok) return resolve()
+        if (response.ok) {
+          settled = true
+          return resolve()
+        }
       } catch {}
-      if (Date.now() > deadline) return reject(new Error('dev server did not start'))
+      if (settled) return
+      if (Date.now() > deadline) {
+        settled = true
+        return reject(new Error('dev server did not start'))
+      }
       setTimeout(poll, 250)
     }
     poll()
+    serverExited.then((error) => {
+      settled = true
+      reject(error)
+    })
   })
 
   try {
@@ -137,28 +180,10 @@ try {
       process.exitCode = 1
     }
   } catch (error) {
-    counts ??= {
-      defer: 0,
-      exact: 0,
-      // The denominator is the requested id count, or the full authority
-      // catalog for a no-argument run, so an abort before or during the
-      // browser work still reports the authority's expected case count
-      // instead of 0.
-      expected: requestedIds.length > 0
-        ? requestedIds.length
-        : (catalogIds?.length ?? 0),
-      executed: 0,
-      fail: 0,
-      missing: 0,
-      near: 0,
-      skip: 0,
-      strict: 0,
-    }
-    counts.fail += 1
-    console.error('parity-summary aborted:', error && error.message ? error.message : String(error))
-    console.log(`PARITY-SUMMARY ${JSON.stringify(counts)}`)
-    process.exitCode = 1
+    reportAbort(error)
   }
+} catch (error) {
+  reportAbort(error)
 } finally {
   if (browser) await browser.close().catch(() => {})
   server.kill()

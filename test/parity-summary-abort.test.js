@@ -6,10 +6,12 @@ import { fileURLToPath } from 'node:url'
 const script = fileURLToPath(new URL('../scripts/parity-summary', import.meta.url))
 
 test('a full-catalog abort still reports the authority denominator (expected 210)', async () => {
-  // Force chromium.launch to fail after the server and authority manifest are
-  // up: an invalid PLAYWRIGHT_BROWSERS_PATH makes the launch throw before any
-  // case runs. The abort summary must keep the no-argument denominator — the
-  // authority catalog's 210 cases — instead of reporting expected 0.
+  // Force an abort after the script's own startup work: an invalid
+  // PLAYWRIGHT_BROWSERS_PATH makes chromium.launch throw (or, in environments
+  // that forbid binding sockets, the fixture dev server exits before
+  // readiness and aborts immediately). Either way the abort summary must keep
+  // the no-argument denominator — the authority catalog's 210 cases — instead
+  // of reporting expected 0.
   const child = spawn(process.execPath, [script], {
     env: {
       ...process.env,

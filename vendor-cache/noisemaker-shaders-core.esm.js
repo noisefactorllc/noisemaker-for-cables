@@ -3,8 +3,8 @@
  * Includes: CanvasRenderer + UIController + EffectSelect
  * Copyright (c) 2017-2026 Noise Factor LLC. https://noisefactor.io/
  * SPDX-License-Identifier: MIT
- * Build: 058d15dc
- * Date: 2026-10-04T02:33:07.779Z
+ * Build: 41ba5e19
+ * Date: 2026-10-05T04:46:30.082Z
  */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
@@ -1994,6 +1994,7 @@ var frozenEnums = null;
 function deepMerge(target, source) {
   if (!source || typeof source !== "object") return target;
   for (const key of Object.keys(source)) {
+    if (key === "__proto__" || key === "constructor" || key === "prototype") continue;
     const sourceVal = source[key];
     const targetVal = target[key];
     if (sourceVal && typeof sourceVal === "object" && !Array.isArray(sourceVal) && targetVal && typeof targetVal === "object" && !Array.isArray(targetVal) && !("type" in sourceVal)) {
@@ -2804,7 +2805,7 @@ function validate(ast) {
           node.oscType,
           "oscKind",
           0,
-          /* @__PURE__ */ new Set([0, 1, 2, 3, 4, 5]),
+          /* @__PURE__ */ new Set([0, 1, 2, 3, 4, 5, 6]),
           "osc",
           "type"
         ),
@@ -4153,11 +4154,7 @@ function formatValue(value, spec, options = {}, sourceForm) {
     }
   }
   if (typeof value === "number") {
-    if (Number.isInteger(value)) {
-      return String(value);
-    }
-    const rounded = Math.round(value * 1e3) / 1e3;
-    return String(rounded);
+    return formatLosslessNumber(value);
   }
   if (typeof value === "string") {
     if (value.startsWith("#")) {
@@ -4391,11 +4388,12 @@ function unparseCall(call, options = {}) {
     for (const [key, value] of Object.entries(call.kwargs)) {
       if (key === "_skip" && value === false) continue;
       const spec = specs[key] || null;
+      const defaultSpec = spec || options.schemaSpecs?.[key] || null;
       const sourceForm = call.argSources?.[key];
-      if (spec && spec.default !== void 0) {
+      if (defaultSpec && defaultSpec.default !== void 0) {
         const formattedValue = formatValue(value, spec, options, sourceForm);
-        const formattedDefault = formatValue(spec.default, spec, options);
-        const isExplicitNone = spec.type === "surface" && formattedValue === "none" && formattedDefault !== "none";
+        const formattedDefault = formatValue(defaultSpec.default, spec, options);
+        const isExplicitNone = spec?.type === "surface" && formattedValue === "none" && formattedDefault !== "none";
         if (formattedValue === formattedDefault && !isExplicitNone) {
           continue;
         }
@@ -4764,6 +4762,17 @@ function unparse(compiled, overrides = {}, options = {}) {
         }
       }
       const specs = effectDef?.globals || {};
+      const schemaSpecs = {};
+      if (!effectDef) {
+        const opSpec = ops[step.op];
+        if (opSpec?.args) {
+          for (const arg of opSpec.args) {
+            if (arg?.name && specs[arg.name] === void 0) {
+              schemaSpecs[arg.name] = arg;
+            }
+          }
+        }
+      }
       for (const [key, value] of Object.entries(stepOverrides)) {
         if (key.startsWith("_")) {
           call.kwargs[key] = value;
@@ -4775,8 +4784,11 @@ function unparse(compiled, overrides = {}, options = {}) {
           call.kwargs[key] = value;
         }
       }
+      if (call.kwargs.volumeSize !== void 0 && specs.volumeSize?.ui?.control === false) {
+        delete call.kwargs.volumeSize;
+      }
       const callIndent = currentChain.length === 0 ? 0 : inSubchain ? 4 : 2;
-      let callCode = unparseCall(call, { ...planOptions, specs, indent: callIndent });
+      let callCode = unparseCall(call, { ...planOptions, specs, schemaSpecs, indent: callIndent });
       if (isFromOverride && fromNamespace) {
         callCode = `from(${fromNamespace}, ${callCode})`;
       }
@@ -5632,6 +5644,8 @@ function expand(compilationResult, options = {}) {
   const writtenVolumes = /* @__PURE__ */ new Map();
   const readVolumes = /* @__PURE__ */ new Map();
   const exportedTextures = /* @__PURE__ */ new Map();
+  const mediaSteps = [];
+  const mediaStepIds = /* @__PURE__ */ new Set();
   let lastWrittenSurface = null;
   const resolveEnum = (path) => {
     const parts = path.split(".");
@@ -6191,7 +6205,17 @@ function expand(compilationResult, options = {}) {
                 pass.inputs[uniformName] = currentInput || "global_inputTex";
               }
             } else if (effectDef.externalTexture && texRef === effectDef.externalTexture) {
-              pass.inputs[uniformName] = `${texRef}_step_${step.temp}`;
+              const texId = `${texRef}_step_${step.temp}`;
+              pass.inputs[uniformName] = texId;
+              if (!mediaStepIds.has(texId)) {
+                mediaStepIds.add(texId);
+                mediaSteps.push({
+                  textureId: texId,
+                  uniform: uniformName,
+                  stepIndex: step.temp,
+                  effect: effectName
+                });
+              }
             } else if (step.args && Object.prototype.hasOwnProperty.call(step.args, texRef)) {
               const arg = step.args[texRef];
               if (arg == null) {
@@ -6451,7 +6475,7 @@ function expand(compilationResult, options = {}) {
     errors.push({ message: "No render surface specified and no write() found - add render(oN) or write(oN)" });
     renderSurface = null;
   }
-  return { passes, errors, programs, textureSpecs, renderSurface };
+  return { passes, errors, programs, textureSpecs, renderSurface, mediaSteps };
 }
 
 // shaders/src/runtime/resources.js
@@ -12871,6 +12895,15 @@ function oscNoise(t, seed) {
   const n2 = noise2D(loopX + seed * 2, loopY + seed * 2, seed);
   return (n1 + n2) / 2;
 }
+function oscNoise2d(time, speed, seed) {
+  const periodicValue = (x, v) => (Math.sin((x - v) * TAU2) + 1) * 0.5;
+  const px = (Math.abs(seed % 16) + 0.5) / 16;
+  const py = (Math.abs(Math.floor(seed / 16) % 16) + 0.5) / 16;
+  const timeNoise = noise2D(px, py, seed + 12345);
+  const valueNoise = noise2D(px, py, seed);
+  const scaledTime = periodicValue(time, timeNoise) * speed;
+  return periodicValue(scaledTime, valueNoise);
+}
 var AUTOMATION_FIELD_RANGES = {
   unit: { min: 0, max: 1 },
   oscillatorSpeed: { min: -20, max: 20 },
@@ -13178,6 +13211,20 @@ function evaluateOscillator(osc, normalizedTime, externalState, depth = 0, stack
     case 5:
       value = oscNoise(t, seed);
       break;
+    case 6: {
+      const speed = resolveAutomationField(
+        osc.speed,
+        normalizedTime,
+        AUTOMATION_FIELD_RANGES.oscillatorSpeed,
+        externalState,
+        depth,
+        stack,
+        1,
+        context
+      );
+      value = oscNoise2d(normalizedTime + offset, Number.isFinite(speed) ? speed : 1, seed);
+      break;
+    }
     default:
       value = 0;
   }
@@ -16647,7 +16694,7 @@ function compileGraph(source, options = {}) {
       };
     }
   }
-  const { passes, errors: expandErrors, programs, textureSpecs, renderSurface } = expand(
+  const { passes, errors: expandErrors, programs, textureSpecs, renderSurface, mediaSteps } = expand(
     compilationResult,
     { shaderOverrides: options.shaderOverrides }
   );
@@ -16667,6 +16714,8 @@ function compileGraph(source, options = {}) {
     textures: extractTextureSpecs(passes, options, textureSpecs),
     renderSurface,
     // Which surface to present to screen (e.g., 'o0', 'o2')
+    mediaSteps,
+    // Per-step external texture bindings (e.g. imageTex_step_0)
     compiledAt: Date.now()
   };
   return graph;
@@ -16881,8 +16930,8 @@ var CanvasRenderer = class {
    * @param {object} options - Configuration options
    * @param {HTMLCanvasElement} options.canvas - Target canvas element
    * @param {HTMLElement} [options.canvasContainer] - Container element for canvas reset
-   * @param {number} [options.width=1024] - Render width
-   * @param {number} [options.height=1024] - Render height
+   * @param {number} [options.width=1024] - Render resolution width; sizes an unsized canvas element
+   * @param {number} [options.height=1024] - Render resolution height; sizes an unsized canvas element
    * @param {string} [options.basePath='../../shaders'] - Base path for shader assets
    * @param {boolean} [options.preferWebGPU=false] - Use WebGPU backend
    * @param {boolean} [options.useBundles=false] - Load effects from pre-built bundles
@@ -16949,6 +16998,7 @@ var CanvasRenderer = class {
     this._lastBackendInvalidationGeneration = -1;
     this._setupCanvasObserver();
     this._setupContextLossHandlers();
+    this._applyInitialCanvasSize();
   }
   /**
    * Set up observation of canvas dimension changes.
@@ -16988,6 +17038,31 @@ var CanvasRenderer = class {
     }
     interceptDimension("width", widthDesc);
     interceptDimension("height", heightDesc);
+  }
+  /**
+   * Size the canvas element from the render options when the host has not
+   * sized it. A canvas element's drawing buffer is its width/height, so an
+   * element left at the browser default (300x150) exports 300x150 pixels
+   * even though the pipeline renders internally at options.width x
+   * options.height. When the element already carries a size (attribute or
+   * property), the host's size wins and a disagreement is reported as a
+   * diagnostic naming both sizes.
+   * @private
+   */
+  _applyInitialCanvasSize() {
+    const canvas = this._canvas;
+    if (!canvas || typeof canvas.getAttribute !== "function") return;
+    const hostSized = canvas.getAttribute("width") !== null || canvas.getAttribute("height") !== null;
+    if (!hostSized) {
+      canvas.width = this._width;
+      canvas.height = this._height;
+      return;
+    }
+    if (canvas.width !== this._width || canvas.height !== this._height) {
+      console.warn(
+        `[Canvas] Canvas element is ${canvas.width}x${canvas.height} but the renderer options specify ${this._width}x${this._height}; the element size governs the output buffer.`
+      );
+    }
   }
   /**
    * Called when canvas dimensions change.
@@ -18222,6 +18297,7 @@ var CanvasRenderer = class {
    * Update a texture from an external source (video, image, canvas).
    * This is used for media input effects that need to display camera/video content.
    * @param {string} texId - Texture ID from effect's externalTexture property
+   *   (per-step: 'imageTex_step_N'; list them with getMediaSteps())
    * @param {HTMLVideoElement|HTMLImageElement|HTMLCanvasElement|ImageBitmap} source - Media source
    * @param {object} [options] - Update options
    * @param {boolean} [options.flipY=true] - Whether to flip the Y axis
@@ -18233,6 +18309,19 @@ var CanvasRenderer = class {
       return { width: 0, height: 0 };
     }
     return this._pipeline.backend.updateTextureFromSource(texId, source, options);
+  }
+  /**
+   * List the current program's media texture bindings.
+   *
+   * Each step that uses an external-texture effect (e.g. synth/media) binds
+   * its own texture, named '<externalTexture>_step_N' where N is the step's
+   * node index in the compiled program. Returns one entry per distinct
+   * texture id, in program order.
+   *
+   * @returns {Array<{textureId: string, uniform: string, stepIndex: number, effect: string}>}
+   */
+  getMediaSteps() {
+    return this._pipeline?.graph?.mediaSteps || [];
   }
   // =========================================================================
   // Mesh Loading (for meshLoader effect OBJ import)
@@ -20276,7 +20365,7 @@ function formatEnumName2(name) {
   if (sanitized !== null) {
     return sanitized;
   }
-  return `"${name.replace(/"/g, '\\"')}"`;
+  return `"${name.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`;
 }
 function createEffectDefCallback(getEffect2) {
   return (effectName, namespace) => {

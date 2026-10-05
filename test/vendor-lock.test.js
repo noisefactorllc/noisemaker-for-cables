@@ -1,6 +1,5 @@
 import assert from 'node:assert/strict'
 import { createHash } from 'node:crypto'
-import { createServer } from 'node:http'
 import {
   mkdir,
   mkdtemp,
@@ -39,40 +38,36 @@ const fixtureArtifacts = new Map([
 
 const digest = (bytes) => createHash('sha256').update(bytes).digest('hex')
 
+// The CDN source is stubbed through the fetchImplementation seam instead of a
+// real loopback HTTP server: test environments may forbid binding sockets, and
+// the transport is not what these tests assert.
 async function withVendorFixture(run) {
   const requestedPaths = []
-  const server = createServer((request, response) => {
-    const pathname = new URL(request.url, 'http://fixture.invalid').pathname
+  const sourceBaseUrl = 'https://vendor-fixture.invalid/1/'
+  const fetchImplementation = async (url) => {
+    const pathname = new URL(url).pathname
     requestedPaths.push(pathname)
     const bytes = fixtureArtifacts.get(pathname)
 
     if (!bytes) {
-      response.writeHead(404)
-      response.end('not found')
-      return
+      return { ok: false, status: 404, arrayBuffer: async () => new ArrayBuffer(0) }
     }
 
-    response.writeHead(200, { 'content-type': 'application/octet-stream' })
-    response.end(bytes)
-  })
-
-  await new Promise((resolve, reject) => {
-    server.once('error', reject)
-    server.listen(0, '127.0.0.1', resolve)
-  })
+    return {
+      ok: true,
+      status: 200,
+      arrayBuffer: async () =>
+        bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength),
+    }
+  }
 
   const directory = await mkdtemp(join(tmpdir(), 'noisemaker-vendor-lock-'))
-  const address = server.address()
-  const sourceBaseUrl = `http://127.0.0.1:${address.port}/1/`
   const cacheRoot = join(directory, 'vendor-cache')
   const lockPath = join(directory, 'vendor.lock.json')
 
   try {
-    await run({ cacheRoot, lockPath, requestedPaths, sourceBaseUrl })
+    await run({ cacheRoot, fetchImplementation, lockPath, requestedPaths, sourceBaseUrl })
   } finally {
-    await new Promise((resolve, reject) => {
-      server.close((error) => (error ? reject(error) : resolve()))
-    })
     await rm(directory, { force: true, recursive: true })
   }
 }

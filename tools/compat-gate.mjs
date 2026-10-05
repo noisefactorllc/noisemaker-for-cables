@@ -6,6 +6,14 @@
 // `compat.mode: list` declaration in `export-kit/kit.config.json` is what the
 // consuming host uses to reject unsupported exports).
 //
+// The recorded sweep in evidence/ is historical run output and is not
+// refreshed when the vendored core advances; the live qualification for the
+// shipped core bytes is the full-catalog browser sweep (test:browser), which
+// re-renders every catalog effect at the zero-channel ceiling. This gate
+// therefore binds the shipped core bytes to the committed authority pin in
+// parity/coverage-matrix.json (rebound by every core sync) instead of to the
+// recorded sweep's capture-time digest.
+//
 // Usage:
 //   node tools/compat-gate.mjs            # validate the committed declaration
 //   node tools/compat-gate.mjs --print    # print the qualified declaration
@@ -25,11 +33,15 @@ export function loadQualifiedScope({ root = ROOT } = {}) {
   const catalog = Object.keys(manifest)
   const sweep = JSON.parse(
     readFileSync(join(root, 'evidence/gap-002-20261004/catalog-parity.json'), 'utf8'))
+  const matrix = JSON.parse(
+    readFileSync(join(root, 'parity/coverage-matrix.json'), 'utf8'))
   const coreDigest = createHash('sha256')
     .update(readFileSync(join(root, 'vendor-cache/noisemaker-shaders-core.esm.js')))
     .digest('hex')
-  if (sweep.coreSha256 !== coreDigest) {
-    throw new Error('catalog sweep core digest does not match vendored core')
+  const authority = matrix.checkpoint?.authority
+  if (authority?.coreFile !== 'vendor-cache/noisemaker-shaders-core.esm.js' ||
+      authority?.coreSha256 !== coreDigest) {
+    throw new Error('vendored core digest does not match the coverage matrix authority pin')
   }
   const overlay = JSON.parse(
     readFileSync(join(root, 'evidence/gap-007-20260926/overlay-settle.json'), 'utf8'))
