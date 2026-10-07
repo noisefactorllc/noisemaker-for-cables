@@ -12,6 +12,7 @@ import { chromium } from 'playwright'
 
 import { inspectCablesStandalone } from './lib/cables-standalone-identity.js'
 import { removeTemporaryDirectory } from './lib/remove-temporary-directory.js'
+import { renderErrorLines } from './lib/render-error-lines.js'
 import { stopChild } from './lib/stop-child.js'
 
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..')
@@ -995,8 +996,7 @@ try {
       }
     })
     assert.equal(removal.opCount, 0, 'Noisemaker Program op was not removed from the loaded saved project')
-    const removalTerminalErrors = instance.terminalLines.filter((line) =>
-      /webgl|gl_invalid|\bgl error\b|unhandled|uncaught.*promise|promise rejection/i.test(line))
+    const removalTerminalErrors = renderErrorLines(instance.terminalLines)
     assert.deepEqual(removalTerminalErrors, [], 'removing the op from the saved project logged errors')
     // Persist the reduced project in the original saved format (the editor's
     // serialize() omits objName, so its output is not reloadable): take the
@@ -1045,8 +1045,7 @@ try {
     }), 'reduced saved project did not load its remaining ops')
     assert.equal(reducedState.noisemakerOps, 0, 'reduced saved project still contains the Noisemaker op')
     assert.equal(reducedState.mainLoop, 1, 'reduced saved project lost its other ops')
-    const reducedTerminalErrors = reducedInstance.terminalLines.filter((line) =>
-      /webgl|gl_invalid|\bgl error\b|unhandled|uncaught.*promise|promise rejection/i.test(line))
+    const reducedTerminalErrors = renderErrorLines(reducedInstance.terminalLines)
     assertNoRenderErrors(reducedTerminalErrors, 'the reduced saved project logged errors on reload')
     savedProjectRemoval = { noisemakerOps: reducedState.noisemakerOps, mainLoop: reducedState.mainLoop, opCount: reducedState.opCount }
   } finally {
@@ -1077,8 +1076,7 @@ try {
       return state?.ready && state.texture && state.error === '' ? state : null
     }, 'legacy-parameter saved project did not render through the current op')
     assert.match(upgradedState.dsl, /cellSmooth:/)
-    const upgradeTerminalErrors = upgradeInstance.terminalLines.filter((line) =>
-      /webgl|gl_invalid|\bgl error\b|unhandled|uncaught.*promise|promise rejection/i.test(line))
+    const upgradeTerminalErrors = renderErrorLines(upgradeInstance.terminalLines)
     assertNoRenderErrors(upgradeTerminalErrors, 'the legacy-parameter saved project logged errors on reload')
     savedProjectUpgrade = {
       ready: upgradedState.ready,
@@ -1095,12 +1093,10 @@ try {
 
   console.error('[smoke] screenshot')
   const screenshot = await page.screenshot({ path: screenshotPath })
-  const glOrPromiseErrors = [...consoleErrors, ...pageErrors].filter((message) =>
-    /webgl|gl_invalid|\bgl error\b|unhandled|uncaught.*promise|promise rejection/i.test(message))
+  const glOrPromiseErrors = renderErrorLines([...consoleErrors, ...pageErrors])
   assertNoRenderErrors(glOrPromiseErrors, 'the editor session logged console or page errors')
 
-  const terminalGlErrors = terminalLines.filter((line) =>
-    /webgl|gl_invalid|\bgl error\b|unhandled|uncaught.*promise|promise rejection/i.test(line))
+  const terminalGlErrors = renderErrorLines(terminalLines)
   assertNoRenderErrors(terminalGlErrors, 'the editor session logged terminal errors')
 
   const report = {
