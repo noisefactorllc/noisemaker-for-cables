@@ -5,7 +5,7 @@ import { spawn } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import { cp, mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises'
 import { arch, cpus, platform, release, tmpdir } from 'node:os'
-import { dirname, join, resolve } from 'node:path'
+import { delimiter, dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 import { chromium } from 'playwright'
@@ -177,8 +177,30 @@ if (cablesStandalone.platform === 'linux') {
 }
 
 const userDataDirectory = await mkdtemp(join(tmpdir(), 'noisemaker-cables-smoke-'))
+// On Linux the editor opens folders and links through xdg-open, which can
+// start a browser or file manager on the test display. Put a stub first on the
+// editor's PATH that records each request and opens nothing.
+const externalOpenDirectory = process.platform === 'linux'
+  ? await mkdtemp(join(tmpdir(), 'noisemaker-cables-open-'))
+  : null
+const externalOpenLog = externalOpenDirectory && join(externalOpenDirectory, 'requests.log')
+const childEnvironment = {
+  ...process.env,
+  ELECTRON_DISABLE_SECURITY_WARNINGS: 'true',
+  ...(externalOpenDirectory && {
+    NOISEMAKER_SMOKE_OPEN_LOG: externalOpenLog,
+    PATH: `${externalOpenDirectory}${delimiter}${process.env.PATH ?? ''}`,
+  }),
+}
 
 try {
+  if (externalOpenDirectory) {
+    await writeFile(
+      join(externalOpenDirectory, 'xdg-open'),
+      '#!/bin/sh\nprintf \'%s\\n\' "$*" >> "$NOISEMAKER_SMOKE_OPEN_LOG"\n',
+      { mode: 0o755 },
+    )
+  }
   await mkdir(reportRoot, { recursive: true })
   child = spawn(executable, [
     `--patch=${patchPath}`,
@@ -191,7 +213,7 @@ try {
     '--no-sandbox',
     ...graphicsFlags(),
   ], {
-    env: { ...process.env, ELECTRON_DISABLE_SECURITY_WARNINGS: 'true' },
+    env: childEnvironment,
     stdio: ['ignore', 'pipe', 'pipe'],
   })
   for (const stream of [child.stdout, child.stderr]) {
@@ -904,7 +926,7 @@ try {
         '--no-sandbox',
         ...graphicsFlags(),
       ], {
-        env: { ...process.env, ELECTRON_DISABLE_SECURITY_WARNINGS: 'true' },
+        env: childEnvironment,
         stdio: ['ignore', 'pipe', 'pipe'],
       })
       for (const stream of [child.stdout, child.stderr]) {
@@ -1131,6 +1153,9 @@ try {
     canvasResize,
     canvasResizeBefore,
     consoleErrors,
+    externalOpens: externalOpenLog
+      ? (await readFile(externalOpenLog, 'utf8').catch(() => '')).split('\n').filter(Boolean)
+      : null,
     driverPerformanceNotices: {
       count: driverPerformanceNotices.length,
       samples: driverPerformanceNotices.slice(0, 3),
@@ -1161,6 +1186,7 @@ try {
   if (browser) await browser.close().catch(() => {})
   if (child) await stopChild(child)
   await removeTemporaryDirectory(userDataDirectory)
+  if (externalOpenDirectory) await removeTemporaryDirectory(externalOpenDirectory)
 }
 })().catch(async (error) => {
   emitErrorAnnotations(error)

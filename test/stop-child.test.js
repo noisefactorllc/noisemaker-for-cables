@@ -42,3 +42,30 @@ test('waits for child exit after escalating from SIGTERM to SIGKILL', async () =
   await stopped
   assert.equal(settled, true)
 })
+
+test('releases the child stdio pipes once the child is gone', async () => {
+  const destroyed = []
+  const stream = (name) => ({ destroy: () => destroyed.push(name) })
+  const exitedChild = Object.assign(new EventEmitter(), {
+    exitCode: 0,
+    stderr: stream('stderr'),
+    stdin: null,
+    stdout: stream('stdout'),
+  })
+  await stopChild(exitedChild)
+  assert.deepEqual(destroyed.sort(), ['stderr', 'stdout'])
+
+  destroyed.length = 0
+  const runningChild = Object.assign(new EventEmitter(), {
+    exitCode: null,
+    stderr: stream('stderr'),
+    stdout: stream('stdout'),
+  })
+  runningChild.kill = () => {
+    runningChild.exitCode = 0
+    runningChild.emit('exit', 0, null)
+    return true
+  }
+  await stopChild(runningChild, { delay: () => new Promise(() => {}) })
+  assert.deepEqual(destroyed.sort(), ['stderr', 'stdout'])
+})
