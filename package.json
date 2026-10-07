@@ -29,7 +29,8 @@
     "vendor:verify": "node tools/vendor.mjs verify",
     "test:browser": "playwright test",
     "test:standalone": "node tools/standalone-smoke.mjs",
-    "verify": "npm run vendor:verify && npm test && npm run build && npm run test:browser && npm pack --dry-run"
+    "check": "npm run vendor:verify && npm test && npm run build && npm pack --dry-run",
+    "verify": "npm run check && npm run test:browser"
   },
   "engines": {
     "node": ">=22"

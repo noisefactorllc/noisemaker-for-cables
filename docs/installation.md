@@ -27,9 +27,9 @@ not included in the 16-file package archive. It opens the committed patch in
 the real Electron editor, attaches over CDP, exercises edits, media, resize,
 reset, delete/recreate, saved-project reload and op removal, and a project
 saved with deprecated parameter names, and writes its ignored output under
-`test-report/`. The export-kit workflow runs it for Standalone 0.11.0 and
-0.11.3 on Windows x64, Intel macOS, and Linux x64 with software GL. On macOS
-outside CI it renders on the host GPU.
+`test-report/`. The export-kit workflow's weekly and manual runs run it for
+Standalone 0.11.0 and 0.11.3 on Windows x64, Intel macOS, and Linux x64 with
+software GL. On macOS outside CI it renders on the host GPU.
 
 ## Inputs
 

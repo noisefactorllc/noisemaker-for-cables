@@ -4,9 +4,22 @@ name: Export kit
 # export-kit-release.yml, which builds this repo's export kit at this exact
 # SHA and ships it to kits.noisedeck.app. See scaffold
 # docs/runbook/export-kits.md.
+#
+# Push gate (fast, no rendering): `npm run check` (vendor lock, unit suite,
+# reproducible op bundle, package contents), the compatibility gate, and a
+# no-diff check on the committed op. A green gate dispatches the kit release.
+#
+# Weekly and manual runs add everything that renders through software GL or
+# downloads Cables Standalone: the browser suites (full-catalog parity sweep,
+# pixel parity, state hygiene) and the native editor smoke on Windows x64,
+# Intel macOS, and Linux x64 for each declared Standalone version. A manual
+# run dispatches the kit release only when every job passes; the weekly run
+# never does.
 
 on:
   workflow_dispatch:
+  schedule:
+    - cron: '41 7 * * 1'
   push:
     branches: [main]
     paths:
@@ -28,7 +41,7 @@ on:
 permissions: {}
 
 concurrency:
-  group: export-kit-${{ github.ref }}
+  group: export-kit-${{ github.ref }}-${{ github.event_name == 'schedule' && 'weekly' || 'gate' }}
   cancel-in-progress: false
 
 jobs:
@@ -43,19 +56,38 @@ jobs:
           node-version: '24'
           cache: npm
       - run: npm ci
-      - run: npx playwright install --with-deps chromium
-      - run: npm run verify
+      - run: npm run check
       - run: node tools/compat-gate.mjs
       - run: git diff --exit-code -- Ops.Extension.Noisemaker
+
+  browser:
+    # Software-rendered (SwiftShader) parity is a weekly true-up, never a push gate.
+    if: github.event_name != 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:browser
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()
         with:
-          name: runtime-${{ github.sha }}
+          name: browser-${{ github.sha }}
           path: |
             playwright-report/
             test-results/
 
   standalone:
+    # Downloads each Cables Standalone build and renders through software GL;
+    # weekly and manual only.
+    if: github.event_name != 'push'
     strategy:
       fail-fast: false
       matrix:
@@ -124,8 +156,13 @@ jobs:
         run: hdiutil detach "$RUNNER_TEMP/cables-volume" || true
 
   dispatch:
-    needs: [runtime, standalone]
-    if: github.ref == 'refs/heads/main'
+    needs: [runtime, browser, standalone]
+    # On push the weekly jobs are skipped and the fast gate decides; a manual
+    # run publishes only when every job passed.
+    if: >-
+      !cancelled() && github.ref == 'refs/heads/main' && github.event_name != 'schedule' &&
+      needs.runtime.result == 'success' &&
+      !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled')
     runs-on: ubuntu-latest
     steps:
       - name: Mint scaffold-dispatch token

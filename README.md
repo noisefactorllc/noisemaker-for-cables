@@ -34,15 +34,21 @@ to load unchanged.
 
 ## Verification
 
-`npm run verify` checks the locked artifacts, runs the unit suite, rebuilds the
-op bundle, runs the browser suites, and checks the package contents. The
-full-catalog browser sweep renders every effect through the Cables adapter and
-through the reference WebGL2 backend of the same pinned core, and fails on any
-mismatched channel. `node scripts/parity-summary` prints the same comparison as
-counts. `node tools/compat-gate.mjs` checks that the export kit declares
-exactly the effects that `parity/coverage-matrix.json` qualifies for the
-vendored core. `npm run test:standalone` runs the op in the real Cables
-Standalone editor; see [installation](docs/installation.md).
+`npm run check` verifies the locked artifacts, runs the unit suite, rebuilds the
+op bundle, and checks the package contents; it renders nothing.
+`npm run verify` adds the browser suites. Their full-catalog sweep renders every
+effect through the Cables adapter and through the reference WebGL2 backend of
+the same pinned core, and fails on any mismatched channel.
+`node scripts/parity-summary` prints the same comparison as counts.
+`node tools/compat-gate.mjs` checks that the export kit declares exactly the
+effects that `parity/coverage-matrix.json` qualifies for the vendored core.
+`npm run test:standalone` runs the op in the real Cables Standalone editor; see
+[installation](docs/installation.md).
+
+On every push the export-kit workflow runs `npm run check` and the
+compatibility gate before it releases the kit. The browser suites and the
+Standalone smoke render through software GL, so the workflow runs them weekly
+and on manual dispatch.
 
 ## License
 

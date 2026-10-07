@@ -49,11 +49,17 @@ test('package scripts expose the complete development workflow', async () => {
     'vendor:verify',
     'test:browser',
     'test:standalone',
+    'check',
     'verify',
   ]) {
     assert.equal(typeof packageJson.scripts[script], 'string', `missing ${script} script`)
   }
-  assert.match(packageJson.scripts.verify, /npm pack --dry-run/)
+  for (const step of ['npm run vendor:verify', 'npm test', 'npm run build', 'npm pack --dry-run']) {
+    assert.ok(packageJson.scripts.check.includes(step), `check is missing ${step}`)
+  }
+  assert.ok(!packageJson.scripts.check.includes('test:browser'), 'check must not render')
+  assert.match(packageJson.scripts.verify, /npm run check/)
+  assert.match(packageJson.scripts.verify, /npm run test:browser/)
 })
 
 test('source facade exposes only the planned bridge APIs', async () => {
