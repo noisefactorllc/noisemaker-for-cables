@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "title": "GAP-002 rendered parity coverage matrix at the existing checkpoint",
+  "title": "Rendered parity coverage matrix at the vendored authority checkpoint",
   "checkpoint": {
     "authority": {
       "kind": "vendored Noisemaker runtime pinned by vendor.lock.json",
@@ -52,7 +52,7 @@
       },
       "sizes": {
         "checkpoint": "64x48 for every catalog and representative case",
-        "beyondCheckpoint": "cubemap cases concatenate six face captures; native-host resize coverage is tracked separately under GAP-003"
+        "beyondCheckpoint": "cubemap cases concatenate six face captures; native-host canvas and manual resize run in the standalone smoke (npm run test:standalone)"
       },
       "chains": ["starter", "named-subchain-and-outputs", "artistic-chain", "remap-ubo", "mesh", "points-agents"],
       "hostResourceChecks": "Every catalog sweep iteration snapshots GL object counts (buffers, framebuffers, programs, queries, renderbuffers, samplers, shaders, textures, transform feedbacks, vertex arrays) on both the adapter and reference contexts before and after the effect; any delta fails the sweep as a visible resource-leak failure."
@@ -64,7 +64,6 @@
     "failures": "Comparison failures carry mismatchedChannels, max/mean channel error, and the first divergent pixels."
   },
   "outOfScope": {
-    "nativeEditorHost": "Standalone editor qualification remains under GAP-003.",
-    "releaseAcceptance": "Release boundary remains under GAP-005."
+    "nativeEditorHost": "The native Cables Standalone editor lifecycle runs in the standalone smoke (npm run test:standalone), on the export-kit workflow's Windows x64 and Intel macOS matrix for Standalone 0.11.0 and 0.11.3."
   }
 }

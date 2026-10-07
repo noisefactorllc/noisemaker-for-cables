@@ -1,18 +1,16 @@
-// GAP-006 pre-delivery compatibility gate.
+// Pre-delivery compatibility gate.
 //
-// Derives the qualified export scope from the committed parity evidence and
+// Derives the qualified export scope from parity/coverage-matrix.json and
 // rejects any kit compatibility declaration that claims more than that scope
-// before the kit is delivered (the repository-side gate; the narrowed
-// `compat.mode: list` declaration in `export-kit/kit.config.json` is what the
-// consuming host uses to reject unsupported exports).
+// before the kit is delivered. The narrowed `compat.mode: list` declaration in
+// `export-kit/kit.config.json` is what the consuming host uses to reject
+// unsupported exports.
 //
-// The recorded sweep in evidence/ is historical run output and is not
-// refreshed when the vendored core advances; the live qualification for the
-// shipped core bytes is the full-catalog browser sweep (test:browser), which
-// re-renders every catalog effect at the zero-channel ceiling. This gate
-// therefore binds the shipped core bytes to the committed authority pin in
-// parity/coverage-matrix.json (rebound by every core sync) instead of to the
-// recorded sweep's capture-time digest.
+// The matrix is the qualification record for the shipped core bytes: its
+// authority pin must equal the vendored core digest (every core sync rebinds
+// it), and the full-catalog browser sweep (test:browser) fails unless every
+// effect outside its compileOnly list renders and matches the independent
+// reference at the zero-channel ceiling. CI runs that sweep before this gate.
 //
 // Usage:
 //   node tools/compat-gate.mjs            # validate the committed declaration
@@ -30,9 +28,7 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
 export function loadQualifiedScope({ root = ROOT } = {}) {
   const manifest = JSON.parse(
     readFileSync(join(root, 'vendor-cache/effects/manifest.json'), 'utf8'))
-  const catalog = Object.keys(manifest)
-  const sweep = JSON.parse(
-    readFileSync(join(root, 'evidence/gap-002-20261004/catalog-parity.json'), 'utf8'))
+  const catalog = Object.keys(manifest).sort()
   const matrix = JSON.parse(
     readFileSync(join(root, 'parity/coverage-matrix.json'), 'utf8'))
   const coreDigest = createHash('sha256')
@@ -43,48 +39,33 @@ export function loadQualifiedScope({ root = ROOT } = {}) {
       authority?.coreSha256 !== coreDigest) {
     throw new Error('vendored core digest does not match the coverage matrix authority pin')
   }
-  const overlay = JSON.parse(
-    readFileSync(join(root, 'evidence/gap-007-20260926/overlay-settle.json'), 'utf8'))
 
-  if (sweep.failures?.length) {
-    throw new Error(`catalog sweep records ${sweep.failures.length} failure(s)`)
+  const denominator = matrix.denominator ?? {}
+  const compileOnly = denominator.compileOnly
+  if (!Array.isArray(compileOnly)) {
+    throw new Error('coverage matrix denominator.compileOnly must be a list')
   }
-  if (sweep.effectCount !== catalog.length) {
+  if (denominator.catalogEffects !== catalog.length) {
     throw new Error(
-      `sweep effectCount ${sweep.effectCount} != catalog size ${catalog.length}`)
+      `matrix catalogEffects ${denominator.catalogEffects} != catalog size ${catalog.length}`)
   }
 
-  const byId = new Map()
-  for (const result of sweep.results) {
-    if (byId.has(result.id)) throw new Error(`duplicate sweep result: ${result.id}`)
-    byId.set(result.id, result)
-  }
-  const missing = catalog.filter((id) => !byId.has(id))
-  if (missing.length) throw new Error(`catalog ids missing from sweep: ${missing}`)
-
-  const settled = new Map()
-  for (const c of overlay.cases) {
-    settled.set(c.id, c.comparisons.every((x) => x.mismatchedChannels === 0))
-  }
-
-  const qualified = new Set()
   const unqualified = new Map()
-  for (const id of catalog) {
-    const r = byId.get(id)
-    if (!r.rendered || !r.compared) {
-      unqualified.set(id, r.classification || 'not-rendered')
-    } else if (r.mismatchedChannels !== 0) {
-      if (r.classification === 'nondeterministic-canvas-overlay-generation' &&
-          settled.get(id) === true) {
-        qualified.add(id)
-      } else {
-        unqualified.set(id, r.classification || 'mismatched-channels')
-      }
-    } else {
-      qualified.add(id)
+  for (const entry of compileOnly) {
+    if (!catalog.includes(entry?.id)) {
+      throw new Error(`compileOnly id is not in the catalog: ${entry?.id}`)
     }
+    if (unqualified.has(entry.id)) throw new Error(`duplicate compileOnly id: ${entry.id}`)
+    unqualified.set(entry.id, entry.reason || 'compile-only')
   }
-  return { catalog, qualified: [...qualified].sort(), unqualified: Object.fromEntries(unqualified) }
+  if (denominator.renderedAndCompared !== catalog.length - unqualified.size) {
+    throw new Error(
+      `matrix renderedAndCompared ${denominator.renderedAndCompared} != ` +
+      `${catalog.length} catalog ids minus ${unqualified.size} compile-only`)
+  }
+
+  const qualified = catalog.filter((id) => !unqualified.has(id))
+  return { catalog, qualified, unqualified: Object.fromEntries(unqualified) }
 }
 
 export function validateDeclaration(declaration, scope) {

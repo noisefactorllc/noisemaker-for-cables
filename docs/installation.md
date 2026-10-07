@@ -23,10 +23,12 @@ is self-contained and does not fetch shader code at runtime.
 
 From a source checkout, point `CABLES_APP` at the Standalone executable and run
 `npm run test:standalone` for a local release check. The development harness is
-not included in the portable 15-file archive. It opens the committed patch in
+not included in the 16-file package archive. It opens the committed patch in
 the real Electron editor, attaches over CDP, exercises edits, media, resize,
-reset, and delete/recreate, and writes its ignored evidence under
-`test-report/`.
+reset, delete/recreate, saved-project reload and op removal, and a project
+saved with deprecated parameter names, and writes its ignored output under
+`test-report/`. The export-kit workflow runs it for Standalone 0.11.0 and
+0.11.3 on Windows x64 and Intel macOS.
 
 ## Inputs
 
@@ -91,9 +93,9 @@ texture size, 4 draw buffers, 9 fragment texture units, a 16,384-byte uniform
 block, and 8 uniform-buffer bindings. Unsupported capabilities fail before
 **Ready**.
 
-Version 1 targets Cables CGL/WebGL2 and Standalone 0.11.0. Cables CGP/WebGPU,
-generated one-op-per-effect authoring nodes, multiple independent media input
-ports, and a second offscreen rendering context are not included.
+Version 1 targets Cables CGL/WebGL2 in Standalone 0.11.0 and 0.11.3. Cables
+CGP/WebGPU, generated one-op-per-effect authoring nodes, multiple independent
+media input ports, and a second offscreen rendering context are not included.
 
 The Program op does not request browser MIDI or microphone permissions. A host
 or companion Cables op owns capture, updates the linked state object, and may

@@ -5,8 +5,6 @@
 
 # Noisemaker for Cables
 
-Current measured support: [compatibility report](docs/COMPATIBILITY.md).
-
 > This package supports the "Export Shader Pipeline" feature in Noisedeck.app. The
 > feature runs shader compositions on other platforms. Noise Factor derives this package
 > from the upstream Noisemaker Engine project and tests it for pixel-level parity.
@@ -15,9 +13,9 @@ Current measured support: [compatibility report](docs/COMPATIBILITY.md).
 engine and complete effect catalog to Cables GL without a second rendering
 context or CPU readback.
 
-The first release exposes one native Cables op:
-`Ops.Extension.Noisemaker.Program`. Generated per-effect ops are outside the
-initial package scope.
+The package exposes one native Cables op:
+`Ops.Extension.Noisemaker.Program`. Generated per-effect ops are outside its
+scope.
 
 The bundle contains the pinned reference Noisemaker compiler, engine, GLSL, and
 all 210 locked effects. It accepts complete Polymorphic programs, including
@@ -29,11 +27,22 @@ The installed op remains `Ops.Extension.Noisemaker.Program`. Its browser global
 are retained as compatibility identifiers so existing Cables patches continue
 to load unchanged.
 
-- [Read the completion audit and known gaps](docs/COMPLETION_GAPS.md)
 - [Install the op in Cables Standalone](docs/installation.md)
 - [Open the example patch](examples/README.md)
 - [Read the runtime architecture](docs/architecture.md)
 - [Update the pinned effect catalog](docs/catalog-update.md)
+
+## Verification
+
+`npm run verify` checks the locked artifacts, runs the unit suite, rebuilds the
+op bundle, runs the browser suites, and checks the package contents. The
+full-catalog browser sweep renders every effect through the Cables adapter and
+through the reference WebGL2 backend of the same pinned core, and fails on any
+mismatched channel. `node scripts/parity-summary` prints the same comparison as
+counts. `node tools/compat-gate.mjs` checks that the export kit declares
+exactly the effects that `parity/coverage-matrix.json` qualifies for the
+vendored core. `npm run test:standalone` runs the op in the real Cables
+Standalone editor; see [installation](docs/installation.md).
 
 ## License
 

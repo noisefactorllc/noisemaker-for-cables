@@ -29,28 +29,66 @@ test('qualified scope covers all 210 rendered catalog effects', () => {
   assert.ok(scope.qualified.includes('filter/octaveWarp'))
 })
 
-test('qualified scope rejects a vendored core that drifts from the authority pin', () => {
+function withMatrixFixture(edit, check) {
   const fixture = mkdtempSync(join(tmpdir(), 'cables-compat-'))
   try {
     const paths = [
       'vendor-cache/effects/manifest.json',
       'vendor-cache/noisemaker-shaders-core.esm.js',
-      'evidence/gap-002-20261004/catalog-parity.json',
-      'evidence/gap-007-20260926/overlay-settle.json',
       'parity/coverage-matrix.json',
     ]
     for (const path of paths) {
       mkdirSync(dirname(join(fixture, path)), { recursive: true })
       copyFileSync(join(root, path), join(fixture, path))
     }
-    const matrixPath = join(fixture, paths[4])
+    const matrixPath = join(fixture, 'parity/coverage-matrix.json')
     const matrix = JSON.parse(readFileSync(matrixPath, 'utf8'))
-    matrix.checkpoint.authority.coreSha256 = '0'.repeat(64)
+    edit(matrix)
     writeFileSync(matrixPath, JSON.stringify(matrix))
-    assert.throws(() => loadQualifiedScope({ root: fixture }), /core digest/)
+    check(fixture)
   } finally {
     rmSync(fixture, { recursive: true, force: true })
   }
+}
+
+test('qualified scope rejects a vendored core that drifts from the authority pin', () => {
+  withMatrixFixture(
+    (matrix) => { matrix.checkpoint.authority.coreSha256 = '0'.repeat(64) },
+    (fixture) => assert.throws(() => loadQualifiedScope({ root: fixture }), /core digest/),
+  )
+})
+
+test('a compile-only matrix entry leaves that effect out of the qualified scope', () => {
+  withMatrixFixture(
+    (matrix) => {
+      matrix.denominator.compileOnly = [{ id: 'filter/octaveWarp', reason: 'probe' }]
+      matrix.denominator.renderedAndCompared = 209
+    },
+    (fixture) => {
+      const scope = loadQualifiedScope({ root: fixture })
+      assert.equal(scope.qualified.length, 209)
+      assert.ok(!scope.qualified.includes('filter/octaveWarp'))
+      assert.deepEqual(scope.unqualified, { 'filter/octaveWarp': 'probe' })
+    },
+  )
+})
+
+test('qualified scope rejects a matrix denominator that disagrees with the catalog', () => {
+  withMatrixFixture(
+    (matrix) => { matrix.denominator.catalogEffects = 209 },
+    (fixture) => assert.throws(() => loadQualifiedScope({ root: fixture }), /catalogEffects/),
+  )
+  withMatrixFixture(
+    (matrix) => { matrix.denominator.compileOnly = [{ id: 'filter/octaveWarp', reason: 'probe' }] },
+    (fixture) => assert.throws(() => loadQualifiedScope({ root: fixture }), /renderedAndCompared/),
+  )
+  withMatrixFixture(
+    (matrix) => {
+      matrix.denominator.compileOnly = [{ id: 'filter/unknown', reason: 'probe' }]
+      matrix.denominator.renderedAndCompared = 209
+    },
+    (fixture) => assert.throws(() => loadQualifiedScope({ root: fixture }), /not in the catalog/),
+  )
 })
 
 test('the committed kit declaration matches the qualified scope exactly', () => {

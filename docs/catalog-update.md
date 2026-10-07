@@ -15,16 +15,22 @@ An intentional catalog refresh is:
 npm run vendor:update
 node tools/generate-effect-entry.mjs
 npm run vendor:verify
-npm test
 npm run build
 npm run test:browser
-npm pack --dry-run
+node scripts/parity-summary
 ```
 
 Review the lock diff before accepting it. The manifest count, locked bundles,
 generated static imports, runtime registrations, catalog compiler sweep, and
 browser sweep must all agree. A missing, duplicate, renamed, or hash-mismatched
 effect is a hard failure.
+
+Once the browser sweep and the parity summary pass, rebind
+`checkpoint.authority` in `parity/coverage-matrix.json` to the new core: the
+`Build:` id from the core header and the SHA-256 of
+`vendor-cache/noisemaker-shaders-core.esm.js`. The compatibility gate and its
+unit tests refuse a core that does not match that pin. Then run
+`npm run verify` and `node tools/compat-gate.mjs`.
 
 `parity/programs.json` is the hand-authored full-DSL corpus.
 `parity/catalog-inputs.js` creates valid explicit programs for every effect,

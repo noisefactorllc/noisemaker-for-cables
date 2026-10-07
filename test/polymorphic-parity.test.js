@@ -1472,7 +1472,7 @@ test('valid call forms retain from override namespaces and mixed automation argu
   assert.equal(mixed.vars[0].expr.channel.value, 2)
 })
 
-test('GAP-027: subchain argument validation contract exposes P008, P009, P010 diagnostics in permissive mode', async () => {
+test('subchain argument validation contract exposes P008, P009, P010 diagnostics in permissive mode', async () => {
   const core = await createReferenceCompiler()
   const { compile, lex, parse, registerOp, registerStarterOps } = core
 
@@ -1610,7 +1610,7 @@ test('upstream texture-policy fields (mipmaps/persistent/3D filter) propagate fr
   }
 })
 
-test('GAP-027: strict opt-in mode rejects subchain argument violations with SyntaxError', async () => {
+test('strict opt-in mode rejects subchain argument violations with SyntaxError', async () => {
   const core = await createReferenceCompiler()
   const { compile, lex, parse, registerOp, registerStarterOps } = core
 
