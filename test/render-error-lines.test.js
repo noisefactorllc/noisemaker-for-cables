@@ -1,7 +1,11 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 
-import { isRenderErrorLine, renderErrorLines } from '../tools/lib/render-error-lines.js'
+import {
+  isDriverPerformanceNotice,
+  isRenderErrorLine,
+  renderErrorLines,
+} from '../tools/lib/render-error-lines.js'
 
 // The Apple M4 physical-GPU leg reports this driver advice under a WebGL
 // context tag.
@@ -13,6 +17,8 @@ test('physical-GPU driver performance notices are not render errors', () => {
   assert.equal(isRenderErrorLine(performanceNotice), false)
   assert.equal(isRenderErrorLine('[.WebGL-0x1]GL Driver Message (OpenGL, Performance, 0, Medium): Program undergoing recompile'), false)
   assert.deepEqual(renderErrorLines([performanceNotice, performanceNotice]), [])
+  assert.equal(isDriverPerformanceNotice(performanceNotice), true)
+  assert.equal(isDriverPerformanceNotice('[.WebGL-0x1]GL Driver Message (OpenGL, Error, 0, High): x'), false)
 })
 
 test('driver messages of other types still fail the smoke', () => {

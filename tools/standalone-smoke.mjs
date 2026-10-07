@@ -12,7 +12,7 @@ import { chromium } from 'playwright'
 
 import { inspectCablesStandalone } from './lib/cables-standalone-identity.js'
 import { removeTemporaryDirectory } from './lib/remove-temporary-directory.js'
-import { renderErrorLines } from './lib/render-error-lines.js'
+import { isDriverPerformanceNotice, renderErrorLines } from './lib/render-error-lines.js'
 import { stopChild } from './lib/stop-child.js'
 
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..')
@@ -29,6 +29,24 @@ if (!executableInput) {
 
 const sleep = (milliseconds) => new Promise((resolveSleep) => setTimeout(resolveSleep, milliseconds))
 const digest = (bytes) => createHash('sha256').update(bytes).digest('hex')
+
+// The Linux CI container and GitHub's macOS runners expose no usable GPU;
+// without a software GL path the editor's WebGL context creation returns null
+// and the renderer fails with "Cannot read properties of null (reading
+// 'createBuffer')". They render through SwiftShader. A macOS run outside CI
+// renders on the host GPU, which is the physical-GPU leg.
+function graphicsFlags() {
+  if (process.platform === 'linux') {
+    return ['--use-angle=swiftshader', '--enable-unsafe-swiftshader',
+      // The container's /dev/shm is 64 MiB; additional editor instances
+      // crash their renderers without this flag.
+      '--disable-dev-shm-usage']
+  }
+  if (process.platform === 'darwin' && process.env.CI) {
+    return ['--use-angle=swiftshader', '--enable-unsafe-swiftshader']
+  }
+  return []
+}
 
 async function waitFor(check, message, timeout = 30_000) {
   const started = Date.now()
@@ -90,6 +108,16 @@ const waitForCdpPageTarget = async (url, message, timeout = 90_000) => {
 const terminalLines = []
 const consoleErrors = []
 const pageErrors = []
+const driverPerformanceNotices = []
+
+// Render errors in the given lines. Driver performance notices are set aside
+// and reported, so a passing run shows what the classifier excluded.
+const renderErrorsIn = (lines) => {
+  for (const line of lines) {
+    if (isDriverPerformanceNotice(line)) driverPerformanceNotices.push(String(line).slice(0, 300))
+  }
+  return renderErrorLines(lines)
+}
 
 // CI diagnostics: the standalone runners cannot serve job logs to this
 // automation's read-only credentials, so any smoke failure must surface its
@@ -161,17 +189,7 @@ try {
     // which kills the GPU process on macOS hosts; --no-sandbox is also
     // required for the Linux CI container's chrome-sandbox SUID helper.
     '--no-sandbox',
-    ...(process.platform === 'linux'
-      ? ['--use-angle=swiftshader', '--enable-unsafe-swiftshader',
-        // The container's /dev/shm is 64 MiB; additional editor instances
-        // crash their renderers without this flag.
-        '--disable-dev-shm-usage']
-      // CI macOS runners expose no usable GPU; without a software GL path
-      // the editor's WebGL context creation returns null and the renderer
-      // fails with "Cannot read properties of null (reading 'createBuffer')".
-      : process.platform === 'darwin'
-        ? ['--use-angle=swiftshader', '--enable-unsafe-swiftshader']
-      : []),
+    ...graphicsFlags(),
   ], {
     env: { ...process.env, ELECTRON_DISABLE_SECURITY_WARNINGS: 'true' },
     stdio: ['ignore', 'pipe', 'pipe'],
@@ -884,14 +902,7 @@ try {
         `--remote-debugging-port=${cdpPort}`,
         `--user-data-dir=${profile}`,
         '--no-sandbox',
-        ...(process.platform === 'linux'
-          ? ['--use-angle=swiftshader', '--enable-unsafe-swiftshader',
-            // The container's /dev/shm is 64 MiB; additional editor instances
-            // crash their renderers without this flag.
-            '--disable-dev-shm-usage']
-          : process.platform === 'darwin'
-            ? ['--use-angle=swiftshader', '--enable-unsafe-swiftshader']
-            : []),
+        ...graphicsFlags(),
       ], {
         env: { ...process.env, ELECTRON_DISABLE_SECURITY_WARNINGS: 'true' },
         stdio: ['ignore', 'pipe', 'pipe'],
@@ -996,7 +1007,7 @@ try {
       }
     })
     assert.equal(removal.opCount, 0, 'Noisemaker Program op was not removed from the loaded saved project')
-    const removalTerminalErrors = renderErrorLines(instance.terminalLines)
+    const removalTerminalErrors = renderErrorsIn(instance.terminalLines)
     assert.deepEqual(removalTerminalErrors, [], 'removing the op from the saved project logged errors')
     // Persist the reduced project in the original saved format (the editor's
     // serialize() omits objName, so its output is not reloadable): take the
@@ -1045,7 +1056,7 @@ try {
     }), 'reduced saved project did not load its remaining ops')
     assert.equal(reducedState.noisemakerOps, 0, 'reduced saved project still contains the Noisemaker op')
     assert.equal(reducedState.mainLoop, 1, 'reduced saved project lost its other ops')
-    const reducedTerminalErrors = renderErrorLines(reducedInstance.terminalLines)
+    const reducedTerminalErrors = renderErrorsIn(reducedInstance.terminalLines)
     assertNoRenderErrors(reducedTerminalErrors, 'the reduced saved project logged errors on reload')
     savedProjectRemoval = { noisemakerOps: reducedState.noisemakerOps, mainLoop: reducedState.mainLoop, opCount: reducedState.opCount }
   } finally {
@@ -1076,7 +1087,7 @@ try {
       return state?.ready && state.texture && state.error === '' ? state : null
     }, 'legacy-parameter saved project did not render through the current op')
     assert.match(upgradedState.dsl, /cellSmooth:/)
-    const upgradeTerminalErrors = renderErrorLines(upgradeInstance.terminalLines)
+    const upgradeTerminalErrors = renderErrorsIn(upgradeInstance.terminalLines)
     assertNoRenderErrors(upgradeTerminalErrors, 'the legacy-parameter saved project logged errors on reload')
     savedProjectUpgrade = {
       ready: upgradedState.ready,
@@ -1093,10 +1104,10 @@ try {
 
   console.error('[smoke] screenshot')
   const screenshot = await page.screenshot({ path: screenshotPath })
-  const glOrPromiseErrors = renderErrorLines([...consoleErrors, ...pageErrors])
+  const glOrPromiseErrors = renderErrorsIn([...consoleErrors, ...pageErrors])
   assertNoRenderErrors(glOrPromiseErrors, 'the editor session logged console or page errors')
 
-  const terminalGlErrors = renderErrorLines(terminalLines)
+  const terminalGlErrors = renderErrorsIn(terminalLines)
   assertNoRenderErrors(terminalGlErrors, 'the editor session logged terminal errors')
 
   const report = {
@@ -1120,6 +1131,10 @@ try {
     canvasResize,
     canvasResizeBefore,
     consoleErrors,
+    driverPerformanceNotices: {
+      count: driverPerformanceNotices.length,
+      samples: driverPerformanceNotices.slice(0, 3),
+    },
     facade,
     finalState,
     initial,

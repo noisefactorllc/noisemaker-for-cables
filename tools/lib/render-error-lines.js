@@ -11,6 +11,10 @@
 const RENDER_ERROR_PATTERN = /webgl|gl_invalid|\bgl error\b|unhandled|uncaught.*promise|promise rejection/i
 const DRIVER_PERFORMANCE_NOTICE = /GL Driver Message \([^,()]*,\s*Performance\s*,[^()]*\)/i
 
+export function isDriverPerformanceNotice(line) {
+  return DRIVER_PERFORMANCE_NOTICE.test(String(line))
+}
+
 export function isRenderErrorLine(line) {
   const text = String(line)
   return RENDER_ERROR_PATTERN.test(text) && !DRIVER_PERFORMANCE_NOTICE.test(text)
