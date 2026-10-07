@@ -64,6 +64,6 @@
     "failures": "Comparison failures carry mismatchedChannels, max/mean channel error, and the first divergent pixels."
   },
   "outOfScope": {
-    "nativeEditorHost": "The native Cables Standalone editor lifecycle runs in the standalone smoke (npm run test:standalone), on the export-kit workflow's Windows x64 and Intel macOS matrix for Standalone 0.11.0 and 0.11.3."
+    "nativeEditorHost": "The native Cables Standalone editor lifecycle runs in the standalone smoke (npm run test:standalone), on the export-kit workflow's Windows x64, Intel macOS, and Linux x64 matrix for Standalone 0.11.0 and 0.11.3."
   }
 }

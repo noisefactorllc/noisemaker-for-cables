@@ -59,7 +59,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-2025, macos-15-intel]
+        os: [windows-2025, macos-15-intel, ubuntu-24.04]
         version: ['0.11.0', '0.11.3']
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
@@ -96,8 +96,24 @@ jobs:
             --output "$RUNNER_TEMP/cables.dmg"
           hdiutil attach "$RUNNER_TEMP/cables.dmg" -readonly -nobrowse -mountpoint "$RUNNER_TEMP/cables-volume"
           echo "CABLES_APP=$RUNNER_TEMP/cables-volume/cables.app/Contents/MacOS/cables" >> "$GITHUB_ENV"
+      - name: Extract the declared Linux distribution
+        if: runner.os == 'Linux'
+        shell: bash
+        env:
+          CABLES_VERSION: ${{ matrix.version }}
+        run: |
+          curl --fail --location --retry 3 \
+            "https://github.com/cables-gl/cables_electron/releases/download/v${CABLES_VERSION}/cables-${CABLES_VERSION}-linux-x64.AppImage" \
+            --output "$RUNNER_TEMP/cables.AppImage"
+          chmod +x "$RUNNER_TEMP/cables.AppImage"
+          (cd "$RUNNER_TEMP" && ./cables.AppImage --appimage-extract > /dev/null)
+          echo "CABLES_APP=$RUNNER_TEMP/squashfs-root/cables" >> "$GITHUB_ENV"
       - name: Exercise the native editor and saved-project lifecycle
+        if: runner.os != 'Linux'
         run: npm run test:standalone
+      - name: Exercise the native editor and saved-project lifecycle on a virtual display
+        if: runner.os == 'Linux'
+        run: xvfb-run --auto-servernum npm run test:standalone
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()
         with:
