@@ -305,17 +305,25 @@ try {
       globalThis.__noisemakerKeyboardClicks.length = 0
       globalThis.__noisemakerKeydowns.length = 0
     })
+    // Controls that hand work to the desktop (the project folder, external
+    // links) open a file manager or browser on the host; pass over them.
     let focusedControl = null
+    const skippedControls = []
     for (let tab = 0; tab < 60 && !focusedControl; tab += 1) {
       await page.keyboard.press('Tab')
       await sleep(120)
-      focusedControl = await frame.evaluate(() => {
+      const candidate = await frame.evaluate(() => {
         const el = document.activeElement
         if (!el || el === document.body) return null
         const isControl = el.tagName === 'BUTTON'
           || el.getAttribute?.('role') === 'button'
           || /(^|\s)(button|iconbutton|eleAsButton)/.test(String(el.className))
         if (!isControl) return null
+        const href = el.getAttribute?.('href') ?? ''
+        if (el.id === 'btn_patch_opendir' || /^(https?|file):/i.test(href) ||
+            el.getAttribute?.('target') === '_blank') {
+          return { skipped: el.id || href }
+        }
         const rect = el.getBoundingClientRect()
         if (rect.width <= 0 || rect.height <= 0) return null
         return {
@@ -325,6 +333,8 @@ try {
           text: (el.textContent || '').trim().slice(0, 40),
         }
       })
+      if (candidate?.skipped !== undefined) skippedControls.push(candidate.skipped)
+      else focusedControl = candidate
     }
     assert.ok(focusedControl, 'Tab traversal did not focus a visible editor control')
     await page.keyboard.press('Enter')
@@ -400,6 +410,7 @@ try {
         focusedControl,
         hostPageActivation,
         keyboardEnterSpaceReachesControl: activationKeys.length >= 2,
+        skippedControls,
       },
       after,
       hasFocus: pageState.hasFocus,
