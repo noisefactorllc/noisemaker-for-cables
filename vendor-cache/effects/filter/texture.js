@@ -1,5 +1,5 @@
 /* filter/texture */
-var t=class{constructor(e={}){this.state={},this.uniforms={},e.name&&(this.name=e.name),e.namespace&&(this.namespace=e.namespace),e.func&&(this.func=e.func),e.description&&(this.description=e.description),e.tags&&(this.tags=e.tags),e.globals&&(this.globals=e.globals),e.passes&&(this.passes=e.passes),e.textures&&(this.textures=e.textures),e.outputTex3d&&(this.outputTex3d=e.outputTex3d),e.outputGeo&&(this.outputGeo=e.outputGeo),e.uniformLayout&&(this.uniformLayout=e.uniformLayout),e.uniformLayouts&&(this.uniformLayouts=e.uniformLayouts),e.paramAliases&&(this.paramAliases=e.paramAliases),e.openCategories&&(this.openCategories=e.openCategories),e.defaultProgram&&(this.defaultProgram=e.defaultProgram),e.hidden&&(this.hidden=!0),e.deprecatedBy&&(this.deprecatedBy=e.deprecatedBy),e.onInit&&(this._configOnInit=e.onInit),e.onUpdate&&(this._configOnUpdate=e.onUpdate),e.onDestroy&&(this._configOnDestroy=e.onDestroy),e.asyncInit&&(this._configAsyncInit=e.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(e){return this._configOnUpdate?this._configOnUpdate.call(this,e):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(e){return this._configAsyncInit?this._configAsyncInit.call(this,e):Promise.resolve()}};var n=new t({name:"Texture",namespace:"filter",func:"texture",tags:["noise"],description:"Procedural surface and material texture overlay",globals:{mode:{type:"int",default:3,define:"MODE",choices:{canvas:0,crosshatch:1,halftone:2,paper:3,stucco:4,regular:5,soft:6,sprinkles:7,clumped:8,contrasty:9,enlarged:10,stippled:11,horizontal:12,vertical:13,speckle:14},ui:{label:"mode",control:"dropdown"}},alpha:{type:"float",default:.5,uniform:"alpha",min:0,max:1,step:.01,ui:{label:"alpha",control:"slider"}},scale:{type:"float",default:1,uniform:"scale",min:.1,max:10,step:.1,randMax:4,ui:{label:"scale",control:"slider"}},intensity:{type:"float",default:40,uniform:"intensity",min:0,max:100,ui:{label:"intensity",control:"slider",enabledBy:{param:"mode",gt:4}}},contrast:{type:"float",default:50,uniform:"contrast",min:0,max:100,ui:{label:"contrast",control:"slider",enabledBy:{param:"mode",gt:4}}},mono:{type:"boolean",default:!0,uniform:"mono",ui:{label:"mono",control:"checkbox",enabledBy:{param:"mode",gt:4}}}},defaultProgram:`search filter, synth
+var n=class{constructor(e={}){this.state={},this.uniforms={},e.name&&(this.name=e.name),e.namespace&&(this.namespace=e.namespace),e.func&&(this.func=e.func),e.description&&(this.description=e.description),e.tags&&(this.tags=e.tags),e.globals&&(this.globals=e.globals),e.passes&&(this.passes=e.passes),e.textures&&(this.textures=e.textures),e.textures3d&&(this.textures3d=e.textures3d),e.shaders&&(this.shaders=e.shaders),e.externalTexture&&(this.externalTexture=e.externalTexture),e.externalMesh&&(this.externalMesh=e.externalMesh),e.builtinMeshes&&(this.builtinMeshes=e.builtinMeshes),e.outputTex3d&&(this.outputTex3d=e.outputTex3d),e.outputGeo&&(this.outputGeo=e.outputGeo),e.uniformLayout&&(this.uniformLayout=e.uniformLayout),e.uniformLayouts&&(this.uniformLayouts=e.uniformLayouts),e.paramAliases&&(this.paramAliases=e.paramAliases),e.openCategories&&(this.openCategories=e.openCategories),e.defaultProgram&&(this.defaultProgram=e.defaultProgram),e.hidden&&(this.hidden=!0),e.deprecatedBy&&(this.deprecatedBy=e.deprecatedBy),e.onInit&&(this._configOnInit=e.onInit),e.onUpdate&&(this._configOnUpdate=e.onUpdate),e.onDestroy&&(this._configOnDestroy=e.onDestroy),e.asyncInit&&(this._configAsyncInit=e.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(e){return this._configOnUpdate?this._configOnUpdate.call(this,e):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(e){return this._configAsyncInit?this._configAsyncInit.call(this,e):Promise.resolve()}};var t=new n({name:"Texture",namespace:"filter",func:"texture",tags:["noise"],description:"Procedural surface and material texture overlay",globals:{mode:{type:"int",default:3,define:"MODE",choices:{canvas:0,crosshatch:1,halftone:2,paper:3,stucco:4,regular:5,soft:6,sprinkles:7,clumped:8,contrasty:9,enlarged:10,stippled:11,horizontal:12,vertical:13,speckle:14},ui:{label:"mode",control:"dropdown"}},alpha:{type:"float",default:.5,uniform:"alpha",min:0,max:1,step:.01,ui:{label:"alpha",control:"slider"}},scale:{type:"float",default:1,uniform:"scale",min:.1,max:10,step:.1,randMax:4,ui:{label:"scale",control:"slider"}},intensity:{type:"float",default:40,uniform:"intensity",min:0,max:100,ui:{label:"intensity",control:"slider",enabledBy:{param:"mode",gt:4}}},contrast:{type:"float",default:50,uniform:"contrast",min:0,max:100,ui:{label:"contrast",control:"slider",enabledBy:{param:"mode",gt:4}}},mono:{type:"boolean",default:!0,uniform:"mono",ui:{label:"mono",control:"checkbox",enabledBy:{param:"mode",gt:4}}}},defaultProgram:`search filter, synth
 
 solid(color: #d1d1d1)
   .texture(alpha: 0.75)
@@ -718,13 +718,12 @@ fn shape_material(raw: f32) -> f32 {
 
 @fragment
 fn main(in: VertexOutput) -> @location(0) vec4<f32> {
-    // Modes 0..4 retain their established sampling contract. The material
-    // modes were added later and normalize the source UV so their presented
-    // image matches the GLSL backend instead of inheriting that old flip.
-    var sourceUV = in.uv;
-    if (MODE >= 5) { sourceUV.y = 1.0 - sourceUV.y; }
-    let base_color: vec4<f32> = textureSample(inputTex, u_sampler, sourceUV);
+    // The output-normalized coordinate, as the GLSL's v_texCoord against its
+    // textures; the default vertex uv has a bottom-left origin, so it is
+    // flipped vertically.
     let dims: vec2<f32> = vec2<f32>(textureDimensions(inputTex, 0));
+    let uv: vec2<f32> = vec2<f32>(in.uv.x, 1.0 - in.uv.y);
+    let base_color: vec4<f32> = textureSample(inputTex, u_sampler, uv);
     let pixel_step: vec2<f32> = 1.0 / dims;
 
     let a: f32 = clamp(alpha, 0.0, 1.0);
@@ -737,11 +736,11 @@ fn main(in: VertexOutput) -> @location(0) vec4<f32> {
         if (fullResolution.x > 0.0) { globalDims = fullResolution; }
         let globalPixel: vec2<f32> = in.position.xy + tileOffset;
         let materialMotion: f32 = time * f32(Z_LOOP);
-        let r: f32 = shape_material(material_value(globalPixel, globalDims, sourceUV, materialMotion, 0x1234abcdu));
+        let r: f32 = shape_material(material_value(globalPixel, globalDims, uv, materialMotion, 0x1234abcdu));
         var material: vec3<f32> = vec3<f32>(r);
         if (mono == 0) {
-            material.g = shape_material(material_value(globalPixel, globalDims, sourceUV, materialMotion, 0x68bc21ebu));
-            material.b = shape_material(material_value(globalPixel, globalDims, sourceUV, materialMotion, 0x02e5be93u));
+            material.g = shape_material(material_value(globalPixel, globalDims, uv, materialMotion, 0x68bc21ebu));
+            material.b = shape_material(material_value(globalPixel, globalDims, uv, materialMotion, 0x02e5be93u));
         }
         return vec4<f32>(clamp(mix(base_color.xyz, material, a), vec3<f32>(0.0), vec3<f32>(1.0)), base_color.w);
     }
@@ -753,11 +752,11 @@ fn main(in: VertexOutput) -> @location(0) vec4<f32> {
     let motion: f32 = time * f32(Z_LOOP);
 
     // Sample height field at center and 4 neighbors for gradient
-    let h_center: f32 = height_field(in.uv, base_freq, motion);
-    let h_right: f32 = height_field(in.uv + vec2<f32>(pixel_step.x, 0.0), base_freq, motion);
-    let h_left: f32 = height_field(in.uv - vec2<f32>(pixel_step.x, 0.0), base_freq, motion);
-    let h_up: f32 = height_field(in.uv + vec2<f32>(0.0, pixel_step.y), base_freq, motion);
-    let h_down: f32 = height_field(in.uv - vec2<f32>(0.0, pixel_step.y), base_freq, motion);
+    let h_center: f32 = height_field(uv, base_freq, motion);
+    let h_right: f32 = height_field(uv + vec2<f32>(pixel_step.x, 0.0), base_freq, motion);
+    let h_left: f32 = height_field(uv - vec2<f32>(pixel_step.x, 0.0), base_freq, motion);
+    let h_up: f32 = height_field(uv + vec2<f32>(0.0, pixel_step.y), base_freq, motion);
+    let h_down: f32 = height_field(uv - vec2<f32>(0.0, pixel_step.y), base_freq, motion);
 
     let gx: f32 = h_right - h_left;
     let gy: f32 = h_down - h_up;
@@ -822,4 +821,4 @@ noise(seed: 1, ridges: true)
 
 render(o0)
 \`\`\`
-`;if(n&&Object.keys(l).length>0){n.shaders||(n.shaders={});for(let[a,e]of Object.entries(l))n.shaders[a]={...e}}n&&i&&(n.help=i);var f="filter/texture",u="filter",m="texture",v=n;export{v as default,f as effectId,m as effectName,i as help,u as namespace};
+`;if(t&&Object.keys(l).length>0){t.shaders||(t.shaders={});for(let[a,e]of Object.entries(l))t.shaders[a]={...e}}t&&i&&(t.help=i);var f="filter/texture",u="filter",m="texture",v=t;export{v as default,f as effectId,m as effectName,i as help,u as namespace};

@@ -1,5 +1,5 @@
 /* filter/scanlineError */
-var t=class{constructor(e={}){this.state={},this.uniforms={},e.name&&(this.name=e.name),e.namespace&&(this.namespace=e.namespace),e.func&&(this.func=e.func),e.description&&(this.description=e.description),e.tags&&(this.tags=e.tags),e.globals&&(this.globals=e.globals),e.passes&&(this.passes=e.passes),e.textures&&(this.textures=e.textures),e.outputTex3d&&(this.outputTex3d=e.outputTex3d),e.outputGeo&&(this.outputGeo=e.outputGeo),e.uniformLayout&&(this.uniformLayout=e.uniformLayout),e.uniformLayouts&&(this.uniformLayouts=e.uniformLayouts),e.paramAliases&&(this.paramAliases=e.paramAliases),e.openCategories&&(this.openCategories=e.openCategories),e.defaultProgram&&(this.defaultProgram=e.defaultProgram),e.hidden&&(this.hidden=!0),e.deprecatedBy&&(this.deprecatedBy=e.deprecatedBy),e.onInit&&(this._configOnInit=e.onInit),e.onUpdate&&(this._configOnUpdate=e.onUpdate),e.onDestroy&&(this._configOnDestroy=e.onDestroy),e.asyncInit&&(this._configAsyncInit=e.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(e){return this._configOnUpdate?this._configOnUpdate.call(this,e):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(e){return this._configAsyncInit?this._configAsyncInit.call(this,e):Promise.resolve()}};var n=new t({name:"Scanline Error",namespace:"filter",func:"scanlineError",tags:["distort","glitch"],description:"Scanline glitch effect/VHS tape artifacts",globals:{mode:{type:"int",default:1,uniform:"mode",choices:{scanline:0,vhs:1},ui:{label:"mode",control:"dropdown"}},timeOffset:{type:"float",default:0,uniform:"timeOffset",min:-10,max:10,step:.01,ui:{label:"time offset",control:"slider"}},distortion:{type:"float",default:1,uniform:"distortion",min:0,max:3,step:.01,ui:{label:"distortion",control:"slider"}},noise:{type:"float",default:1,uniform:"noise",min:0,max:3,step:.01,ui:{label:"noise",control:"slider"}},speed:{type:"float",default:1,uniform:"speed",min:0,max:5,step:.1,ui:{label:"speed",control:"slider"}}},passes:[{name:"main",program:"scanlineError",inputs:{inputTex:"inputTex"},uniforms:{speed:"speed",timeOffset:"timeOffset",distortion:"distortion",noise:"noise",mode:"mode",time:"time"},outputs:{fragColor:"outputTex"}}]});var i={scanlineError:{glsl:`#version 300 es
+var t=class{constructor(e={}){this.state={},this.uniforms={},e.name&&(this.name=e.name),e.namespace&&(this.namespace=e.namespace),e.func&&(this.func=e.func),e.description&&(this.description=e.description),e.tags&&(this.tags=e.tags),e.globals&&(this.globals=e.globals),e.passes&&(this.passes=e.passes),e.textures&&(this.textures=e.textures),e.textures3d&&(this.textures3d=e.textures3d),e.shaders&&(this.shaders=e.shaders),e.externalTexture&&(this.externalTexture=e.externalTexture),e.externalMesh&&(this.externalMesh=e.externalMesh),e.builtinMeshes&&(this.builtinMeshes=e.builtinMeshes),e.outputTex3d&&(this.outputTex3d=e.outputTex3d),e.outputGeo&&(this.outputGeo=e.outputGeo),e.uniformLayout&&(this.uniformLayout=e.uniformLayout),e.uniformLayouts&&(this.uniformLayouts=e.uniformLayouts),e.paramAliases&&(this.paramAliases=e.paramAliases),e.openCategories&&(this.openCategories=e.openCategories),e.defaultProgram&&(this.defaultProgram=e.defaultProgram),e.hidden&&(this.hidden=!0),e.deprecatedBy&&(this.deprecatedBy=e.deprecatedBy),e.onInit&&(this._configOnInit=e.onInit),e.onUpdate&&(this._configOnUpdate=e.onUpdate),e.onDestroy&&(this._configOnDestroy=e.onDestroy),e.asyncInit&&(this._configAsyncInit=e.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(e){return this._configOnUpdate?this._configOnUpdate.call(this,e):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(e){return this._configAsyncInit?this._configAsyncInit.call(this,e):Promise.resolve()}};var n=new t({name:"Scanline Error",namespace:"filter",func:"scanlineError",tags:["distort","glitch"],description:"Scanline glitch effect/VHS tape artifacts",globals:{mode:{type:"int",default:1,uniform:"mode",choices:{scanline:0,vhs:1},ui:{label:"mode",control:"dropdown"}},timeOffset:{type:"float",default:0,uniform:"timeOffset",min:-10,max:10,step:.01,ui:{label:"time offset",control:"slider"}},distortion:{type:"float",default:1,uniform:"distortion",min:0,max:3,step:.01,ui:{label:"distortion",control:"slider"}},noise:{type:"float",default:1,uniform:"noise",min:0,max:3,step:.01,ui:{label:"noise",control:"slider"}},speed:{type:"float",default:1,uniform:"speed",min:0,max:5,step:.1,ui:{label:"speed",control:"slider"}}},passes:[{name:"main",program:"scanlineError",inputs:{inputTex:"inputTex"},uniforms:{speed:"speed",timeOffset:"timeOffset",distortion:"distortion",noise:"noise",mode:"mode",time:"time"},outputs:{fragColor:"outputTex"}}]});var i={scanlineError:{glsl:`#version 300 es
 
 precision highp float;
 precision highp int;
@@ -435,7 +435,7 @@ struct VertexOutput {
 @group(0) @binding(1) var<uniform> speed: f32;
 @group(0) @binding(2) var<uniform> timeOffset: f32;
 @group(0) @binding(3) var<uniform> distortion: f32;
-@group(0) @binding(4) var<uniform> noise_amount: f32;
+@group(0) @binding(4) var<uniform> noise: f32;
 @group(0) @binding(5) var<uniform> mode: f32;
 @group(0) @binding(6) var<uniform> time: f32;
 
@@ -720,7 +720,7 @@ fn main(in: VertexOutput) -> @location(0) vec4<f32> {
         let gradSource = vhs_gradValue(yNorm, 5.0, time_value, speed_value);
 
         let noiseColor = vec3<f32>(scanSource);
-        let blended = mix(srcTexel.rgb, noiseColor, gradSource * noise_amount);
+        let blended = mix(srcTexel.rgb, noiseColor, gradSource * noise);
 
         return vec4<f32>(blended, srcTexel.a);
     } else {
@@ -752,7 +752,7 @@ fn main(in: VertexOutput) -> @location(0) vec4<f32> {
 
         let texel = textureLoad(inputTex, vec2<i32>(sample_x, coord.y), 0);
 
-        let additive = clamp(line_weighted * white_weighted * 4.0 * noise_amount, 0.0, 4.0);
+        let additive = clamp(line_weighted * white_weighted * 4.0 * noise, 0.0, 4.0);
         let boosted = clamp(texel.rgb + vec3<f32>(additive), vec3<f32>(0.0), vec3<f32>(1.0));
 
         return vec4<f32>(boosted, texel.a);

@@ -1,5 +1,5 @@
 /* mixer/channelCombine */
-var t=class{constructor(e={}){this.state={},this.uniforms={},e.name&&(this.name=e.name),e.namespace&&(this.namespace=e.namespace),e.func&&(this.func=e.func),e.description&&(this.description=e.description),e.tags&&(this.tags=e.tags),e.globals&&(this.globals=e.globals),e.passes&&(this.passes=e.passes),e.textures&&(this.textures=e.textures),e.outputTex3d&&(this.outputTex3d=e.outputTex3d),e.outputGeo&&(this.outputGeo=e.outputGeo),e.uniformLayout&&(this.uniformLayout=e.uniformLayout),e.uniformLayouts&&(this.uniformLayouts=e.uniformLayouts),e.paramAliases&&(this.paramAliases=e.paramAliases),e.openCategories&&(this.openCategories=e.openCategories),e.defaultProgram&&(this.defaultProgram=e.defaultProgram),e.hidden&&(this.hidden=!0),e.deprecatedBy&&(this.deprecatedBy=e.deprecatedBy),e.onInit&&(this._configOnInit=e.onInit),e.onUpdate&&(this._configOnUpdate=e.onUpdate),e.onDestroy&&(this._configOnDestroy=e.onDestroy),e.asyncInit&&(this._configAsyncInit=e.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(e){return this._configOnUpdate?this._configOnUpdate.call(this,e):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(e){return this._configAsyncInit?this._configAsyncInit.call(this,e):Promise.resolve()}};var n=new t({name:"ChannelCombine",namespace:"mixer",func:"channelCombine",tags:["color"],description:"Combine separate surface inputs into R, G, B channels",starter:!1,globals:{rTex:{type:"surface",default:"none",ui:{label:"red source"}},gTex:{type:"surface",default:"none",ui:{label:"green source"}},bTex:{type:"surface",default:"none",ui:{label:"blue source"}},rLevel:{type:"float",default:100,uniform:"rLevel",min:0,max:100,ui:{label:"red level",control:"slider"}},gLevel:{type:"float",default:100,uniform:"gLevel",min:0,max:100,ui:{label:"green level",control:"slider"}},bLevel:{type:"float",default:100,uniform:"bLevel",min:0,max:100,ui:{label:"blue level",control:"slider"}}},defaultProgram:`search mixer, synth, filter
+var t=class{constructor(e={}){this.state={},this.uniforms={},e.name&&(this.name=e.name),e.namespace&&(this.namespace=e.namespace),e.func&&(this.func=e.func),e.description&&(this.description=e.description),e.tags&&(this.tags=e.tags),e.globals&&(this.globals=e.globals),e.passes&&(this.passes=e.passes),e.textures&&(this.textures=e.textures),e.textures3d&&(this.textures3d=e.textures3d),e.shaders&&(this.shaders=e.shaders),e.externalTexture&&(this.externalTexture=e.externalTexture),e.externalMesh&&(this.externalMesh=e.externalMesh),e.builtinMeshes&&(this.builtinMeshes=e.builtinMeshes),e.outputTex3d&&(this.outputTex3d=e.outputTex3d),e.outputGeo&&(this.outputGeo=e.outputGeo),e.uniformLayout&&(this.uniformLayout=e.uniformLayout),e.uniformLayouts&&(this.uniformLayouts=e.uniformLayouts),e.paramAliases&&(this.paramAliases=e.paramAliases),e.openCategories&&(this.openCategories=e.openCategories),e.defaultProgram&&(this.defaultProgram=e.defaultProgram),e.hidden&&(this.hidden=!0),e.deprecatedBy&&(this.deprecatedBy=e.deprecatedBy),e.onInit&&(this._configOnInit=e.onInit),e.onUpdate&&(this._configOnUpdate=e.onUpdate),e.onDestroy&&(this._configOnDestroy=e.onDestroy),e.asyncInit&&(this._configAsyncInit=e.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(e){return this._configOnUpdate?this._configOnUpdate.call(this,e):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(e){return this._configAsyncInit?this._configAsyncInit.call(this,e):Promise.resolve()}};var n=new t({name:"ChannelCombine",namespace:"mixer",func:"channelCombine",tags:["color"],description:"Combine separate surface inputs into R, G, B channels",starter:!1,globals:{rTex:{type:"surface",default:"none",ui:{label:"red source"}},gTex:{type:"surface",default:"none",ui:{label:"green source"}},bTex:{type:"surface",default:"none",ui:{label:"blue source"}},rLevel:{type:"float",default:100,uniform:"rLevel",min:0,max:100,ui:{label:"red level",control:"slider"}},gLevel:{type:"float",default:100,uniform:"gLevel",min:0,max:100,ui:{label:"green level",control:"slider"}},bLevel:{type:"float",default:100,uniform:"bLevel",min:0,max:100,ui:{label:"blue level",control:"slider"}}},defaultProgram:`search mixer, synth, filter
 
 noise(ridges: true, colorMode: mono)
 .write(o0)
@@ -11,7 +11,7 @@ gradient(type: linear)
 .write(o2)
 
 channelCombine(rTex: read(o0), gTex: read(o1), bTex: read(o2))
-.write(o3)`,passes:[{name:"render",program:"channelCombine",inputs:{rTex:"rTex",gTex:"gTex",bTex:"bTex"},outputs:{fragColor:"outputTex"}}]});var o={channelCombine:{glsl:`#version 300 es
+.write(o3)`,passes:[{name:"render",program:"channelCombine",inputs:{rTex:"rTex",gTex:"gTex",bTex:"bTex"},outputs:{fragColor:"outputTex"}}]});var s={channelCombine:{glsl:`#version 300 es
 precision highp float;
 
 uniform sampler2D rTex;
@@ -62,7 +62,7 @@ fn main(@builtin(position) position: vec4<f32>) -> @location(0) vec4<f32> {
 
     return vec4<f32>(r, g, b, 1.0);
 }
-`}},s=`# channelCombine
+`}},o=`# channelCombine
 
 Combine separate surface inputs into R, G, B channels
 
@@ -100,4 +100,4 @@ channelCombine()
 
 render(o0)
 \`\`\`
-`;if(n&&Object.keys(o).length>0){n.shaders||(n.shaders={});for(let[r,e]of Object.entries(o))n.shaders[r]={...e}}n&&s&&(n.help=s);var c="mixer/channelCombine",f="mixer",m="channelCombine",p=n;export{p as default,c as effectId,m as effectName,s as help,f as namespace};
+`;if(n&&Object.keys(s).length>0){n.shaders||(n.shaders={});for(let[r,e]of Object.entries(s))n.shaders[r]={...e}}n&&o&&(n.help=o);var c="mixer/channelCombine",f="mixer",m="channelCombine",d=n;export{d as default,c as effectId,m as effectName,o as help,f as namespace};

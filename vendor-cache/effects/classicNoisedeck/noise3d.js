@@ -1,5 +1,5 @@
 /* classicNoisedeck/noise3d */
-var o=class{constructor(n={}){this.state={},this.uniforms={},n.name&&(this.name=n.name),n.namespace&&(this.namespace=n.namespace),n.func&&(this.func=n.func),n.description&&(this.description=n.description),n.tags&&(this.tags=n.tags),n.globals&&(this.globals=n.globals),n.passes&&(this.passes=n.passes),n.textures&&(this.textures=n.textures),n.outputTex3d&&(this.outputTex3d=n.outputTex3d),n.outputGeo&&(this.outputGeo=n.outputGeo),n.uniformLayout&&(this.uniformLayout=n.uniformLayout),n.uniformLayouts&&(this.uniformLayouts=n.uniformLayouts),n.paramAliases&&(this.paramAliases=n.paramAliases),n.openCategories&&(this.openCategories=n.openCategories),n.defaultProgram&&(this.defaultProgram=n.defaultProgram),n.hidden&&(this.hidden=!0),n.deprecatedBy&&(this.deprecatedBy=n.deprecatedBy),n.onInit&&(this._configOnInit=n.onInit),n.onUpdate&&(this._configOnUpdate=n.onUpdate),n.onDestroy&&(this._configOnDestroy=n.onDestroy),n.asyncInit&&(this._configAsyncInit=n.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(n){return this._configOnUpdate?this._configOnUpdate.call(this,n):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(n){return this._configAsyncInit?this._configAsyncInit.call(this,n):Promise.resolve()}};var e=new o({name:"Noise3d",namespace:"classicNoisedeck",func:"noise3d",tags:["3d","noise"],description:"3D noise volumes",globals:{type:{type:"int",default:12,define:"NOISE_TYPE",choices:{cubes:50,simplex:12,sine:30,spheres:40,wavyPlanes:60,wavyPlaneLower:61,wavyPlaneUpper:62},ui:{label:"noise type",control:"dropdown"}},ridges:{type:"boolean",default:!1,uniform:"ridges",ui:{label:"ridges",control:"checkbox",enabledBy:{param:"type",eq:12}}},seed:{type:"int",default:1,uniform:"seed",min:1,max:100,ui:{label:"seed",control:"slider",enabledBy:{param:"type",neq:50}}},speed:{type:"int",default:1,uniform:"speed",min:-10,max:10,zero:0,randMin:-2,randMax:2,ui:{label:"speed",control:"slider"}},scale:{type:"float",default:25,uniform:"scale",min:1,max:100,ui:{label:"scale",control:"slider",category:"transform"}},offsetX:{type:"float",default:0,uniform:"offsetX",min:-100,max:100,ui:{label:"offset x",control:"slider",category:"transform"}},offsetY:{type:"float",default:0,uniform:"offsetY",min:-100,max:100,ui:{label:"offset y",control:"slider",category:"transform"}},colorMode:{type:"int",default:6,uniform:"colorMode",choices:{depthMap:8,hsv:6,mono:0,surfaceNormal:7},ui:{label:"color mode",control:"dropdown",category:"color"}},hueRotation:{type:"float",default:0,uniform:"hueRotation",min:0,max:360,ui:{label:"hue rotate",control:"slider",category:"color",enabledBy:{param:"colorMode",eq:6}}},hueRange:{type:"float",default:10,uniform:"hueRange",min:0,max:100,ui:{label:"hue range",control:"slider",category:"color",enabledBy:{param:"colorMode",eq:6}}}},paramAliases:{noiseScale:"scale",noiseType:"type"},passes:[{name:"render",program:"noise3d",inputs:{},outputs:{fragColor:"outputTex"}}]});var r={noise3d:{glsl:`#version 300 es
+var t=class{constructor(n={}){this.state={},this.uniforms={},n.name&&(this.name=n.name),n.namespace&&(this.namespace=n.namespace),n.func&&(this.func=n.func),n.description&&(this.description=n.description),n.tags&&(this.tags=n.tags),n.globals&&(this.globals=n.globals),n.passes&&(this.passes=n.passes),n.textures&&(this.textures=n.textures),n.textures3d&&(this.textures3d=n.textures3d),n.shaders&&(this.shaders=n.shaders),n.externalTexture&&(this.externalTexture=n.externalTexture),n.externalMesh&&(this.externalMesh=n.externalMesh),n.builtinMeshes&&(this.builtinMeshes=n.builtinMeshes),n.outputTex3d&&(this.outputTex3d=n.outputTex3d),n.outputGeo&&(this.outputGeo=n.outputGeo),n.uniformLayout&&(this.uniformLayout=n.uniformLayout),n.uniformLayouts&&(this.uniformLayouts=n.uniformLayouts),n.paramAliases&&(this.paramAliases=n.paramAliases),n.openCategories&&(this.openCategories=n.openCategories),n.defaultProgram&&(this.defaultProgram=n.defaultProgram),n.hidden&&(this.hidden=!0),n.deprecatedBy&&(this.deprecatedBy=n.deprecatedBy),n.onInit&&(this._configOnInit=n.onInit),n.onUpdate&&(this._configOnUpdate=n.onUpdate),n.onDestroy&&(this._configOnDestroy=n.onDestroy),n.asyncInit&&(this._configAsyncInit=n.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(n){return this._configOnUpdate?this._configOnUpdate.call(this,n):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(n){return this._configAsyncInit?this._configAsyncInit.call(this,n):Promise.resolve()}};var e=new t({name:"Noise3d",namespace:"classicNoisedeck",func:"noise3d",tags:["3d","noise"],description:"3D noise volumes",globals:{type:{type:"int",default:12,define:"NOISE_TYPE",choices:{cubes:50,simplex:12,sine:30,spheres:40,wavyPlanes:60,wavyPlaneLower:61,wavyPlaneUpper:62},ui:{label:"noise type",control:"dropdown"}},ridges:{type:"boolean",default:!1,uniform:"ridges",ui:{label:"ridges",control:"checkbox",enabledBy:{param:"type",eq:12}}},seed:{type:"int",default:1,uniform:"seed",min:1,max:100,ui:{label:"seed",control:"slider",enabledBy:{param:"type",neq:50}}},speed:{type:"int",default:1,uniform:"speed",min:-10,max:10,zero:0,randMin:-2,randMax:2,ui:{label:"speed",control:"slider"}},scale:{type:"float",default:25,uniform:"scale",min:1,max:100,ui:{label:"scale",control:"slider",category:"transform"}},offsetX:{type:"float",default:0,uniform:"offsetX",min:-100,max:100,ui:{label:"offset x",control:"slider",category:"transform"}},offsetY:{type:"float",default:0,uniform:"offsetY",min:-100,max:100,ui:{label:"offset y",control:"slider",category:"transform"}},colorMode:{type:"int",default:6,uniform:"colorMode",choices:{depthMap:8,hsv:6,mono:0,surfaceNormal:7},ui:{label:"color mode",control:"dropdown",category:"color"}},hueRotation:{type:"float",default:0,uniform:"hueRotation",min:0,max:360,ui:{label:"hue rotate",control:"slider",category:"color",enabledBy:{param:"colorMode",eq:6}}},hueRange:{type:"float",default:10,uniform:"hueRange",min:0,max:100,ui:{label:"hue range",control:"slider",category:"color",enabledBy:{param:"colorMode",eq:6}}}},paramAliases:{noiseScale:"scale",noiseType:"type"},passes:[{name:"render",program:"noise3d",inputs:{},outputs:{fragColor:"outputTex"}}]});var r={noise3d:{glsl:`#version 300 es
 
 /*
  * 3D noise shader.
@@ -695,7 +695,7 @@ void main() {
 @group(0) @binding(0) var<uniform> time: f32;
 @group(0) @binding(1) var<uniform> seed: i32;
 @group(0) @binding(2) var<uniform> resolution: vec2<f32>;
-@group(0) @binding(3) var<uniform> noiseScale: f32;
+@group(0) @binding(3) var<uniform> scale: f32;
 @group(0) @binding(5) var<uniform> ridges: i32;
 @group(0) @binding(6) var<uniform> offsetX: f32;
 @group(0) @binding(7) var<uniform> offsetY: f32;
@@ -1064,7 +1064,7 @@ fn spheres(p: vec3<f32>) -> f32 {
     let ip = floor(q);
     let fp = fract(pr);
     let r1 = prng(ip + f32(seed)) * 0.5 + 0.25;
-    return length(fp - 0.5) - map_value(noiseScale, 1.0, 100.0, 0.025, 0.55) * r1.x;
+    return length(fp - 0.5) - map_value(scale, 1.0, 100.0, 0.025, 0.55) * r1.x;
 }
 
 fn cubes(p_in: vec3<f32>) -> f32 {
@@ -1072,7 +1072,7 @@ fn cubes(p_in: vec3<f32>) -> f32 {
     let s = 4.0;
     p.x = p.x - s * 0.5;
     p = p - s * round(p / s);
-    let b = vec3<f32>(map_value(noiseScale, 1.0, 100.0, 0.1, 0.95));
+    let b = vec3<f32>(map_value(scale, 1.0, 100.0, 0.1, 0.95));
     let q = abs(p) - b;
     return length(max(q, vec3<f32>(0.0))) + min(max(q.x, max(q.y, q.z)), 0.0);
 }
@@ -1083,43 +1083,43 @@ fn getDist(p: vec3<f32>) -> f32 {
     
     if (NOISE_TYPE == 12) {
         // simplex
-        let scale = map_value(noiseScale, 1.0, 100.0, 0.25, 0.025);
-        d = snoise(p * scale + f32(seed)) * 0.5 + 0.5;
+        let scaleN = map_value(scale, 1.0, 100.0, 0.25, 0.025);
+        d = snoise(p * scaleN + f32(seed)) * 0.5 + 0.5;
         d = smootherstep(d);
     } else if (NOISE_TYPE == 20) {
         // cell
-        let scale = map_value(noiseScale, 1.0, 100.0, 0.1, 0.35);
+        let scaleN = map_value(scale, 1.0, 100.0, 0.1, 0.35);
         d = cellular(p * 0.1 + f32(seed)).x;
-        d = smoothstep(scale, 0.5, d);
+        d = smoothstep(scaleN, 0.5, d);
     } else if (NOISE_TYPE == 21) {
         // cell v2
         d = voronoi3d(p * 0.1 + f32(seed)).x;
-        let scale = map_value(noiseScale, 1.0, 100.0, 0.1, 0.35);
-        d = smoothstep(scale, 0.5, d);
+        let scaleN = map_value(scale, 1.0, 100.0, 0.1, 0.35);
+        d = smoothstep(scaleN, 0.5, d);
     } else if (NOISE_TYPE == 30) {
         // sine
-        let scale = map_value(noiseScale, 1.0, 100.0, 1.0, 0.1);
-        d = sine3D(p * scale);
+        let scaleN = map_value(scale, 1.0, 100.0, 1.0, 0.1);
+        d = sine3D(p * scaleN);
     } else if (NOISE_TYPE == 40) {
         d = spheres(p);
     } else if (NOISE_TYPE == 50) {
         d = cubes(p);
     } else if (NOISE_TYPE == 60) {
         // wavy planes both
-        let scale = map_value(noiseScale, 1.0, 100.0, 0.25, 0.025);
-        d = -abs(p.y) + 4.0 + snoise(p * scale + f32(seed)) * 0.75;
+        let scaleN = map_value(scale, 1.0, 100.0, 0.25, 0.025);
+        d = -abs(p.y) + 4.0 + snoise(p * scaleN + f32(seed)) * 0.75;
     } else if (NOISE_TYPE == 61) {
         // wavy plane lower
-        let scale = map_value(noiseScale, 1.0, 100.0, 0.25, 0.025);
-        d = p.y + 4.0 + snoise(p * scale + f32(seed)) * 0.75;
+        let scaleN = map_value(scale, 1.0, 100.0, 0.25, 0.025);
+        d = p.y + 4.0 + snoise(p * scaleN + f32(seed)) * 0.75;
     } else if (NOISE_TYPE == 62) {
         // wavy plane upper
-        let scale = map_value(noiseScale, 1.0, 100.0, 0.25, 0.025);
-        d = -p.y + 2.0 + snoise(p * scale + f32(seed)) * 0.75;
+        let scaleN = map_value(scale, 1.0, 100.0, 0.25, 0.025);
+        d = -p.y + 2.0 + snoise(p * scaleN + f32(seed)) * 0.75;
     } else {
         // default to simplex
-        let scale = map_value(noiseScale, 1.0, 100.0, 0.25, 0.025);
-        d = snoise(p * scale + f32(seed)) * 0.5 + 0.5;
+        let scaleN = map_value(scale, 1.0, 100.0, 0.25, 0.025);
+        d = snoise(p * scaleN + f32(seed)) * 0.5 + 0.5;
         d = smootherstep(d);
     }
 
@@ -1261,4 +1261,4 @@ noise3d()
 
 render(o0)
 \`\`\`
-`;if(e&&Object.keys(r).length>0){e.shaders||(e.shaders={});for(let[t,n]of Object.entries(r))e.shaders[t]={...n}}e&&i&&(e.help=i);var c="classicNoisedeck/noise3d",f="classicNoisedeck",v="noise3d",p=e;export{p as default,c as effectId,v as effectName,i as help,f as namespace};
+`;if(e&&Object.keys(r).length>0){e.shaders||(e.shaders={});for(let[o,n]of Object.entries(r))e.shaders[o]={...n}}e&&i&&(e.help=i);var c="classicNoisedeck/noise3d",f="classicNoisedeck",v="noise3d",p=e;export{p as default,c as effectId,v as effectName,i as help,f as namespace};

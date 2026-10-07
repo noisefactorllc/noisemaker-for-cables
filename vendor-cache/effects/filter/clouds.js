@@ -1,9 +1,9 @@
 /* filter/clouds */
-var n=class{constructor(e={}){this.state={},this.uniforms={},e.name&&(this.name=e.name),e.namespace&&(this.namespace=e.namespace),e.func&&(this.func=e.func),e.description&&(this.description=e.description),e.tags&&(this.tags=e.tags),e.globals&&(this.globals=e.globals),e.passes&&(this.passes=e.passes),e.textures&&(this.textures=e.textures),e.outputTex3d&&(this.outputTex3d=e.outputTex3d),e.outputGeo&&(this.outputGeo=e.outputGeo),e.uniformLayout&&(this.uniformLayout=e.uniformLayout),e.uniformLayouts&&(this.uniformLayouts=e.uniformLayouts),e.paramAliases&&(this.paramAliases=e.paramAliases),e.openCategories&&(this.openCategories=e.openCategories),e.defaultProgram&&(this.defaultProgram=e.defaultProgram),e.hidden&&(this.hidden=!0),e.deprecatedBy&&(this.deprecatedBy=e.deprecatedBy),e.onInit&&(this._configOnInit=e.onInit),e.onUpdate&&(this._configOnUpdate=e.onUpdate),e.onDestroy&&(this._configOnDestroy=e.onDestroy),e.asyncInit&&(this._configAsyncInit=e.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(e){return this._configOnUpdate?this._configOnUpdate.call(this,e):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(e){return this._configAsyncInit?this._configAsyncInit.call(this,e):Promise.resolve()}};var t=new n({name:"Clouds",namespace:"filter",func:"clouds",tags:["noise"],description:"Cloud texture overlay",globals:{seed:{type:"int",default:1,uniform:"seed",min:1,max:100,step:1,ui:{label:"seed",control:"slider"}},scale:{type:"float",default:.25,uniform:"scale",min:.1,max:1,step:.05,ui:{label:"scale",control:"slider"}},speed:{type:"int",default:0,uniform:"speed",min:0,max:4,zero:0,randMax:2,ui:{label:"speed",control:"slider"}}},defaultProgram:`search filter, synth
+var n=class{constructor(e={}){this.state={},this.uniforms={},e.name&&(this.name=e.name),e.namespace&&(this.namespace=e.namespace),e.func&&(this.func=e.func),e.description&&(this.description=e.description),e.tags&&(this.tags=e.tags),e.globals&&(this.globals=e.globals),e.passes&&(this.passes=e.passes),e.textures&&(this.textures=e.textures),e.textures3d&&(this.textures3d=e.textures3d),e.shaders&&(this.shaders=e.shaders),e.externalTexture&&(this.externalTexture=e.externalTexture),e.externalMesh&&(this.externalMesh=e.externalMesh),e.builtinMeshes&&(this.builtinMeshes=e.builtinMeshes),e.outputTex3d&&(this.outputTex3d=e.outputTex3d),e.outputGeo&&(this.outputGeo=e.outputGeo),e.uniformLayout&&(this.uniformLayout=e.uniformLayout),e.uniformLayouts&&(this.uniformLayouts=e.uniformLayouts),e.paramAliases&&(this.paramAliases=e.paramAliases),e.openCategories&&(this.openCategories=e.openCategories),e.defaultProgram&&(this.defaultProgram=e.defaultProgram),e.hidden&&(this.hidden=!0),e.deprecatedBy&&(this.deprecatedBy=e.deprecatedBy),e.onInit&&(this._configOnInit=e.onInit),e.onUpdate&&(this._configOnUpdate=e.onUpdate),e.onDestroy&&(this._configOnDestroy=e.onDestroy),e.asyncInit&&(this._configAsyncInit=e.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(e){return this._configOnUpdate?this._configOnUpdate.call(this,e):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(e){return this._configAsyncInit?this._configAsyncInit.call(this,e):Promise.resolve()}};var t=new n({name:"Clouds",namespace:"filter",func:"clouds",tags:["noise"],description:"Cloud texture overlay",globals:{seed:{type:"int",default:1,uniform:"seed",min:1,max:100,step:1,ui:{label:"seed",control:"slider"}},scale:{type:"float",default:.25,uniform:"scale",min:.1,max:1,step:.05,ui:{label:"scale",control:"slider"}},speed:{type:"int",default:0,uniform:"speed",min:0,max:4,zero:0,randMax:2,ui:{label:"speed",control:"slider"}}},defaultProgram:`search filter, synth
 
 solid(color: #2d78f0)
 .clouds(scale: 0.55)
-.write(o0)`,passes:[{name:"render",program:"clouds",inputs:{inputTex:"inputTex"},uniforms:{seed:"seed",scale:"scale",speed:"speed"},outputs:{fragColor:"outputTex"}}]});var s={clouds:{glsl:`/*
+.write(o0)`,passes:[{name:"render",program:"clouds",inputs:{inputTex:"inputTex"},uniforms:{seed:"seed",scale:"scale",speed:"speed"},outputs:{fragColor:"outputTex"}}]});var o={clouds:{glsl:`/*
  * Clouds - Cloud texture overlay
  *
  * Ridged multi-octave 2D simplex noise shaped into clouds,
@@ -253,7 +253,7 @@ fn main(@builtin(position) pos: vec4<f32>) -> @location(0) vec4<f32> {
 
     return vec4<f32>(result, inputColor.a);
 }
-`}},i=`# clouds
+`}},a=`# clouds
 
 Cloud texture overlay
 
@@ -276,4 +276,4 @@ noise(seed: 1, ridges: true)
 
 render(o0)
 \`\`\`
-`;if(t&&Object.keys(s).length>0){t.shaders||(t.shaders={});for(let[o,e]of Object.entries(s))t.shaders[o]={...e}}t&&i&&(t.help=i);var u="filter/clouds",c="filter",d="clouds",m=t;export{m as default,u as effectId,d as effectName,i as help,c as namespace};
+`;if(t&&Object.keys(o).length>0){t.shaders||(t.shaders={});for(let[s,e]of Object.entries(o))t.shaders[s]={...e}}t&&a&&(t.help=a);var f="filter/clouds",d="filter",c="clouds",m=t;export{m as default,f as effectId,c as effectName,a as help,d as namespace};

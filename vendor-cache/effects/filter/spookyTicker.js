@@ -1,9 +1,9 @@
 /* filter/spookyTicker */
-var t=class{constructor(n={}){this.state={},this.uniforms={},n.name&&(this.name=n.name),n.namespace&&(this.namespace=n.namespace),n.func&&(this.func=n.func),n.description&&(this.description=n.description),n.tags&&(this.tags=n.tags),n.globals&&(this.globals=n.globals),n.passes&&(this.passes=n.passes),n.textures&&(this.textures=n.textures),n.outputTex3d&&(this.outputTex3d=n.outputTex3d),n.outputGeo&&(this.outputGeo=n.outputGeo),n.uniformLayout&&(this.uniformLayout=n.uniformLayout),n.uniformLayouts&&(this.uniformLayouts=n.uniformLayouts),n.paramAliases&&(this.paramAliases=n.paramAliases),n.openCategories&&(this.openCategories=n.openCategories),n.defaultProgram&&(this.defaultProgram=n.defaultProgram),n.hidden&&(this.hidden=!0),n.deprecatedBy&&(this.deprecatedBy=n.deprecatedBy),n.onInit&&(this._configOnInit=n.onInit),n.onUpdate&&(this._configOnUpdate=n.onUpdate),n.onDestroy&&(this._configOnDestroy=n.onDestroy),n.asyncInit&&(this._configAsyncInit=n.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(n){return this._configOnUpdate?this._configOnUpdate.call(this,n):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(n){return this._configAsyncInit?this._configAsyncInit.call(this,n):Promise.resolve()}};var e=new t({name:"Spooky Ticker",namespace:"filter",func:"spookyTicker",tags:["text"],description:"Scrolling pseudo-text ticker overlay",globals:{rows:{type:"int",default:2,uniform:"rows",min:1,max:3,step:1,ui:{label:"rows",control:"slider"}},seed:{type:"int",default:1,uniform:"seed",min:1,max:100,step:1,ui:{label:"seed",control:"slider"}},alpha:{type:"float",default:.75,uniform:"alpha",min:0,max:1,step:.01,ui:{label:"alpha",control:"slider"}},speed:{type:"float",default:1,uniform:"speed",min:0,max:5,step:.1,ui:{label:"speed",control:"slider"}}},defaultProgram:`search filter, synth
+var t=class{constructor(e={}){this.state={},this.uniforms={},e.name&&(this.name=e.name),e.namespace&&(this.namespace=e.namespace),e.func&&(this.func=e.func),e.description&&(this.description=e.description),e.tags&&(this.tags=e.tags),e.globals&&(this.globals=e.globals),e.passes&&(this.passes=e.passes),e.textures&&(this.textures=e.textures),e.textures3d&&(this.textures3d=e.textures3d),e.shaders&&(this.shaders=e.shaders),e.externalTexture&&(this.externalTexture=e.externalTexture),e.externalMesh&&(this.externalMesh=e.externalMesh),e.builtinMeshes&&(this.builtinMeshes=e.builtinMeshes),e.outputTex3d&&(this.outputTex3d=e.outputTex3d),e.outputGeo&&(this.outputGeo=e.outputGeo),e.uniformLayout&&(this.uniformLayout=e.uniformLayout),e.uniformLayouts&&(this.uniformLayouts=e.uniformLayouts),e.paramAliases&&(this.paramAliases=e.paramAliases),e.openCategories&&(this.openCategories=e.openCategories),e.defaultProgram&&(this.defaultProgram=e.defaultProgram),e.hidden&&(this.hidden=!0),e.deprecatedBy&&(this.deprecatedBy=e.deprecatedBy),e.onInit&&(this._configOnInit=e.onInit),e.onUpdate&&(this._configOnUpdate=e.onUpdate),e.onDestroy&&(this._configOnDestroy=e.onDestroy),e.asyncInit&&(this._configAsyncInit=e.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(e){return this._configOnUpdate?this._configOnUpdate.call(this,e):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(e){return this._configAsyncInit?this._configAsyncInit.call(this,e):Promise.resolve()}};var n=new t({name:"Spooky Ticker",namespace:"filter",func:"spookyTicker",tags:["text"],description:"Scrolling pseudo-text ticker overlay",globals:{rows:{type:"int",default:2,uniform:"rows",min:1,max:3,step:1,ui:{label:"rows",control:"slider"}},seed:{type:"int",default:1,uniform:"seed",min:1,max:100,step:1,ui:{label:"seed",control:"slider"}},alpha:{type:"float",default:.75,uniform:"alpha",min:0,max:1,step:.01,ui:{label:"alpha",control:"slider"}},speed:{type:"float",default:1,uniform:"speed",min:0,max:5,step:.1,ui:{label:"speed",control:"slider"}}},defaultProgram:`search filter, synth
 
-perlin()
+solid(color: #101820)
   .spookyTicker()
-  .write(o0)`,passes:[{name:"main",program:"spookyTicker",inputs:{inputTex:"inputTex"},uniforms:{speed:"speed",alpha:"alpha",rows:"rows",seed:"seed"},outputs:{fragColor:"outputTex"}}]});var o={spookyTicker:{glsl:`#version 300 es
+  .write(o0)`,passes:[{name:"main",program:"spookyTicker",inputs:{inputTex:"inputTex"},uniforms:{speed:"speed",alpha:"alpha",rows:"rows",seed:"seed"},outputs:{fragColor:"outputTex"}}]});var r={spookyTicker:{glsl:`#version 300 es
 
 precision highp float;
 precision highp int;
@@ -269,7 +269,7 @@ fn main(@builtin(position) position : vec4<f32>) -> @location(0) vec4<f32> {
 
     return vec4<f32>(clamp(result, vec3<f32>(0.0), vec3<f32>(1.0)), src.a);
 }
-`}},r=`# spookyTicker
+`}},o=`# spookyTicker
 
 Scrolling pseudo-text ticker overlay
 
@@ -293,4 +293,4 @@ noise(seed: 1, ridges: true)
 
 render(o0)
 \`\`\`
-`;if(e&&Object.keys(o).length>0){e.shaders||(e.shaders={});for(let[i,n]of Object.entries(o))e.shaders[i]={...n}}e&&r&&(e.help=r);var c="filter/spookyTicker",d="filter",u="spookyTicker",p=e;export{p as default,c as effectId,u as effectName,r as help,d as namespace};
+`;if(n&&Object.keys(r).length>0){n.shaders||(n.shaders={});for(let[i,e]of Object.entries(r))n.shaders[i]={...e}}n&&o&&(n.help=o);var d="filter/spookyTicker",u="filter",c="spookyTicker",p=n;export{p as default,d as effectId,c as effectName,o as help,u as namespace};

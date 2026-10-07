@@ -1,5 +1,5 @@
 /* filter/normalMap */
-var t=class{constructor(n={}){this.state={},this.uniforms={},n.name&&(this.name=n.name),n.namespace&&(this.namespace=n.namespace),n.func&&(this.func=n.func),n.description&&(this.description=n.description),n.tags&&(this.tags=n.tags),n.globals&&(this.globals=n.globals),n.passes&&(this.passes=n.passes),n.textures&&(this.textures=n.textures),n.outputTex3d&&(this.outputTex3d=n.outputTex3d),n.outputGeo&&(this.outputGeo=n.outputGeo),n.uniformLayout&&(this.uniformLayout=n.uniformLayout),n.uniformLayouts&&(this.uniformLayouts=n.uniformLayouts),n.paramAliases&&(this.paramAliases=n.paramAliases),n.openCategories&&(this.openCategories=n.openCategories),n.defaultProgram&&(this.defaultProgram=n.defaultProgram),n.hidden&&(this.hidden=!0),n.deprecatedBy&&(this.deprecatedBy=n.deprecatedBy),n.onInit&&(this._configOnInit=n.onInit),n.onUpdate&&(this._configOnUpdate=n.onUpdate),n.onDestroy&&(this._configOnDestroy=n.onDestroy),n.asyncInit&&(this._configAsyncInit=n.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(n){return this._configOnUpdate?this._configOnUpdate.call(this,n):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(n){return this._configAsyncInit?this._configAsyncInit.call(this,n):Promise.resolve()}};var e=new t({name:"Normal Map",namespace:"filter",func:"normalMap",tags:["color"],description:"Normal map generation",globals:{},passes:[{name:"main",program:"normalMap",inputs:{inputTex:"inputTex"},outputs:{fragColor:"outputTex"}}]});var r={normalMap:{glsl:`#version 300 es
+var t=class{constructor(n={}){this.state={},this.uniforms={},n.name&&(this.name=n.name),n.namespace&&(this.namespace=n.namespace),n.func&&(this.func=n.func),n.description&&(this.description=n.description),n.tags&&(this.tags=n.tags),n.globals&&(this.globals=n.globals),n.passes&&(this.passes=n.passes),n.textures&&(this.textures=n.textures),n.textures3d&&(this.textures3d=n.textures3d),n.shaders&&(this.shaders=n.shaders),n.externalTexture&&(this.externalTexture=n.externalTexture),n.externalMesh&&(this.externalMesh=n.externalMesh),n.builtinMeshes&&(this.builtinMeshes=n.builtinMeshes),n.outputTex3d&&(this.outputTex3d=n.outputTex3d),n.outputGeo&&(this.outputGeo=n.outputGeo),n.uniformLayout&&(this.uniformLayout=n.uniformLayout),n.uniformLayouts&&(this.uniformLayouts=n.uniformLayouts),n.paramAliases&&(this.paramAliases=n.paramAliases),n.openCategories&&(this.openCategories=n.openCategories),n.defaultProgram&&(this.defaultProgram=n.defaultProgram),n.hidden&&(this.hidden=!0),n.deprecatedBy&&(this.deprecatedBy=n.deprecatedBy),n.onInit&&(this._configOnInit=n.onInit),n.onUpdate&&(this._configOnUpdate=n.onUpdate),n.onDestroy&&(this._configOnDestroy=n.onDestroy),n.asyncInit&&(this._configAsyncInit=n.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(n){return this._configOnUpdate?this._configOnUpdate.call(this,n):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(n){return this._configAsyncInit?this._configAsyncInit.call(this,n):Promise.resolve()}};var e=new t({name:"Normal Map",namespace:"filter",func:"normalMap",tags:["color"],description:"Normal map generation",globals:{},passes:[{name:"main",program:"normalMap",inputs:{inputTex:"inputTex"},outputs:{fragColor:"outputTex"}}]});var i={normalMap:{glsl:`#version 300 es
 precision highp float;
 precision highp int;
 
@@ -154,20 +154,15 @@ void main() {
     vec4 texel = texelFetch(inputTex, ivec2(global_id.xy), 0);
     fragColor = vec4(x_value, y_value, z_value, texel.w);
 }
-`,wgsl:`// Normal map generation. Mirrors noisemaker.effects.normal_map by computing a
-// grayscale reference map, Sobel derivatives, and a stylized Z component.
+`,wgsl:`// Normal map generation, as the GLSL: Sobel derivatives of a reference value
+// and a Z component from their magnitude. Neither backend's size uniform is
+// set, so the reference is the input's red channel (channel count 1).
 
 const CHANNEL_COUNT : u32 = 4u;
 const CHANNEL_CAP : u32 = 4u;
 
-struct NormalMapParams {
-    size : vec4<f32>,    // (width, height, channels, unused)
-    motion : vec4<f32>,  // (time, speed, unused, unused)
-};
-
 @group(0) @binding(0) var inputTex : texture_2d<f32>;
 @group(0) @binding(1) var<storage, read_write> output_buffer : array<f32>;
-@group(0) @binding(2) var<uniform> params : NormalMapParams;
 
 const SOBEL_OFFSETS : array<vec2<i32>, 9> = array<vec2<i32>, 9>(
     vec2<i32>(-1, -1), vec2<i32>(0, -1), vec2<i32>(1, -1),
@@ -269,8 +264,11 @@ fn compute_reference_value(coords : vec2<i32>, channelCount : u32) -> f32 {
 
 @compute @workgroup_size(8, 8, 1)
 fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
-    let width : u32 = as_u32(params.size.x);
-    let height : u32 = as_u32(params.size.y);
+    // The input's dimensions, as the GLSL uses when its size uniform is
+    // unset; nothing sets it on either backend.
+    let dims : vec2<u32> = textureDimensions(inputTex, 0);
+    let width : u32 = max(dims.x, 1u);
+    let height : u32 = max(dims.y, 1u);
     
     // Parallel per-pixel computation: each thread handles one pixel
     let x : u32 = gid.x;
@@ -280,50 +278,24 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
         return;
     }
 
-    let channelCount : u32 = sanitize_channelCount(params.size.z);
+    let channelCount : u32 = sanitize_channelCount(0.0);
     let width_i : i32 = i32(width);
     let height_i : i32 = i32(height);
     
-    // Compute Sobel X response (no normalization needed - matches Python reference)
-    var sobel_x : f32 = 0.0;
+    // Sobel derivatives of the reference value, as the GLSL computes them.
+    var dx : f32 = 0.0;
+    var dy : f32 = 0.0;
     for (var i : u32 = 0u; i < 9u; i = i + 1u) {
         let offset : vec2<i32> = SOBEL_OFFSETS[i];
-        let sample_x : i32 = wrap_coord(i32(x) + offset.x, width_i);
-        let sample_y : i32 = wrap_coord(i32(y) + offset.y, height_i);
-        let coords : vec2<i32> = vec2<i32>(sample_x, sample_y);
-        let sample_value : f32 = compute_reference_value(coords, channelCount);
-        sobel_x = sobel_x + sample_value * SOBEL_X_KERNEL[i];
+        let coords : vec2<i32> = vec2<i32>(wrap_coord(i32(x) + offset.x, width_i), wrap_coord(i32(y) + offset.y, height_i));
+        let value : f32 = compute_reference_value(coords, channelCount);
+        dx = dx + value * SOBEL_X_KERNEL[i];
+        dy = dy + value * SOBEL_Y_KERNEL[i];
     }
-    
-    // Compute Sobel Y response (no normalization needed - matches Python reference)
-    var sobel_y : f32 = 0.0;
-    for (var i : u32 = 0u; i < 9u; i = i + 1u) {
-        let offset : vec2<i32> = SOBEL_OFFSETS[i];
-        let sample_x : i32 = wrap_coord(i32(x) + offset.x, width_i);
-        let sample_y : i32 = wrap_coord(i32(y) + offset.y, height_i);
-        let coords : vec2<i32> = vec2<i32>(sample_x, sample_y);
-        let sample_value : f32 = compute_reference_value(coords, channelCount);
-        sobel_y = sobel_y + sample_value * SOBEL_Y_KERNEL[i];
-    }
-    
-    // Normalize Sobel outputs to [0, 1] range
-    // Sobel kernels can produce values roughly in [-4, 4] for typical gradients
-    // We use a scaling factor to map this to a reasonable range
-    let sobel_scale : f32 = 0.25;  // Approximates 1/4, mapping [-4,4] to [-1,1]
-    
-    // Python does: x = normalize(1 - sobel_x), y = normalize(sobel_y)
-    // Map sobel responses to [0, 1] range and apply the inversion for x
-    let sobel_x_scaled : f32 = sobel_x * sobel_scale + 0.5;  // Map to [0, 1]
-    let sobel_y_scaled : f32 = sobel_y * sobel_scale + 0.5;  // Map to [0, 1]
-    
-    let x_value : f32 = clamp01(1.0 - sobel_x_scaled);
-    let y_value : f32 = clamp01(sobel_y_scaled);
-    
-    // Compute Z component: z = 1 - abs(normalize(sqrt(x^2 + y^2)) * 2 - 1) * 0.5 + 0.5
-    let magnitude : f32 = sqrt(x_value * x_value + y_value * y_value);
-    let normalized_magnitude : f32 = clamp01(magnitude);
-    let two_z : f32 = normalized_magnitude * 2.0 - 1.0;
-    let z_value : f32 = 1.0 - abs(two_z) * 0.5 + 0.5;
+
+    let x_value : f32 = clamp01(dx * 0.5 + 0.5);
+    let y_value : f32 = clamp01(dy * 0.5 + 0.5);
+    let z_value : f32 = clamp01(1.0 - (abs(dx) + abs(dy)) * 0.5);
 
     let pixel : u32 = y * width + x;
     let base_index : u32 = pixel * CHANNEL_COUNT;
@@ -334,7 +306,7 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
     output_buffer[base_index + 2u] = z_value;
     output_buffer[base_index + 3u] = texel.w;
 }
-`}},i=`# normalMap
+`}},r=`# normalMap
 
 Normal map generation
 
@@ -349,4 +321,4 @@ noise(seed: 1, ridges: true)
 
 render(o0)
 \`\`\`
-`;if(e&&Object.keys(r).length>0){e.shaders||(e.shaders={});for(let[a,n]of Object.entries(r))e.shaders[a]={...n}}e&&i&&(e.help=i);var c="filter/normalMap",_="filter",f="normalMap",p=e;export{p as default,c as effectId,f as effectName,i as help,_ as namespace};
+`;if(e&&Object.keys(i).length>0){e.shaders||(e.shaders={});for(let[a,n]of Object.entries(i))e.shaders[a]={...n}}e&&r&&(e.help=r);var c="filter/normalMap",f="filter",_="normalMap",p=e;export{p as default,c as effectId,_ as effectName,r as help,f as namespace};

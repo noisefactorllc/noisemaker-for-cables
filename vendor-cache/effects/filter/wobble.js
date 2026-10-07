@@ -1,5 +1,5 @@
 /* filter/wobble */
-var t=class{constructor(e={}){this.state={},this.uniforms={},e.name&&(this.name=e.name),e.namespace&&(this.namespace=e.namespace),e.func&&(this.func=e.func),e.description&&(this.description=e.description),e.tags&&(this.tags=e.tags),e.globals&&(this.globals=e.globals),e.passes&&(this.passes=e.passes),e.textures&&(this.textures=e.textures),e.outputTex3d&&(this.outputTex3d=e.outputTex3d),e.outputGeo&&(this.outputGeo=e.outputGeo),e.uniformLayout&&(this.uniformLayout=e.uniformLayout),e.uniformLayouts&&(this.uniformLayouts=e.uniformLayouts),e.paramAliases&&(this.paramAliases=e.paramAliases),e.openCategories&&(this.openCategories=e.openCategories),e.defaultProgram&&(this.defaultProgram=e.defaultProgram),e.hidden&&(this.hidden=!0),e.deprecatedBy&&(this.deprecatedBy=e.deprecatedBy),e.onInit&&(this._configOnInit=e.onInit),e.onUpdate&&(this._configOnUpdate=e.onUpdate),e.onDestroy&&(this._configOnDestroy=e.onDestroy),e.asyncInit&&(this._configAsyncInit=e.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(e){return this._configOnUpdate?this._configOnUpdate.call(this,e):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(e){return this._configAsyncInit?this._configAsyncInit.call(this,e):Promise.resolve()}};var n=new t({name:"Wobble",namespace:"filter",func:"wobble",tags:["transform"],description:"Wobble animation effect",globals:{speed:{type:"float",default:5,uniform:"speed",min:0,max:5,step:.1,zero:0,ui:{label:"speed",control:"slider"}},range:{type:"float",default:.5,uniform:"range",min:0,max:5,step:.05,ui:{label:"range",control:"slider"}},wrap:{type:"int",default:0,uniform:"wrap",choices:{mirror:0,repeat:1,clamp:2},randChoices:[0,1],ui:{label:"wrap",control:"dropdown"}}},passes:[{name:"main",program:"wobble",inputs:{inputTex:"inputTex"},uniforms:{speed:"speed",range:"range",time:"time",wrap:"wrap"},outputs:{fragColor:"outputTex"}}]});var o={wobble:{glsl:`#version 300 es
+var t=class{constructor(e={}){this.state={},this.uniforms={},e.name&&(this.name=e.name),e.namespace&&(this.namespace=e.namespace),e.func&&(this.func=e.func),e.description&&(this.description=e.description),e.tags&&(this.tags=e.tags),e.globals&&(this.globals=e.globals),e.passes&&(this.passes=e.passes),e.textures&&(this.textures=e.textures),e.textures3d&&(this.textures3d=e.textures3d),e.shaders&&(this.shaders=e.shaders),e.externalTexture&&(this.externalTexture=e.externalTexture),e.externalMesh&&(this.externalMesh=e.externalMesh),e.builtinMeshes&&(this.builtinMeshes=e.builtinMeshes),e.outputTex3d&&(this.outputTex3d=e.outputTex3d),e.outputGeo&&(this.outputGeo=e.outputGeo),e.uniformLayout&&(this.uniformLayout=e.uniformLayout),e.uniformLayouts&&(this.uniformLayouts=e.uniformLayouts),e.paramAliases&&(this.paramAliases=e.paramAliases),e.openCategories&&(this.openCategories=e.openCategories),e.defaultProgram&&(this.defaultProgram=e.defaultProgram),e.hidden&&(this.hidden=!0),e.deprecatedBy&&(this.deprecatedBy=e.deprecatedBy),e.onInit&&(this._configOnInit=e.onInit),e.onUpdate&&(this._configOnUpdate=e.onUpdate),e.onDestroy&&(this._configOnDestroy=e.onDestroy),e.asyncInit&&(this._configAsyncInit=e.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(e){return this._configOnUpdate?this._configOnUpdate.call(this,e):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(e){return this._configAsyncInit?this._configAsyncInit.call(this,e):Promise.resolve()}};var n=new t({name:"Wobble",namespace:"filter",func:"wobble",tags:["transform"],description:"Wobble animation effect",globals:{speed:{type:"float",default:5,uniform:"speed",min:0,max:5,step:.1,zero:0,ui:{label:"speed",control:"slider"}},range:{type:"float",default:.5,uniform:"range",min:0,max:5,step:.05,ui:{label:"range",control:"slider"}},wrap:{type:"int",default:0,uniform:"wrap",choices:{mirror:0,repeat:1,clamp:2},randChoices:[0,1],ui:{label:"wrap",control:"dropdown"}}},passes:[{name:"main",program:"wobble",inputs:{inputTex:"inputTex"},uniforms:{speed:"speed",range:"range",time:"time",wrap:"wrap"},outputs:{fragColor:"outputTex"}}]});var a={wobble:{glsl:`#version 300 es
 
 precision highp float;
 precision highp int;
@@ -208,14 +208,17 @@ fn main(in: VertexOutput) -> @location(0) vec4<f32> {
     let offset = (vec2<f32>(xRandom, yRandom) - 0.5) * offsetScale;
 
     // Apply offset to texture coordinate
-    var sampleCoord = in.uv + offset;
+    // The output-normalized coordinate, as the GLSL's gl_FragCoord /
+    // resolution; the default vertex uv has a bottom-left origin, so it is
+    // flipped vertically.
+    var sampleCoord = vec2<f32>(in.uv.x, 1.0 - in.uv.y) + offset;
     sampleCoord = applyWrap(sampleCoord);
 
     let sampled = textureSample(inputTex, u_sampler, sampleCoord);
 
     return sampled;
 }
-`}},a=`# wobble
+`}},r=`# wobble
 
 Wobble animation effect
 
@@ -238,4 +241,4 @@ noise(seed: 1, ridges: true)
 
 render(o0)
 \`\`\`
-`;if(n&&Object.keys(o).length>0){n.shaders||(n.shaders={});for(let[s,e]of Object.entries(o))n.shaders[s]={...e}}n&&a&&(n.help=a);var l="filter/wobble",u="filter",d="wobble",c=n;export{c as default,l as effectId,d as effectName,a as help,u as namespace};
+`;if(n&&Object.keys(a).length>0){n.shaders||(n.shaders={});for(let[s,e]of Object.entries(a))n.shaders[s]={...e}}n&&r&&(n.help=r);var l="filter/wobble",u="filter",d="wobble",c=n;export{c as default,l as effectId,d as effectName,r as help,u as namespace};

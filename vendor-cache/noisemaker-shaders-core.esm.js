@@ -3,8 +3,8 @@
  * Includes: CanvasRenderer + UIController + EffectSelect
  * Copyright (c) 2017-2026 Noise Factor LLC. https://noisefactor.io/
  * SPDX-License-Identifier: MIT
- * Build: 41ba5e19
- * Date: 2026-10-05T04:46:30.082Z
+ * Build: 8fa067f6
+ * Date: 2026-10-07T19:29:22.492Z
  */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
@@ -5362,6 +5362,11 @@ var Effect = class {
    * @param {object} [config.globals] - Effect parameters/uniforms
    * @param {Array} [config.passes] - Render passes
    * @param {object} [config.textures] - Internal texture allocations
+   * @param {object} [config.textures3d] - Internal 3D texture allocations
+   * @param {object} [config.shaders] - Inline shader sources by program name
+   * @param {string} [config.externalTexture] - Texture id the host fills (media, text)
+   * @param {string} [config.externalMesh] - Mesh id the host fills
+   * @param {object} [config.builtinMeshes] - Built-in mesh paths by name
    * @param {string[]} [config.openCategories] - Categories to show expanded by default (e.g. ['general', 'julia'])
    * @param {string} [config.defaultProgram] - Optional default DSL program for the demo UI
    * @param {Function} [config.onInit] - Lifecycle hook: called once on init
@@ -5379,6 +5384,11 @@ var Effect = class {
     if (config.globals) this.globals = config.globals;
     if (config.passes) this.passes = config.passes;
     if (config.textures) this.textures = config.textures;
+    if (config.textures3d) this.textures3d = config.textures3d;
+    if (config.shaders) this.shaders = config.shaders;
+    if (config.externalTexture) this.externalTexture = config.externalTexture;
+    if (config.externalMesh) this.externalMesh = config.externalMesh;
+    if (config.builtinMeshes) this.builtinMeshes = config.builtinMeshes;
     if (config.outputTex3d) this.outputTex3d = config.outputTex3d;
     if (config.outputGeo) this.outputGeo = config.outputGeo;
     if (config.uniformLayout) this.uniformLayout = config.uniformLayout;
@@ -6034,7 +6044,7 @@ function expand(compilationResult, options = {}) {
           workgroups: passDef.workgroups,
           storageBuffers: passDef.storageBuffers,
           storageTextures: passDef.storageTextures,
-          // GAP-005: pass labels and per-pass execution controls are
+          // Pass labels and per-pass execution controls are
           // copied verbatim. `name`/`type` stay queryable metadata
           // (backend shader-kind dispatch remains source-derived);
           // `viewport` is resolved to backend x/y/w/h numbers by
@@ -8191,7 +8201,7 @@ var WebGL2Backend = class _WebGL2Backend extends Backend {
   }
   /**
    * Record a missing render target (FBO or MRT attachment) as a structured
-   * diagnostic (GAP-007). The legacy console warning is unchanged and still
+   * diagnostic. The legacy console warning is unchanged and still
    * fires on every occurrence; the record is deduplicated per
    * kind|output|pass so per-frame rendering cannot grow it unboundedly.
    */
@@ -8874,7 +8884,15 @@ var WebGL2Backend = class _WebGL2Backend extends Backend {
         type: gl.FLOAT
       }
     };
-    const resolved = formats[format];
+    const aliases = {
+      "rgba8unorm": "rgba8",
+      "rgba16float": "rgba16f",
+      "rgba32float": "rgba32f",
+      "r8unorm": "r8",
+      "r16float": "r16f",
+      "r32float": "r32f"
+    };
+    const resolved = formats[aliases[format] ?? format];
     if (resolved) return resolved;
     if (format !== void 0 && format !== null) {
       const key = String(format);
@@ -10024,6 +10042,29 @@ var WebGPUBackend = class _WebGPUBackend extends Backend {
     this.device.queue.submit([commandEncoder.finish()]);
   }
   /**
+   * Record a missing render target as a structured diagnostic, matching the
+   * WebGL2 backend. The console warning at each call site is unchanged; the
+   * record is deduplicated per kind|output|pass so per-frame rendering
+   * cannot grow it unboundedly.
+   * @param {'mrt'|'storage-surface'|'copy-output'} kind
+   * @param {string|null} outputId
+   * @param {string|null} passId
+   */
+  _recordMissingRenderTarget(kind, outputId, passId) {
+    if (!this._warnedMissingRenderTargets) this._warnedMissingRenderTargets = /* @__PURE__ */ new Set();
+    const key = `${kind}|${outputId}|${passId}`;
+    if (this._warnedMissingRenderTargets.has(key)) return;
+    this._warnedMissingRenderTargets.add(key);
+    this.diagnostics.add({
+      code: DIAGNOSTIC_CODES.MISSING_RENDER_TARGET,
+      backend: "webgpu",
+      stage: "render",
+      kind,
+      pass: passId,
+      output: outputId
+    });
+  }
+  /**
    * Resolve the WGSL shader source from a program spec.
    * Looks for sources in order: wgsl, source, fragment (for render shaders)
    */
@@ -10903,6 +10944,7 @@ var WebGPUBackend = class _WebGPUBackend extends Backend {
       const tex = this.textures.get(outputId) || state.surfaces?.[outputId];
       if (!tex) {
         console.warn(`[executeMRTRenderPass] Texture not found for ${outputId} in pass ${pass.id}`);
+        this._recordMissingRenderTarget("mrt", outputId, pass.id ?? null);
         continue;
       }
       if (!viewportTex) viewportTex = tex;
@@ -11471,7 +11513,11 @@ var WebGPUBackend = class _WebGPUBackend extends Backend {
   createSingleUniformBuffer(value, typeDecl) {
     let data;
     let byteLength;
-    if (typeof value === "boolean") {
+    if (typeof value === "boolean" && typeDecl !== "i32" && typeDecl !== "u32") {
+      this._singleUniformFloat32[0] = value ? 1 : 0;
+      data = this._singleUniformFloat32;
+      byteLength = 4;
+    } else if (typeof value === "boolean") {
       this._singleUniformInt32[0] = value ? 1 : 0;
       data = this._singleUniformInt32;
       byteLength = 4;
@@ -11650,6 +11696,7 @@ var WebGPUBackend = class _WebGPUBackend extends Backend {
       }
     }
     console.warn("Render surface write texture not found, using fallback storage texture");
+    this._recordMissingRenderTarget("storage-surface", renderSurfaceName ?? null, null);
     const width = state?.screenWidth || 1280;
     const height = state?.screenHeight || 720;
     const key = `outputStorage_${width}x${height}`;
@@ -12303,6 +12350,7 @@ var WebGPUBackend = class _WebGPUBackend extends Backend {
     }
     if (!outputTex) {
       console.warn(`[copyBufferToTexture] Output texture not found: ${outputId}`);
+      this._recordMissingRenderTarget("copy-output", outputId, null);
       return;
     }
     const width = state.screenWidth || outputTex.width;
@@ -12730,6 +12778,15 @@ function mrtFormatBytes(format) {
     case "rgba8":
     case "rgba8unorm":
       return 4;
+    case "r32f":
+    case "r32float":
+      return 4;
+    case "r16f":
+    case "r16float":
+      return 2;
+    case "r8":
+    case "r8unorm":
+      return 1;
     default:
       return 8;
   }
@@ -12740,15 +12797,13 @@ function isGLSLSource(text) {
 function isWGSLBucket(bucket) {
   if (!bucket) return false;
   if (bucket.wgsl) return true;
-  if (bucket.source && !isGLSLSource(bucket.source)) return true;
-  if (bucket.fragment && !isGLSLSource(bucket.fragment)) return true;
-  return false;
+  if (bucket.source) return !isGLSLSource(bucket.source);
+  return !!bucket.fragment && !isGLSLSource(bucket.fragment);
 }
 function isGLSLBucket(bucket) {
   if (!bucket) return false;
-  if (bucket.glsl || bucket.fragment || bucket.vertex) return true;
-  if (bucket.source && !isWGSLBucket(bucket)) return true;
-  return false;
+  if (bucket.source) return isGLSLSource(bucket.source);
+  return !!(bucket.glsl || bucket.fragment);
 }
 function definitionPasses(definition) {
   if (!definition || typeof definition !== "object") return [];
@@ -13397,6 +13452,7 @@ var Pipeline = class {
       // AudioState instance
     };
     this._asyncRenders = /* @__PURE__ */ new Map();
+    this._asyncInitPromises = /* @__PURE__ */ new Map();
     this._lifecycleEffects = /* @__PURE__ */ new Map();
     this._initLifecycleDone = /* @__PURE__ */ new Set();
     this._runtimeUniforms = /* @__PURE__ */ new Map();
@@ -13527,7 +13583,7 @@ var Pipeline = class {
     this.initLifecycleEffects();
   }
   /**
-   * Production lifecycle hooks (GAP-026).
+   * Production lifecycle hooks.
    * Called after texture allocation, on resize, and on hot recompile (the
    * same sites as initAsyncEffects()). Rebuilds the managed-effect map from
    * the current graph and calls onInit() once per effect instance per
@@ -13636,6 +13692,32 @@ var Pipeline = class {
       this._startAsyncInit(nodeId, effectDef, { debounce: true, params: stepValues });
     }
   }
+  /**
+   * Run checkAsyncRegen for every asyncInit node whose effect reads this
+   * uniform, with the node's current param values.
+   * @param {string} uniformName - The uniform setUniform just changed
+   * @private
+   */
+  _regenAsyncForUniform(uniformName) {
+    const seen = /* @__PURE__ */ new Set();
+    for (const pass of this.graph.passes) {
+      if (!pass.nodeId || !pass.effectKey || seen.has(pass.nodeId)) continue;
+      const effectDef = getEffect(pass.effectKey);
+      if (!effectDef?.globals) continue;
+      if (!effectDef._configAsyncInit && effectDef.asyncInit === Effect.prototype.asyncInit) continue;
+      const params = {};
+      let reads = false;
+      for (const [paramName, spec] of Object.entries(effectDef.globals)) {
+        const uniform = spec.uniform || paramName;
+        if (uniform === uniformName) reads = true;
+        const value = pass.uniforms?.[uniform] ?? this.globalUniforms[uniform];
+        if (value !== void 0) params[paramName] = value;
+      }
+      if (!reads) continue;
+      seen.add(pass.nodeId);
+      this.checkAsyncRegen(pass.nodeId, pass.effectKey, params);
+    }
+  }
   _startAsyncInit(nodeId, effectDef, { debounce = false, params = null } = {}) {
     if (debounce) {
       if (!this._asyncDebounceTimers) this._asyncDebounceTimers = /* @__PURE__ */ new Map();
@@ -13653,6 +13735,17 @@ var Pipeline = class {
     this._asyncRenders.set(nodeId, () => {
       cancelled = true;
     });
+    const drawParams = params ? { ...params } : { ...this.globalUniforms };
+    for (const [paramName, spec] of Object.entries(effectDef.globals || {})) {
+      if (isAutomationValue(drawParams[paramName])) drawParams[paramName] = spec.default;
+    }
+    if (!this._asyncParamCache) this._asyncParamCache = /* @__PURE__ */ new Map();
+    const drawn = {};
+    for (const [paramName, spec] of Object.entries(effectDef.globals || {})) {
+      const value = drawParams[paramName] ?? drawParams[spec.uniform];
+      if (value !== void 0 && value !== null && typeof value !== "object") drawn[paramName] = value;
+    }
+    this._asyncParamCache.set(nodeId, drawn);
     const context = {
       updateTexture: (texName, canvas) => {
         if (cancelled) return;
@@ -13661,12 +13754,32 @@ var Pipeline = class {
       },
       width: this.width,
       height: this.height,
-      params: params ? { ...params } : { ...this.globalUniforms },
+      params: drawParams,
       isCancelled: () => cancelled
     };
-    effectDef.asyncInit(context).catch((err) => {
+    const run = Promise.resolve(effectDef.asyncInit(context)).catch((err) => {
       console.error(`[Pipeline] asyncInit error for ${nodeId}:`, err);
+    }).finally(() => {
+      if (this._asyncInitPromises.get(nodeId) === run) this._asyncInitPromises.delete(nodeId);
     });
+    this._asyncInitPromises.set(nodeId, run);
+  }
+  /**
+   * Resolve once every asyncInit started so far has settled, including a
+   * debounced regeneration that is already scheduled. Async CPU effects
+   * (fibers, scratches, strayHair, ...) draw their overlay over several
+   * frames; a host or test that captures a frame awaits this instead of
+   * counting frames. Errors are logged by the pipeline and do not reject.
+   * @returns {Promise<void>}
+   */
+  async whenAsyncInitsSettled() {
+    while (this._asyncInitPromises.size > 0 || (this._asyncDebounceTimers?.size ?? 0) > 0) {
+      if (this._asyncInitPromises.size > 0) {
+        await Promise.all([...this._asyncInitPromises.values()]);
+      } else {
+        await new Promise((resolve) => setTimeout(resolve, 50));
+      }
+    }
   }
   /**
    * Collect uniform values from all passes for resolving parameter-based
@@ -13831,7 +13944,7 @@ var Pipeline = class {
   }
   /**
    * Static preflight of this pipeline's effect graph against device
-   * capabilities (GAP-016). Runs the same analysis as
+   * capabilities. Runs the same analysis as
    * preflightEffect() — per-backend authorability, predicted MRT
    * format demotions, and predicted maxTextureSize clamps — before any
    * program is compiled. Read-only; never mutates the graph.
@@ -14461,7 +14574,6 @@ var Pipeline = class {
         for (const [uName, uValue] of Object.entries(expanded)) {
           this.setUniform(uName, uValue);
         }
-        return;
       }
     }
     const isScopedUniform = /_node_\d+$/.test(name) || /_chain_\d+$/.test(name);
@@ -14471,6 +14583,12 @@ var Pipeline = class {
           const currentValue = pass.uniforms[name];
           if (!this.isAutomationConfig(currentValue)) {
             pass.uniforms[name] = value;
+          }
+        }
+        if (pass.uniformAliases && pass.uniforms) {
+          for (const [shaderName, globalName] of Object.entries(pass.uniformAliases)) {
+            if (globalName !== name || this.isAutomationConfig(pass.uniforms[shaderName])) continue;
+            pass.uniforms[shaderName] = Array.isArray(value) ? value.slice() : value;
           }
         }
         if (!isScopedUniform && pass.uniforms) {
@@ -14485,6 +14603,9 @@ var Pipeline = class {
           }
         }
       }
+    }
+    if (this.graph && this.graph.passes) {
+      this._regenAsyncForUniform(name);
     }
     if (oldValue !== value && this.graph && this.graph.textures) {
       let affectsTextures = false;
@@ -14897,8 +15018,8 @@ var Pipeline = class {
     return 1;
   }
   /**
-   * Resolve an authored pass viewport spec to backend {x, y, w, h} numbers
-   * (GAP-005). The authored spec accepts the same dimension grammar as
+   * Resolve an authored pass viewport spec to backend {x, y, w, h} numbers.
+   * The authored spec accepts the same dimension grammar as
    * texture sizes (numbers, 'screen', percentages, {param}/{screenDivide}/
    * {scale, clamp} forms) on the x/y/w/h/width/height keys. Resolution is
    * cached per pass: the reusable box is mutated in place each frame so
@@ -20605,7 +20726,8 @@ var UIController = class {
     const applySize = (result) => {
       if (result.width > 0 && result.height > 0) {
         const effectKey = `step_${stepIndex}`;
-        this._programState.setValue(effectKey, "imageSize", [result.width, result.height]);
+        media.size = [result.width, result.height];
+        this._programState.setValue(effectKey, "imageSize", media.size);
       }
     };
     if (resultOrPromise && typeof resultOrPromise.then === "function") {
@@ -22173,8 +22295,23 @@ render(o0)`;
       return false;
     }
     this._programState.fromDsl(dsl);
+    this._restoreMediaSizes();
     this._syncControlValuesFromState();
     return true;
+  }
+  /**
+   * Put each loaded media source's uploaded size back into its step's imageSize
+   * @private
+   */
+  _restoreMediaSizes() {
+    this._programState.batch(() => {
+      for (const [stepIndex, media] of this._mediaInputs) {
+        if (!media.source || !media.size) continue;
+        const effectKey = `step_${stepIndex}`;
+        if (!this._programState.getEffectDef(effectKey)?.globals?.imageSize) continue;
+        this._programState.setValue(effectKey, "imageSize", media.size);
+      }
+    });
   }
   /**
    * Sync all UI control values from programState

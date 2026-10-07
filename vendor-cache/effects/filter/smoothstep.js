@@ -1,9 +1,9 @@
 /* filter/smoothstep */
-var n=class{constructor(e={}){this.state={},this.uniforms={},e.name&&(this.name=e.name),e.namespace&&(this.namespace=e.namespace),e.func&&(this.func=e.func),e.description&&(this.description=e.description),e.tags&&(this.tags=e.tags),e.globals&&(this.globals=e.globals),e.passes&&(this.passes=e.passes),e.textures&&(this.textures=e.textures),e.outputTex3d&&(this.outputTex3d=e.outputTex3d),e.outputGeo&&(this.outputGeo=e.outputGeo),e.uniformLayout&&(this.uniformLayout=e.uniformLayout),e.uniformLayouts&&(this.uniformLayouts=e.uniformLayouts),e.paramAliases&&(this.paramAliases=e.paramAliases),e.openCategories&&(this.openCategories=e.openCategories),e.defaultProgram&&(this.defaultProgram=e.defaultProgram),e.hidden&&(this.hidden=!0),e.deprecatedBy&&(this.deprecatedBy=e.deprecatedBy),e.onInit&&(this._configOnInit=e.onInit),e.onUpdate&&(this._configOnUpdate=e.onUpdate),e.onDestroy&&(this._configOnDestroy=e.onDestroy),e.asyncInit&&(this._configAsyncInit=e.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(e){return this._configOnUpdate?this._configOnUpdate.call(this,e):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(e){return this._configAsyncInit?this._configAsyncInit.call(this,e):Promise.resolve()}};var t=new n({name:"Smoothstep",namespace:"filter",func:"smoothstep",tags:["edges","util"],description:"Smooth Hermite interpolation between edges",globals:{edge0:{type:"float",default:0,uniform:"edge0",min:0,max:1,step:.01,randMax:.25,ui:{label:"edge 0",control:"slider"}},edge1:{type:"float",default:1,uniform:"edge1",min:0,max:1,step:.01,randMin:.75,ui:{label:"edge 1",control:"slider"}}},defaultProgram:`search synth, filter
+var n=class{constructor(e={}){this.state={},this.uniforms={},e.name&&(this.name=e.name),e.namespace&&(this.namespace=e.namespace),e.func&&(this.func=e.func),e.description&&(this.description=e.description),e.tags&&(this.tags=e.tags),e.globals&&(this.globals=e.globals),e.passes&&(this.passes=e.passes),e.textures&&(this.textures=e.textures),e.textures3d&&(this.textures3d=e.textures3d),e.shaders&&(this.shaders=e.shaders),e.externalTexture&&(this.externalTexture=e.externalTexture),e.externalMesh&&(this.externalMesh=e.externalMesh),e.builtinMeshes&&(this.builtinMeshes=e.builtinMeshes),e.outputTex3d&&(this.outputTex3d=e.outputTex3d),e.outputGeo&&(this.outputGeo=e.outputGeo),e.uniformLayout&&(this.uniformLayout=e.uniformLayout),e.uniformLayouts&&(this.uniformLayouts=e.uniformLayouts),e.paramAliases&&(this.paramAliases=e.paramAliases),e.openCategories&&(this.openCategories=e.openCategories),e.defaultProgram&&(this.defaultProgram=e.defaultProgram),e.hidden&&(this.hidden=!0),e.deprecatedBy&&(this.deprecatedBy=e.deprecatedBy),e.onInit&&(this._configOnInit=e.onInit),e.onUpdate&&(this._configOnUpdate=e.onUpdate),e.onDestroy&&(this._configOnDestroy=e.onDestroy),e.asyncInit&&(this._configAsyncInit=e.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(e){return this._configOnUpdate?this._configOnUpdate.call(this,e):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(e){return this._configAsyncInit?this._configAsyncInit.call(this,e):Promise.resolve()}};var t=new n({name:"Smoothstep",namespace:"filter",func:"smoothstep",tags:["edges","util"],description:"Smooth Hermite interpolation between edges",globals:{edge0:{type:"float",default:0,uniform:"edge0",min:0,max:1,step:.01,randMax:.25,ui:{label:"edge 0",control:"slider"}},edge1:{type:"float",default:1,uniform:"edge1",min:0,max:1,step:.01,randMin:.75,ui:{label:"edge 1",control:"slider"}}},defaultProgram:`search synth, filter
 
 cell()
   .smoothstep(edge1: 0.51)
-  .write(o0)`,passes:[{name:"render",program:"smoothstep",inputs:{inputTex:"inputTex"},outputs:{fragColor:"outputTex"}}]});var s={smoothstep:{glsl:`/*
+  .write(o0)`,passes:[{name:"render",program:"smoothstep",inputs:{inputTex:"inputTex"},outputs:{fragColor:"outputTex"}}]});var r={smoothstep:{glsl:`/*
  * Smoothstep threshold effect
  * Creates smooth transition between edge0 and edge1
  */
@@ -59,7 +59,7 @@ fn main(@builtin(position) pos: vec4<f32>) -> @location(0) vec4<f32> {
 
     return color;
 }
-`}},r=`# smoothstep
+`}},o=`# smoothstep
 
 Smooth Hermite interpolation between edges
 
@@ -81,4 +81,4 @@ noise(seed: 1, ridges: true)
 
 render(o0)
 \`\`\`
-`;if(t&&Object.keys(s).length>0){t.shaders||(t.shaders={});for(let[o,e]of Object.entries(s))t.shaders[o]={...e}}t&&r&&(t.help=r);var l="filter/smoothstep",f="filter",d="smoothstep",m=t;export{m as default,l as effectId,d as effectName,r as help,f as namespace};
+`;if(t&&Object.keys(r).length>0){t.shaders||(t.shaders={});for(let[s,e]of Object.entries(r))t.shaders[s]={...e}}t&&o&&(t.help=o);var p="filter/smoothstep",d="filter",f="smoothstep",h=t;export{h as default,p as effectId,f as effectName,o as help,d as namespace};
