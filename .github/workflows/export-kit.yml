@@ -12,9 +12,9 @@ name: Export kit
 # Weekly and manual runs add everything that renders through software GL or
 # downloads Cables Standalone: the browser suites (full-catalog parity sweep,
 # pixel parity, state hygiene) and the native editor smoke on Windows x64,
-# Intel macOS, and Linux x64 for each declared Standalone version. A manual
-# run dispatches the kit release only when every job passes; the weekly run
-# never does.
+# Intel macOS, macOS arm64, and Linux x64 for each declared Standalone
+# version. A manual run dispatches the kit release only when every job passes;
+# the weekly run never does.
 
 on:
   workflow_dispatch:
@@ -101,7 +101,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-2025, macos-15-intel, ubuntu-24.04]
+        # macos-15-intel is the x86_64 image; macos-15 is Apple silicon (arm64).
+        os: [windows-2025, macos-15-intel, macos-15, ubuntu-24.04]
         version: ['0.11.0', '0.11.3']
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
@@ -125,19 +126,28 @@ jobs:
           Invoke-WebRequest "https://github.com/cables-gl/cables_electron/releases/download/v$env:CABLES_VERSION/cables-$env:CABLES_VERSION-win-x64.zip" -OutFile $archive
           Expand-Archive $archive $directory
           "CABLES_APP=$(Join-Path $directory 'cables.exe')" >> $env:GITHUB_ENV
-      - name: Mount the declared Intel macOS distribution
+      - name: Mount the declared macOS distribution for the runner's architecture
         if: runner.os == 'macOS'
         shell: bash
         env:
           CABLES_VERSION: ${{ matrix.version }}
         run: |
-          test "$(uname -m)" = x86_64
+          case "$RUNNER_ARCH" in
+            ARM64) DISTRIBUTION=arm64 MACHINE=arm64 ;;
+            X64) DISTRIBUTION=x64 MACHINE=x86_64 ;;
+            *) echo "::error::no declared macOS distribution for $RUNNER_ARCH"; exit 1 ;;
+          esac
+          # Native, not Rosetta: the leg qualifies its own architecture.
+          test "$(uname -m)" = "$MACHINE"
           test "$(sysctl -in sysctl.proc_translated 2>/dev/null || true)" != 1
           curl --fail --location --retry 3 \
-            "https://github.com/cables-gl/cables_electron/releases/download/v${CABLES_VERSION}/cables-${CABLES_VERSION}-mac-x64.dmg" \
+            "https://github.com/cables-gl/cables_electron/releases/download/v${CABLES_VERSION}/cables-${CABLES_VERSION}-mac-${DISTRIBUTION}.dmg" \
             --output "$RUNNER_TEMP/cables.dmg"
           hdiutil attach "$RUNNER_TEMP/cables.dmg" -readonly -nobrowse -mountpoint "$RUNNER_TEMP/cables-volume"
-          echo "CABLES_APP=$RUNNER_TEMP/cables-volume/cables.app/Contents/MacOS/cables" >> "$GITHUB_ENV"
+          app="$RUNNER_TEMP/cables-volume/cables.app/Contents/MacOS/cables"
+          lipo -archs "$app"
+          lipo -archs "$app" | tr ' ' '\n' | grep -qx "$MACHINE"
+          echo "CABLES_APP=$app" >> "$GITHUB_ENV"
       - name: Extract the declared Linux distribution
         if: runner.os == 'Linux'
         shell: bash
@@ -161,7 +171,7 @@ jobs:
         with:
           name: standalone-${{ matrix.os }}-${{ matrix.version }}-${{ github.sha }}
           path: test-report/
-      - name: Detach the Intel macOS distribution
+      - name: Detach the macOS distribution
         if: always() && runner.os == 'macOS'
         run: hdiutil detach "$RUNNER_TEMP/cables-volume" || true
 
