@@ -3,8 +3,8 @@
  * Includes: CanvasRenderer + UIController + EffectSelect
  * Copyright (c) 2017-2026 Noise Factor LLC. https://noisefactor.io/
  * SPDX-License-Identifier: MIT
- * Build: 5976b7a6
- * Date: 2026-10-08T02:45:40.951Z
+ * Build: ba20f72c
+ * Date: 2026-10-08T17:45:47.172Z
  */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
@@ -9401,20 +9401,18 @@ struct FsParams {
 @fragment
 fn fsMip(f: FsParams) -> @location(0) vec4f {
     let d = vec2u(f.frag.xy);
-    let base = d * 2u;
-    let a = textureLoad(src, base, 0u);
-    let b = textureLoad(src, base + vec2u(1u, 0u), 0u);
-    let c = textureLoad(src, base + vec2u(0u, 1u), 0u);
-    let e = textureLoad(src, base + vec2u(1u, 1u), 0u);
-    return (a + b + c + e) * 0.25;
+    let sourceSize = textureDimensions(src);
+    let targetSize = max(sourceSize / 2u, vec2u(1u));
+    let sourceCoord = min(vec2u((vec2f(d) + vec2f(0.5)) * vec2f(sourceSize) / vec2f(targetSize)), sourceSize - vec2u(1u));
+    return textureLoad(src, sourceCoord, 0u);
 }
 
 @fragment
 fn fsScale(f: FsParams) -> @location(0) vec4f {
     let d = vec2u(f.frag.xy);
     let ratio = vec2f(dims.x, dims.y) / vec2f(dims.z, dims.w);
-    let scaled = vec2f(d) * ratio;
-    let maxCoord = vec2u(max(dims.x - 1.0, 0.0), max(dims.y - 1.0, 0.0));
+    let scaled = (vec2f(d) + vec2f(0.5)) * ratio;
+    let maxCoord = vec2u(vec2f(max(dims.x - 1.0, 0.0), max(dims.y - 1.0, 0.0)));
     let coord = min(vec2u(scaled), maxCoord);
     return textureLoad(src, coord, 0u);
 }
@@ -9639,7 +9637,7 @@ var WebGPUBackend = class _WebGPUBackend extends Backend {
       gpuFormat: format,
       usage,
       is3D: true,
-      filter: spec.filter
+      filter: spec.filter || "linear"
     });
     return texture;
   }
@@ -9998,7 +9996,7 @@ var WebGPUBackend = class _WebGPUBackend extends Backend {
   /**
    * Regenerate the mip chain of mipmapped 2D textures from level 0.
    * Called by the Pipeline after each frame's passes for every texture
-   * authored with `mipmaps: true`. Each level renders a 2x2 box downsample
+   * authored with `mipmaps: true`. Each level renders a nearest blit
    * of the previous level into that level's single-mip view. Textures
    * without a mip chain are skipped.
    * @param {string[]} ids - Texture ids to regenerate
@@ -10052,7 +10050,7 @@ var WebGPUBackend = class _WebGPUBackend extends Backend {
     const commandEncoder = this.device.createCommandEncoder();
     const renderPass = commandEncoder.beginRenderPass({
       colorAttachments: [{
-        view: tex.view,
+        view: tex.renderView || tex.view,
         clearValue: { r: 0, g: 0, b: 0, a: 0 },
         loadOp: "clear",
         storeOp: "store"
@@ -10222,6 +10220,7 @@ var WebGPUBackend = class _WebGPUBackend extends Backend {
       // Map of entry point -> Set of used binding indices
       bindings,
       // Store parsed bindings for bind group creation
+      samplerTextureNames: this.parseSamplerTextureUses(source),
       // True if the source contains any `@binding` declarations at all,
       // even ones we filtered out as dead. Used by createBindGroup to
       // distinguish "modern shader, all bindings filtered as dead" (use
@@ -10260,9 +10259,10 @@ var WebGPUBackend = class _WebGPUBackend extends Backend {
     }
     let vertexModule;
     let vertexEntryPoint;
+    let vertexSource = "";
     let fragmentModule = mainModule;
     if (spec.vertexWGSL || spec.vertexWgsl) {
-      const vertexSource = spec.vertexWGSL || spec.vertexWgsl;
+      vertexSource = spec.vertexWGSL || spec.vertexWgsl;
       vertexModule = this.device.createShaderModule({ code: vertexSource });
       const vertexInfo = await vertexModule.getCompilationInfo();
       const vertexErrors = vertexInfo.messages.filter((m) => m.type === "error");
@@ -10339,6 +10339,7 @@ var WebGPUBackend = class _WebGPUBackend extends Backend {
       pipelineCache,
       bindings,
       // Store parsed bindings for bind group creation
+      samplerTextureNames: this.parseSamplerTextureUses(source + "\n" + (vertexSource || "")),
       // See compileComputeProgram for what this flag is for.
       _sourceHasBindings: sourceHasBindings,
       // Use definition-provided uniformLayout if available, fall back to shader parsing
@@ -10736,7 +10737,7 @@ var WebGPUBackend = class _WebGPUBackend extends Backend {
       const name = match[4];
       const typeDecl = match[5].trim();
       let bindingType = "unknown";
-      if (typeDecl.includes("texture_storage_2d")) {
+      if (typeDecl.includes("texture_storage_2d") || typeDecl.includes("texture_storage_3d")) {
         bindingType = "storage_texture";
       } else if (typeDecl.includes("texture_2d") || typeDecl.includes("texture_3d")) {
         bindingType = "texture";
@@ -10767,6 +10768,26 @@ var WebGPUBackend = class _WebGPUBackend extends Backend {
       return a.binding - b.binding;
     });
     return filtered;
+  }
+  /**
+   * Cache the texture associated with each sampler at compile time. WGSL
+   * binding declarations have no required order, so the actual sampling
+   * calls determine which texture's authored filter applies. A sampler used
+   * with multiple textures has no single inferred filter; callers retain
+   * their existing default or provide an explicit samplerTypes override.
+   */
+  parseSamplerTextureUses(source) {
+    const clean = this.stripWGSLComments(source);
+    const names = /* @__PURE__ */ new Map();
+    const samples = /\btextureSample\w*\s*\(\s*(\w+)\s*,\s*(\w+)\s*,/g;
+    let match;
+    while ((match = samples.exec(clean)) !== null) {
+      const textureName = match[1];
+      const samplerName = match[2];
+      if (!names.has(samplerName)) names.set(samplerName, textureName);
+      else if (names.get(samplerName) !== textureName) names.set(samplerName, null);
+    }
+    return names;
   }
   hasShaderBindings(source) {
     return /@binding\s*\(/.test(this.stripWGSLComments(source));
@@ -11413,7 +11434,13 @@ var WebGPUBackend = class _WebGPUBackend extends Backend {
           entries.push(entry);
         }
       } else if (binding.type === "sampler") {
-        const samplerType = pass.samplerTypes?.[binding.name] || inputSamplerDefault;
+        let samplerType = pass.samplerTypes?.[binding.name];
+        if (!samplerType) {
+          const sampledName = program.samplerTextureNames?.get(binding.name);
+          const texId = pass.inputs?.[sampledName];
+          const sampledTexture = this.textures.get(texId) || (typeof texId === "string" ? this.textures.get(texId.replace(/_chain_\d+$/, "")) : null);
+          samplerType = sampledTexture?.is3D ? sampledTexture.filter === "nearest" ? "nearest" : "default" : inputSamplerDefault;
+        }
         entry.resource = this.samplers.get(samplerType) || this.samplers.get("default");
         entries.push(entry);
       } else if (binding.type === "uniform") {
@@ -11426,7 +11453,7 @@ var WebGPUBackend = class _WebGPUBackend extends Backend {
           }
         } else {
           let value = getUniform(binding.name);
-          if (value === void 0 || value === null || typeof value !== "number" && typeof value !== "boolean" && !Array.isArray(value)) {
+          if (value === void 0 || value === null || typeof value !== "number" && typeof value !== "boolean" && !Array.isArray(value) && !(value instanceof Float32Array)) {
             if (binding.typeDecl === "i32" || binding.typeDecl === "u32") {
               value = 0;
             } else if (binding.typeDecl.startsWith("vec2")) {
@@ -11551,7 +11578,7 @@ var WebGPUBackend = class _WebGPUBackend extends Backend {
         data = this._singleUniformFloat32;
         byteLength = 4;
       }
-    } else if (Array.isArray(value)) {
+    } else if (Array.isArray(value) || value instanceof Float32Array) {
       const arr = this._singleUniformFloat32;
       if (value.length === 2) {
         arr[0] = value[0];
@@ -11583,13 +11610,18 @@ var WebGPUBackend = class _WebGPUBackend extends Backend {
         if (typeof typeDecl === "string" && /^array<\s*vec4/.test(typeDecl)) {
           const m = typeDecl.match(/^array<[^,>]+(?:<[^>]+>)?\s*,\s*(\d+)\s*>/);
           const count = m ? parseInt(m[1], 10) : Math.ceil(value.length / 4);
-          const flat = new Float32Array(count * 4);
-          const copyLen = Math.min(value.length, flat.length);
-          for (let i = 0; i < copyLen; i++) flat[i] = value[i];
-          data = flat;
-          byteLength = flat.byteLength;
+          if (value instanceof Float32Array && value.length === count * 4) {
+            data = value;
+            byteLength = value.byteLength;
+          } else {
+            const flat = new Float32Array(count * 4);
+            const copyLen = Math.min(value.length, flat.length);
+            for (let i = 0; i < copyLen; i++) flat[i] = value[i];
+            data = flat;
+            byteLength = flat.byteLength;
+          }
         } else {
-          data = new Float32Array(value);
+          data = value instanceof Float32Array ? value : new Float32Array(value);
           byteLength = data.byteLength;
         }
       }
@@ -12392,7 +12424,7 @@ var WebGPUBackend = class _WebGPUBackend extends Backend {
     });
     const passEncoder = this.commandEncoder.beginRenderPass({
       colorAttachments: [{
-        view: outputTex.view,
+        view: outputTex.renderView || outputTex.view,
         loadOp: "clear",
         storeOp: "store",
         clearValue: { r: 0, g: 0, b: 0, a: 1 }
@@ -14036,7 +14068,9 @@ var Pipeline = class {
         width: existingTex.width,
         height: existingTex.height,
         format: existingTex.format,
-        usage: ["sample", "copySrc", "copyDst"]
+        // A mipmapped source is copied through the WebGPU resample
+        // path even when this temporary has the same dimensions.
+        usage: ["render", "sample", "copySrc", "copyDst"]
       });
       this.backend.copyTexture(texId, preserveId);
     }
@@ -14736,10 +14770,20 @@ var Pipeline = class {
         if (hasTransform && uniforms[spec.param] === void 0 && spec.default !== void 0) {
           value = spec.default;
         }
+        if (!Number.isFinite(Number(value))) {
+          if (spec.default !== void 0) {
+            value = spec.default;
+          } else {
+            value = paramDefault;
+            if (spec.multiply !== void 0) value *= spec.multiply;
+            if (spec.power !== void 0) value = Math.pow(value, spec.power);
+          }
+        }
         return Math.max(1, Math.floor(value));
       }
       if (spec.screenDivide !== void 0) {
-        const divisor = uniforms[spec.screenDivide] ?? spec.default ?? 1;
+        let divisor = uniforms[spec.screenDivide] ?? spec.default ?? 1;
+        if (!Number.isFinite(Number(divisor))) divisor = spec.default ?? 1;
         return Math.max(1, Math.round(screenSize / divisor));
       }
       if (spec.scale !== void 0) {
@@ -23735,10 +23779,10 @@ render(o0)`;
    * @private
    */
   _updateDependentControls() {
+    const allValues = this._programState.getAllStepValues();
     for (const dep of this._dependentControls) {
       const { element, effectKey, enabledBy } = dep;
-      const params = this._programState.getStepValues(effectKey);
-      if (!params) continue;
+      const params = allValues[effectKey] || {};
       const isEnabled = this._evaluateEnableCondition(enabledBy, params);
       element.inert = !isEnabled;
       element.setAttribute("aria-disabled", String(!isEnabled));
@@ -23768,33 +23812,51 @@ render(o0)`;
    * - { and: [condition1, condition2, ...] } - AND multiple conditions (explicit)
    * - { not: condition } - negate a condition
    *
+   * A parameter driven by an oscillator, MIDI, audio or a variable has no
+   * single value to test: a condition on it is unknown, and only a condition
+   * that is false whatever the source does disables the control.
+   *
    * @param {string|object} condition - The enabledBy condition
    * @param {object} params - Current parameter values
    * @returns {boolean} Whether the control should be enabled
    * @private
    */
   _evaluateEnableCondition(condition, params) {
+    return this._evaluateCondition(condition, params) !== false;
+  }
+  /**
+   * @returns {boolean|null} null when the result depends on an automated value
+   * @private
+   */
+  _evaluateCondition(condition, params) {
     if (typeof condition === "string") {
       const value2 = params[condition];
+      if (this._isAutomationValue(value2)) return null;
       return this._isControlEnabled(value2);
     }
     if (typeof condition !== "object" || condition === null) {
       return true;
     }
     if (Array.isArray(condition.or)) {
-      return condition.or.some((c) => this._evaluateEnableCondition(c, params));
+      const results = condition.or.map((c) => this._evaluateCondition(c, params));
+      if (results.includes(true)) return true;
+      return results.includes(null) ? null : false;
     }
     if (Array.isArray(condition.and)) {
-      return condition.and.every((c) => this._evaluateEnableCondition(c, params));
+      const results = condition.and.map((c) => this._evaluateCondition(c, params));
+      if (results.includes(false)) return false;
+      return results.includes(null) ? null : true;
     }
     if (condition.not !== void 0) {
-      return !this._evaluateEnableCondition(condition.not, params);
+      const result2 = this._evaluateCondition(condition.not, params);
+      return result2 === null ? null : !result2;
     }
     const paramName = condition.param;
     if (!paramName) {
       return true;
     }
     const value = params[paramName];
+    if (this._isAutomationValue(value)) return null;
     const operators = ["eq", "neq", "gt", "gte", "lt", "lte", "in", "notIn"];
     const hasOperator = operators.some((op) => condition[op] !== void 0);
     if (!hasOperator) {
@@ -23842,6 +23904,13 @@ render(o0)`;
       return Math.abs(a - b) < 1e-4;
     }
     return a === b;
+  }
+  /**
+   * Whether an oscillator, MIDI, audio source or let-variable binding drives a value
+   * @private
+   */
+  _isAutomationValue(value) {
+    return !!(value && typeof value === "object" && (value._varRef || value.type === "Oscillator" || value._ast?.type === "Oscillator" || value.type === "Midi" || value._ast?.type === "Midi" || value.type === "Audio" || value._ast?.type === "Audio"));
   }
   /**
    * Check if a control's enabler value means the dependent control should be enabled
