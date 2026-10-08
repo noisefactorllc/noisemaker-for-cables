@@ -3,8 +3,8 @@
  * Includes: CanvasRenderer + UIController + EffectSelect
  * Copyright (c) 2017-2026 Noise Factor LLC. https://noisefactor.io/
  * SPDX-License-Identifier: MIT
- * Build: 8e583593
- * Date: 2026-10-07T20:50:12.348Z
+ * Build: 15c9114e
+ * Date: 2026-10-07T23:05:41.102Z
  */
 var NoisemakerCablesGL=(()=>{var Da=Object.defineProperty;var Rb=Object.getOwnPropertyDescriptor;var Ib=Object.getOwnPropertyNames;var Db=Object.prototype.hasOwnProperty;var _=(e,t,o)=>()=>{if(o)throw o[0];try{return e&&(t=e(e=0)),t}catch(r){throw o=[r],r}};var Pa=(e,t)=>{for(var o in t)Da(e,o,{get:t[o],enumerable:!0})},Pb=(e,t,o,r)=>{if(t&&typeof t=="object"||typeof t=="function")for(let i of Ib(t))!Db.call(e,i)&&i!==o&&Da(e,i,{get:()=>t[i],enumerable:!(r=Rb(t,i))||r.enumerable});return e};var Mb=e=>Pb(Da({},"__esModule",{value:!0}),e);function Ms(e){let t=[],o=[],r=[],i=[],s=[],a=[],n=e.split(`
 `);for(let f of n){let g=f.trim();if(g.length===0||g.startsWith("#"))continue;let b=g.split(/\s+/);switch(b[0]){case"v":{let w=parseFloat(b[1])||0,C=parseFloat(b[2])||0,d=parseFloat(b[3])||0;t.push([w,C,d]);break}case"vn":{let w=parseFloat(b[1])||0,C=parseFloat(b[2])||0,d=parseFloat(b[3])||0;o.push([w,C,d]);break}case"vt":{let w=parseFloat(b[1])||0,C=parseFloat(b[2])||0;r.push([w,C]);break}case"f":{let w=[];for(let C=1;C<b.length;C++){let d=b[C].split("/"),O=parseInt(d[0],10)-1,F=d[1]?parseInt(d[1],10)-1:-1,x=d[2]?parseInt(d[2],10)-1:-1;w.push({vIdx:O,vtIdx:F,vnIdx:x})}for(let C=1;C<w.length-1;C++){let d=w[0],O=w[C],F=w[C+1];l(d),l(F),l(O)}break}}}function l(f){f.vIdx>=0&&f.vIdx<t.length?i.push(...t[f.vIdx]):i.push(0,0,0),f.vnIdx>=0&&f.vnIdx<o.length?s.push(...o[f.vnIdx]):s.push(0,0,1),f.vtIdx>=0&&f.vtIdx<r.length?a.push(...r[f.vtIdx]):a.push(0,0)}let c=i.length/3;return o.length===0&&c>0&&vy(i,s),{positions:new Float32Array(i),normals:new Float32Array(s),uvs:new Float32Array(a),vertexCount:c}}function vy(e,t){let o=e.length/3,r=o/3,i=new Float32Array(r*3);for(let n=0;n<r;n++){let l=n*9,c=l+3,f=l+6,g=e[l],b=e[l+1],v=e[l+2],w=e[c],C=e[c+1],d=e[c+2],O=e[f],F=e[f+1],x=e[f+2],R=w-g,P=C-b,X=d-v,V=O-g,ce=F-b,se=x-v,he=P*se-X*ce,ne=X*V-R*se,ue=R*ce-P*V,ve=Math.sqrt(he*he+ne*ne+ue*ue);ve>1e-4?(he/=ve,ne/=ve,ue/=ve):(he=0,ne=0,ue=1),i[n*3]=he,i[n*3+1]=ne,i[n*3+2]=ue}let s=new Map,a=n=>Math.round(n*1e4)/1e4;for(let n=0;n<o;n++){let l=e[n*3],c=e[n*3+1],f=e[n*3+2],g=`${a(l)},${a(c)},${a(f)}`,b=Math.floor(n/3),v=i[b*3],w=i[b*3+1],C=i[b*3+2];s.has(g)||s.set(g,{nx:0,ny:0,nz:0,count:0});let d=s.get(g);d.nx+=v,d.ny+=w,d.nz+=C,d.count++}for(let n of s.values()){let l=Math.sqrt(n.nx*n.nx+n.ny*n.ny+n.nz*n.nz);l>1e-4?(n.nx/=l,n.ny/=l,n.nz/=l):(n.nx=0,n.ny=0,n.nz=1)}for(let n=0;n<o;n++){let l=e[n*3],c=e[n*3+1],f=e[n*3+2],g=`${a(l)},${a(c)},${a(f)}`,b=s.get(g);t[n*3]=b.nx,t[n*3+1]=b.ny,t[n*3+2]=b.nz}}async function gy(e){let t=await fetch(e);if(!t.ok)throw new Error(`Failed to load OBJ: ${t.status} ${t.statusText}`);let o=await t.text();return Ms(o)}function xy(e,t,o,r,i){let s=r*i,a=e.length/3;a>s&&console.warn(`[OBJ] Mesh has ${a} vertices, but texture can only hold ${s}. Truncating.`);let n=Math.min(a,s),l=r*i,c=new Float32Array(l*4),f=new Float32Array(l*4),g=new Float32Array(l*4);for(let b=0;b<n;b++){let v=b*4,w=b*3,C=b*2;c[v]=e[w],c[v+1]=e[w+1],c[v+2]=e[w+2],c[v+3]=1,f[v]=t[w],f[v+1]=t[w+1],f[v+2]=t[w+2],f[v+3]=0,g[v]=o[C],g[v+1]=o[C+1],g[v+2]=0,g[v+3]=0}for(let b=n;b<l;b++){let v=b*4;c[v+3]=0}return{positionData:c,normalData:f,uvData:g,vertexCount:n}}function _y(e){let t=[],o=0,r=1,i=1,s=1,a=1,n=0;function l(v,w,C,d,O){for(let P=n;P<o;P++)e[P]===`
@@ -90109,16 +90109,61 @@ fn periodicFunction(p: f32) -> f32 {
     return map(sin(x), -1.0, 1.0, 0.0, 1.0);
 }
 
-fn constant(st_in: vec2<f32>, freq: f32, speed: f32) -> f32 {
-    var x = st_in.x * freq;
-    var y = st_in.y * freq;
+// Positive modulo for lattice wrapping
+fn positiveModulo(a: i32, b: i32) -> i32 {
+    var result = a - (a / b) * b;
+    if (result < 0) { result = result + b; }
+    return result;
+}
+
+// The GLSL lattice hash: pcg over the integer lattice cell (offset by xyOffset),
+// the seed and fixed jitter words, wrapped on an integer period.
+fn randomFromLatticeWithOffset(st: vec2<f32>, freq: f32, xyOffset: vec2<i32>) -> vec3<f32> {
+    let scaled = st * freq;
+    let base = vec2<i32>(floor(scaled)) + xyOffset;
+    let frac = fract(scaled);
+
+    let seedInt = i32(seed);
+    let seedFrac = 0.0;
+
+    let xCombined = frac.x + seedFrac;
+    var xi = base.x + seedInt + i32(floor(xCombined));
+    var yi = base.y;
+
     if (wrap) {
-        x = modulo(x, freq);
-        y = modulo(y, freq);
+        let freqInt = i32(freq + 0.5);
+        if (freqInt > 0) {
+            xi = positiveModulo(xi, freqInt);
+            yi = positiveModulo(yi, freqInt);
+        }
     }
-    x = x + seed;
-    let rand = prng(vec3<f32>(floor(vec2<f32>(x, y)), seed));
-    let scaledTime = periodicFunction(rand.x - time) * map(abs(speed), 0.0, 100.0, 0.0, 0.33);
+
+    let xBits = bitcast<u32>(xi);
+    let yBits = bitcast<u32>(yi);
+    let seedBits = bitcast<u32>(seedInt);
+    let fracBits = 0u;
+
+    let jitter = vec3<u32>(
+        (fracBits * 374761393u) ^ 0x9E3779B9u,
+        (fracBits * 668265263u) ^ 0x7F4A7C15u,
+        (fracBits * 2246822519u) ^ 0x94D049B4u
+    );
+
+    let state = vec3<u32>(xBits, yBits, seedBits) ^ jitter;
+    let prngState = pcg(state);
+    let denom = f32(0xffffffffu);
+    return vec3<f32>(
+        f32(prngState.x) / denom,
+        f32(prngState.y) / denom,
+        f32(prngState.z) / denom
+    );
+}
+
+fn constant(st: vec2<f32>, freq: f32, speed: f32) -> f32 {
+    let randTime = randomFromLatticeWithOffset(st, freq, vec2<i32>(40, 0));
+    let scaledTime = periodicFunction(randTime.x - time) * map(abs(speed), 0.0, 100.0, 0.0, 0.33);
+
+    let rand = randomFromLatticeWithOffset(st, freq, vec2<i32>(0, 0));
     return periodicFunction(rand.y - scaledTime);
 }
 
@@ -90278,8 +90323,8 @@ fn sineNoise(st_in: vec2<f32>, freq: f32, s: f32, blend: f32) -> f32 {
     let b = blend;
     let c = 1.0 - blend;
 
-    let r1 = prng(vec3<f32>(s, 0.0, 0.0)) * 0.75 + 0.125;
-    let r2 = prng(vec3<f32>(s + 10.0, 0.0, 0.0)) * 0.75 + 0.125;
+    let r1 = prng(vec3<f32>(s)) * 0.75 + 0.125;
+    let r2 = prng(vec3<f32>(s + 10.0)) * 0.75 + 0.125;
     let x = sin(r1.x * st.y + sin(r1.y * st.x + a) + sin(r1.z * st.x + b) + c);
     let y = sin(r2.x * st.x + sin(r2.y * st.y + b) + sin(r2.z * st.y + c) + a);
 
