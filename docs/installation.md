@@ -27,9 +27,20 @@ not included in the 16-file package archive. It opens the committed patch in
 the real Electron editor, attaches over CDP, exercises edits, media, resize,
 reset, delete/recreate, saved-project reload and op removal, and a project
 saved with deprecated parameter names, and writes its ignored output under
-`test-report/`. The export-kit workflow's weekly and manual runs run it for
-Standalone 0.11.0 and 0.11.3 on Windows x64, Intel macOS, and Linux x64 with
-software GL. On macOS outside CI it renders on the host GPU.
+`test-report/`.
+
+The supported platforms are Windows x64, Intel macOS, macOS arm64 (Apple
+silicon), and Linux x64, each with Standalone 0.11.0 and 0.11.3. The
+export-kit workflow's weekly and manual runs run the smoke on all four
+platforms for both versions on GitHub-hosted runners. Windows x64, Intel
+macOS, and Linux x64 render through software GL there. macOS arm64 renders on
+the runner's virtual Apple GPU (Apple Paravirtual device) through ANGLE Metal,
+the path Apple-silicon users run. CI has no physical Apple GPU, so a run on a
+physical Apple-silicon GPU is a manual check outside CI, and a run outside CI
+renders on the host GPU. The
+[compatibility report](https://github.com/noisefactorllc/noisemaker-for-cables/issues/5)
+records the result of each platform and version and the source each was
+measured at.
 
 ## Inputs
 

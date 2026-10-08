@@ -50,3 +50,20 @@ test('each macOS leg mounts the distribution for its own architecture and runs i
   assert.match(job, /sysctl\.proc_translated/)
   assert.match(job, /lipo -archs "\$app"/)
 })
+
+test('the installation guide states the declared platform contract, macOS arm64 included', async () => {
+  const guide = await readProjectFile('docs/installation.md')
+  const prose = guide.replace(/\s+/g, ' ')
+  for (const target of Object.keys(DECLARED_TARGETS)) {
+    assert.ok(prose.includes(target), `docs/installation.md does not name ${target}`)
+  }
+  // Every Standalone version statement names exactly the declared versions.
+  const statements = prose.match(/Standalone 0\.11\.\d+(?:(?: \/ |, | and )0\.11\.\d+)*/g) ?? []
+  assert.ok(statements.length > 0)
+  for (const statement of statements) {
+    assert.deepEqual(statement.match(/0\.11\.\d+/g), SUPPORTED_CABLES_STANDALONE_VERSIONS, statement)
+  }
+  // The guide says how the macOS arm64 leg is measured and where results live.
+  assert.match(prose, /macOS arm64[^.]*ANGLE Metal/)
+  assert.match(prose, /https:\/\/github\.com\/noisefactorllc\/noisemaker-for-cables\/issues\/5/)
+})

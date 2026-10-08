@@ -27,6 +27,9 @@ The installed op remains `Ops.Extension.Noisemaker.Program`. Its browser global
 are retained as compatibility identifiers so existing Cables patches continue
 to load unchanged.
 
+- Current measured support: the [compatibility report](https://github.com/noisefactorllc/noisemaker-for-cables/issues/5)
+  gives the measured platforms, Standalone versions, parity counts, and
+  evidence for the current source
 - [Install the op in Cables Standalone](docs/installation.md)
 - [Open the example patch](examples/README.md)
 - [Read the runtime architecture](docs/architecture.md)
@@ -46,9 +49,10 @@ effects that `parity/coverage-matrix.json` qualifies for the vendored core.
 [installation](docs/installation.md).
 
 On every push the export-kit workflow runs `npm run check` and the
-compatibility gate. The browser suites and the Standalone smoke render through
-software GL, so the workflow runs them weekly and on manual dispatch, and it
-releases the kit only after such a run passes every job.
+compatibility gate. The browser suites and the Standalone smoke render (through
+software GL, and on macOS arm64 on the runner's virtual Apple GPU), so the
+workflow runs them weekly and on manual dispatch, and it releases the kit only
+after such a run passes every job.
 
 ## License
 
