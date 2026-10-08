@@ -773,6 +773,20 @@ fn mapRange(value: f32, inMin: f32, inMax: f32, outMin: f32, outMax: f32) -> f32
     return outMin + (outMax - outMin) * (value - inMin) / (inMax - inMin);
 }
 
+// GLSL mod(): x - y * floor(x / y). WGSL % truncates instead, and its exact
+// remainder differs from this expression when y is not exactly representable.
+fn glslMod(x: f32, y: f32) -> f32 {
+    return x - y * floor(x / y);
+}
+
+// The GLSL maps a full-image coordinate into the input texture as
+// (uv * fullResolution - tileOffset) / textureSize. Untiled, tileOffset is 0
+// and fullResolution is the frame size. The division by the texture size is
+// x * rcp(size), which need not return uv exactly; compute it the same way.
+fn inputCoord(uv: vec2f) -> vec2f {
+    return (uv * u.resolution) / vec2f(textureDimensions(inputTex, 0));
+}
+
 // PCG PRNG
 fn pcg(v_in: vec3u) -> vec3u {
     var v = v_in * 1664525u + 1013904223u;
@@ -834,12 +848,14 @@ fn hsv2rgb(hsv: vec3f) -> vec3f {
     let x = c * (1.0 - abs((h * 6.0) - 2.0 * floor((h * 6.0) / 2.0) - 1.0));
     let m = v - c;
     var rgb: vec3f;
-    if (h < 1.0/6.0) { rgb = vec3f(c, x, 0.0); }
-    else if (h < 2.0/6.0) { rgb = vec3f(x, c, 0.0); }
-    else if (h < 3.0/6.0) { rgb = vec3f(0.0, c, x); }
-    else if (h < 4.0/6.0) { rgb = vec3f(0.0, x, c); }
-    else if (h < 5.0/6.0) { rgb = vec3f(x, 0.0, c); }
-    else { rgb = vec3f(c, 0.0, x); }
+    // The GLSL's ranges, including black for a hue outside [0, 1).
+    if (0.0 <= h && h < 1.0/6.0) { rgb = vec3f(c, x, 0.0); }
+    else if (1.0/6.0 <= h && h < 2.0/6.0) { rgb = vec3f(x, c, 0.0); }
+    else if (2.0/6.0 <= h && h < 3.0/6.0) { rgb = vec3f(0.0, c, x); }
+    else if (3.0/6.0 <= h && h < 4.0/6.0) { rgb = vec3f(0.0, x, c); }
+    else if (4.0/6.0 <= h && h < 5.0/6.0) { rgb = vec3f(x, 0.0, c); }
+    else if (5.0/6.0 <= h && h < 1.0) { rgb = vec3f(c, 0.0, x); }
+    else { rgb = vec3f(0.0, 0.0, 0.0); }
     return rgb + vec3f(m);
 }
 
@@ -849,7 +865,7 @@ fn rgb2hsv(rgb: vec3f) -> vec3f {
     let delta = maxC - minC;
     var h = 0.0;
     if (delta != 0.0) {
-        if (maxC == rgb.r) { h = ((rgb.g - rgb.b) / delta) % 6.0 / 6.0; }
+        if (maxC == rgb.r) { h = glslMod((rgb.g - rgb.b) / delta, 6.0) / 6.0; }
         else if (maxC == rgb.g) { h = ((rgb.b - rgb.r) / delta + 2.0) / 6.0; }
         else { h = ((rgb.r - rgb.g) / delta + 4.0) / 6.0; }
     }
@@ -869,10 +885,10 @@ fn posterize(color: vec3f, levIn: f32) -> vec3f {
 
 fn pixellate(uv_in: vec2f, sizeIn: f32) -> vec3f {
     var size = sizeIn;
-    if (size < 1.0) { return textureSample(inputTex, samp, uv_in).rgb; }
+    if (size < 1.0) { return textureSample(inputTex, samp, inputCoord(uv_in)).rgb; }
     size *= 4.0;
-    let dx = size / u.resolution.x;
-    let dy = size / u.resolution.y;
+    let dx = size * (1.0 / u.resolution.x);
+    let dy = size * (1.0 / u.resolution.y);
     var uv = uv_in - 0.5;
     let coord = vec2f(dx * floor(uv.x / dx), dy * floor(uv.y / dy)) + 0.5;
     return textureSample(inputTex, samp, coord).rgb;
@@ -893,11 +909,21 @@ fn convolve(uv: vec2f, kernel: array<f32, 9>, divide: bool) -> vec3f {
     var kernelWeight = 0.0;
     var conv = vec3f(0.0);
     for (var i = 0; i < 9; i++) {
-        let color = textureSample(inputTex, samp, uv + offsets[i] * u.effectAmt).rgb;
+        let color = textureSample(inputTex, samp, inputCoord(uv + offsets[i] * u.effectAmt)).rgb;
         conv += color * kernel[i];
         kernelWeight += kernel[i];
     }
-    if (divide && kernelWeight != 0.0) { conv /= kernelWeight; }
+    if (divide) {
+        if (kernelWeight != 0.0) {
+            conv /= kernelWeight;
+        } else {
+            // The edge and derivative kernels sum to zero. The GLSL divides
+            // by that zero weight anyway, and clamp() takes the result to 1
+            // where conv > 0 and to 0 elsewhere. Give that result directly;
+            // WGSL leaves a division by zero indeterminate.
+            conv = select(vec3f(0.0), vec3f(1.0), conv > vec3f(0.0));
+        }
+    }
     return clamp(conv, vec3f(0.0), vec3f(1.0));
 }
 
@@ -961,7 +987,10 @@ fn convolutionEffect(color: vec3f, uv: vec2f) -> vec3f {
     return color;
 }
 
-fn cga(color: vec4f, st: vec2f) -> vec3f {
+// fragCoord is the output pixel. The dither pattern is fixed to the screen,
+// as gl_FragCoord fixes it in the GLSL, while st (the transformed coordinate)
+// picks the sampled block.
+fn cga(color: vec4f, st: vec2f, fragCoord: vec2f) -> vec3f {
     let amt = mapRange(u.effectAmt, 0.0, 20.0, 0.0, 5.0);
     if (amt < 0.01) { return color.rgb; }
     let pixelDensity = amt;
@@ -980,6 +1009,8 @@ fn cga(color: vec4f, st: vec2f) -> vec3f {
     let light = vec3f(85.0, 255.0, 255.0) / 255.0;
     let dark = vec3f(254.0, 84.0, 255.0) / 255.0;
     let white = vec3f(1.0);
+    // Levels outside 0..6 (input outside 0..1) keep both colors black, as
+    // the GLSL's zero-initialized c1 and c2 do.
     var c1 = black;
     var c2 = black;
     if (o == 0.0) { c1 = black; c2 = black; }
@@ -988,25 +1019,23 @@ fn cga(color: vec4f, st: vec2f) -> vec3f {
     else if (o == 3.0) { c1 = dark; c2 = light; }
     else if (o == 4.0) { c1 = light; c2 = light; }
     else if (o == 5.0) { c1 = light; c2 = white; }
-    else { c1 = white; c2 = white; }
-    let fx = st.x * u.resolution.x;
-    let fy = st.y * u.resolution.y;
+    else if (o == 6.0) { c1 = white; c2 = white; }
     var result = c1;
-    if ((fx % dSize) > size) {
-        if ((fy % dSize) > size) { result = c1; } else { result = c2; }
+    if (glslMod(fragCoord.x, dSize) > size) {
+        if (glslMod(fragCoord.y, dSize) > size) { result = c1; } else { result = c2; }
     } else {
-        if ((fy % dSize) > size) { result = c2; } else { result = c1; }
+        if (glslMod(fragCoord.y, dSize) > size) { result = c2; } else { result = c1; }
     }
     return result;
 }
 
 fn subpixel(st: vec2f, scaleIn: f32) -> vec3f {
     let scale = mapRange(scaleIn, 0.0, 100.0, 0.0, 10.0);
-    let orig = pixellate(st, scale);
+    let orig = pixellate(st, 4.0 * scale);
     var color = orig;
     let coord = floor(st * u.resolution);
-    let m = coord.x % (4.0 * scale);
-    if ((coord.y % (4.0 * scale)) <= scale) {
+    let m = glslMod(coord.x, 4.0 * scale);
+    if (glslMod(coord.y, 4.0 * scale) <= scale) {
         color *= vec3f(0.0);
     } else if (m <= scale) {
         color *= vec3f(1.0, 0.0, 0.0);
@@ -1093,12 +1122,12 @@ fn main(@builtin(position) fragCoord: vec4f) -> @location(0) vec4f {
     else if (FLIP == 17) { if (uv.x < 0.5) { uv.x = 1.0 - uv.x; } if (uv.y > 0.5) { uv.y = 1.0 - uv.y; } }
     else if (FLIP == 18) { if (uv.x < 0.5) { uv.x = 1.0 - uv.x; } if (uv.y < 0.5) { uv.y = 1.0 - uv.y; } }
 
-    var color = textureSample(inputTex, samp, uv);
+    var color = textureSample(inputTex, samp, inputCoord(uv));
 
     if (u.effectAmt != 0.0 && EFFECT != 0) {
         if (EFFECT == 100) { color = vec4f(pixellate(uv, u.effectAmt), color.a); }
         else if (EFFECT == 110) { color = vec4f(posterize(color.rgb, u.effectAmt), color.a); }
-        else if (EFFECT == 200) { color = vec4f(cga(color, uv), color.a); }
+        else if (EFFECT == 200) { color = vec4f(cga(color, uv, fragCoord.xy), color.a); }
         else if (EFFECT == 210) { color = vec4f(subpixel(uv, u.effectAmt), color.a); }
         else if (EFFECT == 220) { color = vec4f(bloom(uv), color.a); }
         else if (EFFECT == 230) { color = vec4f(zoomBlur(uv), color.a); }

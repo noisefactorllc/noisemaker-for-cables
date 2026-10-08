@@ -3,8 +3,8 @@
  * Includes: CanvasRenderer + UIController + EffectSelect
  * Copyright (c) 2017-2026 Noise Factor LLC. https://noisefactor.io/
  * SPDX-License-Identifier: MIT
- * Build: ba20f72c
- * Date: 2026-10-08T17:45:47.172Z
+ * Build: 247f452b
+ * Date: 2026-10-08T23:06:07.311Z
  */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
@@ -3945,7 +3945,7 @@ function formatOscillator(osc) {
   if (osc.offset !== 0) {
     parts.push(`offset: ${osc.offset}`);
   }
-  if (osc.seed !== 1 && osc.oscType === 5) {
+  if (osc.seed !== 1 && (osc.oscType === 5 || osc.oscType === 6)) {
     parts.push(`seed: ${osc.seed}`);
   }
   return `osc(${parts.join(", ")})`;
@@ -4436,10 +4436,11 @@ function formatLetExpr(expr, options = {}) {
     case "Oscillator": {
       let typeStr = "oscKind.sine";
       if (expr.oscType?.type === "Member" && expr.oscType.path) {
-        typeStr = `oscKind.${expr.oscType.path[expr.oscType.path.length - 1]}`;
+        const name = expr.oscType.path[expr.oscType.path.length - 1];
+        typeStr = Object.prototype.hasOwnProperty.call(stdEnums.oscKind, name) ? `oscKind.${name}` : expr.oscType.path.join(".");
       } else if (expr.oscType?.type === "Ident") {
         typeStr = expr.oscType.name;
-      } else if (expr.oscType?.type === "Number" && Number.isInteger(expr.oscType.value) && expr.oscType.value >= 0 && expr.oscType.value <= 5) {
+      } else if (expr.oscType?.type === "Number" && Number.isInteger(expr.oscType.value) && expr.oscType.value >= 0 && expr.oscType.value < oscKindNames.length) {
         typeStr = `oscKind.${oscKindNames[expr.oscType.value]}`;
       }
       const parts = [`type: ${typeStr}`];
@@ -14131,6 +14132,8 @@ var Pipeline = class {
       "vol6",
       "vol7"
     ]);
+    const readBeforeWriteSurfaces = /* @__PURE__ */ new Set();
+    const writtenSurfaces = /* @__PURE__ */ new Set();
     const meshNames = /* @__PURE__ */ new Set(["mesh0", "mesh1", "mesh2", "mesh3", "mesh4", "mesh5", "mesh6", "mesh7"]);
     const defaultUniforms = this.collectDefaultUniforms();
     const meshTexturePattern = /^mesh\d+_(positions|normals|uvs)$/;
@@ -14141,19 +14144,26 @@ var Pipeline = class {
             const globalName = this.parseGlobalName(texId);
             if (globalName && !meshTexturePattern.test(globalName)) {
               surfaceNames.add(globalName);
+              if (!writtenSurfaces.has(globalName)) {
+                readBeforeWriteSurfaces.add(globalName);
+              }
             }
           }
         }
-        if (pass.outputs) {
-          for (const texId of Object.values(pass.outputs)) {
+        if (pass.outputs || pass.storageTextures) {
+          for (const texId of Object.values(pass.outputs || pass.storageTextures)) {
             const globalName = this.parseGlobalName(texId);
             if (globalName && !meshTexturePattern.test(globalName)) {
               surfaceNames.add(globalName);
+              writtenSurfaces.add(globalName);
             }
           }
         }
       }
     }
+    this._feedbackSurfaces = new Set(
+      [...readBeforeWriteSurfaces].filter((name) => writtenSurfaces.has(name))
+    );
     this._needsMidiNoteGrid = false;
     if (this.graph && this.graph.passes) {
       for (const pass of this.graph.passes) {
@@ -15140,8 +15150,9 @@ var Pipeline = class {
    * @param {Object} pass - The pass that just executed
    */
   adoptIterationBindings(pass) {
-    if (!pass.outputs) return;
-    for (const outputName of Object.values(pass.outputs)) {
+    const outputs = pass.outputs || pass.storageTextures;
+    if (!outputs) return;
+    for (const outputName of Object.values(outputs)) {
       if (typeof outputName !== "string") continue;
       const globalName = this.parseGlobalName(outputName);
       if (!globalName) continue;
@@ -15156,8 +15167,9 @@ var Pipeline = class {
   /**
    * Swap double-buffered surfaces at end of frame.
    *
-   * For state surfaces (xyz, vel, rgba, trail), we DON'T swap - we persist
-   * the frame's final read/write bindings so particles continue from where they left off.
+   * For state surfaces (xyz, vel, rgba, trail) and graph feedback surfaces,
+   * persist the frame's final read/write bindings so the next frame reads
+   * the latest write even when an intervening update pass was skipped.
    *
    * For display surfaces (o0-o7), we swap so the next frame renders fresh.
    */
@@ -15179,7 +15191,7 @@ var Pipeline = class {
     };
     for (const [name, surface] of this.surfaces.entries()) {
       surface.currentFrame = this.frameIndex;
-      if (isStateSurface(name)) {
+      if (isStateSurface(name) || this._feedbackSurfaces?.has(name)) {
         const finalRead = this.frameReadTextures?.get(name);
         const finalWrite = this.frameWriteTextures?.get(name);
         if (finalRead && finalWrite) {
@@ -15261,8 +15273,9 @@ var Pipeline = class {
    * subsequent passes will read from that write buffer, and write to the other buffer.
    */
   updateFrameSurfaceBindings(pass, state) {
-    if (!pass.outputs) return;
-    for (const outputName of Object.values(pass.outputs)) {
+    const outputs = pass.outputs || pass.storageTextures;
+    if (!outputs) return;
+    for (const outputName of Object.values(outputs)) {
       if (typeof outputName !== "string") continue;
       const surfaceName = this.parseGlobalName(outputName);
       if (surfaceName) {
