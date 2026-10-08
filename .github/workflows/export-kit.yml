@@ -95,7 +95,9 @@ jobs:
             test-results/
 
   standalone:
-    # Downloads each Cables Standalone build and renders through software GL;
+    # Downloads each Cables Standalone build and renders it through software GL
+    # (Windows x64, Intel macOS, Linux x64) or, on macOS arm64, on the runner's
+    # virtual Apple GPU through ANGLE Metal (tools/lib/graphics-flags.js);
     # weekly and manual only.
     if: github.event_name != 'push'
     strategy:

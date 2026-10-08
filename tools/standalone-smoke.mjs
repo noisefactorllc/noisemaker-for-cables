@@ -11,6 +11,7 @@ import { fileURLToPath } from 'node:url'
 import { chromium } from 'playwright'
 
 import { inspectCablesStandalone } from './lib/cables-standalone-identity.js'
+import { graphicsFlags } from './lib/graphics-flags.js'
 import { removeTemporaryDirectory } from './lib/remove-temporary-directory.js'
 import { isDriverPerformanceNotice, renderErrorLines } from './lib/render-error-lines.js'
 import { stopChild } from './lib/stop-child.js'
@@ -29,24 +30,6 @@ if (!executableInput) {
 
 const sleep = (milliseconds) => new Promise((resolveSleep) => setTimeout(resolveSleep, milliseconds))
 const digest = (bytes) => createHash('sha256').update(bytes).digest('hex')
-
-// The Linux CI container and GitHub's macOS runners expose no usable GPU;
-// without a software GL path the editor's WebGL context creation returns null
-// and the renderer fails with "Cannot read properties of null (reading
-// 'createBuffer')". They render through SwiftShader. A macOS run outside CI
-// renders on the host GPU, which is the physical-GPU leg.
-function graphicsFlags() {
-  if (process.platform === 'linux') {
-    return ['--use-angle=swiftshader', '--enable-unsafe-swiftshader',
-      // The container's /dev/shm is 64 MiB; additional editor instances
-      // crash their renderers without this flag.
-      '--disable-dev-shm-usage']
-  }
-  if (process.platform === 'darwin' && process.env.CI) {
-    return ['--use-angle=swiftshader', '--enable-unsafe-swiftshader']
-  }
-  return []
-}
 
 async function waitFor(check, message, timeout = 30_000) {
   const started = Date.now()
@@ -109,6 +92,9 @@ const terminalLines = []
 const consoleErrors = []
 const pageErrors = []
 const driverPerformanceNotices = []
+// Chromium's GPU feature status and devices, read over CDP once the editor is
+// up, so a run that cannot create a WebGL context records why.
+let gpuInfo = null
 
 // Render errors in the given lines. Driver performance notices are set aside
 // and reported, so a passing run shows what the classifier excluded.
@@ -232,6 +218,17 @@ try {
     cdpUrl,
     'Cables Standalone DevTools endpoint did not accept the CDP connection',
   )
+  gpuInfo = await browser.newBrowserCDPSession()
+    .then((session) => Promise.race([
+      session.send('SystemInfo.getInfo'),
+      sleep(15_000).then(() => { throw new Error('SystemInfo.getInfo did not answer within 15 s') }),
+    ]))
+    .then(({ gpu }) => ({
+      devices: gpu.devices,
+      auxAttributes: gpu.auxAttributes,
+      featureStatus: gpu.featureStatus,
+    }))
+    .catch((error) => ({ error: error.message }))
   const context = browser.contexts()[0]
   const page = await waitFor(() => context.pages()[0], 'Cables editor page did not open')
   page.on('console', (message) => {
@@ -1151,6 +1148,7 @@ try {
       release: release(),
       cpu: cpus()[0]?.model,
       sourceSha: process.env.GITHUB_SHA ?? null,
+      gpuInfo,
       graphics: await frame.evaluate(() => {
         const gl = gui.corePatch().cgl.gl
         const debug = gl.getExtension('WEBGL_debug_renderer_info')
@@ -1206,7 +1204,7 @@ try {
     await writeFile(join(reportRoot, 'standalone-smoke-failure.json'), `${JSON.stringify({
       error: error && error.message ? error.message : String(error),
       stack: error && error.stack ? error.stack : null,
-      consoleErrors, pageErrors, terminalLines: terminalLines.slice(-200),
+      consoleErrors, pageErrors, gpuInfo, terminalLines: terminalLines.slice(-200),
     }, null, 2)}\n`)
   } catch {}
   process.exitCode = 1
