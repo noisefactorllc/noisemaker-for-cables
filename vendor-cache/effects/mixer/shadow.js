@@ -1,5 +1,5 @@
 /* mixer/shadow */
-var t=class{constructor(e={}){this.state={},this.uniforms={},e.name&&(this.name=e.name),e.namespace&&(this.namespace=e.namespace),e.func&&(this.func=e.func),e.description&&(this.description=e.description),e.tags&&(this.tags=e.tags),e.globals&&(this.globals=e.globals),e.passes&&(this.passes=e.passes),e.textures&&(this.textures=e.textures),e.textures3d&&(this.textures3d=e.textures3d),e.shaders&&(this.shaders=e.shaders),e.externalTexture&&(this.externalTexture=e.externalTexture),e.externalMesh&&(this.externalMesh=e.externalMesh),e.builtinMeshes&&(this.builtinMeshes=e.builtinMeshes),e.outputTex3d&&(this.outputTex3d=e.outputTex3d),e.outputGeo&&(this.outputGeo=e.outputGeo),e.uniformLayout&&(this.uniformLayout=e.uniformLayout),e.uniformLayouts&&(this.uniformLayouts=e.uniformLayouts),e.paramAliases&&(this.paramAliases=e.paramAliases),e.openCategories&&(this.openCategories=e.openCategories),e.defaultProgram&&(this.defaultProgram=e.defaultProgram),e.hidden&&(this.hidden=!0),e.deprecatedBy&&(this.deprecatedBy=e.deprecatedBy),e.onInit&&(this._configOnInit=e.onInit),e.onUpdate&&(this._configOnUpdate=e.onUpdate),e.onDestroy&&(this._configOnDestroy=e.onDestroy),e.asyncInit&&(this._configAsyncInit=e.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(e){return this._configOnUpdate?this._configOnUpdate.call(this,e):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(e){return this._configAsyncInit?this._configAsyncInit.call(this,e):Promise.resolve()}};var n=new t({name:"Shadow",namespace:"mixer",func:"shadow",tags:["color"],openCategories:["general","shadow"],description:"Cast a shadow or glow from one input onto another",globals:{tex:{type:"surface",default:"none",ui:{label:"source b"}},maskSource:{type:"int",default:0,uniform:"maskSource",choices:{sourceA:0,sourceB:1},ui:{label:"mask source",control:"dropdown"}},sourceChannel:{type:"int",default:0,uniform:"sourceChannel",choices:{red:0,green:1,blue:2,alpha:3},ui:{label:"channel",control:"dropdown"}},threshold:{type:"float",default:.5,uniform:"threshold",min:0,max:1,randMin:.25,randMax:.75,ui:{label:"threshold",control:"slider"}},color:{type:"color",default:[0,0,0],uniform:"color",ui:{label:"color",control:"color",category:"shadow"}},blur:{type:"float",default:1,uniform:"blur",min:0,max:3,zero:0,ui:{label:"blur",control:"slider",category:"shadow"}},spread:{type:"float",default:0,uniform:"spread",min:0,max:1,randMax:.5,ui:{label:"spread",control:"slider",category:"shadow"}},offsetX:{type:"float",default:.1,uniform:"offsetX",min:-1,max:1,randMin:-.2,randMax:.2,zero:0,ui:{label:"offset x",control:"slider",category:"offset"}},offsetY:{type:"float",default:-.1,uniform:"offsetY",min:-1,max:1,randMin:-.2,randMax:.2,zero:0,ui:{label:"offset y",control:"slider",category:"offset"}},wrap:{type:"int",default:1,uniform:"wrap",choices:{hide:0,mirror:1,repeat:2,clamp:3},ui:{label:"wrap",control:"dropdown",category:"offset"}}},defaultProgram:`search mixer, synth
+var o=class{constructor(e={}){this.state={},this.uniforms={},e.name&&(this.name=e.name),e.namespace&&(this.namespace=e.namespace),e.func&&(this.func=e.func),e.description&&(this.description=e.description),e.tags&&(this.tags=e.tags),e.globals&&(this.globals=e.globals),e.passes&&(this.passes=e.passes),e.textures&&(this.textures=e.textures),e.textures3d&&(this.textures3d=e.textures3d),e.shaders&&(this.shaders=e.shaders),e.externalTexture&&(this.externalTexture=e.externalTexture),e.externalMesh&&(this.externalMesh=e.externalMesh),e.builtinMeshes&&(this.builtinMeshes=e.builtinMeshes),e.outputTex3d&&(this.outputTex3d=e.outputTex3d),e.outputGeo&&(this.outputGeo=e.outputGeo),e.uniformLayout&&(this.uniformLayout=e.uniformLayout),e.uniformLayouts&&(this.uniformLayouts=e.uniformLayouts),e.paramAliases&&(this.paramAliases=e.paramAliases),e.openCategories&&(this.openCategories=e.openCategories),e.defaultProgram&&(this.defaultProgram=e.defaultProgram),e.hidden&&(this.hidden=!0),e.deprecatedBy&&(this.deprecatedBy=e.deprecatedBy),e.onInit&&(this._configOnInit=e.onInit),e.onUpdate&&(this._configOnUpdate=e.onUpdate),e.onDestroy&&(this._configOnDestroy=e.onDestroy),e.asyncInit&&(this._configAsyncInit=e.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(e){return this._configOnUpdate?this._configOnUpdate.call(this,e):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(e){return this._configAsyncInit?this._configAsyncInit.call(this,e):Promise.resolve()}};var n=new o({name:"Shadow",namespace:"mixer",func:"shadow",tags:["color"],openCategories:["general","shadow"],description:"Cast a shadow or glow from one input onto another",globals:{tex:{type:"surface",default:"none",ui:{label:"source b"}},maskSource:{type:"int",default:0,uniform:"maskSource",choices:{sourceA:0,sourceB:1},ui:{label:"mask source",control:"dropdown"}},sourceChannel:{type:"int",default:0,uniform:"sourceChannel",choices:{red:0,green:1,blue:2,alpha:3},ui:{label:"channel",control:"dropdown"}},threshold:{type:"float",default:.5,uniform:"threshold",min:0,max:1,randMin:.25,randMax:.75,ui:{label:"threshold",control:"slider"}},color:{type:"color",default:[0,0,0],uniform:"color",ui:{label:"color",control:"color",category:"shadow"}},blur:{type:"float",default:1,uniform:"blur",min:0,max:3,zero:0,ui:{label:"blur",control:"slider",category:"shadow"}},spread:{type:"float",default:0,uniform:"spread",min:0,max:1,randMax:.5,ui:{label:"spread",control:"slider",category:"shadow"}},offsetX:{type:"float",default:.1,uniform:"offsetX",min:-1,max:1,randMin:-.2,randMax:.2,zero:0,ui:{label:"offset x",control:"slider",category:"offset"}},offsetY:{type:"float",default:-.1,uniform:"offsetY",min:-1,max:1,randMin:-.2,randMax:.2,zero:0,ui:{label:"offset y",control:"slider",category:"offset"}},wrap:{type:"int",default:1,uniform:"wrap",choices:{hide:0,mirror:1,repeat:2,clamp:3},ui:{label:"wrap",control:"dropdown",category:"offset"}}},defaultProgram:`search mixer, synth
 
 noise(scaleX: 100, scaleY: 100)
 .write(o0)
@@ -143,6 +143,9 @@ void main() {
 @group(0) @binding(9) var<uniform> blur: f32;
 @group(0) @binding(10) var<uniform> spread: f32;
 @group(0) @binding(11) var<uniform> wrap: i32;
+@group(0) @binding(12) var<uniform> tileOffset: vec2<f32>;
+@group(0) @binding(13) var<uniform> fullResolution: vec2<f32>;
+@group(0) @binding(14) var<uniform> renderScale: f32;
 
 // Extract a single channel from a color
 fn getChannel(color: vec4<f32>, channel: i32) -> f32 {
@@ -155,7 +158,9 @@ fn getChannel(color: vec4<f32>, channel: i32) -> f32 {
 @fragment
 fn main(@builtin(position) position: vec4<f32>) -> @location(0) vec4<f32> {
     let dims = vec2<f32>(textureDimensions(inputTex, 0));
-    let uv = position.xy / dims;
+    let st = position.xy / dims;
+    let globalCoord = position.xy + tileOffset;
+    let uv = globalCoord / fullResolution;
 
     // Base image is the non-mask source. Use textureSampleLevel throughout
     // because the blur loop below depends on per-pixel out-of-bounds checks
@@ -163,50 +168,55 @@ fn main(@builtin(position) position: vec4<f32>) -> @location(0) vec4<f32> {
     // (it would require uniform control flow for implicit derivatives).
     var baseColor: vec4<f32>;
     if (maskSource == 0) {
-        baseColor = textureSampleLevel(tex, samp, uv, 0.0);
+        baseColor = textureSampleLevel(tex, samp, st, 0.0);
     } else {
-        baseColor = textureSampleLevel(inputTex, samp, uv, 0.0);
+        baseColor = textureSampleLevel(inputTex, samp, st, 0.0);
     }
 
-    // Mask UV shifted by shadow offset
-    let maskUV = uv - vec2<f32>(offsetX, offsetY) * 0.1;
+    // Mask UV shifted by shadow offset, scaled for print resolution
+    let maskUV = uv - vec2<f32>(offsetX, offsetY) * 0.1 * renderScale;
 
     // Gaussian blur of thresholded mask
     var shadowMask: f32 = 0.0;
     var totalWeight: f32 = 0.0;
 
-    let sigma = max(blur, 0.001);
+    // Scale blur by renderScale and cap at overlap
+    let blurPixels = min(blur * renderScale, 256.0);
+    let sigma = max(blurPixels, 0.001);
     let sigma2 = 2.0 * sigma * sigma;
 
     for (var x: i32 = -5; x <= 5; x = x + 1) {
         for (var y: i32 = -5; y <= 5; y = y + 1) {
-            let offset = vec2<f32>(f32(x), f32(y)) * blur / dims;
+            let offset = vec2<f32>(f32(x), f32(y)) * blurPixels / dims;
             let sampleUV = maskUV + offset;
+
+            // Convert global UV to local UV for tile-local texture sampling
+            let localUV = (sampleUV * fullResolution - tileOffset) / dims;
 
             // Apply wrap mode to sample UVs
             var thresholded: f32 = 0.0;
             if (wrap == 0) {
                 // hide: treat out-of-bounds as empty
-                if (sampleUV.x >= 0.0 && sampleUV.x <= 1.0 && sampleUV.y >= 0.0 && sampleUV.y <= 1.0) {
+                if (localUV.x >= 0.0 && localUV.x <= 1.0 && localUV.y >= 0.0 && localUV.y <= 1.0) {
                     var maskSample: vec4<f32>;
                     if (maskSource == 0) {
-                        maskSample = textureSampleLevel(inputTex, samp, sampleUV, 0.0);
+                        maskSample = textureSampleLevel(inputTex, samp, localUV, 0.0);
                     } else {
-                        maskSample = textureSampleLevel(tex, samp, sampleUV, 0.0);
+                        maskSample = textureSampleLevel(tex, samp, localUV, 0.0);
                     }
                     thresholded = step(threshold, getChannel(maskSample, sourceChannel));
                 }
             } else {
-                var wrappedUV = sampleUV;
+                var wrappedUV = localUV;
                 if (wrap == 1) {
                     // mirror
-                    wrappedUV = abs(((sampleUV + 1.0) % 2.0 + 2.0) % 2.0 - 1.0);
+                    wrappedUV = abs((localUV + 1.0) - 2.0 * floor((localUV + 1.0) / 2.0) - 1.0);
                 } else if (wrap == 2) {
                     // repeat
-                    wrappedUV = (sampleUV % 1.0 + 1.0) % 1.0;
+                    wrappedUV = fract(localUV);
                 } else {
                     // clamp
-                    wrappedUV = clamp(sampleUV, vec2<f32>(0.0), vec2<f32>(1.0));
+                    wrappedUV = clamp(localUV, vec2<f32>(0.0), vec2<f32>(1.0));
                 }
                 var maskSample: vec4<f32>;
                 if (maskSource == 0) {
@@ -235,9 +245,9 @@ fn main(@builtin(position) position: vec4<f32>) -> @location(0) vec4<f32> {
     // Composite mask source (foreground) on top of the shadow
     var fgSample: vec4<f32>;
     if (maskSource == 0) {
-        fgSample = textureSampleLevel(inputTex, samp, uv, 0.0);
+        fgSample = textureSampleLevel(inputTex, samp, st, 0.0);
     } else {
-        fgSample = textureSampleLevel(tex, samp, uv, 0.0);
+        fgSample = textureSampleLevel(tex, samp, st, 0.0);
     }
     let fgMask = step(threshold, getChannel(fgSample, sourceChannel));
     let result = mix(withShadow, fgSample.rgb, fgMask);
@@ -279,4 +289,4 @@ noise(seed: 2, ridges: true)
 
 render(o1)
 \`\`\`
-`;if(n&&Object.keys(a).length>0){n.shaders||(n.shaders={});for(let[o,e]of Object.entries(a))n.shaders[o]={...e}}n&&r&&(n.help=r);var f="mixer/shadow",h="mixer",d="shadow",p=n;export{p as default,f as effectId,d as effectName,r as help,h as namespace};
+`;if(n&&Object.keys(a).length>0){n.shaders||(n.shaders={});for(let[t,e]of Object.entries(a))n.shaders[t]={...e}}n&&r&&(n.help=r);var f="mixer/shadow",d="mixer",h="shadow",p=n;export{p as default,f as effectId,h as effectName,r as help,d as namespace};

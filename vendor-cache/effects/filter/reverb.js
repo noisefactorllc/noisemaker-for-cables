@@ -81,6 +81,8 @@ void main() {
 @group(0) @binding(3) var<uniform> ridges: i32;
 @group(0) @binding(4) var<uniform> alpha: f32;
 @group(0) @binding(5) var<uniform> wrap: i32;
+@group(0) @binding(6) var<uniform> tileOffset: vec2<f32>;
+@group(0) @binding(7) var<uniform> fullResolution: vec2<f32>;
 
 fn applyWrap(uv: vec2<f32>) -> vec2<f32> {
     if (wrap == 0) {
@@ -102,10 +104,13 @@ fn ridge_transform(color: vec4<f32>) -> vec4<f32> {
 fn main(@builtin(position) pos: vec4<f32>) -> @location(0) vec4<f32> {
     let dimsU: vec2<u32> = textureDimensions(inputTex, 0);
     let dims: vec2<f32> = vec2<f32>(f32(dimsU.x), f32(dimsU.y));
-    let uv: vec2<f32> = pos.xy / dims;
+
+    let globalCoord: vec2<f32> = pos.xy + tileOffset;
+    let globalUV: vec2<f32> = globalCoord / fullResolution;
+    let localUV: vec2<f32> = pos.xy / dims;
 
     // Save original input for alpha blending
-    let original: vec4<f32> = textureSample(inputTex, inputSampler, uv);
+    let original: vec4<f32> = textureSample(inputTex, inputSampler, localUV);
 
     // Sample at current position
     var current: vec4<f32> = original;
@@ -124,8 +129,10 @@ fn main(@builtin(position) pos: vec4<f32>) -> @location(0) vec4<f32> {
 
     let iters: i32 = clamp(iterations, 1, 8);
     for (var i: i32 = 0; i < iters; i = i + 1) {
-        let scaledUV: vec2<f32> = applyWrap(uv * scale);
-        var scaled: vec4<f32> = textureSample(inputTex, inputSampler, scaledUV);
+        let warpedGlobalUV: vec2<f32> = globalUV * scale;
+        let wrappedGlobalUV: vec2<f32> = applyWrap(warpedGlobalUV);
+        let sampledLocalUV: vec2<f32> = fract((wrappedGlobalUV * fullResolution - tileOffset) / dims);
+        var scaled: vec4<f32> = textureSample(inputTex, inputSampler, sampledLocalUV);
 
         if (useRidges) {
             scaled = ridge_transform(scaled);
@@ -166,4 +173,4 @@ noise(seed: 1, ridges: true)
 
 render(o0)
 \`\`\`
-`;if(t&&Object.keys(i).length>0){t.shaders||(t.shaders={});for(let[r,e]of Object.entries(i))t.shaders[r]={...e}}t&&a&&(t.help=a);var p="filter/reverb",c="filter",f="reverb",d=t;export{d as default,p as effectId,f as effectName,a as help,c as namespace};
+`;if(t&&Object.keys(i).length>0){t.shaders||(t.shaders={});for(let[r,e]of Object.entries(i))t.shaders[r]={...e}}t&&a&&(t.help=a);var p="filter/reverb",f="filter",c="reverb",d=t;export{d as default,p as effectId,c as effectName,a as help,f as namespace};

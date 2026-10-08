@@ -241,9 +241,7 @@ fn wrap01(v: vec2<f32>) -> vec2<f32> {
 
 fn sampleGrid(uv: vec2<f32>) -> f32 {
     let dims = vec2<f32>(textureDimensions(gridTex));
-    let w = wrap01(uv);
-    // WebGPU: gridTex y=0=top, worldPos y=0=visual-bottom. Read at 1-y.
-    let coord = vec2<i32>(vec2f(w.x, 1.0 - w.y) * dims);
+    let coord = vec2<i32>(wrap01(uv) * dims);
     return textureLoad(gridTex, coord, 0).a;
 }
 
@@ -310,9 +308,7 @@ fn main(in: VertexOutput) -> FragmentOutputs {
     var stepDir = randomDir;
     if (inputW > 0.0) {
         let inputDims = textureDimensions(inputTex);
-        let wpos = wrap01(pos);
-        // WebGPU: inputTex y=0=top, worldPos y=0=visual-bottom. Read at 1-y.
-        let inputCoord = vec2<i32>(vec2f(wpos.x, 1.0 - wpos.y) * vec2<f32>(inputDims));
+        let inputCoord = vec2<i32>(wrap01(pos) * vec2<f32>(inputDims));
         let inputVal = textureLoad(inputTex, inputCoord, 0);
         var inputDir = inputVal.xy * 2.0 - 1.0;
         if (length(inputDir) > 0.01) {
@@ -388,39 +384,12 @@ void main() {
 
 @group(0) @binding(0) var uSampler: sampler;
 @group(0) @binding(1) var gridTex: texture_2d<f32>;
-
-struct VertexOutput {
-    @builtin(position) position: vec4f,
-    @location(0) uv: vec2f,
-}
-
-@vertex
-fn vs(@builtin(vertex_index) vertexIndex: u32) -> VertexOutput {
-    var pos = array<vec2f, 6>(
-        vec2f(-1.0, -1.0),
-        vec2f( 1.0, -1.0),
-        vec2f(-1.0,  1.0),
-        vec2f(-1.0,  1.0),
-        vec2f( 1.0, -1.0),
-        vec2f( 1.0,  1.0),
-    );
-    var uvs = array<vec2f, 6>(
-        vec2f(0.0, 1.0),
-        vec2f(1.0, 1.0),
-        vec2f(0.0, 0.0),
-        vec2f(0.0, 0.0),
-        vec2f(1.0, 1.0),
-        vec2f(1.0, 0.0),
-    );
-    var out: VertexOutput;
-    out.position = vec4f(pos[vertexIndex], 0.0, 1.0);
-    out.uv = uvs[vertexIndex];
-    return out;
-}
+@group(0) @binding(2) var<uniform> resolution: vec2<f32>;
 
 @fragment
-fn fs(in: VertexOutput) -> @location(0) vec4f {
-    return textureSample(gridTex, uSampler, in.uv);
+fn main(@builtin(position) position: vec4<f32>) -> @location(0) vec4<f32> {
+    let uv = position.xy / resolution;
+    return textureSample(gridTex, uSampler, uv);
 }
 `},depositGrid:{vertex:`#version 300 es
 precision highp float;
@@ -555,7 +524,8 @@ fn vs_main(@builtin(vertex_index) vertexIndex: u32) -> VertexOutput {
     }
     
     // Position from xyz (normalized [0,1])
-    let clip = xyz.xy * 2.0 - 1.0;
+    // WebGPU clip y runs opposite to GL's, so negate the GLSL's clip y
+    let clip = vec2<f32>(xyz.x * 2.0 - 1.0, 1.0 - xyz.y * 2.0);
     output.position = vec4<f32>(clip, 0.0, 1.0);
     
     return output;
@@ -746,9 +716,8 @@ void main() {
 @fragment
 fn main(@builtin(position) fragCoord: vec4f) -> @location(0) vec4f {
     let uv = fragCoord.xy / u.resolution;
-    let displayUv = vec2f(uv.x, 1.0 - uv.y);
-    let input = textureSample(inputTex, inputTexSampler, displayUv);
-    let grid = textureSample(gridTex, gridTexSampler, displayUv);
+    let input = textureSample(inputTex, inputTexSampler, uv);
+    let grid = textureSample(gridTex, gridTexSampler, uv);
     
     // Blend grid structure over input
     // Grid alpha indicates structure presence
@@ -764,7 +733,7 @@ fn main(@builtin(position) fragCoord: vec4f) -> @location(0) vec4f {
     
     return vec4f(color, alpha);
 }
-`}},a=`# dla
+`}},o=`# dla
 
 Diffusion-limited aggregation
 
@@ -798,4 +767,4 @@ noise()
 
 render(o0)
 \`\`\`
-`;if(n&&Object.keys(r).length>0){n.shaders||(n.shaders={});for(let[i,e]of Object.entries(r))n.shaders[i]={...e}}n&&a&&(n.help=a);var d="points/dla",c="points",p="dla",f=n;export{f as default,d as effectId,p as effectName,a as help,c as namespace};
+`;if(n&&Object.keys(r).length>0){n.shaders||(n.shaders={});for(let[i,e]of Object.entries(r))n.shaders[i]={...e}}n&&o&&(n.help=o);var d="points/dla",c="points",p="dla",g=n;export{g as default,d as effectId,p as effectName,o as help,c as namespace};

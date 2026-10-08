@@ -164,6 +164,8 @@ void main() {
 @group(0) @binding(5) var<uniform> speed: f32;
 @group(0) @binding(6) var<uniform> rotation: f32;
 @group(0) @binding(7) var<uniform> seed: i32;
+@group(0) @binding(8) var<uniform> tileOffset: vec2<f32>;
+@group(0) @binding(9) var<uniform> fullResolution: vec2<f32>;
 
 const PI: f32 = 3.141592653589793;
 const TAU: f32 = 6.283185307179586;
@@ -184,8 +186,8 @@ fn tilingNoise1D(x: f32, freq: f32, s: f32) -> f32 {
     f = f * f * (3.0 - 2.0 * f);  // smoothstep
     
     // Wrap indices for seamless tiling
-    let i0 = (i % freq + freq) % freq;
-    let i1 = ((i + 1.0) % freq + freq) % freq;
+    let i0 = i - freq * floor(i / freq);
+    let i1 = (i + 1.0) - freq * floor((i + 1.0) / freq);
     
     let a = hash11(i0, s);
     let b = hash11(i1, s);
@@ -236,11 +238,11 @@ fn oscSquare(t: f32) -> f32 {
 
 @fragment
 fn main(@builtin(position) position: vec4<f32>) -> @location(0) vec4<f32> {
-    var res = resolution;
+    var res = fullResolution;
     if (res.x < 1.0) { res = vec2<f32>(1024.0, 1024.0); }
     
-    // Normalized coordinates (flip y for WebGPU coordinate system)
-    var st = vec2<f32>(position.x, res.y - position.y) / res;
+    // Normalized coordinates
+    var st = (position.xy + tileOffset) / res;
     
     // Center for rotation
     st = st - 0.5;

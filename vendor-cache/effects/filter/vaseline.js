@@ -1,5 +1,5 @@
 /* filter/vaseline */
-var n=class{constructor(e={}){this.state={},this.uniforms={},e.name&&(this.name=e.name),e.namespace&&(this.namespace=e.namespace),e.func&&(this.func=e.func),e.description&&(this.description=e.description),e.tags&&(this.tags=e.tags),e.globals&&(this.globals=e.globals),e.passes&&(this.passes=e.passes),e.textures&&(this.textures=e.textures),e.textures3d&&(this.textures3d=e.textures3d),e.shaders&&(this.shaders=e.shaders),e.externalTexture&&(this.externalTexture=e.externalTexture),e.externalMesh&&(this.externalMesh=e.externalMesh),e.builtinMeshes&&(this.builtinMeshes=e.builtinMeshes),e.outputTex3d&&(this.outputTex3d=e.outputTex3d),e.outputGeo&&(this.outputGeo=e.outputGeo),e.uniformLayout&&(this.uniformLayout=e.uniformLayout),e.uniformLayouts&&(this.uniformLayouts=e.uniformLayouts),e.paramAliases&&(this.paramAliases=e.paramAliases),e.openCategories&&(this.openCategories=e.openCategories),e.defaultProgram&&(this.defaultProgram=e.defaultProgram),e.hidden&&(this.hidden=!0),e.deprecatedBy&&(this.deprecatedBy=e.deprecatedBy),e.onInit&&(this._configOnInit=e.onInit),e.onUpdate&&(this._configOnUpdate=e.onUpdate),e.onDestroy&&(this._configOnDestroy=e.onDestroy),e.asyncInit&&(this._configAsyncInit=e.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(e){return this._configOnUpdate?this._configOnUpdate.call(this,e):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(e){return this._configAsyncInit?this._configAsyncInit.call(this,e):Promise.resolve()}};var t=new n({name:"Vaseline",namespace:"filter",func:"vaseline",tags:["blur"],description:"Vaseline lens blur effect",globals:{alpha:{type:"float",default:.5,uniform:"alpha",min:0,max:1,step:.01,ui:{label:"alpha",control:"slider"}}},passes:[{name:"main",program:"upsample",inputs:{inputTex:"inputTex"},uniforms:{alpha:"alpha"},outputs:{fragColor:"outputTex"}}]});var s={upsample:{glsl:`#version 300 es
+var n=class{constructor(e={}){this.state={},this.uniforms={},e.name&&(this.name=e.name),e.namespace&&(this.namespace=e.namespace),e.func&&(this.func=e.func),e.description&&(this.description=e.description),e.tags&&(this.tags=e.tags),e.globals&&(this.globals=e.globals),e.passes&&(this.passes=e.passes),e.textures&&(this.textures=e.textures),e.textures3d&&(this.textures3d=e.textures3d),e.shaders&&(this.shaders=e.shaders),e.externalTexture&&(this.externalTexture=e.externalTexture),e.externalMesh&&(this.externalMesh=e.externalMesh),e.builtinMeshes&&(this.builtinMeshes=e.builtinMeshes),e.outputTex3d&&(this.outputTex3d=e.outputTex3d),e.outputGeo&&(this.outputGeo=e.outputGeo),e.uniformLayout&&(this.uniformLayout=e.uniformLayout),e.uniformLayouts&&(this.uniformLayouts=e.uniformLayouts),e.paramAliases&&(this.paramAliases=e.paramAliases),e.openCategories&&(this.openCategories=e.openCategories),e.defaultProgram&&(this.defaultProgram=e.defaultProgram),e.hidden&&(this.hidden=!0),e.deprecatedBy&&(this.deprecatedBy=e.deprecatedBy),e.onInit&&(this._configOnInit=e.onInit),e.onUpdate&&(this._configOnUpdate=e.onUpdate),e.onDestroy&&(this._configOnDestroy=e.onDestroy),e.asyncInit&&(this._configAsyncInit=e.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(e){return this._configOnUpdate?this._configOnUpdate.call(this,e):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(e){return this._configAsyncInit?this._configAsyncInit.call(this,e):Promise.resolve()}};var t=new n({name:"Vaseline",namespace:"filter",func:"vaseline",tags:["blur"],description:"Vaseline lens blur effect",globals:{alpha:{type:"float",default:.5,uniform:"alpha",min:0,max:1,step:.01,ui:{label:"alpha",control:"slider"}}},passes:[{name:"main",program:"upsample",inputs:{inputTex:"inputTex"},uniforms:{alpha:"alpha"},outputs:{fragColor:"outputTex"}}]});var l={upsample:{glsl:`#version 300 es
 precision highp float;
 
 // Vaseline - N-tap blur with edge-weighted blending
@@ -83,6 +83,9 @@ struct Params {
     resolution: vec2f,
     alpha: f32,
     _pad0: f32,
+    tileOffset: vec2f,
+    fullResolution: vec2f,
+    renderScale: f32,
 }
 
 @group(0) @binding(0) var inputTex: texture_2d<f32>;
@@ -106,8 +109,10 @@ fn chebyshev_mask(uv: vec2f) -> f32 {
 @fragment
 fn main(@builtin(position) fragCoord: vec4f) -> @location(0) vec4f {
     let coord = vec2i(fragCoord.xy);
-    let fullSize = params.resolution;
-    let uv = (vec2f(coord) + 0.5) / fullSize;
+    let globalCoord = fragCoord.xy + params.tileOffset;
+    let uv = globalCoord / params.fullResolution;
+    let fullRes = select(params.resolution, params.fullResolution, params.fullResolution.x > 0.0);
+    let globalUV = (fragCoord.xy + params.tileOffset) / fullRes;
 
     let original = textureLoad(inputTex, coord, 0);
     let a = clamp(params.alpha, 0.0, 1.0);
@@ -116,8 +121,8 @@ fn main(@builtin(position) fragCoord: vec4f) -> @location(0) vec4f {
         return vec4f(clamp01v(original.rgb), original.a);
     }
 
-    let texelSize = 1.0 / fullSize;
-    let radiusUV = RADIUS * texelSize;
+    let texelSize = 1.0 / params.fullResolution;
+    let radiusUV = RADIUS * params.renderScale * texelSize;
 
     // N-tap gather using golden angle spiral
     var blurAccum = vec3f(0.0);
@@ -132,16 +137,17 @@ fn main(@builtin(position) fragCoord: vec4f) -> @location(0) vec4f {
         let sigma: f32 = 0.4;
         let weight = exp(-0.5 * (r * r) / (sigma * sigma));
 
-        let sampleUV = clamp(uv + offset * radiusUV, vec2f(0.0), vec2f(1.0));
-        blurAccum = blurAccum + textureSample(inputTex, inputSampler, sampleUV).rgb * weight;
+        let sampleGlobalUV = clamp(uv + offset * radiusUV, vec2f(0.0), vec2f(1.0));
+        let sampleLocalUV = (sampleGlobalUV * params.fullResolution - params.tileOffset) / vec2f(textureDimensions(inputTex, 0));
+        blurAccum = blurAccum + textureSample(inputTex, inputSampler, sampleLocalUV).rgb * weight;
         weightSum = weightSum + weight;
     }
 
     let blurred = blurAccum / weightSum;
     let boosted = clamp01v(blurred + vec3f(BRIGHTNESS_ADJUST));
 
-    // Edge mask - more effect at edges
-    var edgeMask = chebyshev_mask(uv);
+    // Edge mask - more effect at edges, using global UV so center is full-image center
+    var edgeMask = chebyshev_mask(globalUV);
     edgeMask = smoothstep(0.0, 0.8, edgeMask);
 
     let sourceClamped = clamp01v(original.rgb);
@@ -151,7 +157,7 @@ fn main(@builtin(position) fragCoord: vec4f) -> @location(0) vec4f {
 
     return vec4f(finalRgb, original.a);
 }
-`}},r=`# vaseline
+`}},s=`# vaseline
 
 Vaseline lens blur effect
 
@@ -172,4 +178,4 @@ noise(seed: 1, ridges: true)
 
 render(o0)
 \`\`\`
-`;if(t&&Object.keys(s).length>0){t.shaders||(t.shaders={});for(let[a,e]of Object.entries(s))t.shaders[a]={...e}}t&&r&&(t.help=r);var c="filter/vaseline",f="filter",p="vaseline",d=t;export{d as default,c as effectId,p as effectName,r as help,f as namespace};
+`;if(t&&Object.keys(l).length>0){t.shaders||(t.shaders={});for(let[a,e]of Object.entries(l))t.shaders[a]={...e}}t&&s&&(t.help=s);var f="filter/vaseline",c="filter",p="vaseline",m=t;export{m as default,f as effectId,p as effectName,s as help,c as namespace};

@@ -1239,7 +1239,7 @@ fn bicubicValue(st: vec2<f32>, freq: vec2<f32>, s: f32, blend: f32) -> f32 {
 
 // 3\xD73 Catmull-Rom value noise (9 texture lookups)
 fn catmullRom3x3ValueNoise(st: vec2<f32>, freq: vec2<f32>, s: f32, blend: f32) -> f32 {
-    let lattice = vec2<f32>(st.x * freq.x + s, st.y * freq.y);
+    let lattice = st * freq;
     
     // Sample 3\xD73 grid centered on current position
     let x0y0 = constantOffset(lattice, freq, s, blend, vec2<i32>(-1, -1));
@@ -1266,7 +1266,7 @@ fn catmullRom3x3ValueNoise(st: vec2<f32>, freq: vec2<f32>, s: f32, blend: f32) -
 
 // 4\xD74 Catmull-Rom value noise (16 texture lookups)
 fn catmullRom4x4ValueNoise(st: vec2<f32>, freq: vec2<f32>, s: f32, blend: f32) -> f32 {
-    let lattice = vec2<f32>(st.x * freq.x + s, st.y * freq.y);
+    let lattice = st * freq;
     
     // Sample 4\xD74 grid
     let x0y0 = constantOffset(lattice, freq, s, blend, vec2<i32>(-1, -1));

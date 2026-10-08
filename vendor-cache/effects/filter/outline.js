@@ -1,5 +1,5 @@
 /* filter/outline */
-var t=class{constructor(e={}){this.state={},this.uniforms={},e.name&&(this.name=e.name),e.namespace&&(this.namespace=e.namespace),e.func&&(this.func=e.func),e.description&&(this.description=e.description),e.tags&&(this.tags=e.tags),e.globals&&(this.globals=e.globals),e.passes&&(this.passes=e.passes),e.textures&&(this.textures=e.textures),e.textures3d&&(this.textures3d=e.textures3d),e.shaders&&(this.shaders=e.shaders),e.externalTexture&&(this.externalTexture=e.externalTexture),e.externalMesh&&(this.externalMesh=e.externalMesh),e.builtinMeshes&&(this.builtinMeshes=e.builtinMeshes),e.outputTex3d&&(this.outputTex3d=e.outputTex3d),e.outputGeo&&(this.outputGeo=e.outputGeo),e.uniformLayout&&(this.uniformLayout=e.uniformLayout),e.uniformLayouts&&(this.uniformLayouts=e.uniformLayouts),e.paramAliases&&(this.paramAliases=e.paramAliases),e.openCategories&&(this.openCategories=e.openCategories),e.defaultProgram&&(this.defaultProgram=e.defaultProgram),e.hidden&&(this.hidden=!0),e.deprecatedBy&&(this.deprecatedBy=e.deprecatedBy),e.onInit&&(this._configOnInit=e.onInit),e.onUpdate&&(this._configOnUpdate=e.onUpdate),e.onDestroy&&(this._configOnDestroy=e.onDestroy),e.asyncInit&&(this._configAsyncInit=e.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(e){return this._configOnUpdate?this._configOnUpdate.call(this,e):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(e){return this._configAsyncInit?this._configAsyncInit.call(this,e):Promise.resolve()}};var n=new t({name:"Outline",namespace:"filter",tags:["edges"],func:"outline",description:"Outline/edge stroke",globals:{shape:{type:"int",default:1,uniform:"sobelMetric",choices:{circle:1,diamond:2,square:3,octagon:4},ui:{label:"shape",control:"dropdown"}},thickness:{type:"float",default:1,uniform:"thickness",min:1,max:10,step:.1,ui:{label:"thickness",control:"slider"}},invert:{type:"boolean",default:!1,uniform:"invert",ui:{label:"invert",control:"checkbox"}}},textures:{outlineValueMap:{width:"100%",height:"100%",format:"rgba16f"},outlineEdges:{width:"100%",height:"100%",format:"rgba16f"}},passes:[{name:"valueMap",program:"outlineValueMap",inputs:{inputTex:"inputTex"},outputs:{color:"outlineValueMap"}},{name:"sobel",program:"outlineSobel",inputs:{valueTexture:"outlineValueMap"},outputs:{color:"outlineEdges"}},{name:"blend",program:"outlineBlend",inputs:{inputTex:"inputTex",edgesTexture:"outlineEdges"},outputs:{color:"outputTex"}}]});var a={outlineBlend:{glsl:`#version 300 es
+var t=class{constructor(e={}){this.state={},this.uniforms={},e.name&&(this.name=e.name),e.namespace&&(this.namespace=e.namespace),e.func&&(this.func=e.func),e.description&&(this.description=e.description),e.tags&&(this.tags=e.tags),e.globals&&(this.globals=e.globals),e.passes&&(this.passes=e.passes),e.textures&&(this.textures=e.textures),e.textures3d&&(this.textures3d=e.textures3d),e.shaders&&(this.shaders=e.shaders),e.externalTexture&&(this.externalTexture=e.externalTexture),e.externalMesh&&(this.externalMesh=e.externalMesh),e.builtinMeshes&&(this.builtinMeshes=e.builtinMeshes),e.outputTex3d&&(this.outputTex3d=e.outputTex3d),e.outputGeo&&(this.outputGeo=e.outputGeo),e.uniformLayout&&(this.uniformLayout=e.uniformLayout),e.uniformLayouts&&(this.uniformLayouts=e.uniformLayouts),e.paramAliases&&(this.paramAliases=e.paramAliases),e.openCategories&&(this.openCategories=e.openCategories),e.defaultProgram&&(this.defaultProgram=e.defaultProgram),e.hidden&&(this.hidden=!0),e.deprecatedBy&&(this.deprecatedBy=e.deprecatedBy),e.onInit&&(this._configOnInit=e.onInit),e.onUpdate&&(this._configOnUpdate=e.onUpdate),e.onDestroy&&(this._configOnDestroy=e.onDestroy),e.asyncInit&&(this._configAsyncInit=e.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(e){return this._configOnUpdate?this._configOnUpdate.call(this,e):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(e){return this._configAsyncInit?this._configAsyncInit.call(this,e):Promise.resolve()}};var n=new t({name:"Outline",namespace:"filter",tags:["edges"],func:"outline",description:"Outline/edge stroke",globals:{shape:{type:"int",default:1,uniform:"sobelMetric",choices:{circle:1,diamond:2,square:3,octagon:4},ui:{label:"shape",control:"dropdown"}},thickness:{type:"float",default:1,uniform:"thickness",min:1,max:10,step:.1,ui:{label:"thickness",control:"slider"}},invert:{type:"boolean",default:!1,uniform:"invert",ui:{label:"invert",control:"checkbox"}}},textures:{outlineValueMap:{width:"100%",height:"100%",format:"rgba16f"},outlineEdges:{width:"100%",height:"100%",format:"rgba16f"}},passes:[{name:"valueMap",program:"outlineValueMap",inputs:{inputTex:"inputTex"},outputs:{color:"outlineValueMap"}},{name:"sobel",program:"outlineSobel",inputs:{valueTexture:"outlineValueMap"},outputs:{color:"outlineEdges"}},{name:"blend",program:"outlineBlend",inputs:{inputTex:"inputTex",edgesTexture:"outlineEdges"},outputs:{color:"outputTex"}}]});var i={outlineBlend:{glsl:`#version 300 es
 
 precision highp float;
 precision highp int;
@@ -60,8 +60,15 @@ struct VertexOutput {
 
 @fragment
 fn main(input : VertexOutput) -> @location(0) vec4<f32> {
-    let base = textureSample(inputTex, inputSampler, input.texCoord);
-    let edges = textureSample(edgesTexture, edgesSampler, input.texCoord);
+    let dimensions = vec2<i32>(textureDimensions(inputTex, 0));
+    if (dimensions.x == 0 || dimensions.y == 0) {
+        return vec4<f32>(0.0);
+    }
+
+    let uv = input.position.xy / vec2<f32>(dimensions);
+
+    let base = textureSample(inputTex, inputSampler, uv);
+    let edges = textureSample(edgesTexture, edgesSampler, uv);
 
     // Edge strength from luminance
     let strength = clamp(edges.r, 0.0, 1.0);
@@ -162,7 +169,7 @@ void main() {
 struct Params {
     sobelMetric : f32,
     thickness : f32,
-    _pad1 : f32,
+    renderScale : f32,
     _pad2 : f32,
 }
 
@@ -216,7 +223,7 @@ fn main(input : VertexOutput) -> @location(0) vec4<f32> {
     let metric = i32(params.sobelMetric);
 
     // Sample 3x3 neighborhood with thickness scaling
-    let offset = max(1, i32(params.thickness));
+    let offset = max(1, i32(params.thickness * params.renderScale));
     var samples : array<f32, 9>;
     var idx = 0;
     for (var ky = -1; ky <= 1; ky = ky + 1) {
@@ -341,11 +348,13 @@ struct VertexOutput {
 
 @fragment
 fn main(input : VertexOutput) -> @location(0) vec4<f32> {
-    let texel = textureSample(inputTex, inputSampler, input.texCoord);
+    let dimensions = vec2<i32>(textureDimensions(inputTex, 0));
+    let uv = (input.position.xy - vec2<f32>(0.5)) / vec2<f32>(f32(max(dimensions.x, 1)), f32(max(dimensions.y, 1)));
+    let texel = textureSample(inputTex, inputSampler, uv);
     let value = valueMapComponent(texel);
     return vec4<f32>(value, value, value, texel.a);
 }
-`}},i=`# outline
+`}},a=`# outline
 
 Outline/edge stroke
 
@@ -368,4 +377,4 @@ noise(seed: 1, ridges: true)
 
 render(o0)
 \`\`\`
-`;if(n&&Object.keys(a).length>0){n.shaders||(n.shaders={});for(let[r,e]of Object.entries(a))n.shaders[r]={...e}}n&&i&&(n.help=i);var p="filter/outline",m="filter",f="outline",c=n;export{c as default,p as effectId,f as effectName,i as help,m as namespace};
+`;if(n&&Object.keys(i).length>0){n.shaders||(n.shaders={});for(let[r,e]of Object.entries(i))n.shaders[r]={...e}}n&&a&&(n.help=a);var p="filter/outline",m="filter",f="outline",c=n;export{c as default,p as effectId,f as effectName,a as help,m as namespace};

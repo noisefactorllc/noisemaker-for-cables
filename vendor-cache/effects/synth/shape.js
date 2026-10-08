@@ -1,5 +1,5 @@
 /* synth/shape */
-var t=class{constructor(n={}){this.state={},this.uniforms={},n.name&&(this.name=n.name),n.namespace&&(this.namespace=n.namespace),n.func&&(this.func=n.func),n.description&&(this.description=n.description),n.tags&&(this.tags=n.tags),n.globals&&(this.globals=n.globals),n.passes&&(this.passes=n.passes),n.textures&&(this.textures=n.textures),n.textures3d&&(this.textures3d=n.textures3d),n.shaders&&(this.shaders=n.shaders),n.externalTexture&&(this.externalTexture=n.externalTexture),n.externalMesh&&(this.externalMesh=n.externalMesh),n.builtinMeshes&&(this.builtinMeshes=n.builtinMeshes),n.outputTex3d&&(this.outputTex3d=n.outputTex3d),n.outputGeo&&(this.outputGeo=n.outputGeo),n.uniformLayout&&(this.uniformLayout=n.uniformLayout),n.uniformLayouts&&(this.uniformLayouts=n.uniformLayouts),n.paramAliases&&(this.paramAliases=n.paramAliases),n.openCategories&&(this.openCategories=n.openCategories),n.defaultProgram&&(this.defaultProgram=n.defaultProgram),n.hidden&&(this.hidden=!0),n.deprecatedBy&&(this.deprecatedBy=n.deprecatedBy),n.onInit&&(this._configOnInit=n.onInit),n.onUpdate&&(this._configOnUpdate=n.onUpdate),n.onDestroy&&(this._configOnDestroy=n.onDestroy),n.asyncInit&&(this._configAsyncInit=n.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(n){return this._configOnUpdate?this._configOnUpdate.call(this,n):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(n){return this._configAsyncInit?this._configAsyncInit.call(this,n):Promise.resolve()}};var e=new t({name:"Shape",namespace:"synth",func:"shape",tags:["geometric"],description:"Interference patterns from geometric shapes",uniformLayout:{resolution:{slot:0,components:"xy"},time:{slot:0,components:"z"},seed:{slot:0,components:"w"},wrap:{slot:1,components:"x"},loopAScale:{slot:1,components:"w"},loopBScale:{slot:2,components:"x"},speedA:{slot:2,components:"y"},speedB:{slot:2,components:"z"}},globals:{loopAOffset:{type:"int",default:40,define:"LOOP_A_OFFSET",choices:{"Shapes:":null,circle:10,triangle:20,diamond:30,square:40,pentagon:50,hexagon:60,heptagon:70,octagon:80,nonagon:90,decagon:100,hendecagon:110,dodecagon:120,"Directional:":null,horizontalScan:200,verticalScan:210,"Noise:":null,noiseConstant:300,noiseLinear:310,noiseHermite:320,noiseCatmullRom3x3:330,noiseCatmullRom4x4:340,noiseBSpline3x3:350,noiseBSpline4x4:360,noiseSimplex:370,noiseSine:380,"Misc:":null,rings:400,sine:410},ui:{label:"loop a",control:"dropdown"}},loopBOffset:{type:"int",default:30,define:"LOOP_B_OFFSET",choices:{"Shapes:":null,circle:10,triangle:20,diamond:30,square:40,pentagon:50,hexagon:60,heptagon:70,octagon:80,nonagon:90,decagon:100,hendecagon:110,dodecagon:120,"Directional:":null,horizontalScan:200,verticalScan:210,"Noise:":null,noiseConstant:300,noiseLinear:310,noiseHermite:320,noiseCatmullRom3x3:330,noiseCatmullRom4x4:340,noiseBSpline3x3:350,noiseBSpline4x4:360,noiseSimplex:370,noiseSine:380,"Misc:":null,rings:400,sine:410},ui:{label:"loop b",control:"dropdown"}},loopAScale:{type:"float",default:1,uniform:"loopAScale",min:1,max:100,ui:{label:"a scale",control:"slider"}},loopBScale:{type:"float",default:1,uniform:"loopBScale",min:1,max:100,ui:{label:"b scale",control:"slider"}},speedA:{type:"int",default:50,uniform:"speedA",min:-100,max:100,zero:0,ui:{label:"speed a",control:"slider"}},speedB:{type:"int",default:50,uniform:"speedB",min:-100,max:100,zero:0,ui:{label:"speed b",control:"slider"}},seed:{type:"int",default:1,uniform:"seed",min:1,max:100,ui:{label:"noise seed",control:"slider",category:"noise",enabledBy:{or:[{param:"loopAOffset",gte:300,lt:400},{param:"loopBOffset",gte:300,lt:400}]}}},wrap:{type:"boolean",default:!0,uniform:"wrap",ui:{label:"wrap",control:"checkbox",category:"noise",enabledBy:{or:[{param:"loopAOffset",gte:300,lt:370},{param:"loopBOffset",gte:300,lt:370}]}}}},paramAliases:{loopAAmp:"speedA",loopBAmp:"speedB"},passes:[{name:"render",program:"shape",inputs:{},outputs:{fragColor:"outputTex"}}]});var o={shape:{glsl:`#version 300 es
+var t=class{constructor(n={}){this.state={},this.uniforms={},n.name&&(this.name=n.name),n.namespace&&(this.namespace=n.namespace),n.func&&(this.func=n.func),n.description&&(this.description=n.description),n.tags&&(this.tags=n.tags),n.globals&&(this.globals=n.globals),n.passes&&(this.passes=n.passes),n.textures&&(this.textures=n.textures),n.textures3d&&(this.textures3d=n.textures3d),n.shaders&&(this.shaders=n.shaders),n.externalTexture&&(this.externalTexture=n.externalTexture),n.externalMesh&&(this.externalMesh=n.externalMesh),n.builtinMeshes&&(this.builtinMeshes=n.builtinMeshes),n.outputTex3d&&(this.outputTex3d=n.outputTex3d),n.outputGeo&&(this.outputGeo=n.outputGeo),n.uniformLayout&&(this.uniformLayout=n.uniformLayout),n.uniformLayouts&&(this.uniformLayouts=n.uniformLayouts),n.paramAliases&&(this.paramAliases=n.paramAliases),n.openCategories&&(this.openCategories=n.openCategories),n.defaultProgram&&(this.defaultProgram=n.defaultProgram),n.hidden&&(this.hidden=!0),n.deprecatedBy&&(this.deprecatedBy=n.deprecatedBy),n.onInit&&(this._configOnInit=n.onInit),n.onUpdate&&(this._configOnUpdate=n.onUpdate),n.onDestroy&&(this._configOnDestroy=n.onDestroy),n.asyncInit&&(this._configAsyncInit=n.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(n){return this._configOnUpdate?this._configOnUpdate.call(this,n):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(n){return this._configAsyncInit?this._configAsyncInit.call(this,n):Promise.resolve()}};var e=new t({name:"Shape",namespace:"synth",func:"shape",tags:["geometric"],description:"Interference patterns from geometric shapes",uniformLayout:{resolution:{slot:0,components:"xy"},time:{slot:0,components:"z"},seed:{slot:0,components:"w"},wrap:{slot:1,components:"x"},loopAScale:{slot:1,components:"w"},loopBScale:{slot:2,components:"x"},speedA:{slot:2,components:"y"},speedB:{slot:2,components:"z"},tileOffset:{slot:3,components:"xy"},fullResolution:{slot:3,components:"zw"}},globals:{loopAOffset:{type:"int",default:40,define:"LOOP_A_OFFSET",choices:{"Shapes:":null,circle:10,triangle:20,diamond:30,square:40,pentagon:50,hexagon:60,heptagon:70,octagon:80,nonagon:90,decagon:100,hendecagon:110,dodecagon:120,"Directional:":null,horizontalScan:200,verticalScan:210,"Noise:":null,noiseConstant:300,noiseLinear:310,noiseHermite:320,noiseCatmullRom3x3:330,noiseCatmullRom4x4:340,noiseBSpline3x3:350,noiseBSpline4x4:360,noiseSimplex:370,noiseSine:380,"Misc:":null,rings:400,sine:410},ui:{label:"loop a",control:"dropdown"}},loopBOffset:{type:"int",default:30,define:"LOOP_B_OFFSET",choices:{"Shapes:":null,circle:10,triangle:20,diamond:30,square:40,pentagon:50,hexagon:60,heptagon:70,octagon:80,nonagon:90,decagon:100,hendecagon:110,dodecagon:120,"Directional:":null,horizontalScan:200,verticalScan:210,"Noise:":null,noiseConstant:300,noiseLinear:310,noiseHermite:320,noiseCatmullRom3x3:330,noiseCatmullRom4x4:340,noiseBSpline3x3:350,noiseBSpline4x4:360,noiseSimplex:370,noiseSine:380,"Misc:":null,rings:400,sine:410},ui:{label:"loop b",control:"dropdown"}},loopAScale:{type:"float",default:1,uniform:"loopAScale",min:1,max:100,ui:{label:"a scale",control:"slider"}},loopBScale:{type:"float",default:1,uniform:"loopBScale",min:1,max:100,ui:{label:"b scale",control:"slider"}},speedA:{type:"int",default:50,uniform:"speedA",min:-100,max:100,zero:0,ui:{label:"speed a",control:"slider"}},speedB:{type:"int",default:50,uniform:"speedB",min:-100,max:100,zero:0,ui:{label:"speed b",control:"slider"}},seed:{type:"int",default:1,uniform:"seed",min:1,max:100,ui:{label:"noise seed",control:"slider",category:"noise",enabledBy:{or:[{param:"loopAOffset",gte:300,lt:400},{param:"loopBOffset",gte:300,lt:400}]}}},wrap:{type:"boolean",default:!0,uniform:"wrap",ui:{label:"wrap",control:"checkbox",category:"noise",enabledBy:{or:[{param:"loopAOffset",gte:300,lt:370},{param:"loopBOffset",gte:300,lt:370}]}}}},paramAliases:{loopAAmp:"speedA",loopBAmp:"speedB"},passes:[{name:"render",program:"shape",inputs:{},outputs:{fragColor:"outputTex"}}]});var o={shape:{glsl:`#version 300 es
 
 /*
  * GLSL shape generator shader (mono-only variant).
@@ -519,7 +519,7 @@ void main() {
  */
 
 struct Uniforms {
-    data : array<vec4<f32>, 3>,
+    data : array<vec4<f32>, 4>,
 };
 
 @group(0) @binding(0) var<uniform> uniforms : Uniforms;
@@ -537,6 +537,9 @@ var<private> loopBScale : f32;
 var<private> speedA : f32;
 var<private> speedB : f32;
 var<private> aspectRatio : f32;
+var<private> tileOffset : vec2<f32>;
+var<private> fullResolution : vec2<f32>;
+var<private> globalCoord : vec2<f32>;
 
 const PI : f32 = 3.14159265359;
 const TAU : f32 = 6.28318530718;
@@ -935,7 +938,7 @@ fn rings(st: vec2<f32>, freq: f32) -> f32 {
 }
 
 fn diamonds(pos: vec4<f32>, freq: f32) -> f32 {
-    var stLocal = pos.xy / resolution.y;
+    var stLocal = globalCoord / fullResolution.y;
     stLocal = stLocal - vec2<f32>(0.5 * aspectRatio, 0.5);
     stLocal = stLocal * freq;
     return (cos(stLocal.x * PI) + cos(stLocal.y * PI));
@@ -989,12 +992,14 @@ fn main(@builtin(position) pos: vec4<f32>) -> @location(0) vec4<f32> {
     speedB = uniforms.data[2].z;
     // Slot [2].w unused (was paletteMode)
 
-    // Slots [3] and [4] unused (were palette parameters)
-
-    aspectRatio = resolution.x / resolution.y;
+    // Slot [3] = (tileOffset.x, tileOffset.y, fullResolution.x, fullResolution.y)
+    tileOffset = uniforms.data[3].xy;
+    fullResolution = uniforms.data[3].zw;
 
     var color = vec4<f32>(0.0, 0.0, 0.0, 1.0);
-    var st = pos.xy / resolution.y;
+    globalCoord = pos.xy + tileOffset;
+    var st = globalCoord / fullResolution.y;
+    aspectRatio = fullResolution.x / fullResolution.y;
 
     var lf1 = map(loopAScale, 1.0, 100.0, 6.0, 1.0);
     if (wrap) {

@@ -572,7 +572,7 @@ fn rotate2D(st_in: vec2<f32>, rot: f32) -> vec2<f32> {
     st -= vec2<f32>(0.5 * aspectRatio, 0.5);
     let c = cos(angle);
     let s = sin(angle);
-    st = vec2<f32>(c * st.x - s * st.y, s * st.x + c * st.y);
+    st = mat2x2<f32>(c, -s, s, c) * st;
     st += vec2<f32>(0.5 * aspectRatio, 0.5);
     st.x /= aspectRatio;
     return st;
@@ -801,4 +801,4 @@ noise(seed: 1, ridges: true)
 
 render(o0)
 \`\`\`
-`;if(n&&Object.keys(o).length>0){n.shaders||(n.shaders={});for(let[r,e]of Object.entries(o))n.shaders[r]={...e}}n&&l&&(n.help=l);var f="filter/feedback",m="filter",d="feedback",u=n;export{u as default,f as effectId,d as effectName,l as help,m as namespace};
+`;if(n&&Object.keys(o).length>0){n.shaders||(n.shaders={});for(let[r,e]of Object.entries(o))n.shaders[r]={...e}}n&&l&&(n.help=l);var c="filter/feedback",m="filter",d="feedback",u=n;export{u as default,c as effectId,d as effectName,l as help,m as namespace};

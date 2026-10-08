@@ -61,6 +61,8 @@ struct Uniforms {
     alpha: f32,
     _pad1: f32,
     _pad2: f32,
+    tileOffset: vec2<f32>,
+    fullResolution: vec2<f32>,
 }
 
 @group(0) @binding(0) var inputSampler: sampler;
@@ -88,11 +90,14 @@ fn computeVignetteMask(uv: vec2<f32>, dims: vec2<f32>) -> f32 {
 @fragment
 fn main(@builtin(position) pos: vec4<f32>) -> @location(0) vec4<f32> {
     let texSize = vec2<f32>(textureDimensions(inputTex));
-    let uv = pos.xy / texSize;
+    let tileDims = texSize;
+    let dims = select(tileDims, uniforms.fullResolution, uniforms.fullResolution.x > 0.0);
+    let uv = pos.xy / tileDims;
+    let globalUV = (pos.xy + uniforms.tileOffset) / dims;
     
     let texel = textureSample(inputTex, inputSampler, uv);
     
-    let mask = computeVignetteMask(uv, texSize);
+    let mask = computeVignetteMask(globalUV, dims);
     
     // Apply brightness to RGB only, preserve alpha
     let brightnessRgb = vec3<f32>(uniforms.vignetteBrightness);
@@ -123,4 +128,4 @@ noise(seed: 1, ridges: true)
 
 render(o0)
 \`\`\`
-`;if(t&&Object.keys(i).length>0){t.shaders||(t.shaders={});for(let[s,e]of Object.entries(i))t.shaders[s]={...e}}t&&a&&(t.help=a);var d="filter/vignette",p="filter",f="vignette",m=t;export{m as default,d as effectId,f as effectName,a as help,p as namespace};
+`;if(t&&Object.keys(i).length>0){t.shaders||(t.shaders={});for(let[s,e]of Object.entries(i))t.shaders[s]={...e}}t&&a&&(t.help=a);var f="filter/vignette",d="filter",p="vignette",m=t;export{m as default,f as effectId,p as effectName,a as help,d as namespace};

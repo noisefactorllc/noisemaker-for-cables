@@ -1,5 +1,5 @@
 /* synth/reactionDiffusion */
-var n=class{constructor(e={}){this.state={},this.uniforms={},e.name&&(this.name=e.name),e.namespace&&(this.namespace=e.namespace),e.func&&(this.func=e.func),e.description&&(this.description=e.description),e.tags&&(this.tags=e.tags),e.globals&&(this.globals=e.globals),e.passes&&(this.passes=e.passes),e.textures&&(this.textures=e.textures),e.textures3d&&(this.textures3d=e.textures3d),e.shaders&&(this.shaders=e.shaders),e.externalTexture&&(this.externalTexture=e.externalTexture),e.externalMesh&&(this.externalMesh=e.externalMesh),e.builtinMeshes&&(this.builtinMeshes=e.builtinMeshes),e.outputTex3d&&(this.outputTex3d=e.outputTex3d),e.outputGeo&&(this.outputGeo=e.outputGeo),e.uniformLayout&&(this.uniformLayout=e.uniformLayout),e.uniformLayouts&&(this.uniformLayouts=e.uniformLayouts),e.paramAliases&&(this.paramAliases=e.paramAliases),e.openCategories&&(this.openCategories=e.openCategories),e.defaultProgram&&(this.defaultProgram=e.defaultProgram),e.hidden&&(this.hidden=!0),e.deprecatedBy&&(this.deprecatedBy=e.deprecatedBy),e.onInit&&(this._configOnInit=e.onInit),e.onUpdate&&(this._configOnUpdate=e.onUpdate),e.onDestroy&&(this._configOnDestroy=e.onDestroy),e.asyncInit&&(this._configAsyncInit=e.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(e){return this._configOnUpdate?this._configOnUpdate.call(this,e):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(e){return this._configAsyncInit?this._configAsyncInit.call(this,e):Promise.resolve()}};var t=new n({name:"Reaction-Diffusion",func:"reactionDiffusion",tags:["sim"],description:"Gray-Scott reaction-diffusion",uniformLayouts:{rd:{resolution:{slot:0,components:"xy"},time:{slot:0,components:"z"},inputIntensity:{slot:1,components:"x"},smoothing:{slot:3,components:"w"}},rdFb:{resolution:{slot:0,components:"xy"},time:{slot:0,components:"z"},zoom:{slot:0,components:"w"},feed:{slot:1,components:"x"},kill:{slot:1,components:"y"},rate1:{slot:1,components:"z"},rate2:{slot:1,components:"w"},speed:{slot:2,components:"x"},weight:{slot:2,components:"y"},sourceF:{slot:2,components:"z"},sourceK:{slot:2,components:"w"},sourceR1:{slot:3,components:"x"},sourceR2:{slot:3,components:"y"},resetState:{slot:3,components:"z"},seed:{slot:3,components:"w"}}},textures:{global_rd_state:{width:{screenDivide:"zoom",default:8},height:{screenDivide:"zoom",default:8}}},globals:{tex:{type:"surface",default:"none",ui:{label:"texture",category:"input"}},zoom:{type:"int",default:8,uniform:"zoom",choices:{x1:1,x2:2,x4:4,x8:8,x16:16,x32:32,x64:64},randChoices:[4,8,16,32,64],ui:{label:"zoom",control:"dropdown"}},smoothing:{type:"int",default:1,uniform:"smoothing",choices:{constant:0,linear:1,hermite:2,catmullRom3x3:3,catmullRom4x4:4,bSpline3x3:5,bSpline4x4:6},ui:{label:"smoothing",control:"dropdown"}},speed:{type:"float",default:100,uniform:"speed",min:10,max:145,randMax:50,ui:{label:"speed",control:"slider"}},resetState:{type:"boolean",default:!1,uniform:"resetState",ui:{control:"button",buttonLabel:"reset",label:"state"}},seed:{type:"int",default:1,uniform:"seed",min:1,max:100,ui:{label:"seed",control:!1}},sourceF:{type:"int",default:0,uniform:"sourceF",choices:{slider:0,sliderInput:6,brightness:1,darkness:2,red:3,green:4,blue:5},randChance:0,ui:{label:"feed source",control:"dropdown",category:"rules"}},feed:{type:"float",default:70,uniform:"feed",min:10,max:110,randMin:35,randMax:50,ui:{label:"feed value",control:"slider",category:"rules"}},sourceK:{type:"int",default:0,uniform:"sourceK",choices:{slider:0,sliderInput:6,brightness:1,darkness:2,red:3,green:4,blue:5},randChance:0,ui:{label:"kill source",control:"dropdown",category:"rules"}},kill:{type:"float",default:67,uniform:"kill",min:45,max:70,randMin:50,randMax:65,ui:{label:"kill value",control:"slider",category:"rules"}},sourceR1:{type:"int",default:0,uniform:"sourceR1",choices:{slider:0,sliderInput:6,brightness:1,darkness:2,red:3,green:4,blue:5},randChance:0,ui:{label:"rate 1 source",control:"dropdown",category:"rules"}},rate1:{type:"float",default:92,uniform:"rate1",min:50,max:120,ui:{label:"rate 1 value",control:"slider",category:"rules"}},sourceR2:{type:"int",default:0,uniform:"sourceR2",choices:{slider:0,sliderInput:6,brightness:1,darkness:2,red:3,green:4,blue:5},randChance:0,ui:{label:"rate 2 source",control:"dropdown",category:"rules"}},rate2:{type:"float",default:22,uniform:"rate2",min:20,max:50,randMax:35,ui:{label:"rate 2 value",control:"slider",category:"rules"}},iterations:{type:"int",default:8,uniform:"iterations",min:1,max:32,randMin:6,ui:{label:"iterations",control:"slider",category:"rules"}},weight:{type:"float",default:0,uniform:"weight",min:0,max:100,randChance:0,ui:{label:"input weight",control:"slider",category:"input",enabledBy:{param:"tex",neq:"none"}}},inputIntensity:{type:"float",default:0,uniform:"inputIntensity",min:0,max:100,randChance:0,ui:{label:"input mix",control:"slider",category:"input",enabledBy:{param:"tex",neq:"none"}}}},passes:[{name:"simulate",program:"rdFb",repeat:"iterations",inputs:{bufTex:"global_rd_state",inputTex:"tex"},outputs:{fragColor:"global_rd_state"}},{name:"render",program:"rd",inputs:{fbTex:"global_rd_state",inputTex:"tex"},outputs:{fragColor:"outputTex"}}]});var r={rd:{glsl:`#version 300 es
+var n=class{constructor(e={}){this.state={},this.uniforms={},e.name&&(this.name=e.name),e.namespace&&(this.namespace=e.namespace),e.func&&(this.func=e.func),e.description&&(this.description=e.description),e.tags&&(this.tags=e.tags),e.globals&&(this.globals=e.globals),e.passes&&(this.passes=e.passes),e.textures&&(this.textures=e.textures),e.textures3d&&(this.textures3d=e.textures3d),e.shaders&&(this.shaders=e.shaders),e.externalTexture&&(this.externalTexture=e.externalTexture),e.externalMesh&&(this.externalMesh=e.externalMesh),e.builtinMeshes&&(this.builtinMeshes=e.builtinMeshes),e.outputTex3d&&(this.outputTex3d=e.outputTex3d),e.outputGeo&&(this.outputGeo=e.outputGeo),e.uniformLayout&&(this.uniformLayout=e.uniformLayout),e.uniformLayouts&&(this.uniformLayouts=e.uniformLayouts),e.paramAliases&&(this.paramAliases=e.paramAliases),e.openCategories&&(this.openCategories=e.openCategories),e.defaultProgram&&(this.defaultProgram=e.defaultProgram),e.hidden&&(this.hidden=!0),e.deprecatedBy&&(this.deprecatedBy=e.deprecatedBy),e.onInit&&(this._configOnInit=e.onInit),e.onUpdate&&(this._configOnUpdate=e.onUpdate),e.onDestroy&&(this._configOnDestroy=e.onDestroy),e.asyncInit&&(this._configAsyncInit=e.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(e){return this._configOnUpdate?this._configOnUpdate.call(this,e):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(e){return this._configAsyncInit?this._configAsyncInit.call(this,e):Promise.resolve()}};var t=new n({name:"Reaction-Diffusion",func:"reactionDiffusion",tags:["sim"],description:"Gray-Scott reaction-diffusion",uniformLayouts:{rd:{resolution:{slot:0,components:"xy"},time:{slot:0,components:"z"},inputIntensity:{slot:1,components:"x"},tileOffset:{slot:2,components:"xy"},fullResolution:{slot:2,components:"zw"},smoothing:{slot:3,components:"w"}},rdFb:{resolution:{slot:0,components:"xy"},time:{slot:0,components:"z"},zoom:{slot:0,components:"w"},feed:{slot:1,components:"x"},kill:{slot:1,components:"y"},rate1:{slot:1,components:"z"},rate2:{slot:1,components:"w"},speed:{slot:2,components:"x"},weight:{slot:2,components:"y"},sourceF:{slot:2,components:"z"},sourceK:{slot:2,components:"w"},sourceR1:{slot:3,components:"x"},sourceR2:{slot:3,components:"y"},resetState:{slot:3,components:"z"},seed:{slot:3,components:"w"}}},textures:{global_rd_state:{width:{screenDivide:"zoom",default:8},height:{screenDivide:"zoom",default:8}}},globals:{tex:{type:"surface",default:"none",ui:{label:"texture",category:"input"}},zoom:{type:"int",default:8,uniform:"zoom",choices:{x1:1,x2:2,x4:4,x8:8,x16:16,x32:32,x64:64},randChoices:[4,8,16,32,64],ui:{label:"zoom",control:"dropdown"}},smoothing:{type:"int",default:1,uniform:"smoothing",choices:{constant:0,linear:1,hermite:2,catmullRom3x3:3,catmullRom4x4:4,bSpline3x3:5,bSpline4x4:6},ui:{label:"smoothing",control:"dropdown"}},speed:{type:"float",default:100,uniform:"speed",min:10,max:145,randMax:50,ui:{label:"speed",control:"slider"}},resetState:{type:"boolean",default:!1,uniform:"resetState",ui:{control:"button",buttonLabel:"reset",label:"state"}},seed:{type:"int",default:1,uniform:"seed",min:1,max:100,ui:{label:"seed",control:!1}},sourceF:{type:"int",default:0,uniform:"sourceF",choices:{slider:0,sliderInput:6,brightness:1,darkness:2,red:3,green:4,blue:5},randChance:0,ui:{label:"feed source",control:"dropdown",category:"rules"}},feed:{type:"float",default:70,uniform:"feed",min:10,max:110,randMin:35,randMax:50,ui:{label:"feed value",control:"slider",category:"rules"}},sourceK:{type:"int",default:0,uniform:"sourceK",choices:{slider:0,sliderInput:6,brightness:1,darkness:2,red:3,green:4,blue:5},randChance:0,ui:{label:"kill source",control:"dropdown",category:"rules"}},kill:{type:"float",default:67,uniform:"kill",min:45,max:70,randMin:50,randMax:65,ui:{label:"kill value",control:"slider",category:"rules"}},sourceR1:{type:"int",default:0,uniform:"sourceR1",choices:{slider:0,sliderInput:6,brightness:1,darkness:2,red:3,green:4,blue:5},randChance:0,ui:{label:"rate 1 source",control:"dropdown",category:"rules"}},rate1:{type:"float",default:92,uniform:"rate1",min:50,max:120,ui:{label:"rate 1 value",control:"slider",category:"rules"}},sourceR2:{type:"int",default:0,uniform:"sourceR2",choices:{slider:0,sliderInput:6,brightness:1,darkness:2,red:3,green:4,blue:5},randChance:0,ui:{label:"rate 2 source",control:"dropdown",category:"rules"}},rate2:{type:"float",default:22,uniform:"rate2",min:20,max:50,randMax:35,ui:{label:"rate 2 value",control:"slider",category:"rules"}},iterations:{type:"int",default:8,uniform:"iterations",min:1,max:32,randMin:6,ui:{label:"iterations",control:"slider",category:"rules"}},weight:{type:"float",default:0,uniform:"weight",min:0,max:100,randChance:0,ui:{label:"input weight",control:"slider",category:"input",enabledBy:{param:"tex",neq:"none"}}},inputIntensity:{type:"float",default:0,uniform:"inputIntensity",min:0,max:100,randChance:0,ui:{label:"input mix",control:"slider",category:"input",enabledBy:{param:"tex",neq:"none"}}}},passes:[{name:"simulate",program:"rdFb",repeat:"iterations",inputs:{bufTex:"global_rd_state",inputTex:"tex"},outputs:{fragColor:"global_rd_state"}},{name:"render",program:"rd",inputs:{fbTex:"global_rd_state",inputTex:"tex"},outputs:{fragColor:"outputTex"}}]});var l={rd:{glsl:`#version 300 es
 
 /*
  * Reaction-diffusion display shader.
@@ -348,7 +348,7 @@ void main() {
 struct Uniforms {
     // data[0] = (resolution.x, resolution.y, time, unused)
     // data[1] = (inputIntensity, unused, unused, unused)
-    // data[2] = (unused, unused, unused, unused)
+    // data[2] = (tileOffset.x, tileOffset.y, fullResolution.x, fullResolution.y)
     // data[3] = (unused, unused, unused, smoothing)
     data : array<vec4<f32>, 4>,
 };
@@ -547,19 +547,22 @@ fn main(@builtin(position) pos : vec4<f32>) -> @location(0) vec4<f32> {
     let resolution = uniforms.data[0].xy;
     let smoothing = i32(uniforms.data[3].w);
     let inputIntensity = uniforms.data[1].x * 0.01;
+    let tileOffset = uniforms.data[2].xy;
+    let fullResolution = uniforms.data[2].zw;
+    let globalCoord = pos.xy + tileOffset;
 
     var intensity = 1.0;
 
     if (smoothing == 0) {
         let texSizeI = vec2<i32>(textureDimensions(fbTex, 0));
         let texSizeF = vec2<f32>(f32(texSizeI.x), f32(texSizeI.y));
-        let coord = vec2<i32>(floor(pos.xy * texSizeF / resolution));
+        let coord = vec2<i32>(floor(globalCoord * texSizeF / fullResolution));
         let clamped = clamp(coord, vec2<i32>(0), texSizeI - vec2<i32>(1));
         intensity = clamp(textureLoad(fbTex, clamped, 0).g, 0.0, 1.0);
     } else if (smoothing == 2) {
         // hermite (smoothstep)
         let texSize = vec2<f32>(textureDimensions(fbTex, 0));
-        let texelPos = (pos.xy * texSize / resolution) - vec2<f32>(0.5);
+        let texelPos = (globalCoord * texSize / fullResolution) - vec2<f32>(0.5);
         let base = floor(texelPos);
         let weights = fract(texelPos);
         let next = base + vec2<f32>(1.0);
@@ -584,37 +587,37 @@ fn main(@builtin(position) pos : vec4<f32>) -> @location(0) vec4<f32> {
         // catmull-rom 3x3 (9 taps)
         let texSize = vec2<f32>(textureDimensions(fbTex, 0));
         let texelSize = 1.0 / texSize;
-        let scaling = resolution / texSize;
-        let uv = (pos.xy - scaling * 0.5) / resolution;
+        let scaling = fullResolution / texSize;
+        let uv = (globalCoord - scaling * 0.5) / fullResolution;
         let sample = catmullRom3x3(fbTex, uv, texelSize);
         intensity = clamp(sample.g, 0.0, 1.0);
     } else if (smoothing == 4) {
         // catmull-rom 4x4 (16 taps)
         let texSize = vec2<f32>(textureDimensions(fbTex, 0));
         let texelSize = 1.0 / texSize;
-        let scaling = resolution / texSize;
-        let uv = (pos.xy - scaling * 0.5) / resolution;
+        let scaling = fullResolution / texSize;
+        let uv = (globalCoord - scaling * 0.5) / fullResolution;
         let sample = catmullRom4x4(fbTex, uv, texelSize);
         intensity = clamp(sample.g, 0.0, 1.0);
     } else if (smoothing == 5) {
         // b-spline 3x3 (9 taps)
         let texSize = vec2<f32>(textureDimensions(fbTex, 0));
         let texelSize = 1.0 / texSize;
-        let scaling = resolution / texSize;
-        let uv = (pos.xy - scaling * 0.5) / resolution;
+        let scaling = fullResolution / texSize;
+        let uv = (globalCoord - scaling * 0.5) / fullResolution;
         let sample = quadratic(fbTex, uv, texelSize);
         intensity = clamp(sample.g, 0.0, 1.0);
     } else if (smoothing == 6) {
         // b-spline 4x4 (16 taps)
         let texSize = vec2<f32>(textureDimensions(fbTex, 0));
         let texelSize = 1.0 / texSize;
-        let scaling = resolution / texSize;
-        let uv = (pos.xy - scaling * 0.5) / resolution;
+        let scaling = fullResolution / texSize;
+        let uv = (globalCoord - scaling * 0.5) / fullResolution;
         let sample = bicubic(fbTex, uv, texelSize);
         intensity = clamp(sample.g, 0.0, 1.0);
     } else {
         let texSize = vec2<f32>(textureDimensions(fbTex, 0));
-        let texelPos = (pos.xy * texSize / resolution) - vec2<f32>(0.5, 0.5);
+        let texelPos = (globalCoord * texSize / fullResolution) - vec2<f32>(0.5, 0.5);
         let base = floor(texelPos);
         let weights = fract(texelPos);
         let next = base + vec2<f32>(1.0, 1.0);
@@ -645,7 +648,7 @@ fn main(@builtin(position) pos : vec4<f32>) -> @location(0) vec4<f32> {
 
     // Blend with input texture
     if (inputIntensity > 0.0) {
-        var inputUv = pos.xy / resolution;
+        var inputUv = globalCoord / fullResolution;
         let inputColor = textureSampleLevel(inputTex, samp, inputUv, 0.0).rgb;
         rdColor = mix(rdColor, inputColor, inputIntensity);
     }
@@ -1037,7 +1040,7 @@ fn main(@builtin(position) pos : vec4<f32>) -> @location(0) vec4<f32> {
 
     return vec4<f32>(a2, b2, 0.0, 1.0);
 }
-`}},l=`# reactionDiffusion
+`}},r=`# reactionDiffusion
 
 Gray-Scott reaction-diffusion
 
@@ -1078,4 +1081,4 @@ reactionDiffusion(tex: read(o0))
 
 render(o1)
 \`\`\`
-`;if(t&&Object.keys(r).length>0){t.shaders||(t.shaders={});for(let[o,e]of Object.entries(r))t.shaders[o]={...e}}t&&l&&(t.help=l);var x="synth/reactionDiffusion",v="synth",c="reactionDiffusion",f=t;export{f as default,x as effectId,c as effectName,l as help,v as namespace};
+`;if(t&&Object.keys(l).length>0){t.shaders||(t.shaders={});for(let[o,e]of Object.entries(l))t.shaders[o]={...e}}t&&r&&(t.help=r);var x="synth/reactionDiffusion",v="synth",c="reactionDiffusion",f=t;export{f as default,x as effectId,c as effectName,r as help,v as namespace};

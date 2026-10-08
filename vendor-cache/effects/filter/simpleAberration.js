@@ -3,7 +3,7 @@ var n=class{constructor(e={}){this.state={},this.uniforms={},e.name&&(this.name=
 
 noise(ridges: true, colorMode: mono)
 .simpleAberration()
-.write(o0)`,passes:[{name:"render",program:"chromaticAberration",inputs:{inputTex:"inputTex"},uniforms:{displacement:"displacement"},outputs:{fragColor:"outputTex"}}]});var s={chromaticAberration:{glsl:`#version 300 es
+.write(o0)`,passes:[{name:"render",program:"chromaticAberration",inputs:{inputTex:"inputTex"},uniforms:{displacement:"displacement"},outputs:{fragColor:"outputTex"}}]});var i={chromaticAberration:{glsl:`#version 300 es
 
 /*
  * Chromatic aberration effect.
@@ -54,26 +54,38 @@ struct Uniforms {
     resolution: vec2f,
     aspect: f32,
     displacement: f32,
+    tileOffset: vec2f,
+    fullResolution: vec2f,
 }
 
 @group(0) @binding(2) var<uniform> u: Uniforms;
 
 @fragment
 fn main(@builtin(position) fragCoord: vec4f) -> @location(0) vec4f {
-    var uv = fragCoord.xy / u.resolution;
+    let texSize = vec2f(textureDimensions(inputTex));
+    let globalPixel = fragCoord.xy + u.tileOffset;
+    let globalUV = globalPixel / u.fullResolution;
 
-    let redOffset = clamp(uv.x + u.displacement, 0.0, 1.0);
-    let red = textureSample(inputTex, samp, vec2f(redOffset, uv.y));
+    let maxDisplacementUV = 256.0 / u.fullResolution.x;
+    let boundedDisplacement = clamp(u.displacement, -maxDisplacementUV, maxDisplacementUV);
 
-    let green = textureSample(inputTex, samp, uv);
+    let redGlobalUV = globalUV + vec2f(boundedDisplacement, 0.0);
+    let redLocalUV = (redGlobalUV * u.fullResolution - u.tileOffset) / texSize;
+    let redOffset = clamp(redLocalUV.x, 0.0, 1.0);
+    let red = textureSample(inputTex, samp, vec2f(redOffset, redLocalUV.y));
 
-    let blueOffset = clamp(uv.x - u.displacement, 0.0, 1.0);
-    let blue = textureSample(inputTex, samp, vec2f(blueOffset, uv.y));
+    let greenLocalUV = (globalUV * u.fullResolution - u.tileOffset) / texSize;
+    let green = textureSample(inputTex, samp, greenLocalUV);
+
+    let blueGlobalUV = globalUV - vec2f(boundedDisplacement, 0.0);
+    let blueLocalUV = (blueGlobalUV * u.fullResolution - u.tileOffset) / texSize;
+    let blueOffset = clamp(blueLocalUV.x, 0.0, 1.0);
+    let blue = textureSample(inputTex, samp, vec2f(blueOffset, blueLocalUV.y));
 
     // chromatic aberration
     return vec4f(red.r, green.g, blue.b, green.a);
 }
-`}},i=`# simpleAberration
+`}},l=`# simpleAberration
 
 Chromatic aberration
 
@@ -94,4 +106,4 @@ noise(seed: 1, ridges: true)
 
 render(o0)
 \`\`\`
-`;if(t&&Object.keys(s).length>0){t.shaders||(t.shaders={});for(let[r,e]of Object.entries(s))t.shaders[r]={...e}}t&&i&&(t.help=i);var p="filter/simpleAberration",f="filter",c="simpleAberration",m=t;export{m as default,p as effectId,c as effectName,i as help,f as namespace};
+`;if(t&&Object.keys(i).length>0){t.shaders||(t.shaders={});for(let[r,e]of Object.entries(i))t.shaders[r]={...e}}t&&l&&(t.help=l);var f="filter/simpleAberration",p="filter",c="simpleAberration",m=t;export{m as default,f as effectId,c as effectName,l as help,p as namespace};

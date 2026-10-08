@@ -1,5 +1,5 @@
 /* synth/cellularAutomata */
-var t=class{constructor(e={}){this.state={},this.uniforms={},e.name&&(this.name=e.name),e.namespace&&(this.namespace=e.namespace),e.func&&(this.func=e.func),e.description&&(this.description=e.description),e.tags&&(this.tags=e.tags),e.globals&&(this.globals=e.globals),e.passes&&(this.passes=e.passes),e.textures&&(this.textures=e.textures),e.textures3d&&(this.textures3d=e.textures3d),e.shaders&&(this.shaders=e.shaders),e.externalTexture&&(this.externalTexture=e.externalTexture),e.externalMesh&&(this.externalMesh=e.externalMesh),e.builtinMeshes&&(this.builtinMeshes=e.builtinMeshes),e.outputTex3d&&(this.outputTex3d=e.outputTex3d),e.outputGeo&&(this.outputGeo=e.outputGeo),e.uniformLayout&&(this.uniformLayout=e.uniformLayout),e.uniformLayouts&&(this.uniformLayouts=e.uniformLayouts),e.paramAliases&&(this.paramAliases=e.paramAliases),e.openCategories&&(this.openCategories=e.openCategories),e.defaultProgram&&(this.defaultProgram=e.defaultProgram),e.hidden&&(this.hidden=!0),e.deprecatedBy&&(this.deprecatedBy=e.deprecatedBy),e.onInit&&(this._configOnInit=e.onInit),e.onUpdate&&(this._configOnUpdate=e.onUpdate),e.onDestroy&&(this._configOnDestroy=e.onDestroy),e.asyncInit&&(this._configAsyncInit=e.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(e){return this._configOnUpdate?this._configOnUpdate.call(this,e):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(e){return this._configAsyncInit?this._configAsyncInit.call(this,e):Promise.resolve()}};var n=new t({name:"Cellular Automata",func:"cellularAutomata",tags:["sim"],description:"2D cellular automata with rule presets",uniformLayouts:{ca:{resolution:{slot:0,components:"xy"},time:{slot:0,components:"z"},smoothing:{slot:1,components:"y"}},caFb:{deltaTime:{slot:0,components:"y"},seed:{slot:0,components:"z"},resetState:{slot:0,components:"w"},ruleIndex:{slot:1,components:"x"},speed:{slot:1,components:"y"},weight:{slot:1,components:"z"},bornMask0:{slot:2,components:"xyzw"},bornMask1:{slot:3,components:"xyzw"},bornMask2:{slot:4,components:"x"},surviveMask0:{slot:4,components:"yzw"},surviveMask1:{slot:5,components:"xyzw"},surviveMask2:{slot:6,components:"xy"},source:{slot:6,components:"z"}}},textures:{global_ca_state:{width:{screenDivide:"zoom",default:32},height:{screenDivide:"zoom",default:32}}},globals:{tex:{type:"surface",default:"none",ui:{label:"texture",category:"input"}},zoom:{type:"int",default:32,choices:{x1:1,x2:2,x4:4,x8:8,x16:16,x32:32,x64:64},randChoices:[4,8,16,32,64],ui:{label:"zoom",control:"dropdown"}},ruleIndex:{type:"int",default:0,choices:{classicLife:0,highlife:1,seeds:2,coral:3,dayNight:4,lifeWithoutDeath:5,replicator:6,amoeba:7,maze:8,gliderWalk:9,diamoeba:10,size2x2:11,morley:12,anneal:13,size34Life:14,simpleReplicator:15,waffles:16,pondLife:17},ui:{label:"rules",control:"dropdown"},uniform:"ruleIndex"},smoothing:{type:"int",default:0,choices:{constant:0,linear:1,hermite:2,catmullRom3x3:3,catmullRom4x4:4,bSpline3x3:5,bSpline4x4:6},ui:{label:"smoothing",control:"dropdown"},uniform:"smoothing"},seed:{type:"int",default:1,min:1,max:100,ui:{label:"seed",control:!1},uniform:"seed"},speed:{type:"float",default:10,min:1,max:100,ui:{label:"speed",control:"slider"},uniform:"speed"},resetState:{type:"boolean",default:!1,uniform:"resetState",ui:{control:"button",buttonLabel:"reset",label:"state"}},weight:{type:"float",default:0,min:0,max:100,randChance:0,ui:{label:"input weight",control:"slider",category:"input",enabledBy:{param:"tex",neq:"none"}},uniform:"weight"},source:{type:"int",default:0,min:0,max:7,ui:{control:!1},uniform:"source"}},passes:[{name:"update",program:"caFb",inputs:{bufTex:"global_ca_state",tex:"tex"},outputs:{fragColor:"global_ca_state"}},{name:"render",program:"ca",inputs:{fbTex:"global_ca_state",prevFrameTex:"global_ca_state",bufTex:"global_ca_state",tex:"tex"},outputs:{fragColor:"outputTex"}}]});var l={ca:{glsl:`#version 300 es
+var t=class{constructor(e={}){this.state={},this.uniforms={},e.name&&(this.name=e.name),e.namespace&&(this.namespace=e.namespace),e.func&&(this.func=e.func),e.description&&(this.description=e.description),e.tags&&(this.tags=e.tags),e.globals&&(this.globals=e.globals),e.passes&&(this.passes=e.passes),e.textures&&(this.textures=e.textures),e.textures3d&&(this.textures3d=e.textures3d),e.shaders&&(this.shaders=e.shaders),e.externalTexture&&(this.externalTexture=e.externalTexture),e.externalMesh&&(this.externalMesh=e.externalMesh),e.builtinMeshes&&(this.builtinMeshes=e.builtinMeshes),e.outputTex3d&&(this.outputTex3d=e.outputTex3d),e.outputGeo&&(this.outputGeo=e.outputGeo),e.uniformLayout&&(this.uniformLayout=e.uniformLayout),e.uniformLayouts&&(this.uniformLayouts=e.uniformLayouts),e.paramAliases&&(this.paramAliases=e.paramAliases),e.openCategories&&(this.openCategories=e.openCategories),e.defaultProgram&&(this.defaultProgram=e.defaultProgram),e.hidden&&(this.hidden=!0),e.deprecatedBy&&(this.deprecatedBy=e.deprecatedBy),e.onInit&&(this._configOnInit=e.onInit),e.onUpdate&&(this._configOnUpdate=e.onUpdate),e.onDestroy&&(this._configOnDestroy=e.onDestroy),e.asyncInit&&(this._configAsyncInit=e.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(e){return this._configOnUpdate?this._configOnUpdate.call(this,e):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(e){return this._configAsyncInit?this._configAsyncInit.call(this,e):Promise.resolve()}};var n=new t({name:"Cellular Automata",func:"cellularAutomata",tags:["sim"],description:"2D cellular automata with rule presets",uniformLayouts:{ca:{resolution:{slot:0,components:"xy"},time:{slot:0,components:"z"},smoothing:{slot:1,components:"y"},tileOffset:{slot:2,components:"xy"},fullResolution:{slot:2,components:"zw"}},caFb:{deltaTime:{slot:0,components:"y"},seed:{slot:0,components:"z"},resetState:{slot:0,components:"w"},ruleIndex:{slot:1,components:"x"},speed:{slot:1,components:"y"},weight:{slot:1,components:"z"},bornMask0:{slot:2,components:"xyzw"},bornMask1:{slot:3,components:"xyzw"},bornMask2:{slot:4,components:"x"},surviveMask0:{slot:4,components:"yzw"},surviveMask1:{slot:5,components:"xyzw"},surviveMask2:{slot:6,components:"xy"},source:{slot:6,components:"z"}}},textures:{global_ca_state:{width:{screenDivide:"zoom",default:32},height:{screenDivide:"zoom",default:32}}},globals:{tex:{type:"surface",default:"none",ui:{label:"texture",category:"input"}},zoom:{type:"int",default:32,choices:{x1:1,x2:2,x4:4,x8:8,x16:16,x32:32,x64:64},randChoices:[4,8,16,32,64],ui:{label:"zoom",control:"dropdown"}},ruleIndex:{type:"int",default:0,choices:{classicLife:0,highlife:1,seeds:2,coral:3,dayNight:4,lifeWithoutDeath:5,replicator:6,amoeba:7,maze:8,gliderWalk:9,diamoeba:10,size2x2:11,morley:12,anneal:13,size34Life:14,simpleReplicator:15,waffles:16,pondLife:17},ui:{label:"rules",control:"dropdown"},uniform:"ruleIndex"},smoothing:{type:"int",default:0,choices:{constant:0,linear:1,hermite:2,catmullRom3x3:3,catmullRom4x4:4,bSpline3x3:5,bSpline4x4:6},ui:{label:"smoothing",control:"dropdown"},uniform:"smoothing"},seed:{type:"int",default:1,min:1,max:100,ui:{label:"seed",control:!1},uniform:"seed"},speed:{type:"float",default:10,min:1,max:100,ui:{label:"speed",control:"slider"},uniform:"speed"},resetState:{type:"boolean",default:!1,uniform:"resetState",ui:{control:"button",buttonLabel:"reset",label:"state"}},weight:{type:"float",default:0,min:0,max:100,randChance:0,ui:{label:"input weight",control:"slider",category:"input",enabledBy:{param:"tex",neq:"none"}},uniform:"weight"},source:{type:"int",default:0,min:0,max:7,ui:{control:!1},uniform:"source"}},passes:[{name:"update",program:"caFb",inputs:{bufTex:"global_ca_state",tex:"tex"},outputs:{fragColor:"global_ca_state"}},{name:"render",program:"ca",inputs:{fbTex:"global_ca_state",prevFrameTex:"global_ca_state",bufTex:"global_ca_state",tex:"tex"},outputs:{fragColor:"outputTex"}}]});var l={ca:{glsl:`#version 300 es
 
 /*
  * Cellular automata display pass.
@@ -303,7 +303,7 @@ void main() {
 // Mono-only version (no palette support).
 
 struct Uniforms {
-    data : array<vec4<f32>, 2>,
+    data : array<vec4<f32>, 3>,
 };
 
 @group(0) @binding(0) var<uniform> uniforms : Uniforms;
@@ -331,15 +331,14 @@ fn bicubic4(p0: vec4<f32>, p1: vec4<f32>, p2: vec4<f32>, p3: vec4<f32>, t: f32) 
 }
 
 fn catmullRom3(p0: vec4<f32>, p1: vec4<f32>, p2: vec4<f32>, t: f32) -> vec4<f32> {
+    // Catmull-Rom-esque cubic through 3 points
+    // Interpolating (passes through control points)
     let t2 = t * t;
     let t3 = t2 * t;
 
-    let m = 0.5 * (p2 - p0);
-
-    return (2.0*t3 - 3.0*t2 + 1.0) * p1 +
-           (t3 - 2.0*t2 + t) * m +
-           (-2.0*t3 + 3.0*t2) * p2 +
-           (t3 - t2) * m;
+    return p1 + 0.5 * t * (p2 - p0) +
+           0.5 * t2 * (2.0*p0 - 5.0*p1 + 4.0*p2 - p0) +
+           0.5 * t3 * (-p0 + 3.0*p1 - 3.0*p2 + p0);
 }
 
 fn catmullRom4(p0: vec4<f32>, p1: vec4<f32>, p2: vec4<f32>, p3: vec4<f32>, t: f32) -> vec4<f32> {
@@ -494,46 +493,49 @@ fn cosineMix(a: f32, b: f32, t: f32) -> f32 {
 @fragment fn main(@builtin(position) fragCoord: vec4<f32>) -> @location(0) vec4<f32> {
     let resolution = uniforms.data[0].xy;
     let smoothing = i32(uniforms.data[1].y);
+    let tileOffset = uniforms.data[2].xy;
+    let fullResolution = uniforms.data[2].zw;
+    let globalCoord = fragCoord.xy + tileOffset;
 
     var state: f32 = 0.0;
     if (smoothing == 0) {
         // constant - use textureLoad for exact nearest-neighbor sampling
         let texSizeI = vec2<i32>(textureDimensions(fbTex, 0));
         let texSizeF = vec2<f32>(f32(texSizeI.x), f32(texSizeI.y));
-        let pixelCoord = vec2<i32>(floor(fragCoord.xy * texSizeF / resolution));
+        let pixelCoord = vec2<i32>(floor(globalCoord * texSizeF / fullResolution));
         state = textureLoad(fbTex, clamp(pixelCoord, vec2<i32>(0), texSizeI - vec2<i32>(1)), 0).g;
     } else if (smoothing == 3) {
         // catmull-rom 3x3 (9 taps)
         let texSize = vec2<f32>(textureDimensions(fbTex, 0));
         let texelSize = 1.0 / texSize;
-        let scaling = resolution / texSize;
-        let uv = (fragCoord.xy - scaling * 0.5) / resolution;
+        let scaling = fullResolution / texSize;
+        let uv = (globalCoord - scaling * 0.5) / fullResolution;
         state = catmullRom3x3Sample(fbTex, mySampler, uv, texelSize).g;
     } else if (smoothing == 4) {
         // catmull-rom 4x4 (16 taps)
         let texSize = vec2<f32>(textureDimensions(fbTex, 0));
         let texelSize = 1.0 / texSize;
-        let scaling = resolution / texSize;
-        let uv = (fragCoord.xy - scaling * 0.5) / resolution;
+        let scaling = fullResolution / texSize;
+        let uv = (globalCoord - scaling * 0.5) / fullResolution;
         state = catmullRom4x4Sample(fbTex, mySampler, uv, texelSize).g;
     } else if (smoothing == 5) {
         // b-spline 3x3 (9 taps)
         let texSize = vec2<f32>(textureDimensions(fbTex, 0));
         let texelSize = 1.0 / texSize;
-        let scaling = resolution / texSize;
-        let uv = (fragCoord.xy - scaling * 0.5) / resolution;
+        let scaling = fullResolution / texSize;
+        let uv = (globalCoord - scaling * 0.5) / fullResolution;
         state = quadraticSample(fbTex, mySampler, uv, texelSize).g;
     } else if (smoothing == 6) {
         // b-spline 4x4 (16 taps)
         let texSize = vec2<f32>(textureDimensions(fbTex, 0));
         let texelSize = 1.0 / texSize;
-        let scaling = resolution / texSize;
-        let uv = (fragCoord.xy - scaling * 0.5) / resolution;
+        let scaling = fullResolution / texSize;
+        let uv = (globalCoord - scaling * 0.5) / fullResolution;
         state = bicubicSample(fbTex, mySampler, uv, texelSize).g;
     } else {
         // linear-style smoothing \u2014 sample texel centres explicitly to avoid seams.
         let texSize = vec2<f32>(textureDimensions(fbTex, 0));
-        let texelPos = (fragCoord.xy * texSize / resolution) - vec2<f32>(0.5, 0.5);
+        let texelPos = (globalCoord * texSize / fullResolution) - vec2<f32>(0.5, 0.5);
         let base = floor(texelPos);
         let weights = fract(texelPos);
         let next = base + vec2<f32>(1.0, 1.0);
@@ -1041,7 +1043,7 @@ fn main(@builtin(position) fragCoord: vec4<f32>) -> @location(0) vec4<f32> {
     let nextState: vec4<f32> = vec4<f32>(newState, newState, newState, 1.0);
     return mix(currentState, nextState, min(1.0, deltaTime * animSpeed));
 }
-`}},r=`# cellularAutomata
+`}},a=`# cellularAutomata
 
 2D cellular automata with rule presets
 
@@ -1074,4 +1076,4 @@ cellularAutomata(tex: read(o0))
 
 render(o1)
 \`\`\`
-`;if(n&&Object.keys(l).length>0){n.shaders||(n.shaders={});for(let[o,e]of Object.entries(l))n.shaders[o]={...e}}n&&r&&(n.help=r);var x="synth/cellularAutomata",f="synth",c="cellularAutomata",v=n;export{v as default,x as effectId,c as effectName,r as help,f as namespace};
+`;if(n&&Object.keys(l).length>0){n.shaders||(n.shaders={});for(let[o,e]of Object.entries(l))n.shaders[o]={...e}}n&&a&&(n.help=a);var x="synth/cellularAutomata",f="synth",c="cellularAutomata",v=n;export{v as default,x as effectId,c as effectName,a as help,f as namespace};

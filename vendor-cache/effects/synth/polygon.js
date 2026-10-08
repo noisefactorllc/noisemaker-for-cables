@@ -68,6 +68,8 @@ void main(){
 @group(0) @binding(7) var<uniform> fgAlpha: f32;
 @group(0) @binding(8) var<uniform> bgColor: vec3<f32>;
 @group(0) @binding(9) var<uniform> bgAlpha: f32;
+@group(0) @binding(10) var<uniform> tileOffset: vec2<f32>;
+@group(0) @binding(11) var<uniform> fullResolution: vec2<f32>;
 
 const PI: f32 = 3.14159265359;
 
@@ -80,7 +82,8 @@ fn polygon(st: vec2<f32>, sides: f32) -> f32 {
 
 @fragment
 fn main(@builtin(position) position: vec4<f32>) -> @location(0) vec4<f32> {
-  var st = position.xy / resolution;
+  let globalCoord = position.xy + tileOffset;
+  var st = globalCoord / fullResolution;
   st = (st - vec2<f32>(0.5, 0.5)) * 2.0;
   st.x *= aspect;
   // Apply rotation
@@ -143,4 +146,4 @@ polygon()
 
 render(o0)
 \`\`\`
-`;if(o&&Object.keys(s).length>0){o.shaders||(o.shaders={});for(let[n,t]of Object.entries(s))o.shaders[n]={...t}}o&&a&&(o.help=a);var f="synth/polygon",p="synth",d="polygon",h=o;export{h as default,f as effectId,d as effectName,a as help,p as namespace};
+`;if(o&&Object.keys(s).length>0){o.shaders||(o.shaders={});for(let[n,t]of Object.entries(s))o.shaders[n]={...t}}o&&a&&(o.help=a);var f="synth/polygon",p="synth",d="polygon",c=o;export{c as default,f as effectId,d as effectName,a as help,p as namespace};

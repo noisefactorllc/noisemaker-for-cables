@@ -251,7 +251,7 @@ void main() {
 struct Uniforms {
     radius: f32,
     taps: f32,
-    _pad2: f32,
+    renderScale: f32,
     _pad3: f32,
 }
 
@@ -269,8 +269,8 @@ fn main(@builtin(position) pos: vec4<f32>) -> @location(0) vec4<f32> {
     let uv = pos.xy / texSize;
     let texelSize = 1.0 / texSize;
     
-    // Bloom radius in UV space
-    let radiusUV = uniforms.radius * texelSize;
+    // Bloom radius in UV space, scaled for export resolution
+    let radiusUV = uniforms.radius * uniforms.renderScale * texelSize;
 
     // Clamp taps to valid range
     let tapCount = clamp(i32(uniforms.taps), 1, MAX_TAPS);

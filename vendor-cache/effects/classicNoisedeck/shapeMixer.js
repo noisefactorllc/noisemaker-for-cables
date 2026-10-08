@@ -1,5 +1,5 @@
 /* classicNoisedeck/shapeMixer */
-var m=Object.defineProperty;var p=(n,e,o)=>e in n?m(n,e,{enumerable:!0,configurable:!0,writable:!0,value:o}):n[e]=o;var r=(n,e,o)=>p(n,typeof e!="symbol"?e+"":e,o);var a=class{constructor(e={}){this.state={},this.uniforms={},e.name&&(this.name=e.name),e.namespace&&(this.namespace=e.namespace),e.func&&(this.func=e.func),e.description&&(this.description=e.description),e.tags&&(this.tags=e.tags),e.globals&&(this.globals=e.globals),e.passes&&(this.passes=e.passes),e.textures&&(this.textures=e.textures),e.textures3d&&(this.textures3d=e.textures3d),e.shaders&&(this.shaders=e.shaders),e.externalTexture&&(this.externalTexture=e.externalTexture),e.externalMesh&&(this.externalMesh=e.externalMesh),e.builtinMeshes&&(this.builtinMeshes=e.builtinMeshes),e.outputTex3d&&(this.outputTex3d=e.outputTex3d),e.outputGeo&&(this.outputGeo=e.outputGeo),e.uniformLayout&&(this.uniformLayout=e.uniformLayout),e.uniformLayouts&&(this.uniformLayouts=e.uniformLayouts),e.paramAliases&&(this.paramAliases=e.paramAliases),e.openCategories&&(this.openCategories=e.openCategories),e.defaultProgram&&(this.defaultProgram=e.defaultProgram),e.hidden&&(this.hidden=!0),e.deprecatedBy&&(this.deprecatedBy=e.deprecatedBy),e.onInit&&(this._configOnInit=e.onInit),e.onUpdate&&(this._configOnUpdate=e.onUpdate),e.onDestroy&&(this._configOnDestroy=e.onDestroy),e.asyncInit&&(this._configAsyncInit=e.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(e){return this._configOnUpdate?this._configOnUpdate.call(this,e):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(e){return this._configAsyncInit?this._configAsyncInit.call(this,e):Promise.resolve()}};var l={none:{mode:"none",amp:[.5,.5,.5],freq:[2,2,2],offset:[.5,.5,.5],phase:[1,1,1]},seventiesShirt:{mode:"rgb",amp:[.76,.88,.37],freq:[1,1,1],offset:[.93,.97,.52],phase:[.21,.41,.56]},fiveG:{mode:"rgb",amp:[.56851584,.7740668,.23485267],freq:[1,1,1],offset:[.5,.5,.5],phase:[.727029,.08039695,.10427457]},afterimage:{mode:"rgb",amp:[.5,.5,.5],freq:[1,1,1],offset:[.5,.5,.5],phase:[.3,.2,.2]},barstow:{mode:"rgb",amp:[.45,.2,.1],freq:[1,1,1],offset:[.7,.2,.2],phase:[.5,.4,0]},bloob:{mode:"rgb",amp:[.09,.59,.48],freq:[1,1,1],offset:[.2,.31,.98],phase:[.88,.4,.33]},blueSkies:{mode:"rgb",amp:[.5,.5,.5],freq:[1,1,1],offset:[.1,.4,.7],phase:[.1,.1,.1]},brushedMetal:{mode:"rgb",amp:[.5,.5,.5],freq:[1,1,1],offset:[.5,.5,.5],phase:[0,.1,.2]},burningSky:{mode:"rgb",amp:[.7259015,.7004237,.9494409],freq:[1,1,1],offset:[.63290054,.37883538,.29405284],phase:[0,.1,.2]},california:{mode:"rgb",amp:[.94,.33,.27],freq:[1,1,1],offset:[.74,.37,.73],phase:[.44,.17,.88]},columbia:{mode:"rgb",amp:[1,.7,1],freq:[1,1,1],offset:[1,.4,.9],phase:[.4,.5,.6]},cottonCandy:{mode:"rgb",amp:[.51,.39,.41],freq:[1,1,1],offset:[.59,.53,.94],phase:[.15,.41,.46]},darkSatin:{mode:"hsv",amp:[0,0,.51],freq:[1,1,1],offset:[0,0,.43],phase:[0,0,.36]},dealerHat:{mode:"rgb",amp:[.83,.45,.19],freq:[1,1,1],offset:[.79,.45,.35],phase:[.28,.91,.61]},dreamy:{mode:"rgb",amp:[.5,.5,.5],freq:[1,1,1],offset:[.5,.5,.5],phase:[0,.2,.25]},eventHorizon:{mode:"rgb",amp:[.5,.5,.5],freq:[1,1,1],offset:[.22,.48,.62],phase:[.1,.3,.2]},ghostly:{mode:"hsv",amp:[.02,.92,.76],freq:[1,1,1],offset:[.51,.49,.51],phase:[.71,.23,.66]},grayscale:{mode:"rgb",amp:[.5,.5,.5],freq:[2,2,2],offset:[.5,.5,.5],phase:[1,1,1]},hazySunset:{mode:"rgb",amp:[.79,.56,.22],freq:[1,1,1],offset:[.96,.5,.49],phase:[.15,.98,.87]},heatmap:{mode:"rgb",amp:[.75804377,.62868536,.2227562],freq:[1,1,1],offset:[.35536355,.12935615,.17060602],phase:[0,.25,.5]},hypercolor:{mode:"rgb",amp:[.79,.5,.23],freq:[1,1,1],offset:[.75,.47,.45],phase:[.08,.84,.16]},jester:{mode:"rgb",amp:[.7,.81,.73],freq:[1,1,1],offset:[.1,.22,.27],phase:[.99,.12,.94]},justBlue:{mode:"rgb",amp:[.5,.5,.5],freq:[0,0,1],offset:[.5,.5,.5],phase:[.5,.5,.5]},justCyan:{mode:"rgb",amp:[.5,.5,.5],freq:[0,1,1],offset:[.5,.5,.5],phase:[.5,.5,.5]},justGreen:{mode:"rgb",amp:[.5,.5,.5],freq:[0,1,0],offset:[.5,.5,.5],phase:[.5,.5,.5]},justPurple:{mode:"rgb",amp:[.5,.5,.5],freq:[1,0,1],offset:[.5,.5,.5],phase:[.5,.5,.5]},justRed:{mode:"rgb",amp:[.5,.5,.5],freq:[1,0,0],offset:[.5,.5,.5],phase:[.5,.5,.5]},justYellow:{mode:"rgb",amp:[.5,.5,.5],freq:[1,1,0],offset:[.5,.5,.5],phase:[.5,.5,.5]},mars:{mode:"rgb",amp:[.74,.33,.09],freq:[1,1,1],offset:[.62,.2,.2],phase:[.2,.1,0]},modesto:{mode:"rgb",amp:[.56,.68,.39],freq:[1,1,1],offset:[.72,.07,.62],phase:[.25,.4,.41]},moss:{mode:"rgb",amp:[.78,.39,.07],freq:[1,1,1],offset:[0,.53,.33],phase:[.94,.92,.9]},neptune:{mode:"rgb",amp:[.5,.5,.5],freq:[1,1,1],offset:[.2,.64,.62],phase:[.15,.2,.3]},netOfGems:{mode:"rgb",amp:[.5,.5,.5],freq:[1,1,1],offset:[.64,.12,.84],phase:[.1,.25,.15]},organic:{mode:"rgb",amp:[.42,.42,.04],freq:[1,1,1],offset:[.47,.27,.27],phase:[.41,.14,.11]},papaya:{mode:"rgb",amp:[.65,.4,.11],freq:[1,1,1],offset:[.72,.45,.08],phase:[.71,.8,.84]},radioactive:{mode:"rgb",amp:[.62,.79,.11],freq:[1,1,1],offset:[.22,.56,.17],phase:[.15,.1,.25]},royal:{mode:"rgb",amp:[.5,.5,.5],freq:[1,1,1],offset:[.41,.22,.67],phase:[.2,.25,.2]},santaCruz:{mode:"rgb",amp:[.5,.5,.5],freq:[1,1,1],offset:[.5,.5,.5],phase:[.25,.5,.75]},sherbet:{mode:"rgb",amp:[.6059281,.17591387,.17166573],freq:[1,1,1],offset:[.5224456,.3864609,.36020845],phase:[0,.25,.5]},sherbetDouble:{mode:"rgb",amp:[.6059281,.17591387,.17166573],freq:[2,2,2],offset:[.5224456,.3864609,.36020845],phase:[0,.25,.5]},silvermane:{mode:"oklab",amp:[.42,0,0],freq:[2,2,2],offset:[.45,.5,.42],phase:[.63,1,1]},skykissed:{mode:"rgb",amp:[.5,.5,.5],freq:[1,1,1],offset:[.83,.6,.63],phase:[.3,.1,0]},solaris:{mode:"rgb",amp:[.5,.5,.5],freq:[1,1,1],offset:[.6,.4,.1],phase:[.3,.2,.1]},spooky:{mode:"oklab",amp:[.46,.73,.19],freq:[1,1,1],offset:[.27,.79,.78],phase:[.27,.16,.04]},springtime:{mode:"rgb",amp:[.67,.25,.27],freq:[1,1,1],offset:[.74,.48,.46],phase:[.07,.79,.39]},sproingtime:{mode:"rgb",amp:[.9,.43,.34],freq:[1,1,1],offset:[.56,.69,.32],phase:[.03,.8,.4]},sulphur:{mode:"rgb",amp:[.73,.36,.52],freq:[1,1,1],offset:[.78,.68,.15],phase:[.74,.93,.28]},summoning:{mode:"rgb",amp:[1,0,.8],freq:[1,1,1],offset:[0,0,0],phase:[0,.5,.1]},superhero:{mode:"rgb",amp:[1,.25,.5],freq:[.5,.5,.5],offset:[0,0,.25],phase:[.5,0,0]},toxic:{mode:"rgb",amp:[.5,.5,.5],freq:[1,1,1],offset:[.26,.57,.03],phase:[0,.1,.3]},tropicalia:{mode:"oklab",amp:[.28,.08,.65],freq:[1,1,1],offset:[.48,.6,.03],phase:[.1,.15,.3]},tungsten:{mode:"rgb",amp:[.65,.93,.73],freq:[1,1,1],offset:[.31,.21,.27],phase:[.43,.45,.48]},vaporwave:{mode:"rgb",amp:[.9,.76,.63],freq:[1,1,1],offset:[0,.19,.68],phase:[.43,.23,.32]},vibrant:{mode:"rgb",amp:[.78,.63,.68],freq:[1,1,1],offset:[.41,.03,.16],phase:[.81,.61,.06]},vintage:{mode:"rgb",amp:[.97,.74,.23],freq:[1,1,1],offset:[.97,.38,.35],phase:[.34,.41,.44]},vintagePhoto:{mode:"rgb",amp:[.68,.79,.57],freq:[1,1,1],offset:[.56,.35,.14],phase:[.73,.9,.99]}};var F=Math.PI*2,x=l,s=x;var i={};Object.keys(s).forEach((n,e)=>{i[n]={type:"Number",value:e}});var b={sine:{type:"Number",value:0},tri:{type:"Number",value:1},saw:{type:"Number",value:2},sawInv:{type:"Number",value:3},square:{type:"Number",value:4},noise:{type:"Number",value:5},noise1d:{type:"Number",value:5},noise2d:{type:"Number",value:6}},h={noteChange:{type:"Number",value:0},gateNote:{type:"Number",value:1},gateVelocity:{type:"Number",value:2},triggerNote:{type:"Number",value:3},velocity:{type:"Number",value:4},cc:{type:"Number",value:5},cc14:{type:"Number",value:6},nrpn:{type:"Number",value:7},pitchBend:{type:"Number",value:8},pressure:{type:"Number",value:9},polyPressure:{type:"Number",value:10}},g={low:{type:"Number",value:0},mid:{type:"Number",value:1},high:{type:"Number",value:2},vol:{type:"Number",value:3},raw:{type:"Number",value:4}},f={channel:{r:{type:"Number",value:0},g:{type:"Number",value:1},b:{type:"Number",value:2},a:{type:"Number",value:3}},color:{mono:{type:"Number",value:0},rgb:{type:"Number",value:1},hsv:{type:"Number",value:2}},oscType:{sine:{type:"Number",value:0},linear:{type:"Number",value:1},sawtooth:{type:"Number",value:2},sawtoothInv:{type:"Number",value:3},square:{type:"Number",value:4},noise1d:{type:"Number",value:5},noise2d:{type:"Number",value:6}},oscKind:b,midiMode:h,midiZone:{lower:{type:"Number",value:0},upper:{type:"Number",value:1}},audioBand:g,palette:i};var c={};for(let[n,e]of Object.entries(f.palette))c[n]=e.value;var t=class extends a{constructor(){super(...arguments);r(this,"name","ShapeMixer");r(this,"namespace","classicNoisedeck");r(this,"func","shapeMixer");r(this,"tags",["blend","geometric"]);r(this,"description","Shape-based mixing");r(this,"globals",{tex:{type:"surface",default:"none",ui:{label:"source b"}},blendMode:{type:"int",default:2,uniform:"blendMode",choices:{add:0,divide:1,max:2,min:3,mix:4,mod:5,multiply:6,reflect:7,refract:8,subtract:9},ui:{label:"blend mode",control:"dropdown"}},loopOffset:{type:"int",default:10,define:"LOOP_OFFSET",choices:{none:0,"Shapes:":null,circle:10,triangle:20,diamond:30,square:40,pentagon:50,hexagon:60,heptagon:70,octagon:80,"Directional:":null,horizontalScan:200,verticalScan:210,"Noise:":null,noiseConstant:300,noiseLinear:310,noiseHermite:320,noiseBSpline3x3:350,noiseSimplex:370,noiseSine:380,"Misc:":null,rings:400,sine:410},ui:{label:"shape",control:"dropdown"}},loopScale:{type:"float",default:80,uniform:"loopScale",min:1,max:100,ui:{label:"shape scale",control:"slider"}},wrap:{type:"boolean",default:!0,uniform:"wrap",ui:{label:"noise wrap",control:"checkbox",enabledBy:{param:"loopOffset",in:[300,310,320,350]}}},seed:{type:"int",default:1,uniform:"seed",min:1,max:100,ui:{label:"noise seed",control:"slider",enabledBy:{param:"loopOffset",in:[300,310,320,350,370,380]}}},animate:{type:"int",default:1,uniform:"animate",choices:{off:0,forward:1,backward:-1},ui:{label:"animate",control:"dropdown"}},palette:{type:"palette",default:41,uniform:"palette",choices:c,ui:{label:"palette",control:"dropdown",category:"palette"}},paletteMode:{type:"int",default:0,uniform:"paletteMode",ui:{control:!1}},paletteOffset:{type:"vec3",default:[.83,.6,.63],uniform:"paletteOffset",ui:{label:"palette offset",control:"slider",hidden:!0}},paletteAmp:{type:"vec3",default:[.5,.5,.5],uniform:"paletteAmp",ui:{label:"palette amplitude",control:"slider",hidden:!0}},paletteFreq:{type:"vec3",default:[1,1,1],uniform:"paletteFreq",ui:{label:"palette frequency",control:"slider",hidden:!0}},palettePhase:{type:"vec3",default:[.3,.1,0],uniform:"palettePhase",ui:{label:"palette phase",control:"slider",hidden:!0}},cyclePalette:{type:"int",default:1,uniform:"cyclePalette",choices:{off:0,forward:1,backward:-1},ui:{label:"rotation",control:"dropdown",category:"palette"}},rotatePalette:{type:"float",default:0,uniform:"rotatePalette",min:0,max:100,ui:{label:"offset",control:"slider",category:"palette"}},repeatPalette:{type:"int",default:1,uniform:"repeatPalette",min:1,max:10,randMax:5,ui:{label:"repeat",control:"slider",category:"palette"}},levels:{type:"int",default:0,uniform:"levels",min:0,max:32,ui:{label:"posterize",control:"slider",category:"palette"}}});r(this,"passes",[{name:"render",program:"shapeMixer",inputs:{inputTex:"inputTex",tex:"tex"},outputs:{fragColor:"outputTex"}}])}};var u={shapeMixer:{glsl:`#version 300 es
+var m=Object.defineProperty;var p=(n,e,r)=>e in n?m(n,e,{enumerable:!0,configurable:!0,writable:!0,value:r}):n[e]=r;var o=(n,e,r)=>p(n,typeof e!="symbol"?e+"":e,r);var a=class{constructor(e={}){this.state={},this.uniforms={},e.name&&(this.name=e.name),e.namespace&&(this.namespace=e.namespace),e.func&&(this.func=e.func),e.description&&(this.description=e.description),e.tags&&(this.tags=e.tags),e.globals&&(this.globals=e.globals),e.passes&&(this.passes=e.passes),e.textures&&(this.textures=e.textures),e.textures3d&&(this.textures3d=e.textures3d),e.shaders&&(this.shaders=e.shaders),e.externalTexture&&(this.externalTexture=e.externalTexture),e.externalMesh&&(this.externalMesh=e.externalMesh),e.builtinMeshes&&(this.builtinMeshes=e.builtinMeshes),e.outputTex3d&&(this.outputTex3d=e.outputTex3d),e.outputGeo&&(this.outputGeo=e.outputGeo),e.uniformLayout&&(this.uniformLayout=e.uniformLayout),e.uniformLayouts&&(this.uniformLayouts=e.uniformLayouts),e.paramAliases&&(this.paramAliases=e.paramAliases),e.openCategories&&(this.openCategories=e.openCategories),e.defaultProgram&&(this.defaultProgram=e.defaultProgram),e.hidden&&(this.hidden=!0),e.deprecatedBy&&(this.deprecatedBy=e.deprecatedBy),e.onInit&&(this._configOnInit=e.onInit),e.onUpdate&&(this._configOnUpdate=e.onUpdate),e.onDestroy&&(this._configOnDestroy=e.onDestroy),e.asyncInit&&(this._configAsyncInit=e.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(e){return this._configOnUpdate?this._configOnUpdate.call(this,e):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(e){return this._configAsyncInit?this._configAsyncInit.call(this,e):Promise.resolve()}};var l={none:{mode:"none",amp:[.5,.5,.5],freq:[2,2,2],offset:[.5,.5,.5],phase:[1,1,1]},seventiesShirt:{mode:"rgb",amp:[.76,.88,.37],freq:[1,1,1],offset:[.93,.97,.52],phase:[.21,.41,.56]},fiveG:{mode:"rgb",amp:[.56851584,.7740668,.23485267],freq:[1,1,1],offset:[.5,.5,.5],phase:[.727029,.08039695,.10427457]},afterimage:{mode:"rgb",amp:[.5,.5,.5],freq:[1,1,1],offset:[.5,.5,.5],phase:[.3,.2,.2]},barstow:{mode:"rgb",amp:[.45,.2,.1],freq:[1,1,1],offset:[.7,.2,.2],phase:[.5,.4,0]},bloob:{mode:"rgb",amp:[.09,.59,.48],freq:[1,1,1],offset:[.2,.31,.98],phase:[.88,.4,.33]},blueSkies:{mode:"rgb",amp:[.5,.5,.5],freq:[1,1,1],offset:[.1,.4,.7],phase:[.1,.1,.1]},brushedMetal:{mode:"rgb",amp:[.5,.5,.5],freq:[1,1,1],offset:[.5,.5,.5],phase:[0,.1,.2]},burningSky:{mode:"rgb",amp:[.7259015,.7004237,.9494409],freq:[1,1,1],offset:[.63290054,.37883538,.29405284],phase:[0,.1,.2]},california:{mode:"rgb",amp:[.94,.33,.27],freq:[1,1,1],offset:[.74,.37,.73],phase:[.44,.17,.88]},columbia:{mode:"rgb",amp:[1,.7,1],freq:[1,1,1],offset:[1,.4,.9],phase:[.4,.5,.6]},cottonCandy:{mode:"rgb",amp:[.51,.39,.41],freq:[1,1,1],offset:[.59,.53,.94],phase:[.15,.41,.46]},darkSatin:{mode:"hsv",amp:[0,0,.51],freq:[1,1,1],offset:[0,0,.43],phase:[0,0,.36]},dealerHat:{mode:"rgb",amp:[.83,.45,.19],freq:[1,1,1],offset:[.79,.45,.35],phase:[.28,.91,.61]},dreamy:{mode:"rgb",amp:[.5,.5,.5],freq:[1,1,1],offset:[.5,.5,.5],phase:[0,.2,.25]},eventHorizon:{mode:"rgb",amp:[.5,.5,.5],freq:[1,1,1],offset:[.22,.48,.62],phase:[.1,.3,.2]},ghostly:{mode:"hsv",amp:[.02,.92,.76],freq:[1,1,1],offset:[.51,.49,.51],phase:[.71,.23,.66]},grayscale:{mode:"rgb",amp:[.5,.5,.5],freq:[2,2,2],offset:[.5,.5,.5],phase:[1,1,1]},hazySunset:{mode:"rgb",amp:[.79,.56,.22],freq:[1,1,1],offset:[.96,.5,.49],phase:[.15,.98,.87]},heatmap:{mode:"rgb",amp:[.75804377,.62868536,.2227562],freq:[1,1,1],offset:[.35536355,.12935615,.17060602],phase:[0,.25,.5]},hypercolor:{mode:"rgb",amp:[.79,.5,.23],freq:[1,1,1],offset:[.75,.47,.45],phase:[.08,.84,.16]},jester:{mode:"rgb",amp:[.7,.81,.73],freq:[1,1,1],offset:[.1,.22,.27],phase:[.99,.12,.94]},justBlue:{mode:"rgb",amp:[.5,.5,.5],freq:[0,0,1],offset:[.5,.5,.5],phase:[.5,.5,.5]},justCyan:{mode:"rgb",amp:[.5,.5,.5],freq:[0,1,1],offset:[.5,.5,.5],phase:[.5,.5,.5]},justGreen:{mode:"rgb",amp:[.5,.5,.5],freq:[0,1,0],offset:[.5,.5,.5],phase:[.5,.5,.5]},justPurple:{mode:"rgb",amp:[.5,.5,.5],freq:[1,0,1],offset:[.5,.5,.5],phase:[.5,.5,.5]},justRed:{mode:"rgb",amp:[.5,.5,.5],freq:[1,0,0],offset:[.5,.5,.5],phase:[.5,.5,.5]},justYellow:{mode:"rgb",amp:[.5,.5,.5],freq:[1,1,0],offset:[.5,.5,.5],phase:[.5,.5,.5]},mars:{mode:"rgb",amp:[.74,.33,.09],freq:[1,1,1],offset:[.62,.2,.2],phase:[.2,.1,0]},modesto:{mode:"rgb",amp:[.56,.68,.39],freq:[1,1,1],offset:[.72,.07,.62],phase:[.25,.4,.41]},moss:{mode:"rgb",amp:[.78,.39,.07],freq:[1,1,1],offset:[0,.53,.33],phase:[.94,.92,.9]},neptune:{mode:"rgb",amp:[.5,.5,.5],freq:[1,1,1],offset:[.2,.64,.62],phase:[.15,.2,.3]},netOfGems:{mode:"rgb",amp:[.5,.5,.5],freq:[1,1,1],offset:[.64,.12,.84],phase:[.1,.25,.15]},organic:{mode:"rgb",amp:[.42,.42,.04],freq:[1,1,1],offset:[.47,.27,.27],phase:[.41,.14,.11]},papaya:{mode:"rgb",amp:[.65,.4,.11],freq:[1,1,1],offset:[.72,.45,.08],phase:[.71,.8,.84]},radioactive:{mode:"rgb",amp:[.62,.79,.11],freq:[1,1,1],offset:[.22,.56,.17],phase:[.15,.1,.25]},royal:{mode:"rgb",amp:[.5,.5,.5],freq:[1,1,1],offset:[.41,.22,.67],phase:[.2,.25,.2]},santaCruz:{mode:"rgb",amp:[.5,.5,.5],freq:[1,1,1],offset:[.5,.5,.5],phase:[.25,.5,.75]},sherbet:{mode:"rgb",amp:[.6059281,.17591387,.17166573],freq:[1,1,1],offset:[.5224456,.3864609,.36020845],phase:[0,.25,.5]},sherbetDouble:{mode:"rgb",amp:[.6059281,.17591387,.17166573],freq:[2,2,2],offset:[.5224456,.3864609,.36020845],phase:[0,.25,.5]},silvermane:{mode:"oklab",amp:[.42,0,0],freq:[2,2,2],offset:[.45,.5,.42],phase:[.63,1,1]},skykissed:{mode:"rgb",amp:[.5,.5,.5],freq:[1,1,1],offset:[.83,.6,.63],phase:[.3,.1,0]},solaris:{mode:"rgb",amp:[.5,.5,.5],freq:[1,1,1],offset:[.6,.4,.1],phase:[.3,.2,.1]},spooky:{mode:"oklab",amp:[.46,.73,.19],freq:[1,1,1],offset:[.27,.79,.78],phase:[.27,.16,.04]},springtime:{mode:"rgb",amp:[.67,.25,.27],freq:[1,1,1],offset:[.74,.48,.46],phase:[.07,.79,.39]},sproingtime:{mode:"rgb",amp:[.9,.43,.34],freq:[1,1,1],offset:[.56,.69,.32],phase:[.03,.8,.4]},sulphur:{mode:"rgb",amp:[.73,.36,.52],freq:[1,1,1],offset:[.78,.68,.15],phase:[.74,.93,.28]},summoning:{mode:"rgb",amp:[1,0,.8],freq:[1,1,1],offset:[0,0,0],phase:[0,.5,.1]},superhero:{mode:"rgb",amp:[1,.25,.5],freq:[.5,.5,.5],offset:[0,0,.25],phase:[.5,0,0]},toxic:{mode:"rgb",amp:[.5,.5,.5],freq:[1,1,1],offset:[.26,.57,.03],phase:[0,.1,.3]},tropicalia:{mode:"oklab",amp:[.28,.08,.65],freq:[1,1,1],offset:[.48,.6,.03],phase:[.1,.15,.3]},tungsten:{mode:"rgb",amp:[.65,.93,.73],freq:[1,1,1],offset:[.31,.21,.27],phase:[.43,.45,.48]},vaporwave:{mode:"rgb",amp:[.9,.76,.63],freq:[1,1,1],offset:[0,.19,.68],phase:[.43,.23,.32]},vibrant:{mode:"rgb",amp:[.78,.63,.68],freq:[1,1,1],offset:[.41,.03,.16],phase:[.81,.61,.06]},vintage:{mode:"rgb",amp:[.97,.74,.23],freq:[1,1,1],offset:[.97,.38,.35],phase:[.34,.41,.44]},vintagePhoto:{mode:"rgb",amp:[.68,.79,.57],freq:[1,1,1],offset:[.56,.35,.14],phase:[.73,.9,.99]}};var F=Math.PI*2,x=l,s=x;var i={};Object.keys(s).forEach((n,e)=>{i[n]={type:"Number",value:e}});var b={sine:{type:"Number",value:0},tri:{type:"Number",value:1},saw:{type:"Number",value:2},sawInv:{type:"Number",value:3},square:{type:"Number",value:4},noise:{type:"Number",value:5},noise1d:{type:"Number",value:5},noise2d:{type:"Number",value:6}},h={noteChange:{type:"Number",value:0},gateNote:{type:"Number",value:1},gateVelocity:{type:"Number",value:2},triggerNote:{type:"Number",value:3},velocity:{type:"Number",value:4},cc:{type:"Number",value:5},cc14:{type:"Number",value:6},nrpn:{type:"Number",value:7},pitchBend:{type:"Number",value:8},pressure:{type:"Number",value:9},polyPressure:{type:"Number",value:10}},g={low:{type:"Number",value:0},mid:{type:"Number",value:1},high:{type:"Number",value:2},vol:{type:"Number",value:3},raw:{type:"Number",value:4}},f={channel:{r:{type:"Number",value:0},g:{type:"Number",value:1},b:{type:"Number",value:2},a:{type:"Number",value:3}},color:{mono:{type:"Number",value:0},rgb:{type:"Number",value:1},hsv:{type:"Number",value:2}},oscType:{sine:{type:"Number",value:0},linear:{type:"Number",value:1},sawtooth:{type:"Number",value:2},sawtoothInv:{type:"Number",value:3},square:{type:"Number",value:4},noise1d:{type:"Number",value:5},noise2d:{type:"Number",value:6}},oscKind:b,midiMode:h,midiZone:{lower:{type:"Number",value:0},upper:{type:"Number",value:1}},audioBand:g,palette:i};var c={};for(let[n,e]of Object.entries(f.palette))c[n]=e.value;var t=class extends a{constructor(){super(...arguments);o(this,"name","ShapeMixer");o(this,"namespace","classicNoisedeck");o(this,"func","shapeMixer");o(this,"tags",["blend","geometric"]);o(this,"description","Shape-based mixing");o(this,"globals",{tex:{type:"surface",default:"none",ui:{label:"source b"}},blendMode:{type:"int",default:2,uniform:"blendMode",choices:{add:0,divide:1,max:2,min:3,mix:4,mod:5,multiply:6,reflect:7,refract:8,subtract:9},ui:{label:"blend mode",control:"dropdown"}},loopOffset:{type:"int",default:10,define:"LOOP_OFFSET",choices:{none:0,"Shapes:":null,circle:10,triangle:20,diamond:30,square:40,pentagon:50,hexagon:60,heptagon:70,octagon:80,"Directional:":null,horizontalScan:200,verticalScan:210,"Noise:":null,noiseConstant:300,noiseLinear:310,noiseHermite:320,noiseBSpline3x3:350,noiseSimplex:370,noiseSine:380,"Misc:":null,rings:400,sine:410},ui:{label:"shape",control:"dropdown"}},loopScale:{type:"float",default:80,uniform:"loopScale",min:1,max:100,ui:{label:"shape scale",control:"slider"}},wrap:{type:"boolean",default:!0,uniform:"wrap",ui:{label:"noise wrap",control:"checkbox",enabledBy:{param:"loopOffset",in:[300,310,320,350]}}},seed:{type:"int",default:1,uniform:"seed",min:1,max:100,ui:{label:"noise seed",control:"slider",enabledBy:{param:"loopOffset",in:[300,310,320,350,370,380]}}},animate:{type:"int",default:1,uniform:"animate",choices:{off:0,forward:1,backward:-1},ui:{label:"animate",control:"dropdown"}},palette:{type:"palette",default:41,uniform:"palette",choices:c,ui:{label:"palette",control:"dropdown",category:"palette"}},paletteMode:{type:"int",default:0,uniform:"paletteMode",ui:{control:!1}},paletteOffset:{type:"vec3",default:[.83,.6,.63],uniform:"paletteOffset",ui:{label:"palette offset",control:"slider",hidden:!0}},paletteAmp:{type:"vec3",default:[.5,.5,.5],uniform:"paletteAmp",ui:{label:"palette amplitude",control:"slider",hidden:!0}},paletteFreq:{type:"vec3",default:[1,1,1],uniform:"paletteFreq",ui:{label:"palette frequency",control:"slider",hidden:!0}},palettePhase:{type:"vec3",default:[.3,.1,0],uniform:"palettePhase",ui:{label:"palette phase",control:"slider",hidden:!0}},cyclePalette:{type:"int",default:1,uniform:"cyclePalette",choices:{off:0,forward:1,backward:-1},ui:{label:"rotation",control:"dropdown",category:"palette"}},rotatePalette:{type:"float",default:0,uniform:"rotatePalette",min:0,max:100,ui:{label:"offset",control:"slider",category:"palette"}},repeatPalette:{type:"int",default:1,uniform:"repeatPalette",min:1,max:10,randMax:5,ui:{label:"repeat",control:"slider",category:"palette"}},levels:{type:"int",default:0,uniform:"levels",min:0,max:32,ui:{label:"posterize",control:"slider",category:"palette"}}});o(this,"passes",[{name:"render",program:"shapeMixer",inputs:{inputTex:"inputTex",tex:"tex"},outputs:{fragColor:"outputTex"}}])}};var u={shapeMixer:{glsl:`#version 300 es
 
 /*
  * Shape mixer shader.
@@ -800,13 +800,18 @@ struct Uniforms {
     rotatePalette: f32,
     repeatPalette: i32,
     levels: i32,
+    tileOffset: vec2f,
+    fullResolution: vec2f,
 }
+
+// Fragment position, so diamonds() can read it like GLSL's gl_FragCoord.
+var<private> fragCoordXY: vec2f;
 
 const PI: f32 = 3.14159265359;
 const TAU: f32 = 6.28318530718;
 
 fn aspectRatio() -> f32 {
-    return u.resolution.x / u.resolution.y;
+    return u.fullResolution.x / u.fullResolution.y;
 }
 
 fn mapRange(value: f32, inMin: f32, inMax: f32, outMin: f32, outMax: f32) -> f32 {
@@ -839,7 +844,7 @@ fn hsv2rgb(hsv: vec3f) -> vec3f {
     let s = hsv.y;
     let v = hsv.z;
     let c = v * s;
-    let x = c * (1.0 - abs(fract(h * 6.0) * 2.0 - 1.0));
+    let x = c * (1.0 - abs((h * 6.0) - 2.0 * floor((h * 6.0) / 2.0) - 1.0));
     let m = v - c;
     var rgb: vec3f;
     if (h < 1.0/6.0) { rgb = vec3f(c, x, 0.0); }
@@ -904,9 +909,23 @@ fn linear_srgb_from_oklab(c: vec3f) -> vec3f {
     return fwdB * (lms * lms * lms);
 }
 
+fn isNan(val: f32) -> bool {
+    return !(val <= 0.0 || 0.0 <= val);
+}
+
+fn isInf(val: f32) -> bool {
+    return val != 0.0 && val * 2.0 == val;
+}
+
 fn pal(t_in: f32) -> vec3f {
+    if (isNan(t_in)) {
+        return vec3f(0.0);
+    } else if (isInf(t_in)) {
+        return vec3f(0.0);
+    }
+
     var t = t_in * f32(u.repeatPalette) + u.rotatePalette * 0.01;
-    var color = u.paletteOffset + u.paletteAmp * cos(TAU * (u.paletteFreq * t + u.palettePhase));
+    var color = u.paletteOffset + u.paletteAmp * cos(6.28318 * (u.paletteFreq * t + u.palettePhase));
     if (u.paletteMode == 1) { color = hsv2rgb(color); }
     else if (u.paletteMode == 2) {
         color.g = color.g * -0.509 + 0.276;
@@ -951,7 +970,7 @@ fn circles(st: vec2f, freq: f32) -> f32 {
 }
 
 fn diamonds(st_in: vec2f, freq: f32) -> f32 {
-    var st = st_in;
+    var st = (fragCoordXY + u.tileOffset) / u.fullResolution.y;
     st -= vec2f(0.5 * aspectRatio(), 0.5);
     st *= freq;
     return cos(st.x * PI) + cos(st.y * PI);
@@ -977,8 +996,8 @@ fn randomFromLatticeWithOffset(st: vec2f, freq: f32, offset: vec2i) -> vec3f {
     let baseFloor = floor(lattice);
     var base = vec2i(baseFloor) + offset;
     let frac = lattice - baseFloor;
-    let seedInt = i32(floor(f32(u.seed)));
-    let seedFrac = fract(f32(u.seed));
+    let seedInt = u.seed;
+    let seedFrac = 0.0;
     let xCombined = frac.x + seedFrac;
     var xi = base.x + seedInt + i32(floor(xCombined));
     var yi = base.y;
@@ -989,9 +1008,9 @@ fn randomFromLatticeWithOffset(st: vec2f, freq: f32, offset: vec2i) -> vec3f {
             yi = positiveModulo(yi, freqInt);
         }
     }
-    let xBits = u32(xi);
-    let yBits = u32(yi);
-    let seedBits = bitcast<u32>(f32(u.seed));
+    let xBits = bitcast<u32>(xi);
+    let yBits = bitcast<u32>(yi);
+    let seedBits = bitcast<u32>(u.seed);
     let fracBits = bitcast<u32>(seedFrac);
     let jitter = vec3u(
         (fracBits * 374761393u) ^ 0x9E3779B9u,
@@ -1142,7 +1161,7 @@ fn blendFloat(color1: f32, color2: f32, mode: i32, factorIn: f32) -> f32 {
     else if (mode == 2) { return max(color1, color2 * factor); }
     else if (mode == 3) { return min(color1, color2 * factor); }
     else if (mode == 4) { return mix(color1, color2, clamp(factor, 0.0, 1.0)); }
-    else if (mode == 5) { let c2 = max(0.1, color2 * factor); return color1 % c2; }
+    else if (mode == 5) { let c2 = max(0.1, color2 * factor); return color1 - c2 * floor(color1 / c2); }
     else if (mode == 6) { return color1 * color2 * factor; }
     else if (mode == 7) {
         // reflect for scalar: r = i - 2*dot(n,i)*n = i - 2*n*i*n = i*(1 - 2*n^2)
@@ -1150,12 +1169,11 @@ fn blendFloat(color1: f32, color2: f32, mode: i32, factorIn: f32) -> f32 {
         return color1 - 2.0 * n * color1 * n;
     }
     else if (mode == 8) {
-        // refract for scalar approximation
-        let eta = factor;
-        let cosi = color1;
-        let k = 1.0 - eta * eta * (1.0 - cosi * cosi);
+        // GLSL refract(float I, float N, float eta)
+        let d = color2 * color1;
+        let k = 1.0 - factor * factor * (1.0 - d * d);
         if (k < 0.0) { return 0.0; }
-        return eta * color1 + (eta * cosi - sqrt(k)) * color2;
+        return factor * color1 - (factor * d + sqrt(k)) * color2;
     }
     else if (mode == 9) { return color1 - color2 * factor; }
     return mix(color1, color2, clamp(factor, 0.0, 1.0));
@@ -1164,11 +1182,11 @@ fn blendFloat(color1: f32, color2: f32, mode: i32, factorIn: f32) -> f32 {
 fn blendVec3(color1: vec3f, color2: vec3f, mode: i32, factorIn: f32) -> vec3f {
     let factor = 1.0 - factorIn;
     if (mode == 0) { return color1 + color2 * factor; }
-    else if (mode == 1) { return color1 / (color2 * factor); }
+    else if (mode == 1) { return color1 / color2 * factor; }
     else if (mode == 2) { return max(color1, color2 * factor); }
     else if (mode == 3) { return min(color1, color2 * factor); }
     else if (mode == 4) { return mix(color1, color2, clamp(factor, 0.0, 1.0)); }
-    else if (mode == 5) { return color1 % (color2 * factor); }
+    else if (mode == 5) { let c2 = color2 * factor; return color1 - c2 * floor(color1 / c2); }
     else if (mode == 6) { return color1 * color2 * factor; }
     else if (mode == 7) { return reflect(color1, color2 * factor); }
     else if (mode == 8) { return refract(color1, color2, factor); }
@@ -1178,10 +1196,12 @@ fn blendVec3(color1: vec3f, color2: vec3f, mode: i32, factorIn: f32) -> vec3f {
 
 @fragment
 fn main(@builtin(position) fragCoord: vec4f) -> @location(0) vec4f {
-    var st = fragCoord.xy / u.resolution;
+    fragCoordXY = fragCoord.xy;
+    let globalCoord = fragCoord.xy + u.tileOffset;
+    var st = globalCoord / u.fullResolution;
 
-    let color1 = textureSample(inputTex, samp, st);
-    let color2 = textureSample(tex, samp, st);
+    let color1 = textureSample(inputTex, samp, fragCoord.xy / vec2f(textureDimensions(inputTex, 0)));
+    let color2 = textureSample(tex, samp, fragCoord.xy / vec2f(textureDimensions(tex, 0)));
 
     var freq = 1.0;
     if (LOOP_OFFSET == 350) {
@@ -1212,8 +1232,8 @@ fn main(@builtin(position) fragCoord: vec4f) -> @location(0) vec4f {
         var c = blendVec3(color1.rgb, color2.rgb, u.blendMode, blendy * 0.5);
         c = rgb2hsv(c);
         var hue = c.r + u.rotatePalette * 0.01;
-        if (u.cyclePalette == -1) { hue = (hue + u.time) % 1.0; }
-        else if (u.cyclePalette == 1) { hue = (hue - u.time) % 1.0; }
+        if (u.cyclePalette == -1) { hue = (hue + u.time) - floor(hue + u.time); }
+        else if (u.cyclePalette == 1) { hue = (hue - u.time) - floor(hue - u.time); }
         c = hsv2rgb(vec3f(hue, c.g, c.b));
         c = posterize2_vec3(c, f32(u.levels));
         color = vec4f(c, max(color1.a, color2.a));
@@ -1265,4 +1285,4 @@ noise(seed: 2, ridges: true)
 
 render(o1)
 \`\`\`
-`;if(t&&Object.keys(u).length>0){t.shaders||(t.shaders={});for(let[n,e]of Object.entries(u))t.shaders[n]={...e}}t&&d&&(t.help=d);var I="classicNoisedeck/shapeMixer",L="classicNoisedeck",M="shapeMixer",B=t;export{B as default,I as effectId,M as effectName,d as help,L as namespace};
+`;if(t&&Object.keys(u).length>0){t.shaders||(t.shaders={});for(let[n,e]of Object.entries(u))t.shaders[n]={...e}}t&&d&&(t.help=d);var A="classicNoisedeck/shapeMixer",E="classicNoisedeck",M="shapeMixer",R=t;export{R as default,A as effectId,M as effectName,d as help,E as namespace};

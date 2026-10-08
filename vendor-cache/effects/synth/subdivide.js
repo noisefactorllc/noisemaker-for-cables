@@ -1,5 +1,5 @@
 /* synth/subdivide */
-var l=class{constructor(e={}){this.state={},this.uniforms={},e.name&&(this.name=e.name),e.namespace&&(this.namespace=e.namespace),e.func&&(this.func=e.func),e.description&&(this.description=e.description),e.tags&&(this.tags=e.tags),e.globals&&(this.globals=e.globals),e.passes&&(this.passes=e.passes),e.textures&&(this.textures=e.textures),e.textures3d&&(this.textures3d=e.textures3d),e.shaders&&(this.shaders=e.shaders),e.externalTexture&&(this.externalTexture=e.externalTexture),e.externalMesh&&(this.externalMesh=e.externalMesh),e.builtinMeshes&&(this.builtinMeshes=e.builtinMeshes),e.outputTex3d&&(this.outputTex3d=e.outputTex3d),e.outputGeo&&(this.outputGeo=e.outputGeo),e.uniformLayout&&(this.uniformLayout=e.uniformLayout),e.uniformLayouts&&(this.uniformLayouts=e.uniformLayouts),e.paramAliases&&(this.paramAliases=e.paramAliases),e.openCategories&&(this.openCategories=e.openCategories),e.defaultProgram&&(this.defaultProgram=e.defaultProgram),e.hidden&&(this.hidden=!0),e.deprecatedBy&&(this.deprecatedBy=e.deprecatedBy),e.onInit&&(this._configOnInit=e.onInit),e.onUpdate&&(this._configOnUpdate=e.onUpdate),e.onDestroy&&(this._configOnDestroy=e.onDestroy),e.asyncInit&&(this._configAsyncInit=e.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(e){return this._configOnUpdate?this._configOnUpdate.call(this,e):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(e){return this._configAsyncInit?this._configAsyncInit.call(this,e):Promise.resolve()}};var n=new l({name:"Subdivide",namespace:"synth",func:"subdivide",tags:["geometric","pattern"],description:"Recursive grid subdivision with shapes",uniformLayout:{resolution:{slot:0,components:"xy"},mode:{slot:0,components:"z"},depth:{slot:0,components:"w"},density:{slot:1,components:"x"},seed:{slot:1,components:"y"},fill:{slot:1,components:"z"},outline:{slot:1,components:"w"},inputMix:{slot:2,components:"x"},wrap:{slot:2,components:"y"},time:{slot:2,components:"z"},speed:{slot:2,components:"w"}},globals:{tex:{type:"surface",default:"none",ui:{label:"texture",category:"input"}},mode:{type:"int",default:1,uniform:"mode",choices:{binary:0,quad:1},ui:{label:"mode",control:"dropdown"}},depth:{type:"int",default:5,uniform:"depth",min:1,max:6,randMin:3,ui:{label:"depth",control:"slider"}},density:{type:"float",default:75,uniform:"density",min:30,max:100,randMin:50,ui:{label:"density",control:"slider"}},seed:{type:"int",default:69,uniform:"seed",min:1,max:100,ui:{label:"seed",control:"slider"}},fill:{type:"int",default:0,uniform:"fill",choices:{solid:0,circle:1,diamond:2,square:3,arc:4,mixed:5},ui:{label:"fill",control:"dropdown",enabledBy:{param:"mode",neq:0}}},outline:{type:"float",default:3,uniform:"outline",min:0,max:10,zero:0,ui:{label:"outline",control:"slider"}},inputMix:{type:"float",default:0,uniform:"inputMix",min:0,max:100,randChance:0,ui:{label:"input mix",control:"slider",category:"input",enabledBy:{param:"tex",neq:"none"}}},speed:{type:"int",default:1,uniform:"speed",min:0,max:20,zero:0,randMax:5,ui:{label:"speed",control:"slider"}},wrap:{type:"int",default:0,uniform:"wrap",choices:{mirror:0,repeat:1,clamp:2},randChance:0,ui:{label:"wrap",control:"dropdown",category:"input",enabledBy:{param:"tex",neq:"none"}}}},passes:[{name:"render",program:"subdivide",inputs:{inputTex:"tex"},outputs:{fragColor:"outputTex"}}]});var i={subdivide:{glsl:`/*
+var l=class{constructor(e={}){this.state={},this.uniforms={},e.name&&(this.name=e.name),e.namespace&&(this.namespace=e.namespace),e.func&&(this.func=e.func),e.description&&(this.description=e.description),e.tags&&(this.tags=e.tags),e.globals&&(this.globals=e.globals),e.passes&&(this.passes=e.passes),e.textures&&(this.textures=e.textures),e.textures3d&&(this.textures3d=e.textures3d),e.shaders&&(this.shaders=e.shaders),e.externalTexture&&(this.externalTexture=e.externalTexture),e.externalMesh&&(this.externalMesh=e.externalMesh),e.builtinMeshes&&(this.builtinMeshes=e.builtinMeshes),e.outputTex3d&&(this.outputTex3d=e.outputTex3d),e.outputGeo&&(this.outputGeo=e.outputGeo),e.uniformLayout&&(this.uniformLayout=e.uniformLayout),e.uniformLayouts&&(this.uniformLayouts=e.uniformLayouts),e.paramAliases&&(this.paramAliases=e.paramAliases),e.openCategories&&(this.openCategories=e.openCategories),e.defaultProgram&&(this.defaultProgram=e.defaultProgram),e.hidden&&(this.hidden=!0),e.deprecatedBy&&(this.deprecatedBy=e.deprecatedBy),e.onInit&&(this._configOnInit=e.onInit),e.onUpdate&&(this._configOnUpdate=e.onUpdate),e.onDestroy&&(this._configOnDestroy=e.onDestroy),e.asyncInit&&(this._configAsyncInit=e.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(e){return this._configOnUpdate?this._configOnUpdate.call(this,e):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(e){return this._configAsyncInit?this._configAsyncInit.call(this,e):Promise.resolve()}};var n=new l({name:"Subdivide",namespace:"synth",func:"subdivide",tags:["geometric","pattern"],description:"Recursive grid subdivision with shapes",uniformLayout:{resolution:{slot:0,components:"xy"},mode:{slot:0,components:"z"},depth:{slot:0,components:"w"},density:{slot:1,components:"x"},seed:{slot:1,components:"y"},fill:{slot:1,components:"z"},outline:{slot:1,components:"w"},inputMix:{slot:2,components:"x"},wrap:{slot:2,components:"y"},time:{slot:2,components:"z"},speed:{slot:2,components:"w"},tileOffset:{slot:3,components:"xy"},fullResolution:{slot:3,components:"zw"},renderScale:{slot:4,components:"x"}},globals:{tex:{type:"surface",default:"none",ui:{label:"texture",category:"input"}},mode:{type:"int",default:1,uniform:"mode",choices:{binary:0,quad:1},ui:{label:"mode",control:"dropdown"}},depth:{type:"int",default:5,uniform:"depth",min:1,max:6,randMin:3,ui:{label:"depth",control:"slider"}},density:{type:"float",default:75,uniform:"density",min:30,max:100,randMin:50,ui:{label:"density",control:"slider"}},seed:{type:"int",default:69,uniform:"seed",min:1,max:100,ui:{label:"seed",control:"slider"}},fill:{type:"int",default:0,uniform:"fill",choices:{solid:0,circle:1,diamond:2,square:3,arc:4,mixed:5},ui:{label:"fill",control:"dropdown",enabledBy:{param:"mode",neq:0}}},outline:{type:"float",default:3,uniform:"outline",min:0,max:10,zero:0,ui:{label:"outline",control:"slider"}},inputMix:{type:"float",default:0,uniform:"inputMix",min:0,max:100,randChance:0,ui:{label:"input mix",control:"slider",category:"input",enabledBy:{param:"tex",neq:"none"}}},speed:{type:"int",default:1,uniform:"speed",min:0,max:20,zero:0,randMax:5,ui:{label:"speed",control:"slider"}},wrap:{type:"int",default:0,uniform:"wrap",choices:{mirror:0,repeat:1,clamp:2},randChance:0,ui:{label:"wrap",control:"dropdown",category:"input",enabledBy:{param:"tex",neq:"none"}}}},passes:[{name:"render",program:"subdivide",inputs:{inputTex:"tex"},outputs:{fragColor:"outputTex"}}]});var i={subdivide:{glsl:`/*
  * Recursive grid subdivision with shapes
  */
 
@@ -265,7 +265,9 @@ struct Uniforms {
     // data[0] = (resolution.x, resolution.y, mode, depth)
     // data[1] = (density, seed, fill, outline)
     // data[2] = (inputMix, wrap, time, speed)
-    data: array<vec4<f32>, 3>,
+    // data[3] = (tileOffset.x, tileOffset.y, fullResolution.x, fullResolution.y)
+    // data[4] = (renderScale, _, _, _)
+    data: array<vec4<f32>, 5>,
 }
 
 @group(0) @binding(0) var<uniform> u: Uniforms;
@@ -346,17 +348,21 @@ fn shadeFromHash(h: f32) -> f32 {
 @fragment
 fn main(@builtin(position) pos: vec4<f32>) -> @location(0) vec4<f32> {
     let resolution = u.data[0].xy;
+    let tileOffset = u.data[3].xy;
+    let fullResolution = u.data[3].zw;
+    let renderScale = u.data[4].x;
+    let globalCoord = pos.xy + tileOffset;
     let modeType = i32(u.data[0].z);
     let maxDepth = i32(u.data[0].w);
     let dens = u.data[1].x / 100.0;
     let fillType = i32(u.data[1].z);
-    let outlineWidthX = u.data[1].w / resolution.x;
-    let outlineWidthY = u.data[1].w / resolution.y;
+    let outlineWidthX = u.data[1].w * renderScale / fullResolution.x;
+    let outlineWidthY = u.data[1].w * renderScale / fullResolution.y;
 
     let time = u.data[2].z;
     let spd = floor(u.data[2].w) * 2.0;
 
-    let st = pos.xy / resolution;
+    let st = globalCoord / fullResolution;
 
     // Subdivision loop
     var cellMin = vec2<f32>(0.0);
@@ -372,8 +378,8 @@ fn main(@builtin(position) pos: vec4<f32>) -> @location(0) vec4<f32> {
 
         if (h < dens) {
             // Skip splits that would create too-narrow cells (max 5:1 aspect)
-            let cellW = (cellMax.x - cellMin.x) * resolution.x;
-            let cellH = (cellMax.y - cellMin.y) * resolution.y;
+            let cellW = (cellMax.x - cellMin.x) * fullResolution.x;
+            let cellH = (cellMax.y - cellMin.y) * fullResolution.y;
             let canSplitH = min(cellW, cellH * 0.5) / max(cellW, cellH * 0.5) >= 0.2;
             let canSplitV = min(cellW * 0.5, cellH) / max(cellW * 0.5, cellH) >= 0.2;
 
@@ -418,8 +424,8 @@ fn main(@builtin(position) pos: vec4<f32>) -> @location(0) vec4<f32> {
     let cellUv = (st - cellMin) / cellSize;
 
     // 1:1 aspect-corrected coords, scaled to fit shorter side
-    let cellPixelW = cellSize.x * resolution.x;
-    let cellPixelH = cellSize.y * resolution.y;
+    let cellPixelW = cellSize.x * fullResolution.x;
+    let cellPixelH = cellSize.y * fullResolution.y;
     let minDim = min(cellPixelW, cellPixelH);
     var centered = cellUv - 0.5;
     centered.x = centered.x * (cellPixelW / minDim);
@@ -471,8 +477,8 @@ fn main(@builtin(position) pos: vec4<f32>) -> @location(0) vec4<f32> {
 
         var texUv = cellUv;
         // Correct for aspect ratio difference between cell and texture
-        let cellAspect = (cellSize.x * resolution.x) / (cellSize.y * resolution.y);
-        let texAspect = resolution.x / resolution.y;
+        let cellAspect = (cellSize.x * fullResolution.x) / (cellSize.y * fullResolution.y);
+        let texAspect = fullResolution.x / fullResolution.y;
         let ratio = cellAspect / texAspect;
         if (ratio > 1.0) {
             texUv.x = 0.5 + (texUv.x - 0.5) * ratio;
@@ -491,9 +497,9 @@ fn main(@builtin(position) pos: vec4<f32>) -> @location(0) vec4<f32> {
         // Apply wrap mode
         let wrapMode = i32(u.data[2].y);
         if (wrapMode == 0) {
-            texUv = abs(((texUv + 1.0) % 2.0 + 2.0) % 2.0 - 1.0);
+            texUv = abs((texUv + 1.0) - 2.0 * floor((texUv + 1.0) / 2.0) - 1.0);
         } else if (wrapMode == 1) {
-            texUv = (texUv % 1.0 + 1.0) % 1.0;
+            texUv = (texUv - 1.0 * floor(texUv / 1.0));
         } else {
             texUv = clamp(texUv, vec2<f32>(0.0), vec2<f32>(1.0));
         }

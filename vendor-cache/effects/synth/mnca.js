@@ -1,5 +1,5 @@
 /* synth/mnca */
-var n=class{constructor(e={}){this.state={},this.uniforms={},e.name&&(this.name=e.name),e.namespace&&(this.namespace=e.namespace),e.func&&(this.func=e.func),e.description&&(this.description=e.description),e.tags&&(this.tags=e.tags),e.globals&&(this.globals=e.globals),e.passes&&(this.passes=e.passes),e.textures&&(this.textures=e.textures),e.textures3d&&(this.textures3d=e.textures3d),e.shaders&&(this.shaders=e.shaders),e.externalTexture&&(this.externalTexture=e.externalTexture),e.externalMesh&&(this.externalMesh=e.externalMesh),e.builtinMeshes&&(this.builtinMeshes=e.builtinMeshes),e.outputTex3d&&(this.outputTex3d=e.outputTex3d),e.outputGeo&&(this.outputGeo=e.outputGeo),e.uniformLayout&&(this.uniformLayout=e.uniformLayout),e.uniformLayouts&&(this.uniformLayouts=e.uniformLayouts),e.paramAliases&&(this.paramAliases=e.paramAliases),e.openCategories&&(this.openCategories=e.openCategories),e.defaultProgram&&(this.defaultProgram=e.defaultProgram),e.hidden&&(this.hidden=!0),e.deprecatedBy&&(this.deprecatedBy=e.deprecatedBy),e.onInit&&(this._configOnInit=e.onInit),e.onUpdate&&(this._configOnUpdate=e.onUpdate),e.onDestroy&&(this._configOnDestroy=e.onDestroy),e.asyncInit&&(this._configAsyncInit=e.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(e){return this._configOnUpdate?this._configOnUpdate.call(this,e):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(e){return this._configAsyncInit?this._configAsyncInit.call(this,e):Promise.resolve()}};var t=new n({name:"Mnca",func:"mnca",tags:["sim"],description:"Multi-neighborhood cellular automata",uniformLayout:{resolution:{slot:0,components:"xy"},time:{slot:0,components:"z"},deltaTime:{slot:0,components:"w"},speed:{slot:1,components:"x"},smoothing:{slot:1,components:"y"},weight:{slot:1,components:"z"},seed:{slot:1,components:"w"},resetState:{slot:2,components:"x"},n1v1:{slot:2,components:"y"},n1r1:{slot:2,components:"z"},n1v2:{slot:2,components:"w"},n1r2:{slot:3,components:"x"},n1v3:{slot:3,components:"y"},n1r3:{slot:3,components:"z"},n1v4:{slot:3,components:"w"},n1r4:{slot:4,components:"x"},n2v1:{slot:4,components:"y"},n2r1:{slot:4,components:"z"},n2v2:{slot:4,components:"w"},n2r2:{slot:5,components:"x"}},textures:{global_mnca_state:{width:{screenDivide:"zoom",default:8},height:{screenDivide:"zoom",default:8}}},globals:{tex:{type:"surface",default:"none",ui:{label:"texture",category:"input"}},zoom:{type:"int",default:8,choices:{x1:1,x2:2,x4:4,x8:8,x16:16,x32:32,x64:64},randChoices:[4,8,16,32,64],ui:{label:"zoom",control:"dropdown"}},seed:{type:"int",default:1,min:1,max:100,ui:{label:"seed",control:!1},uniform:"seed"},smoothing:{type:"int",default:0,choices:{constant:0,linear:1,hermite:2,catmullRom3x3:3,catmullRom4x4:4,bSpline3x3:5,bSpline4x4:6},ui:{label:"smoothing",control:"dropdown"},uniform:"smoothing"},speed:{type:"float",default:10,min:1,max:100,ui:{label:"speed",control:"slider"},uniform:"speed"},resetState:{type:"boolean",default:!1,uniform:"resetState",ui:{control:"button",buttonLabel:"reset",label:"state"}},weight:{type:"float",default:0,min:0,max:100,randChance:0,ui:{label:"input weight",control:"slider",category:"input",enabledBy:{param:"tex",neq:"none"}},uniform:"weight"},n1v1:{type:"float",default:21,min:0,max:100,randMin:20,ui:{label:"n1 thresh 1",control:"slider",category:"rules"},uniform:"n1v1"},n1r1:{type:"float",default:1,min:0,max:100,ui:{label:"n1 range 1",control:"slider",category:"rules"},uniform:"n1r1"},n1v2:{type:"float",default:35,min:0,max:100,randMin:20,ui:{label:"n1 thresh 2",control:"slider",category:"rules"},uniform:"n1v2"},n1r2:{type:"float",default:15,min:0,max:100,ui:{label:"n1 range 2",control:"slider",category:"rules"},uniform:"n1r2"},n1v3:{type:"float",default:75,min:0,max:100,randMin:20,ui:{label:"n1 thresh 3",control:"slider",category:"rules"},uniform:"n1v3"},n1r3:{type:"float",default:10,min:0,max:100,ui:{label:"n1 range 3",control:"slider",category:"rules"},uniform:"n1r3"},n1v4:{type:"float",default:12,min:0,max:100,randMin:20,ui:{label:"n1 thresh 4",control:"slider",category:"rules"},uniform:"n1v4"},n1r4:{type:"float",default:3,min:0,max:100,ui:{label:"n1 range 4",control:"slider",category:"rules"},uniform:"n1r4"},n2v1:{type:"float",default:10,min:0,max:100,randMin:20,ui:{label:"n2 thresh 1",control:"slider",category:"rules"},uniform:"n2v1"},n2r1:{type:"float",default:18,min:0,max:100,ui:{label:"n2 range 1",control:"slider",category:"rules"},uniform:"n2r1"},n2v2:{type:"float",default:43,min:0,max:100,randMin:20,ui:{label:"n2 thresh 2",control:"slider",category:"rules"},uniform:"n2v2"},n2r2:{type:"float",default:12,min:0,max:100,ui:{label:"n2 range 2",control:"slider",category:"rules"},uniform:"n2r2"},source:{type:"int",default:0,min:0,max:7,ui:{control:!1,category:"misc"},uniform:"source"}},passes:[{name:"update",program:"mncaFb",inputs:{bufTex:"global_mnca_state",seedTex:"tex"},outputs:{fragColor:"global_mnca_state"}},{name:"render",program:"mnca",inputs:{fbTex:"global_mnca_state",prevFrameTex:"global_mnca_state",bufTex:"global_mnca_state",seedTex:"tex"},outputs:{fragColor:"outputTex"}}]});var a={mnca:{glsl:`#version 300 es
+var n=class{constructor(e={}){this.state={},this.uniforms={},e.name&&(this.name=e.name),e.namespace&&(this.namespace=e.namespace),e.func&&(this.func=e.func),e.description&&(this.description=e.description),e.tags&&(this.tags=e.tags),e.globals&&(this.globals=e.globals),e.passes&&(this.passes=e.passes),e.textures&&(this.textures=e.textures),e.textures3d&&(this.textures3d=e.textures3d),e.shaders&&(this.shaders=e.shaders),e.externalTexture&&(this.externalTexture=e.externalTexture),e.externalMesh&&(this.externalMesh=e.externalMesh),e.builtinMeshes&&(this.builtinMeshes=e.builtinMeshes),e.outputTex3d&&(this.outputTex3d=e.outputTex3d),e.outputGeo&&(this.outputGeo=e.outputGeo),e.uniformLayout&&(this.uniformLayout=e.uniformLayout),e.uniformLayouts&&(this.uniformLayouts=e.uniformLayouts),e.paramAliases&&(this.paramAliases=e.paramAliases),e.openCategories&&(this.openCategories=e.openCategories),e.defaultProgram&&(this.defaultProgram=e.defaultProgram),e.hidden&&(this.hidden=!0),e.deprecatedBy&&(this.deprecatedBy=e.deprecatedBy),e.onInit&&(this._configOnInit=e.onInit),e.onUpdate&&(this._configOnUpdate=e.onUpdate),e.onDestroy&&(this._configOnDestroy=e.onDestroy),e.asyncInit&&(this._configAsyncInit=e.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(e){return this._configOnUpdate?this._configOnUpdate.call(this,e):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(e){return this._configAsyncInit?this._configAsyncInit.call(this,e):Promise.resolve()}};var t=new n({name:"Mnca",func:"mnca",tags:["sim"],description:"Multi-neighborhood cellular automata",uniformLayout:{resolution:{slot:0,components:"xy"},time:{slot:0,components:"z"},deltaTime:{slot:0,components:"w"},speed:{slot:1,components:"x"},smoothing:{slot:1,components:"y"},weight:{slot:1,components:"z"},seed:{slot:1,components:"w"},resetState:{slot:2,components:"x"},n1v1:{slot:2,components:"y"},n1r1:{slot:2,components:"z"},n1v2:{slot:2,components:"w"},n1r2:{slot:3,components:"x"},n1v3:{slot:3,components:"y"},n1r3:{slot:3,components:"z"},n1v4:{slot:3,components:"w"},n1r4:{slot:4,components:"x"},n2v1:{slot:4,components:"y"},n2r1:{slot:4,components:"z"},n2v2:{slot:4,components:"w"},n2r2:{slot:5,components:"x"},tileOffset:{slot:6,components:"xy"},fullResolution:{slot:6,components:"zw"}},textures:{global_mnca_state:{width:{screenDivide:"zoom",default:8},height:{screenDivide:"zoom",default:8}}},globals:{tex:{type:"surface",default:"none",ui:{label:"texture",category:"input"}},zoom:{type:"int",default:8,choices:{x1:1,x2:2,x4:4,x8:8,x16:16,x32:32,x64:64},randChoices:[4,8,16,32,64],ui:{label:"zoom",control:"dropdown"}},seed:{type:"int",default:1,min:1,max:100,ui:{label:"seed",control:!1},uniform:"seed"},smoothing:{type:"int",default:0,choices:{constant:0,linear:1,hermite:2,catmullRom3x3:3,catmullRom4x4:4,bSpline3x3:5,bSpline4x4:6},ui:{label:"smoothing",control:"dropdown"},uniform:"smoothing"},speed:{type:"float",default:10,min:1,max:100,ui:{label:"speed",control:"slider"},uniform:"speed"},resetState:{type:"boolean",default:!1,uniform:"resetState",ui:{control:"button",buttonLabel:"reset",label:"state"}},weight:{type:"float",default:0,min:0,max:100,randChance:0,ui:{label:"input weight",control:"slider",category:"input",enabledBy:{param:"tex",neq:"none"}},uniform:"weight"},n1v1:{type:"float",default:21,min:0,max:100,randMin:20,ui:{label:"n1 thresh 1",control:"slider",category:"rules"},uniform:"n1v1"},n1r1:{type:"float",default:1,min:0,max:100,ui:{label:"n1 range 1",control:"slider",category:"rules"},uniform:"n1r1"},n1v2:{type:"float",default:35,min:0,max:100,randMin:20,ui:{label:"n1 thresh 2",control:"slider",category:"rules"},uniform:"n1v2"},n1r2:{type:"float",default:15,min:0,max:100,ui:{label:"n1 range 2",control:"slider",category:"rules"},uniform:"n1r2"},n1v3:{type:"float",default:75,min:0,max:100,randMin:20,ui:{label:"n1 thresh 3",control:"slider",category:"rules"},uniform:"n1v3"},n1r3:{type:"float",default:10,min:0,max:100,ui:{label:"n1 range 3",control:"slider",category:"rules"},uniform:"n1r3"},n1v4:{type:"float",default:12,min:0,max:100,randMin:20,ui:{label:"n1 thresh 4",control:"slider",category:"rules"},uniform:"n1v4"},n1r4:{type:"float",default:3,min:0,max:100,ui:{label:"n1 range 4",control:"slider",category:"rules"},uniform:"n1r4"},n2v1:{type:"float",default:10,min:0,max:100,randMin:20,ui:{label:"n2 thresh 1",control:"slider",category:"rules"},uniform:"n2v1"},n2r1:{type:"float",default:18,min:0,max:100,ui:{label:"n2 range 1",control:"slider",category:"rules"},uniform:"n2r1"},n2v2:{type:"float",default:43,min:0,max:100,randMin:20,ui:{label:"n2 thresh 2",control:"slider",category:"rules"},uniform:"n2v2"},n2r2:{type:"float",default:12,min:0,max:100,ui:{label:"n2 range 2",control:"slider",category:"rules"},uniform:"n2r2"},source:{type:"int",default:0,min:0,max:7,ui:{control:!1,category:"misc"},uniform:"source"}},passes:[{name:"update",program:"mncaFb",inputs:{bufTex:"global_mnca_state",seedTex:"tex"},outputs:{fragColor:"global_mnca_state"}},{name:"render",program:"mnca",inputs:{fbTex:"global_mnca_state",prevFrameTex:"global_mnca_state",bufTex:"global_mnca_state",seedTex:"tex"},outputs:{fragColor:"outputTex"}}]});var a={mnca:{glsl:`#version 300 es
 
 /*
  * Cellular automata display pass.
@@ -299,7 +299,7 @@ void main() {
 `,wgsl:`// Cellular automata display pass (WGSL).
 
 struct Uniforms {
-    data : array<vec4<f32>, 6>,
+    data : array<vec4<f32>, 7>,
 };
 
 @group(0) @binding(0) var<uniform> uniforms : Uniforms;
@@ -327,15 +327,14 @@ fn bicubic4(p0: vec4<f32>, p1: vec4<f32>, p2: vec4<f32>, p3: vec4<f32>, t: f32) 
 }
 
 fn catmullRom3(p0: vec4<f32>, p1: vec4<f32>, p2: vec4<f32>, t: f32) -> vec4<f32> {
+    // Catmull-Rom-esque cubic through 3 points
+    // Interpolating (passes through control points)
     let t2 = t * t;
     let t3 = t2 * t;
 
-    let m = 0.5 * (p2 - p0);
-
-    return (2.0*t3 - 3.0*t2 + 1.0) * p1 +
-           (t3 - 2.0*t2 + t) * m +
-           (-2.0*t3 + 3.0*t2) * p2 +
-           (t3 - t2) * m;
+    return p1 + 0.5 * t * (p2 - p0) +
+           0.5 * t2 * (2.0*p0 - 5.0*p1 + 4.0*p2 - p0) +
+           0.5 * t3 * (-p0 + 3.0*p1 - 3.0*p2 + p0);
 }
 
 fn catmullRom4(p0: vec4<f32>, p1: vec4<f32>, p2: vec4<f32>, p3: vec4<f32>, t: f32) -> vec4<f32> {
@@ -490,46 +489,49 @@ fn cosineMix(a: f32, b: f32, t: f32) -> f32 {
 @fragment fn main(@builtin(position) fragCoord: vec4<f32>) -> @location(0) vec4<f32> {
     let resolution = uniforms.data[0].xy;
     let smoothing = i32(uniforms.data[1].y);
+    let tileOffset = uniforms.data[6].xy;
+    let fullResolution = uniforms.data[6].zw;
+    let globalCoord = fragCoord.xy + tileOffset;
 
     var state: f32 = 0.0;
     if (smoothing == 0) {
         // constant - use textureLoad for exact nearest-neighbor sampling
         let texSizeI = vec2<i32>(textureDimensions(fbTex, 0));
         let texSizeF = vec2<f32>(f32(texSizeI.x), f32(texSizeI.y));
-        let pixelCoord = vec2<i32>(floor(fragCoord.xy * texSizeF / resolution));
+        let pixelCoord = vec2<i32>(floor(globalCoord * texSizeF / fullResolution));
         state = textureLoad(fbTex, clamp(pixelCoord, vec2<i32>(0), texSizeI - vec2<i32>(1)), 0).g;
     } else if (smoothing == 3) {
         // catmull-rom 3x3 (9 taps)
         let texSize = vec2<f32>(textureDimensions(fbTex, 0));
         let texelSize = 1.0 / texSize;
-        let scaling = resolution / texSize;
-        let uv = (fragCoord.xy - scaling * 0.5) / resolution;
+        let scaling = fullResolution / texSize;
+        let uv = (globalCoord - scaling * 0.5) / fullResolution;
         state = catmullRom3x3Sample(fbTex, mySampler, uv, texelSize).g;
     } else if (smoothing == 4) {
         // catmull-rom 4x4 (16 taps)
         let texSize = vec2<f32>(textureDimensions(fbTex, 0));
         let texelSize = 1.0 / texSize;
-        let scaling = resolution / texSize;
-        let uv = (fragCoord.xy - scaling * 0.5) / resolution;
+        let scaling = fullResolution / texSize;
+        let uv = (globalCoord - scaling * 0.5) / fullResolution;
         state = catmullRom4x4Sample(fbTex, mySampler, uv, texelSize).g;
     } else if (smoothing == 5) {
         // b-spline 3x3 (9 taps)
         let texSize = vec2<f32>(textureDimensions(fbTex, 0));
         let texelSize = 1.0 / texSize;
-        let scaling = resolution / texSize;
-        let uv = (fragCoord.xy - scaling * 0.5) / resolution;
+        let scaling = fullResolution / texSize;
+        let uv = (globalCoord - scaling * 0.5) / fullResolution;
         state = quadraticSample(fbTex, mySampler, uv, texelSize).g;
     } else if (smoothing == 6) {
         // b-spline 4x4 (16 taps)
         let texSize = vec2<f32>(textureDimensions(fbTex, 0));
         let texelSize = 1.0 / texSize;
-        let scaling = resolution / texSize;
-        let uv = (fragCoord.xy - scaling * 0.5) / resolution;
+        let scaling = fullResolution / texSize;
+        let uv = (globalCoord - scaling * 0.5) / fullResolution;
         state = bicubicSample(fbTex, mySampler, uv, texelSize).g;
     } else {
         // linear-style smoothing \u2014 sample texel centres explicitly to avoid seams.
         let texSize = vec2<f32>(textureDimensions(fbTex, 0));
-        let texelPos = (fragCoord.xy * texSize / resolution) - vec2<f32>(0.5, 0.5);
+        let texelPos = (globalCoord * texSize / fullResolution) - vec2<f32>(0.5, 0.5);
         let base = floor(texelPos);
         let weights = fract(texelPos);
         let next = base + vec2<f32>(1.0, 1.0);
@@ -872,7 +874,7 @@ fn main(@builtin(position) fragCoord: vec4<f32>) -> @location(0) vec4<f32> {
     let nextState: vec4<f32> = vec4<f32>(newState, newState, newState, 1.0);
     return mix(currentState, nextState, min(1.0, deltaTime * animSpeed));
 }
-`}},r=`# mnca
+`}},l=`# mnca
 
 Multi-neighborhood cellular automata
 
@@ -916,4 +918,4 @@ mnca(tex: read(o0))
 
 render(o1)
 \`\`\`
-`;if(t&&Object.keys(a).length>0){t.shaders||(t.shaders={});for(let[o,e]of Object.entries(a))t.shaders[o]={...e}}t&&r&&(t.help=r);var x="synth/mnca",f="synth",v="mnca",c=t;export{c as default,x as effectId,v as effectName,r as help,f as namespace};
+`;if(t&&Object.keys(a).length>0){t.shaders||(t.shaders={});for(let[o,e]of Object.entries(a))t.shaders[o]={...e}}t&&l&&(t.help=l);var x="synth/mnca",f="synth",v="mnca",c=t;export{c as default,x as effectId,v as effectName,l as help,f as namespace};

@@ -1,5 +1,5 @@
 /* filter/glowingEdge */
-var n=class{constructor(e={}){this.state={},this.uniforms={},e.name&&(this.name=e.name),e.namespace&&(this.namespace=e.namespace),e.func&&(this.func=e.func),e.description&&(this.description=e.description),e.tags&&(this.tags=e.tags),e.globals&&(this.globals=e.globals),e.passes&&(this.passes=e.passes),e.textures&&(this.textures=e.textures),e.textures3d&&(this.textures3d=e.textures3d),e.shaders&&(this.shaders=e.shaders),e.externalTexture&&(this.externalTexture=e.externalTexture),e.externalMesh&&(this.externalMesh=e.externalMesh),e.builtinMeshes&&(this.builtinMeshes=e.builtinMeshes),e.outputTex3d&&(this.outputTex3d=e.outputTex3d),e.outputGeo&&(this.outputGeo=e.outputGeo),e.uniformLayout&&(this.uniformLayout=e.uniformLayout),e.uniformLayouts&&(this.uniformLayouts=e.uniformLayouts),e.paramAliases&&(this.paramAliases=e.paramAliases),e.openCategories&&(this.openCategories=e.openCategories),e.defaultProgram&&(this.defaultProgram=e.defaultProgram),e.hidden&&(this.hidden=!0),e.deprecatedBy&&(this.deprecatedBy=e.deprecatedBy),e.onInit&&(this._configOnInit=e.onInit),e.onUpdate&&(this._configOnUpdate=e.onUpdate),e.onDestroy&&(this._configOnDestroy=e.onDestroy),e.asyncInit&&(this._configAsyncInit=e.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(e){return this._configOnUpdate?this._configOnUpdate.call(this,e):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(e){return this._configAsyncInit?this._configAsyncInit.call(this,e):Promise.resolve()}};var t=new n({name:"Glowing Edge",namespace:"filter",func:"glowingEdge",tags:["edges"],description:"Glowing edge detection",globals:{shape:{type:"int",default:0,uniform:"sobelMetric",choices:{circle:0,diamond:1,square:2,star:3},ui:{label:"shape",control:"dropdown"}},width:{type:"int",default:1,uniform:"width",min:0,max:10,zero:0,randMin:1,randMax:3,ui:{label:"width",control:"slider"}},alpha:{type:"float",default:1,uniform:"alpha",min:0,max:1,step:.05,ui:{label:"alpha",control:"slider"}}},passes:[{name:"main",program:"glowingEdge",inputs:{inputTex:"inputTex"},uniforms:{shape:"sobelMetric",alpha:"alpha",width:"width"},outputs:{fragColor:"outputTex"}}]});var r={glowingEdge:{glsl:`#version 300 es
+var n=class{constructor(e={}){this.state={},this.uniforms={},e.name&&(this.name=e.name),e.namespace&&(this.namespace=e.namespace),e.func&&(this.func=e.func),e.description&&(this.description=e.description),e.tags&&(this.tags=e.tags),e.globals&&(this.globals=e.globals),e.passes&&(this.passes=e.passes),e.textures&&(this.textures=e.textures),e.textures3d&&(this.textures3d=e.textures3d),e.shaders&&(this.shaders=e.shaders),e.externalTexture&&(this.externalTexture=e.externalTexture),e.externalMesh&&(this.externalMesh=e.externalMesh),e.builtinMeshes&&(this.builtinMeshes=e.builtinMeshes),e.outputTex3d&&(this.outputTex3d=e.outputTex3d),e.outputGeo&&(this.outputGeo=e.outputGeo),e.uniformLayout&&(this.uniformLayout=e.uniformLayout),e.uniformLayouts&&(this.uniformLayouts=e.uniformLayouts),e.paramAliases&&(this.paramAliases=e.paramAliases),e.openCategories&&(this.openCategories=e.openCategories),e.defaultProgram&&(this.defaultProgram=e.defaultProgram),e.hidden&&(this.hidden=!0),e.deprecatedBy&&(this.deprecatedBy=e.deprecatedBy),e.onInit&&(this._configOnInit=e.onInit),e.onUpdate&&(this._configOnUpdate=e.onUpdate),e.onDestroy&&(this._configOnDestroy=e.onDestroy),e.asyncInit&&(this._configAsyncInit=e.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(e){return this._configOnUpdate?this._configOnUpdate.call(this,e):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(e){return this._configAsyncInit?this._configAsyncInit.call(this,e):Promise.resolve()}};var t=new n({name:"Glowing Edge",namespace:"filter",func:"glowingEdge",tags:["edges"],description:"Glowing edge detection",globals:{shape:{type:"int",default:0,uniform:"sobelMetric",choices:{circle:0,diamond:1,square:2,star:3},ui:{label:"shape",control:"dropdown"}},width:{type:"int",default:1,uniform:"width",min:0,max:10,zero:0,randMin:1,randMax:3,ui:{label:"width",control:"slider"}},alpha:{type:"float",default:1,uniform:"alpha",min:0,max:1,step:.05,ui:{label:"alpha",control:"slider"}}},passes:[{name:"main",program:"glowingEdge",inputs:{inputTex:"inputTex"},uniforms:{shape:"sobelMetric",alpha:"alpha",width:"width"},outputs:{fragColor:"outputTex"}}]});var l={glowingEdge:{glsl:`#version 300 es
 
 precision highp float;
 precision highp int;
@@ -81,6 +81,8 @@ struct Uniforms {
     alpha: f32,
     width: f32,
     _pad3: f32,
+    tileOffset: vec2<f32>,
+    fullResolution: vec2<f32>,
 }
 
 @group(0) @binding(0) var inputSampler: sampler;
@@ -109,7 +111,8 @@ fn distance_metric(gx: f32, gy: f32, metric: i32) -> f32 {
 @fragment
 fn main(@builtin(position) pos: vec4<f32>) -> @location(0) vec4<f32> {
     let texSize = vec2<f32>(textureDimensions(inputTex));
-    let uv = pos.xy / texSize;
+    let globalCoord = pos.xy + uniforms.tileOffset;
+    let uv = globalCoord / uniforms.fullResolution;
     let texel = uniforms.width / texSize;
 
     // Use textureSampleLevel because noisemaker textures are rgba16float \u2014
@@ -119,17 +122,17 @@ fn main(@builtin(position) pos: vec4<f32>) -> @location(0) vec4<f32> {
     // filtering are needed.
 
     // Sample base color
-    let base = textureSampleLevel(inputTex, inputSampler, uv, 0.0);
+    let base = textureSampleLevel(inputTex, inputSampler, pos.xy / texSize, 0.0);
 
     // Sample 3x3 neighborhood for Sobel
-    let tl = luminance(textureSampleLevel(inputTex, inputSampler, uv + vec2<f32>(-texel.x, -texel.y), 0.0).rgb);
-    let tc = luminance(textureSampleLevel(inputTex, inputSampler, uv + vec2<f32>(0.0, -texel.y), 0.0).rgb);
-    let tr = luminance(textureSampleLevel(inputTex, inputSampler, uv + vec2<f32>(texel.x, -texel.y), 0.0).rgb);
-    let ml = luminance(textureSampleLevel(inputTex, inputSampler, uv + vec2<f32>(-texel.x, 0.0), 0.0).rgb);
-    let mr = luminance(textureSampleLevel(inputTex, inputSampler, uv + vec2<f32>(texel.x, 0.0), 0.0).rgb);
-    let bl = luminance(textureSampleLevel(inputTex, inputSampler, uv + vec2<f32>(-texel.x, texel.y), 0.0).rgb);
-    let bc = luminance(textureSampleLevel(inputTex, inputSampler, uv + vec2<f32>(0.0, texel.y), 0.0).rgb);
-    let br = luminance(textureSampleLevel(inputTex, inputSampler, uv + vec2<f32>(texel.x, texel.y), 0.0).rgb);
+    let tl = luminance(textureSampleLevel(inputTex, inputSampler, ((uv + vec2<f32>(-texel.x, -texel.y)) * uniforms.fullResolution - uniforms.tileOffset) / texSize, 0.0).rgb);
+    let tc = luminance(textureSampleLevel(inputTex, inputSampler, ((uv + vec2<f32>(0.0, -texel.y)) * uniforms.fullResolution - uniforms.tileOffset) / texSize, 0.0).rgb);
+    let tr = luminance(textureSampleLevel(inputTex, inputSampler, ((uv + vec2<f32>(texel.x, -texel.y)) * uniforms.fullResolution - uniforms.tileOffset) / texSize, 0.0).rgb);
+    let ml = luminance(textureSampleLevel(inputTex, inputSampler, ((uv + vec2<f32>(-texel.x, 0.0)) * uniforms.fullResolution - uniforms.tileOffset) / texSize, 0.0).rgb);
+    let mr = luminance(textureSampleLevel(inputTex, inputSampler, ((uv + vec2<f32>(texel.x, 0.0)) * uniforms.fullResolution - uniforms.tileOffset) / texSize, 0.0).rgb);
+    let bl = luminance(textureSampleLevel(inputTex, inputSampler, ((uv + vec2<f32>(-texel.x, texel.y)) * uniforms.fullResolution - uniforms.tileOffset) / texSize, 0.0).rgb);
+    let bc = luminance(textureSampleLevel(inputTex, inputSampler, ((uv + vec2<f32>(0.0, texel.y)) * uniforms.fullResolution - uniforms.tileOffset) / texSize, 0.0).rgb);
+    let br = luminance(textureSampleLevel(inputTex, inputSampler, ((uv + vec2<f32>(texel.x, texel.y)) * uniforms.fullResolution - uniforms.tileOffset) / texSize, 0.0).rgb);
 
     // Sobel kernels
     let gx = -tl - 2.0 * ml - bl + tr + 2.0 * mr + br;
@@ -150,7 +153,7 @@ fn main(@builtin(position) pos: vec4<f32>) -> @location(0) vec4<f32> {
 
     return vec4<f32>(clamp(mixed, vec3<f32>(0.0), vec3<f32>(1.0)), base.a);
 }
-`}},l=`# glowingEdge
+`}},r=`# glowingEdge
 
 Glowing edge detection
 
@@ -173,4 +176,4 @@ noise(seed: 1, ridges: true)
 
 render(o0)
 \`\`\`
-`;if(t&&Object.keys(r).length>0){t.shaders||(t.shaders={});for(let[i,e]of Object.entries(r))t.shaders[i]={...e}}t&&l&&(t.help=l);var x="filter/glowingEdge",p="filter",c="glowingEdge",f=t;export{f as default,x as effectId,c as effectName,l as help,p as namespace};
+`;if(t&&Object.keys(l).length>0){t.shaders||(t.shaders={});for(let[i,e]of Object.entries(l))t.shaders[i]={...e}}t&&r&&(t.help=r);var f="filter/glowingEdge",x="filter",p="glowingEdge",c=t;export{c as default,f as effectId,p as effectName,r as help,x as namespace};

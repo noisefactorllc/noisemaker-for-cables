@@ -17,7 +17,7 @@ navierStokes(
 )
   .write(o1)
 
-render(o1)`,uniformLayouts:{nsSplat:{resolution:{slot:0,components:"xy"},seed:{slot:0,components:"w"},speed:{slot:1,components:"x"},inputForce:{slot:1,components:"y"},inputDye:{slot:1,components:"z"},resetState:{slot:1,components:"w"}},nsAdvect:{resolution:{slot:0,components:"xy"},speed:{slot:0,components:"w"},dyeDecay:{slot:1,components:"x"},velocityDecay:{slot:1,components:"y"}},nsSmooth:{resolution:{slot:0,components:"xy"},smoothing:{slot:0,components:"z"}},nsDivergence:{resolution:{slot:0,components:"xy"}},nsPressure:{resolution:{slot:0,components:"xy"}},nsGradient:{resolution:{slot:0,components:"xy"}},ns:{resolution:{slot:0,components:"xy"},inputIntensity:{slot:1,components:"x"}}},textures:{global_ns_velocity:{width:{screenDivide:"zoom",default:4},height:{screenDivide:"zoom",default:4},format:"rgba16f"},global_ns_pressure:{width:{screenDivide:"zoom",default:4},height:{screenDivide:"zoom",default:4},format:"rgba16f"},global_ns_smoothed:{width:"100%",height:"100%"}},globals:{tex:{type:"surface",default:"none",ui:{label:"texture",category:"input"}},zoom:{type:"int",default:1,choices:{x1:1,x2:2,x4:4,x8:8,x16:16,x32:32},randChoices:[2,4,8],ui:{label:"zoom",control:"dropdown"}},iterations:{type:"int",default:30,uniform:"iterations",min:4,max:40,ui:{label:"pressure iter",control:"slider",category:"solver"}},smoothing:{type:"int",default:1,uniform:"smoothing",choices:{constant:0,linear:1,hermite:2,catmullRom3x3:3,catmullRom4x4:4,bSpline3x3:5,bSpline4x4:6},ui:{label:"smoothing",control:"dropdown"}},speed:{type:"float",default:100,uniform:"speed",min:5,max:145,ui:{label:"speed",control:"slider"}},dyeDecay:{type:"float",default:98,uniform:"dyeDecay",min:80,max:100,ui:{label:"dye decay",control:"slider",category:"decay"}},velocityDecay:{type:"float",default:99,uniform:"velocityDecay",min:80,max:100,ui:{label:"vel decay",control:"slider",category:"decay"}},inputForce:{type:"float",default:.5,uniform:"inputForce",min:0,max:1,step:.01,randChance:0,ui:{label:"input force",control:"slider",category:"input",enabledBy:{param:"tex",neq:"none"}}},inputDye:{type:"float",default:.9,uniform:"inputDye",min:0,max:1,step:.01,randChance:0,ui:{label:"input dye",control:"slider",category:"input",enabledBy:{param:"tex",neq:"none"}}},inputIntensity:{type:"float",default:10,uniform:"inputIntensity",min:0,max:100,randChance:0,ui:{label:"input mix",control:"slider",category:"input",enabledBy:{param:"tex",neq:"none"}}},resetState:{type:"boolean",default:!1,uniform:"resetState",ui:{control:"button",buttonLabel:"stir",label:"state"}},seed:{type:"int",default:1,uniform:"seed",min:1,max:100,ui:{label:"seed",control:!1}}},passes:[{name:"splat",program:"nsSplat",inputs:{bufTex:"global_ns_velocity",inputTex:"tex"},outputs:{fragColor:"global_ns_velocity"}},{name:"advect",program:"nsAdvect",inputs:{bufTex:"global_ns_velocity"},outputs:{fragColor:"global_ns_velocity"}},{name:"divergence",program:"nsDivergence",inputs:{velTex:"global_ns_velocity"},outputs:{fragColor:"global_ns_pressure"}},{name:"pressure",program:"nsPressure",repeat:"iterations",inputs:{bufTex:"global_ns_pressure"},outputs:{fragColor:"global_ns_pressure"}},{name:"gradient",program:"nsGradient",inputs:{velTex:"global_ns_velocity",pressureTex:"global_ns_pressure"},outputs:{fragColor:"global_ns_velocity"}},{name:"smooth",program:"nsSmooth",inputs:{canvasTex:"global_ns_velocity"},outputs:{fragColor:"global_ns_smoothed"}},{name:"render",program:"ns",inputs:{fbTex:"global_ns_smoothed",inputTex:"tex"},outputs:{fragColor:"outputTex"}}]});var r={ns:{glsl:`#version 300 es
+render(o1)`,uniformLayouts:{nsSplat:{resolution:{slot:0,components:"xy"},seed:{slot:0,components:"w"},speed:{slot:1,components:"x"},inputForce:{slot:1,components:"y"},inputDye:{slot:1,components:"z"},resetState:{slot:1,components:"w"}},nsAdvect:{resolution:{slot:0,components:"xy"},speed:{slot:0,components:"w"},dyeDecay:{slot:1,components:"x"},velocityDecay:{slot:1,components:"y"}},nsSmooth:{resolution:{slot:0,components:"xy"},smoothing:{slot:0,components:"z"}},nsDivergence:{resolution:{slot:0,components:"xy"}},nsPressure:{resolution:{slot:0,components:"xy"}},nsGradient:{resolution:{slot:0,components:"xy"}},ns:{resolution:{slot:0,components:"xy"},inputIntensity:{slot:1,components:"x"},tileOffset:{slot:2,components:"xy"},fullResolution:{slot:2,components:"zw"}}},textures:{global_ns_velocity:{width:{screenDivide:"zoom",default:4},height:{screenDivide:"zoom",default:4},format:"rgba16f"},global_ns_pressure:{width:{screenDivide:"zoom",default:4},height:{screenDivide:"zoom",default:4},format:"rgba16f"},global_ns_smoothed:{width:"100%",height:"100%"}},globals:{tex:{type:"surface",default:"none",ui:{label:"texture",category:"input"}},zoom:{type:"int",default:1,choices:{x1:1,x2:2,x4:4,x8:8,x16:16,x32:32},randChoices:[2,4,8],ui:{label:"zoom",control:"dropdown"}},iterations:{type:"int",default:30,uniform:"iterations",min:4,max:40,ui:{label:"pressure iter",control:"slider",category:"solver"}},smoothing:{type:"int",default:1,uniform:"smoothing",choices:{constant:0,linear:1,hermite:2,catmullRom3x3:3,catmullRom4x4:4,bSpline3x3:5,bSpline4x4:6},ui:{label:"smoothing",control:"dropdown"}},speed:{type:"float",default:100,uniform:"speed",min:5,max:145,ui:{label:"speed",control:"slider"}},dyeDecay:{type:"float",default:98,uniform:"dyeDecay",min:80,max:100,ui:{label:"dye decay",control:"slider",category:"decay"}},velocityDecay:{type:"float",default:99,uniform:"velocityDecay",min:80,max:100,ui:{label:"vel decay",control:"slider",category:"decay"}},inputForce:{type:"float",default:.5,uniform:"inputForce",min:0,max:1,step:.01,randChance:0,ui:{label:"input force",control:"slider",category:"input",enabledBy:{param:"tex",neq:"none"}}},inputDye:{type:"float",default:.9,uniform:"inputDye",min:0,max:1,step:.01,randChance:0,ui:{label:"input dye",control:"slider",category:"input",enabledBy:{param:"tex",neq:"none"}}},inputIntensity:{type:"float",default:10,uniform:"inputIntensity",min:0,max:100,randChance:0,ui:{label:"input mix",control:"slider",category:"input",enabledBy:{param:"tex",neq:"none"}}},resetState:{type:"boolean",default:!1,uniform:"resetState",ui:{control:"button",buttonLabel:"stir",label:"state"}},seed:{type:"int",default:1,uniform:"seed",min:1,max:100,ui:{label:"seed",control:!1}}},passes:[{name:"splat",program:"nsSplat",inputs:{bufTex:"global_ns_velocity",inputTex:"tex"},outputs:{fragColor:"global_ns_velocity"}},{name:"advect",program:"nsAdvect",inputs:{bufTex:"global_ns_velocity"},outputs:{fragColor:"global_ns_velocity"}},{name:"divergence",program:"nsDivergence",inputs:{velTex:"global_ns_velocity"},outputs:{fragColor:"global_ns_pressure"}},{name:"pressure",program:"nsPressure",repeat:"iterations",inputs:{bufTex:"global_ns_pressure"},outputs:{fragColor:"global_ns_pressure"}},{name:"gradient",program:"nsGradient",inputs:{velTex:"global_ns_velocity",pressureTex:"global_ns_pressure"},outputs:{fragColor:"global_ns_velocity"}},{name:"smooth",program:"nsSmooth",inputs:{canvasTex:"global_ns_velocity"},outputs:{fragColor:"global_ns_smoothed"}},{name:"render",program:"ns",inputs:{fbTex:"global_ns_smoothed",inputTex:"tex"},outputs:{fragColor:"outputTex"}}]});var r={ns:{glsl:`#version 300 es
 
 /*
  * Navier-Stokes display pass.
@@ -78,7 +78,8 @@ void main() {
 struct Uniforms {
     // data[0] = (resolution.x, resolution.y, _, _)
     // data[1] = (inputIntensity, _, _, _)
-    data : array<vec4<f32>, 2>,
+    // data[2] = (tileOffset.x, tileOffset.y, fullResolution.x, fullResolution.y)
+    data : array<vec4<f32>, 3>,
 };
 
 @group(0) @binding(0) var<uniform> uniforms : Uniforms;
@@ -90,13 +91,16 @@ struct Uniforms {
 fn main(@builtin(position) pos : vec4<f32>) -> @location(0) vec4<f32> {
     let resolution = uniforms.data[0].xy;
     let inputIntensity = uniforms.data[1].x;
+    let tileOffset = uniforms.data[2].xy;
+    let fullResolution = uniforms.data[2].zw;
+    let globalCoord = pos.xy + tileOffset;
 
     let texSize = vec2<i32>(textureDimensions(fbTex, 0));
     let texSizeF = vec2<f32>(texSize);
     let minIdx = vec2<i32>(0);
     let maxIdx = texSize - vec2<i32>(1);
 
-    let texelPos = (pos.xy * texSizeF / resolution) - vec2<f32>(0.5);
+    let texelPos = (globalCoord * texSizeF / fullResolution) - vec2<f32>(0.5);
     let baseI = vec2<i32>(floor(texelPos));
     let f = fract(texelPos);
 
@@ -114,7 +118,8 @@ fn main(@builtin(position) pos : vec4<f32>) -> @location(0) vec4<f32> {
 
     let blend = clamp(inputIntensity, 0.0, 100.0) * 0.01;
     if (blend > 0.0) {
-        let inputColor = textureSampleLevel(inputTex, samp, pos.xy / resolution, 0.0).rgb;
+        let inputUv = globalCoord / fullResolution;
+        let inputColor = textureSampleLevel(inputTex, samp, inputUv, 0.0).rgb;
         outCol = mix(outCol, inputColor, vec3<f32>(blend));
     }
 
@@ -975,4 +980,4 @@ navierStokes(tex: read(o0))
 
 render(o1)
 \`\`\`
-`;if(n&&Object.keys(r).length>0){n.shaders||(n.shaders={});for(let[i,e]of Object.entries(r))n.shaders[i]={...e}}n&&o&&(n.help=o);var v="synth/navierStokes",x="synth",p="navierStokes",u=n;export{u as default,v as effectId,p as effectName,o as help,x as namespace};
+`;if(n&&Object.keys(r).length>0){n.shaders||(n.shaders={});for(let[i,e]of Object.entries(r))n.shaders[i]={...e}}n&&o&&(n.help=o);var v="synth/navierStokes",x="synth",u="navierStokes",p=n;export{p as default,v as effectId,u as effectName,o as help,x as namespace};

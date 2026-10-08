@@ -269,10 +269,10 @@ fn main(@builtin(position) pos: vec4<f32>) -> @location(0) vec4<f32> {
     // Apply wrap mode (floored-mod so negative inputs wrap correctly)
     if (WRAP == 0) {
         // mirror
-        uv = abs(((uv + 1.0) % 2.0 + 2.0) % 2.0 - 1.0);
+        uv = abs((uv + 1.0) - 2.0 * floor((uv + 1.0) / 2.0) - 1.0);
     } else if (WRAP == 1) {
         // repeat
-        uv = (uv % 1.0 + 1.0) % 1.0;
+        uv = (uv - 1.0 * floor(uv / 1.0));
     } else {
         // clamp
         uv = clamp(uv, vec2<f32>(0.0), vec2<f32>(1.0));
@@ -337,4 +337,4 @@ noise(seed: 1, ridges: true)
 
 render(o0)
 \`\`\`
-`;if(n&&Object.keys(a).length>0){n.shaders||(n.shaders={});for(let[i,e]of Object.entries(a))n.shaders[i]={...e}}n&&o&&(n.help=o);var d="filter/pondRipples",u="filter",m="pondRipples",f=n;export{f as default,d as effectId,m as effectName,o as help,u as namespace};
+`;if(n&&Object.keys(a).length>0){n.shaders||(n.shaders={});for(let[i,e]of Object.entries(a))n.shaders[i]={...e}}n&&o&&(n.help=o);var u="filter/pondRipples",d="filter",m="pondRipples",f=n;export{f as default,u as effectId,m as effectName,o as help,d as namespace};

@@ -123,6 +123,9 @@ struct Uniforms {
     speed: i32,
     wrap: i32,
     antialias: i32,
+    resolution: vec2<f32>,
+    tileOffset: vec2<f32>,
+    fullResolution: vec2<f32>,
 }
 
 @group(0) @binding(0) var inputSampler: sampler;
@@ -183,9 +186,9 @@ fn perlinNoise(st_in: vec2<f32>, noiseScale: vec2<f32>, t: f32) -> f32 {
 
 @fragment
 fn main(@builtin(position) pos: vec4<f32>) -> @location(0) vec4<f32> {
-    let texSize = vec2<f32>(textureDimensions(inputTex));
-    let aspectRatio = texSize.x / texSize.y;
-    var uv = pos.xy / texSize;
+    let fullRes = select(uniforms.resolution, uniforms.fullResolution, uniforms.fullResolution.x > 0.0);
+    let aspectRatio = fullRes.x / fullRes.y;
+    var uv = (pos.xy + uniforms.tileOffset) / fullRes;
 
     let strength = uniforms.strength;
     let scale = uniforms.scale;
@@ -203,10 +206,10 @@ fn main(@builtin(position) pos: vec4<f32>) -> @location(0) vec4<f32> {
     // Apply wrap mode
     if (uniforms.wrap == 0) {
         // mirror
-        uv = abs(((uv + 1.0) % 2.0 + 2.0) % 2.0 - 1.0);
+        uv = abs((uv + 1.0) - 2.0 * floor((uv + 1.0) / 2.0) - 1.0);
     } else if (uniforms.wrap == 1) {
         // repeat
-        uv = (uv % 1.0 + 1.0) % 1.0;
+        uv = (uv - 1.0 * floor(uv / 1.0));
     } else {
         // clamp
         uv = clamp(uv, vec2<f32>(0.0), vec2<f32>(1.0));
@@ -225,7 +228,7 @@ fn main(@builtin(position) pos: vec4<f32>) -> @location(0) vec4<f32> {
         return textureSample(inputTex, inputSampler, uv);
     }
 }
-`}},i=`# warp
+`}},l=`# warp
 
 Perlin noise-based warp distortion
 
@@ -251,4 +254,4 @@ noise(seed: 1, ridges: true)
 
 render(o0)
 \`\`\`
-`;if(n&&Object.keys(s).length>0){n.shaders||(n.shaders={});for(let[r,e]of Object.entries(s))n.shaders[r]={...e}}n&&i&&(n.help=i);var u="filter/warp",f="filter",c="warp",d=n;export{d as default,u as effectId,c as effectName,i as help,f as namespace};
+`;if(n&&Object.keys(s).length>0){n.shaders||(n.shaders={});for(let[r,e]of Object.entries(s))n.shaders[r]={...e}}n&&l&&(n.help=l);var p="filter/warp",f="filter",c="warp",d=n;export{d as default,p as effectId,c as effectName,l as help,f as namespace};

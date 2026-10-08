@@ -3,8 +3,8 @@
  * Includes: CanvasRenderer + UIController + EffectSelect
  * Copyright (c) 2017-2026 Noise Factor LLC. https://noisefactor.io/
  * SPDX-License-Identifier: MIT
- * Build: 15c9114e
- * Date: 2026-10-07T23:05:41.102Z
+ * Build: 5976b7a6
+ * Date: 2026-10-08T02:45:40.951Z
  */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
@@ -9863,6 +9863,26 @@ var WebGPUBackend = class _WebGPUBackend extends Backend {
       };
       this.textures.set(id, tex);
     }
+    const context2d = source instanceof HTMLCanvasElement ? source.getContext("2d") : null;
+    if (context2d?.getContextAttributes?.().willReadFrequently) {
+      const pixels = context2d.getImageData(0, 0, width, height).data;
+      const rowBytes = width * 4;
+      let data = pixels;
+      if (flipY) {
+        data = new Uint8Array(pixels.length);
+        for (let row = 0; row < height; row++) {
+          const from = (height - 1 - row) * rowBytes;
+          data.set(pixels.subarray(from, from + rowBytes), row * rowBytes);
+        }
+      }
+      this.device.queue.writeTexture(
+        { texture: tex.handle },
+        data,
+        { bytesPerRow: rowBytes, rowsPerImage: height },
+        { width, height }
+      );
+      return { width, height };
+    }
     this.device.queue.copyExternalImageToTexture(
       { source, flipY },
       { texture: tex.handle },
@@ -15297,7 +15317,8 @@ async function createPipeline(graph, options = {}) {
           adapter.limits.maxColorAttachmentBytesPerSample,
           128
           // Request up to 128 bytes for flexibility
-        )
+        ),
+        maxTextureDimension2D: adapter.limits.maxTextureDimension2D
       }
     });
     let context = null;

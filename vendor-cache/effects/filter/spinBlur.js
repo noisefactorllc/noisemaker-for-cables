@@ -8,16 +8,6 @@ var n=class{constructor(e={}){this.state={},this.uniforms={},e.name&&(this.name=
  * own distortion (multiply x by aspect before rotating, divide after).
  * A per-pixel hash shifts the whole tap comb by up to half an angular
  * step to hide banding from the fixed tap count.
- *
- * Y-convention note: the tap arc is symmetric about theta=0, so the
- * zero-jitter effect is Y-mirror invariant (negating every tap angle
- * maps the tap set onto itself). Per-pixel jitter shifts the whole arc
- * by a bounded sub-step offset, which does not preserve that symmetry
- * exactly - it bounds the residual cross-backend difference by the
- * jitter magnitude rather than eliminating it outright, so this is
- * weaker than "structurally immune." GLSL gl_FragCoord and WGSL
- * @builtin(position) are both used unflipped; presented-pixel parity is
- * covered with a non-centered, non-default regression fixture.
  */
 
 #ifdef GL_ES
@@ -66,9 +56,7 @@ void main() {
 
     float arc = radians(amount);
     float angularStep = arc / float(N - 1);
-    // Mirror-invariant global coordinates keep corresponding WebGL2/WebGPU
-    // pixels on the same dither value while remaining continuous across
-    // tiled renders. The reflected WebGPU tap set applies the opposite sign.
+    // Mirror-invariant global coordinates, continuous across tiled renders.
     vec2 jitterCoord = vec2(globalCoord.x,
         abs(globalCoord.y - fullResolution.y * 0.5));
     float jitter = (hash12(jitterCoord) - 0.5) * angularStep;
@@ -112,9 +100,8 @@ fn hash12(p: vec2<f32>) -> f32 {
     return fract((p3.x + p3.y) * p3.z);
 }
 
-// The symmetric tap arc is invariant to the backend coordinate
-// handedness. Its per-pixel jitter is normalized separately below so
-// corresponding presented pixels use the same angular offset.
+// Rotate uv around center by angle, aspect-corrected exactly as
+// filter/pinch's rotate2D corrects its own distortion.
 fn rotateAround(uv: vec2<f32>, center: vec2<f32>, angle: f32, aspectRatio: f32) -> vec2<f32> {
     var p = uv;
     p.x = p.x * aspectRatio;
@@ -123,7 +110,7 @@ fn rotateAround(uv: vec2<f32>, center: vec2<f32>, angle: f32, aspectRatio: f32) 
     p = p - c;
     let s = sin(angle);
     let co = cos(angle);
-    p = vec2<f32>(co * p.x - s * p.y, s * p.x + co * p.y);
+    p = mat2x2<f32>(co, -s, s, co) * p;
     p = p + c;
     p.x = p.x / aspectRatio;
     return p;
@@ -143,13 +130,11 @@ fn main(@builtin(position) pos: vec4<f32>) -> @location(0) vec4<f32> {
 
     let arc = radians(uniforms.amount);
     let angularStep = arc / f32(N - 1);
-    // Mirror-invariant global coordinates match glsl/spinBlur.glsl and
-    // remain continuous across tiles. The sign is reversed because
-    // reflecting the symmetric tap arc maps theta to -theta, including
-    // the sub-step offset.
+    // Mirror-invariant global coordinates, as glsl/spinBlur.glsl computes
+    // them, continuous across tiles.
     let jitterCoord = vec2<f32>(globalCoord.x,
         abs(globalCoord.y - fullDims.y * 0.5));
-    let jitter = -(hash12(jitterCoord) - 0.5) * angularStep;
+    let jitter = (hash12(jitterCoord) - 0.5) * angularStep;
 
     var sum = vec4<f32>(0.0);
     for (var i: i32 = 0; i < N; i++) {
@@ -160,7 +145,7 @@ fn main(@builtin(position) pos: vec4<f32>) -> @location(0) vec4<f32> {
     }
     return sum / f32(N);
 }
-`}},i=`# spinBlur
+`}},o=`# spinBlur
 
 Rotational blur around a center point (Radial Blur, Spin mode)
 
@@ -191,4 +176,4 @@ noise(seed: 1, ridges: true)
 
 render(o0)
 \`\`\`
-`;if(t&&Object.keys(a).length>0){t.shaders||(t.shaders={});for(let[r,e]of Object.entries(a))t.shaders[r]={...e}}t&&i&&(t.help=i);var p="filter/spinBlur",c="filter",f="spinBlur",d=t;export{d as default,p as effectId,f as effectName,i as help,c as namespace};
+`;if(t&&Object.keys(a).length>0){t.shaders||(t.shaders={});for(let[r,e]of Object.entries(a))t.shaders[r]={...e}}t&&o&&(t.help=o);var c="filter/spinBlur",p="filter",f="spinBlur",d=t;export{d as default,c as effectId,f as effectName,o as help,p as namespace};

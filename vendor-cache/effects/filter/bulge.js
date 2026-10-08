@@ -102,6 +102,9 @@ struct Uniforms {
     wrap: i32,
     rotation: f32,
     antialias: i32,
+    resolution: vec2<f32>,
+    tileOffset: vec2<f32>,
+    fullResolution: vec2<f32>,
 }
 
 @group(0) @binding(0) var inputSampler: sampler;
@@ -117,7 +120,7 @@ fn rotate2D(st_in: vec2<f32>, rot: f32, aspectRatio: f32) -> vec2<f32> {
     st = st - vec2<f32>(0.5 * aspectRatio, 0.5);
     let c = cos(angle);
     let s = sin(angle);
-    st = vec2<f32>(c * st.x - s * st.y, s * st.x + c * st.y);
+    st = mat2x2<f32>(c, -s, s, c) * st;
     st = st + vec2<f32>(0.5 * aspectRatio, 0.5);
     st.x = st.x / aspectRatio;
     return st;
@@ -125,9 +128,9 @@ fn rotate2D(st_in: vec2<f32>, rot: f32, aspectRatio: f32) -> vec2<f32> {
 
 @fragment
 fn main(@builtin(position) pos: vec4<f32>) -> @location(0) vec4<f32> {
-    let texSize = vec2<f32>(textureDimensions(inputTex));
-    let aspectRatio = texSize.x / texSize.y;
-    var uv = pos.xy / texSize;
+    let aspectRatio = uniforms.fullResolution.x / uniforms.fullResolution.y;
+    let globalCoord = pos.xy + uniforms.tileOffset;
+    var uv = globalCoord / uniforms.fullResolution;
 
     // Apply rotation before distortion
     uv = rotate2D(uv, uniforms.rotation / 180.0, aspectRatio);
@@ -153,10 +156,10 @@ fn main(@builtin(position) pos: vec4<f32>) -> @location(0) vec4<f32> {
     // Apply wrap mode
     if (uniforms.wrap == 0) {
         // mirror
-        uv = abs(((uv + 1.0) % 2.0 + 2.0) % 2.0 - 1.0);
+        uv = abs((uv + 1.0) - 2.0 * floor((uv + 1.0) / 2.0) - 1.0);
     } else if (uniforms.wrap == 1) {
         // repeat
-        uv = (uv % 1.0 + 1.0) % 1.0;
+        uv = (uv - 1.0 * floor(uv / 1.0));
     } else {
         // clamp
         uv = clamp(uv, vec2<f32>(0.0), vec2<f32>(1.0));
@@ -165,21 +168,25 @@ fn main(@builtin(position) pos: vec4<f32>) -> @location(0) vec4<f32> {
     // Reverse rotation after distortion
     uv = rotate2D(uv, -uniforms.rotation / 180.0, aspectRatio);
 
+    // Convert distorted global UV back to tile-local for texture sampling.
+    // Use fract() to seamlessly wrap samples at tile boundaries.
+    let sampleUV = fract((uv * uniforms.fullResolution - uniforms.tileOffset) / uniforms.resolution);
+
     if (uniforms.antialias != 0) {
         // 4x supersample using distortion derivatives for adaptive spread
-        let dx = dpdx(uv);
-        let dy = dpdy(uv);
+        let dx = dpdx(sampleUV);
+        let dy = dpdy(sampleUV);
         var col = vec4<f32>(0.0);
-        col += textureSample(inputTex, inputSampler, uv + dx * -0.375 + dy * -0.125);
-        col += textureSample(inputTex, inputSampler, uv + dx *  0.125 + dy * -0.375);
-        col += textureSample(inputTex, inputSampler, uv + dx *  0.375 + dy *  0.125);
-        col += textureSample(inputTex, inputSampler, uv + dx * -0.125 + dy *  0.375);
+        col += textureSample(inputTex, inputSampler, sampleUV + dx * -0.375 + dy * -0.125);
+        col += textureSample(inputTex, inputSampler, sampleUV + dx *  0.125 + dy * -0.375);
+        col += textureSample(inputTex, inputSampler, sampleUV + dx *  0.375 + dy *  0.125);
+        col += textureSample(inputTex, inputSampler, sampleUV + dx * -0.125 + dy *  0.375);
         return col * 0.25;
     } else {
-        return textureSample(inputTex, inputSampler, uv);
+        return textureSample(inputTex, inputSampler, sampleUV);
     }
 }
-`}},a=`# bulge
+`}},o=`# bulge
 
 Bulge distortion from center
 
@@ -204,4 +211,4 @@ noise(seed: 1, ridges: true)
 
 render(o0)
 \`\`\`
-`;if(e&&Object.keys(r).length>0){e.shaders||(e.shaders={});for(let[s,t]of Object.entries(r))e.shaders[s]={...t}}e&&a&&(e.help=a);var p="filter/bulge",f="filter",c="bulge",d=e;export{d as default,p as effectId,c as effectName,a as help,f as namespace};
+`;if(e&&Object.keys(r).length>0){e.shaders||(e.shaders={});for(let[s,t]of Object.entries(r))e.shaders[s]={...t}}e&&o&&(e.help=o);var p="filter/bulge",f="filter",c="bulge",m=e;export{m as default,p as effectId,c as effectName,o as help,f as namespace};

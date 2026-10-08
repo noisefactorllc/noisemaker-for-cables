@@ -1,5 +1,5 @@
 /* filter/corrupt */
-var n=class{constructor(t={}){this.state={},this.uniforms={},t.name&&(this.name=t.name),t.namespace&&(this.namespace=t.namespace),t.func&&(this.func=t.func),t.description&&(this.description=t.description),t.tags&&(this.tags=t.tags),t.globals&&(this.globals=t.globals),t.passes&&(this.passes=t.passes),t.textures&&(this.textures=t.textures),t.textures3d&&(this.textures3d=t.textures3d),t.shaders&&(this.shaders=t.shaders),t.externalTexture&&(this.externalTexture=t.externalTexture),t.externalMesh&&(this.externalMesh=t.externalMesh),t.builtinMeshes&&(this.builtinMeshes=t.builtinMeshes),t.outputTex3d&&(this.outputTex3d=t.outputTex3d),t.outputGeo&&(this.outputGeo=t.outputGeo),t.uniformLayout&&(this.uniformLayout=t.uniformLayout),t.uniformLayouts&&(this.uniformLayouts=t.uniformLayouts),t.paramAliases&&(this.paramAliases=t.paramAliases),t.openCategories&&(this.openCategories=t.openCategories),t.defaultProgram&&(this.defaultProgram=t.defaultProgram),t.hidden&&(this.hidden=!0),t.deprecatedBy&&(this.deprecatedBy=t.deprecatedBy),t.onInit&&(this._configOnInit=t.onInit),t.onUpdate&&(this._configOnUpdate=t.onUpdate),t.onDestroy&&(this._configOnDestroy=t.onDestroy),t.asyncInit&&(this._configAsyncInit=t.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(t){return this._configOnUpdate?this._configOnUpdate.call(this,t):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(t){return this._configAsyncInit?this._configAsyncInit.call(this,t):Promise.resolve()}};var e=new n({name:"Corrupt",namespace:"filter",func:"corrupt",tags:["distort","glitch"],description:"Scanline-based data corruption",uniformLayout:{time:{slot:0,components:"x"},seed:{slot:0,components:"y"},intensity:{slot:0,components:"z"},sort:{slot:0,components:"w"},shift:{slot:1,components:"x"},bits:{slot:1,components:"y"},channelShift:{slot:1,components:"z"},speed:{slot:1,components:"w"},melt:{slot:2,components:"x"},scatter:{slot:2,components:"y"},bandHeight:{slot:2,components:"z"}},globals:{intensity:{type:"float",default:50,uniform:"intensity",min:0,max:100,ui:{label:"intensity",control:"slider"}},bandHeight:{type:"float",default:10,uniform:"bandHeight",min:1,max:100,ui:{label:"band height",control:"slider"}},sort:{type:"float",default:50,uniform:"sort",min:0,max:100,ui:{label:"sort",control:"slider"}},shift:{type:"float",default:50,uniform:"shift",min:0,max:100,ui:{label:"shift",control:"slider"}},channelShift:{type:"float",default:0,uniform:"channelShift",min:0,max:100,ui:{label:"channel shift",control:"slider"}},melt:{type:"float",default:0,uniform:"melt",min:0,max:100,ui:{label:"melt",control:"slider"}},scatter:{type:"float",default:0,uniform:"scatter",min:0,max:100,ui:{label:"scatter",control:"slider"}},bits:{type:"float",default:0,uniform:"bits",min:0,max:100,ui:{label:"bits",control:"slider"}},speed:{type:"int",default:1,uniform:"speed",min:0,max:5,zero:0,ui:{label:"speed",control:"slider"}},seed:{type:"int",default:1,uniform:"seed",min:1,max:100,ui:{label:"seed",control:"slider"}}},passes:[{name:"render",program:"corrupt",inputs:{inputTex:"inputTex"},outputs:{fragColor:"outputTex"}}]});var o={corrupt:{glsl:`/*
+var n=class{constructor(t={}){this.state={},this.uniforms={},t.name&&(this.name=t.name),t.namespace&&(this.namespace=t.namespace),t.func&&(this.func=t.func),t.description&&(this.description=t.description),t.tags&&(this.tags=t.tags),t.globals&&(this.globals=t.globals),t.passes&&(this.passes=t.passes),t.textures&&(this.textures=t.textures),t.textures3d&&(this.textures3d=t.textures3d),t.shaders&&(this.shaders=t.shaders),t.externalTexture&&(this.externalTexture=t.externalTexture),t.externalMesh&&(this.externalMesh=t.externalMesh),t.builtinMeshes&&(this.builtinMeshes=t.builtinMeshes),t.outputTex3d&&(this.outputTex3d=t.outputTex3d),t.outputGeo&&(this.outputGeo=t.outputGeo),t.uniformLayout&&(this.uniformLayout=t.uniformLayout),t.uniformLayouts&&(this.uniformLayouts=t.uniformLayouts),t.paramAliases&&(this.paramAliases=t.paramAliases),t.openCategories&&(this.openCategories=t.openCategories),t.defaultProgram&&(this.defaultProgram=t.defaultProgram),t.hidden&&(this.hidden=!0),t.deprecatedBy&&(this.deprecatedBy=t.deprecatedBy),t.onInit&&(this._configOnInit=t.onInit),t.onUpdate&&(this._configOnUpdate=t.onUpdate),t.onDestroy&&(this._configOnDestroy=t.onDestroy),t.asyncInit&&(this._configAsyncInit=t.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(t){return this._configOnUpdate?this._configOnUpdate.call(this,t):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(t){return this._configAsyncInit?this._configAsyncInit.call(this,t):Promise.resolve()}};var e=new n({name:"Corrupt",namespace:"filter",func:"corrupt",tags:["distort","glitch"],description:"Scanline-based data corruption",uniformLayout:{time:{slot:0,components:"x"},seed:{slot:0,components:"y"},intensity:{slot:0,components:"z"},sort:{slot:0,components:"w"},shift:{slot:1,components:"x"},bits:{slot:1,components:"y"},channelShift:{slot:1,components:"z"},speed:{slot:1,components:"w"},melt:{slot:2,components:"x"},scatter:{slot:2,components:"y"},bandHeight:{slot:2,components:"z"},renderScale:{slot:2,components:"w"},tileOffset:{slot:3,components:"xy"},fullResolution:{slot:3,components:"zw"}},globals:{intensity:{type:"float",default:50,uniform:"intensity",min:0,max:100,ui:{label:"intensity",control:"slider"}},bandHeight:{type:"float",default:10,uniform:"bandHeight",min:1,max:100,ui:{label:"band height",control:"slider"}},sort:{type:"float",default:50,uniform:"sort",min:0,max:100,ui:{label:"sort",control:"slider"}},shift:{type:"float",default:50,uniform:"shift",min:0,max:100,ui:{label:"shift",control:"slider"}},channelShift:{type:"float",default:0,uniform:"channelShift",min:0,max:100,ui:{label:"channel shift",control:"slider"}},melt:{type:"float",default:0,uniform:"melt",min:0,max:100,ui:{label:"melt",control:"slider"}},scatter:{type:"float",default:0,uniform:"scatter",min:0,max:100,ui:{label:"scatter",control:"slider"}},bits:{type:"float",default:0,uniform:"bits",min:0,max:100,ui:{label:"bits",control:"slider"}},speed:{type:"int",default:1,uniform:"speed",min:0,max:5,zero:0,ui:{label:"speed",control:"slider"}},seed:{type:"int",default:1,uniform:"seed",min:1,max:100,ui:{label:"seed",control:"slider"}}},passes:[{name:"render",program:"corrupt",inputs:{inputTex:"inputTex"},outputs:{fragColor:"outputTex"}}]});var o={corrupt:{glsl:`/*
  * Scanline-based data corruption.
  * All corruption operates along horizontal scanlines, simulating linear
  * byte-stream corruption: pixel sorting, horizontal shifting, bit manipulation,
@@ -225,7 +225,7 @@ void main() {
  */
 
 struct Uniforms {
-    data: array<vec4<f32>, 3>,
+    data: array<vec4<f32>, 4>,
 }
 
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
@@ -332,14 +332,15 @@ fn meltDisplace(uv_in: vec2<f32>, meltAmt: f32, t: f32, sd: f32, resX: f32) -> v
     return uv;
 }
 
-fn scatterDisplace(uv_in: vec2<f32>, scatterAmt: f32, t: f32, sd: f32, fragCoord: vec2<f32>) -> vec2<f32> {
+fn scatterDisplace(uv_in: vec2<f32>, scatterAmt: f32, t: f32, sd: f32, rs: f32, tileOff: vec2<f32>, fragCoord: vec2<f32>) -> vec2<f32> {
     var uv = uv_in;
-    let phaseHash = prng(vec3<f32>(floor(fragCoord), sd + 700.0));
+    let scaledCoord = floor((fragCoord + tileOff) / rs);
+    let phaseHash = prng(vec3<f32>(scaledCoord, sd + 700.0));
     let pixTime = floor((t + phaseHash.x) * 8.0);
-    let pixHash = prng(vec3<f32>(floor(fragCoord), pixTime + sd));
+    let pixHash = prng(vec3<f32>(scaledCoord, pixTime + sd));
     let threshold = mix(0.98, 0.1, scatterAmt * scatterAmt);
     if (pixHash.x > threshold) {
-        let dirHash = prng(vec3<f32>(floor(fragCoord) + vec2<f32>(1000.0), pixTime + sd));
+        let dirHash = prng(vec3<f32>(scaledCoord + vec2<f32>(1000.0), pixTime + sd));
         let dist = scatterAmt * 0.15 * (0.5 + pixHash.y * 0.5);
         uv.x = fract(uv.x + (dirHash.x - 0.5) * dist);
         uv.y = clamp(uv.y + (dirHash.y - 0.5) * dist, 0.0, 1.0);
@@ -362,15 +363,24 @@ fn main(@builtin(position) pos: vec4<f32>) -> @location(0) vec4<f32> {
     let melt = uniforms.data[2].x;
     let scatter = uniforms.data[2].y;
     let bandHeight = uniforms.data[2].z;
+    let renderScale = uniforms.data[2].w;
 
-    let resolution = vec2<f32>(textureDimensions(inputTex));
-    let resX = resolution.x;
-    let uv = pos.xy / resolution;
+    let tileOffset = uniforms.data[3].xy;
+    let fullResolution = uniforms.data[3].zw;
+
+    let tileDims = vec2<f32>(textureDimensions(inputTex));
+    let resolution = select(tileDims, fullResolution, fullResolution.x > 0.0);
+    let globalCoord = pos.xy + tileOffset;
+    let uv = globalCoord / resolution;
+    // Scale pixel-space coordinates so corruption patterns maintain their
+    // visual size regardless of export resolution
+    let rs = max(renderScale, 1.0);
+    let resX = resolution.x / rs;
     let spd = floor(speed);
     let t = time * TAU * spd;
 
-    // Scanline grouping
-    let rawRow = pos.y;
+    // Scanline grouping - scale band height so rows stay visually consistent
+    let rawRow = globalCoord.y / rs;
     let bh = max(1.0, floor(bandHeight * 0.32));
     let row = floor(rawRow / bh);
 
@@ -391,7 +401,7 @@ fn main(@builtin(position) pos: vec4<f32>) -> @location(0) vec4<f32> {
     }
     let scatterAmt = scatter / 100.0;
     if (scatterAmt > 0.0) {
-        sampleUv = scatterDisplace(sampleUv, scatterAmt, t, seed, pos.xy);
+        sampleUv = scatterDisplace(sampleUv, scatterAmt, t, seed, rs, tileOffset, pos.xy);
     }
 
     // Band-based corruption to UV
@@ -462,4 +472,4 @@ noise(seed: 1, ridges: true)
 
 render(o0)
 \`\`\`
-`;if(e&&Object.keys(o).length>0){e.shaders||(e.shaders={});for(let[r,t]of Object.entries(o))e.shaders[r]={...t}}e&&s&&(e.help=s);var p="filter/corrupt",c="filter",u="corrupt",h=e;export{h as default,p as effectId,u as effectName,s as help,c as namespace};
+`;if(e&&Object.keys(o).length>0){e.shaders||(e.shaders={});for(let[r,t]of Object.entries(o))e.shaders[r]={...t}}e&&s&&(e.help=s);var c="filter/corrupt",p="filter",u="corrupt",m=e;export{m as default,c as effectId,u as effectName,s as help,p as namespace};

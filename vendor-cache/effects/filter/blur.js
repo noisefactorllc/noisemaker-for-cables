@@ -53,7 +53,7 @@ void main() {
 struct Uniforms {
     radiusX: f32,
     radiusY: f32,
-    _pad1: f32,
+    renderScale: f32,
     _pad2: f32,
 }
 
@@ -67,7 +67,7 @@ fn main(@builtin(position) pos: vec4<f32>) -> @location(0) vec4<f32> {
     let uv = pos.xy / texSize;
     let texelSize = 1.0 / texSize;
     
-    let radius = i32(uniforms.radiusX);
+    let radius = i32(uniforms.radiusX * uniforms.renderScale);
     if (radius <= 0) {
         return textureSample(inputTex, inputSampler, uv);
     }
@@ -143,7 +143,7 @@ void main() {
 struct Uniforms {
     radiusX: f32,
     radiusY: f32,
-    _pad1: f32,
+    renderScale: f32,
     _pad2: f32,
 }
 
@@ -157,7 +157,7 @@ fn main(@builtin(position) pos: vec4<f32>) -> @location(0) vec4<f32> {
     let uv = pos.xy / texSize;
     let texelSize = 1.0 / texSize;
     
-    let radius = i32(uniforms.radiusY);
+    let radius = i32(uniforms.radiusY * uniforms.renderScale);
     if (radius <= 0) {
         return textureSample(inputTex, inputSampler, uv);
     }

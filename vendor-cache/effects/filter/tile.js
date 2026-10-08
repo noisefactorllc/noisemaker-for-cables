@@ -1,5 +1,5 @@
 /* filter/tile */
-var n=class{constructor(e={}){this.state={},this.uniforms={},e.name&&(this.name=e.name),e.namespace&&(this.namespace=e.namespace),e.func&&(this.func=e.func),e.description&&(this.description=e.description),e.tags&&(this.tags=e.tags),e.globals&&(this.globals=e.globals),e.passes&&(this.passes=e.passes),e.textures&&(this.textures=e.textures),e.textures3d&&(this.textures3d=e.textures3d),e.shaders&&(this.shaders=e.shaders),e.externalTexture&&(this.externalTexture=e.externalTexture),e.externalMesh&&(this.externalMesh=e.externalMesh),e.builtinMeshes&&(this.builtinMeshes=e.builtinMeshes),e.outputTex3d&&(this.outputTex3d=e.outputTex3d),e.outputGeo&&(this.outputGeo=e.outputGeo),e.uniformLayout&&(this.uniformLayout=e.uniformLayout),e.uniformLayouts&&(this.uniformLayouts=e.uniformLayouts),e.paramAliases&&(this.paramAliases=e.paramAliases),e.openCategories&&(this.openCategories=e.openCategories),e.defaultProgram&&(this.defaultProgram=e.defaultProgram),e.hidden&&(this.hidden=!0),e.deprecatedBy&&(this.deprecatedBy=e.deprecatedBy),e.onInit&&(this._configOnInit=e.onInit),e.onUpdate&&(this._configOnUpdate=e.onUpdate),e.onDestroy&&(this._configOnDestroy=e.onDestroy),e.asyncInit&&(this._configAsyncInit=e.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(e){return this._configOnUpdate?this._configOnUpdate.call(this,e):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(e){return this._configAsyncInit?this._configAsyncInit.call(this,e):Promise.resolve()}};var t=new n({name:"Tile",namespace:"filter",func:"tile",tags:["tiling","transform"],description:"Symmetry-based kaleidoscope tiler",globals:{symmetry:{type:"int",default:0,uniform:"symmetry",choices:{mirrorXY:0,rotate2:1,rotate4:2,rotate6:3},ui:{label:"symmetry",control:"dropdown"}},scale:{type:"float",default:1,min:.1,max:4,step:.05,uniform:"scale",randChance:0,ui:{label:"scale",control:"slider"}},offsetX:{type:"float",default:0,min:-1,max:1,step:.01,randChance:0,uniform:"offsetX",ui:{label:"offset x",control:"slider"}},offsetY:{type:"float",default:0,min:-1,max:1,step:.01,randChance:0,uniform:"offsetY",ui:{label:"offset y",control:"slider"}},angle:{type:"float",default:0,min:0,max:360,step:1,randChance:0,uniform:"angle",ui:{label:"angle",control:"slider"}},repeat:{type:"float",default:2,min:1,max:10,step:1,randMax:5,uniform:"repeat",ui:{label:"repeat",control:"slider"}},aspectLens:{type:"boolean",default:!0,uniform:"aspectLens",randChance:0,ui:{label:"1:1 aspect",control:"checkbox"}}},passes:[{name:"main",program:"tile",inputs:{inputTex:"inputTex"},outputs:{fragColor:"outputTex"}}]});var s={tile:{glsl:`#version 300 es
+var n=class{constructor(e={}){this.state={},this.uniforms={},e.name&&(this.name=e.name),e.namespace&&(this.namespace=e.namespace),e.func&&(this.func=e.func),e.description&&(this.description=e.description),e.tags&&(this.tags=e.tags),e.globals&&(this.globals=e.globals),e.passes&&(this.passes=e.passes),e.textures&&(this.textures=e.textures),e.textures3d&&(this.textures3d=e.textures3d),e.shaders&&(this.shaders=e.shaders),e.externalTexture&&(this.externalTexture=e.externalTexture),e.externalMesh&&(this.externalMesh=e.externalMesh),e.builtinMeshes&&(this.builtinMeshes=e.builtinMeshes),e.outputTex3d&&(this.outputTex3d=e.outputTex3d),e.outputGeo&&(this.outputGeo=e.outputGeo),e.uniformLayout&&(this.uniformLayout=e.uniformLayout),e.uniformLayouts&&(this.uniformLayouts=e.uniformLayouts),e.paramAliases&&(this.paramAliases=e.paramAliases),e.openCategories&&(this.openCategories=e.openCategories),e.defaultProgram&&(this.defaultProgram=e.defaultProgram),e.hidden&&(this.hidden=!0),e.deprecatedBy&&(this.deprecatedBy=e.deprecatedBy),e.onInit&&(this._configOnInit=e.onInit),e.onUpdate&&(this._configOnUpdate=e.onUpdate),e.onDestroy&&(this._configOnDestroy=e.onDestroy),e.asyncInit&&(this._configAsyncInit=e.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(e){return this._configOnUpdate?this._configOnUpdate.call(this,e):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(e){return this._configAsyncInit?this._configAsyncInit.call(this,e):Promise.resolve()}};var t=new n({name:"Tile",namespace:"filter",func:"tile",tags:["tiling","transform"],description:"Symmetry-based kaleidoscope tiler",globals:{symmetry:{type:"int",default:0,uniform:"symmetry",choices:{mirrorXY:0,rotate2:1,rotate4:2,rotate6:3},ui:{label:"symmetry",control:"dropdown"}},scale:{type:"float",default:1,min:.1,max:4,step:.05,uniform:"scale",randChance:0,ui:{label:"scale",control:"slider"}},offsetX:{type:"float",default:0,min:-1,max:1,step:.01,randChance:0,uniform:"offsetX",ui:{label:"offset x",control:"slider"}},offsetY:{type:"float",default:0,min:-1,max:1,step:.01,randChance:0,uniform:"offsetY",ui:{label:"offset y",control:"slider"}},angle:{type:"float",default:0,min:0,max:360,step:1,randChance:0,uniform:"angle",ui:{label:"angle",control:"slider"}},repeat:{type:"float",default:2,min:1,max:10,step:1,randMax:5,uniform:"repeat",ui:{label:"repeat",control:"slider"}},aspectLens:{type:"boolean",default:!0,uniform:"aspectLens",randChance:0,ui:{label:"1:1 aspect",control:"checkbox"}}},passes:[{name:"main",program:"tile",inputs:{inputTex:"inputTex"},outputs:{fragColor:"outputTex"}}]});var o={tile:{glsl:`#version 300 es
 precision highp float;
 
 uniform vec2 tileOffset;
@@ -136,6 +136,8 @@ void main() {
 @group(0) @binding(8) var<uniform> angle: f32;
 @group(0) @binding(9) var<uniform> repeat: f32;
 @group(0) @binding(10) var<uniform> aspectLens: i32;
+@group(0) @binding(11) var<uniform> tileOffset: vec2<f32>;
+@group(0) @binding(12) var<uniform> fullResolution: vec2<f32>;
 
 const PI: f32 = 3.14159265359;
 const TAU: f32 = 6.28318530718;
@@ -180,7 +182,9 @@ fn rotationalFold(uv: vec2<f32>, n: i32) -> vec2<f32> {
     var a = atan2(p.y, p.x);
     let r = length(p);
 
-    a = ((a + TAU) % TAU) % sectorAngle;
+    // GLSL mod(mod(a + TAU, TAU), sectorAngle), with mod(x, y) = x - y * floor(x / y)
+    let wrapped = (a + TAU) - TAU * floor((a + TAU) / TAU);
+    a = wrapped - sectorAngle * floor(wrapped / sectorAngle);
     if (a > sectorAngle * 0.5) {
         a = sectorAngle - a;
     }
@@ -190,13 +194,13 @@ fn rotationalFold(uv: vec2<f32>, n: i32) -> vec2<f32> {
 
 @fragment
 fn main(@builtin(position) position: vec4<f32>) -> @location(0) vec4<f32> {
-    let texSize = vec2<f32>(textureDimensions(inputTex));
-    let uv = position.xy / texSize;
-    let asp = texSize.x / texSize.y;
+    let globalCoord = position.xy + tileOffset;
+    let globalUV = globalCoord / fullResolution;
+    let asp = fullResolution.x / fullResolution.y;
     let doAspect = aspectLens != 0;
 
     // Rotate in aspect-corrected space to avoid shearing on non-square canvases
-    var st = uv - 0.5;
+    var st = globalUV - 0.5;
     if (doAspect) { st.x *= asp; }
     st = rot(st, angle * PI / 180.0);
     if (doAspect) { st.x /= asp; }
@@ -213,7 +217,7 @@ fn main(@builtin(position) position: vec4<f32>) -> @location(0) vec4<f32> {
         st = rotationalFold(local_scaled + 0.5, 6);
     } else {
         // Square tiling
-        st = fract2(st * rep);
+        st = fract(st * rep);
 
         // Apply source region transforms (before fold \u2014 fold handles any input range)
         // mirrorXY needs half the range so edges match at default scale
@@ -229,19 +233,19 @@ fn main(@builtin(position) position: vec4<f32>) -> @location(0) vec4<f32> {
             st.y = mirrorFold(st.y);
         } else if (symmetry == 1) {
             // rotate2
-            st = rotationalFold(fract2(st), 2);
+            st = rotationalFold(fract(st), 2);
         } else {
             // rotate4
-            st = rotationalFold(fract2(st), 4);
+            st = rotationalFold(fract(st), 4);
         }
     }
 
-    // Clamp to valid texture range
-    st = clamp(st, vec2<f32>(0.0), vec2<f32>(1.0));
+    // Wrap for seamless tiling across tile boundaries
+    let localUV = fract(st);
 
-    return vec4<f32>(textureSampleLevel(inputTex, samp, st, 0.0).rgb, 1.0);
+    return vec4<f32>(textureSampleLevel(inputTex, samp, localUV, 0.0).rgb, 1.0);
 }
-`}},o=`# tile
+`}},s=`# tile
 
 Symmetry-based kaleidoscope tiler. Applies wallpaper-group symmetry operations to produce seamlessly tileable patterns from any input.
 
@@ -283,4 +287,4 @@ noise(seed: 1, ridges: true)
 
 render(o0)
 \`\`\`
-`;if(t&&Object.keys(s).length>0){t.shaders||(t.shaders={});for(let[r,e]of Object.entries(s))t.shaders[r]={...e}}t&&o&&(t.help=o);var c="filter/tile",p="filter",u="tile",d=t;export{d as default,c as effectId,u as effectName,o as help,p as namespace};
+`;if(t&&Object.keys(o).length>0){t.shaders||(t.shaders={});for(let[r,e]of Object.entries(o))t.shaders[r]={...e}}t&&s&&(t.help=s);var c="filter/tile",p="filter",u="tile",d=t;export{d as default,c as effectId,u as effectName,s as help,p as namespace};

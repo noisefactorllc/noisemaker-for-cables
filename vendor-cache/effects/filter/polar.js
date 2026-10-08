@@ -89,6 +89,8 @@ struct Uniforms {
     aspectLens: i32,
     antialias: i32,
     _pad3: f32,
+    tileOffset: vec2<f32>,
+    fullResolution: vec2<f32>,
 }
 
 @group(0) @binding(0) var inputSampler: sampler;
@@ -122,9 +124,10 @@ fn vortexCoords(uvIn: vec2<f32>, aspect: f32, doAspect: bool) -> vec2<f32> {
 
 @fragment
 fn main(@builtin(position) pos: vec4<f32>) -> @location(0) vec4<f32> {
-    let texSize = vec2<f32>(textureDimensions(inputTex));
-    let uv = pos.xy / texSize;
-    let aspect = texSize.x / texSize.y;
+    let tileDims = vec2<f32>(textureDimensions(inputTex));
+    let fullRes = select(tileDims, uniforms.fullResolution, uniforms.fullResolution.x > 0.0);
+    let uv = (pos.xy + uniforms.tileOffset) / fullRes;
+    let aspect = fullRes.x / fullRes.y;
     let doAspect = uniforms.aspectLens != 0;
 
     var coord: vec2<f32>;
@@ -173,4 +176,4 @@ noise(seed: 1, ridges: true)
 
 render(o0)
 \`\`\`
-`;if(t&&Object.keys(r).length>0){t.shaders||(t.shaders={});for(let[o,e]of Object.entries(r))t.shaders[o]={...e}}t&&s&&(t.help=s);var d="filter/polar",p="filter",c="polar",f=t;export{f as default,d as effectId,c as effectName,s as help,p as namespace};
+`;if(t&&Object.keys(r).length>0){t.shaders||(t.shaders={});for(let[o,e]of Object.entries(r))t.shaders[o]={...e}}t&&s&&(t.help=s);var d="filter/polar",f="filter",p="polar",c=t;export{c as default,d as effectId,p as effectName,s as help,f as namespace};

@@ -1,5 +1,5 @@
 /* classicNoisedeck/refract */
-var o=class{constructor(e={}){this.state={},this.uniforms={},e.name&&(this.name=e.name),e.namespace&&(this.namespace=e.namespace),e.func&&(this.func=e.func),e.description&&(this.description=e.description),e.tags&&(this.tags=e.tags),e.globals&&(this.globals=e.globals),e.passes&&(this.passes=e.passes),e.textures&&(this.textures=e.textures),e.textures3d&&(this.textures3d=e.textures3d),e.shaders&&(this.shaders=e.shaders),e.externalTexture&&(this.externalTexture=e.externalTexture),e.externalMesh&&(this.externalMesh=e.externalMesh),e.builtinMeshes&&(this.builtinMeshes=e.builtinMeshes),e.outputTex3d&&(this.outputTex3d=e.outputTex3d),e.outputGeo&&(this.outputGeo=e.outputGeo),e.uniformLayout&&(this.uniformLayout=e.uniformLayout),e.uniformLayouts&&(this.uniformLayouts=e.uniformLayouts),e.paramAliases&&(this.paramAliases=e.paramAliases),e.openCategories&&(this.openCategories=e.openCategories),e.defaultProgram&&(this.defaultProgram=e.defaultProgram),e.hidden&&(this.hidden=!0),e.deprecatedBy&&(this.deprecatedBy=e.deprecatedBy),e.onInit&&(this._configOnInit=e.onInit),e.onUpdate&&(this._configOnUpdate=e.onUpdate),e.onDestroy&&(this._configOnDestroy=e.onDestroy),e.asyncInit&&(this._configAsyncInit=e.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(e){return this._configOnUpdate?this._configOnUpdate.call(this,e):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(e){return this._configAsyncInit?this._configAsyncInit.call(this,e):Promise.resolve()}};var n=new o({name:"Refract",namespace:"classicNoisedeck",func:"refract",tags:["distort"],description:"Refraction distortion",globals:{blendMode:{type:"int",default:10,uniform:"blendMode",choices:{add:0,colorBurn:2,colorDodge:3,darken:4,difference:5,exclusion:6,glow:7,hardLight:8,lighten:9,mix:10,multiply:11,negation:12,overlay:13,phoenix:14,reflect:15,screen:16,softLight:17,subtract:18},ui:{label:"blend mode",control:"dropdown"}},mix:{type:"float",default:50,uniform:"mixAmt",min:0,max:100,ui:{label:"mix",control:"slider"}},mode:{type:"int",default:0,uniform:"mode",choices:{refract:0,reflect:1},ui:{label:"mode",control:"dropdown"}},amount:{type:"float",default:50,uniform:"amount",min:0,max:100,ui:{label:"amount",control:"slider"}},direction:{type:"float",default:0,uniform:"direction",min:0,max:360,ui:{label:"refract dir",control:"slider"}},wrap:{type:"int",default:0,uniform:"wrap",choices:{clamp:2,mirror:0,repeat:1},ui:{label:"wrap",control:"dropdown"}}},paramAliases:{refractDir:"direction",mixAmt:"mix"},passes:[{name:"render",program:"refract",inputs:{inputTex:"inputTex"},uniforms:{mixAmt:"mix"},outputs:{fragColor:"outputTex"}}]});var l={refract:{glsl:`#version 300 es
+var o=class{constructor(e={}){this.state={},this.uniforms={},e.name&&(this.name=e.name),e.namespace&&(this.namespace=e.namespace),e.func&&(this.func=e.func),e.description&&(this.description=e.description),e.tags&&(this.tags=e.tags),e.globals&&(this.globals=e.globals),e.passes&&(this.passes=e.passes),e.textures&&(this.textures=e.textures),e.textures3d&&(this.textures3d=e.textures3d),e.shaders&&(this.shaders=e.shaders),e.externalTexture&&(this.externalTexture=e.externalTexture),e.externalMesh&&(this.externalMesh=e.externalMesh),e.builtinMeshes&&(this.builtinMeshes=e.builtinMeshes),e.outputTex3d&&(this.outputTex3d=e.outputTex3d),e.outputGeo&&(this.outputGeo=e.outputGeo),e.uniformLayout&&(this.uniformLayout=e.uniformLayout),e.uniformLayouts&&(this.uniformLayouts=e.uniformLayouts),e.paramAliases&&(this.paramAliases=e.paramAliases),e.openCategories&&(this.openCategories=e.openCategories),e.defaultProgram&&(this.defaultProgram=e.defaultProgram),e.hidden&&(this.hidden=!0),e.deprecatedBy&&(this.deprecatedBy=e.deprecatedBy),e.onInit&&(this._configOnInit=e.onInit),e.onUpdate&&(this._configOnUpdate=e.onUpdate),e.onDestroy&&(this._configOnDestroy=e.onDestroy),e.asyncInit&&(this._configAsyncInit=e.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(e){return this._configOnUpdate?this._configOnUpdate.call(this,e):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(e){return this._configAsyncInit?this._configAsyncInit.call(this,e):Promise.resolve()}};var n=new o({name:"Refract",namespace:"classicNoisedeck",func:"refract",tags:["distort"],description:"Refraction distortion",globals:{blendMode:{type:"int",default:10,uniform:"blendMode",choices:{add:0,colorBurn:2,colorDodge:3,darken:4,difference:5,exclusion:6,glow:7,hardLight:8,lighten:9,mix:10,multiply:11,negation:12,overlay:13,phoenix:14,reflect:15,screen:16,softLight:17,subtract:18},ui:{label:"blend mode",control:"dropdown"}},mix:{type:"float",default:50,uniform:"mixAmt",min:0,max:100,ui:{label:"mix",control:"slider"}},mode:{type:"int",default:0,uniform:"mode",choices:{refract:0,reflect:1},ui:{label:"mode",control:"dropdown"}},amount:{type:"float",default:50,uniform:"amount",min:0,max:100,ui:{label:"amount",control:"slider"}},direction:{type:"float",default:0,uniform:"direction",min:0,max:360,ui:{label:"refract dir",control:"slider"}},wrap:{type:"int",default:0,uniform:"wrap",choices:{clamp:2,mirror:0,repeat:1},ui:{label:"wrap",control:"dropdown"}}},paramAliases:{refractDir:"direction",mixAmt:"mix"},passes:[{name:"render",program:"refract",inputs:{inputTex:"inputTex"},uniforms:{mixAmt:"mix"},outputs:{fragColor:"outputTex"}}]});var r={refract:{glsl:`#version 300 es
 
 /*
  * Refract shader.
@@ -250,6 +250,9 @@ const TAU : f32 = 6.28318530718;
 @group(0) @binding(5) var<uniform> blendMode : i32;
 @group(0) @binding(6) var<uniform> mixAmt : f32;
 @group(0) @binding(7) var<uniform> wrap : i32;
+@group(0) @binding(8) var<uniform> resolution : vec2<f32>;
+@group(0) @binding(9) var<uniform> tileOffset : vec2<f32>;
+@group(0) @binding(10) var<uniform> fullResolution : vec2<f32>;
 
 fn map_range(value : f32, inMin : f32, inMax : f32, outMin : f32, outMax : f32) -> f32 {
     return outMin + (outMax - outMin) * (value - inMin) / (inMax - inMin);
@@ -260,6 +263,9 @@ fn desaturate(color : vec3<f32>) -> f32 {
 }
 
 fn convolve_kernel(uv : vec2<f32>, kernel : array<f32, 9>, divide : bool) -> vec3<f32> {
+    // Convert global UV to local UV for sampling inputTex
+    let localUV = (uv * fullResolution - tileOffset) / vec2<f32>(textureDimensions(inputTex, 0));
+
     let dims = vec2<f32>(textureDimensions(inputTex, 0));
     let steps = 1.0 / dims;
     var offsets : array<vec2<f32>, 9>;
@@ -278,7 +284,7 @@ fn convolve_kernel(uv : vec2<f32>, kernel : array<f32, 9>, divide : bool) -> vec
     let scale = floor(map_range(amount, 0.0, 100.0, 0.0, 20.0));
 
     for (var i : i32 = 0; i < 9; i = i + 1) {
-        let color = textureSample(inputTex, samp, uv + offsets[i] * scale).rgb;
+        let color = textureSample(inputTex, samp, localUV + offsets[i] * scale).rgb;
         conv = conv + color * kernel[i];
         kernelWeight = kernelWeight + kernel[i];
     }
@@ -431,33 +437,45 @@ fn blend_colors(color1 : vec4<f32>, color2 : vec4<f32>) -> vec3<f32> {
 
 @fragment
 fn main(@builtin(position) position : vec4<f32>) -> @location(0) vec4<f32> {
-    let dims = vec2<f32>(textureDimensions(inputTex, 0));
-    var uv = position.xy / dims;
+    let globalCoord = position.xy + tileOffset;
+    var uv = globalCoord / fullResolution;
 
     var color = vec4<f32>(0.0);
-    let inputColor = textureSample(inputTex, samp, uv);
+
+    // Convert global UV to local UV for sampling inputTex
+    let localUV = (uv * fullResolution - tileOffset) / vec2<f32>(textureDimensions(inputTex, 0));
+    let inputColor = textureSample(inputTex, samp, localUV);
     let brightness = desaturate(inputColor.rgb) + direction / 360.0;
 
+    // In tiling mode, clamp displacement to overlap budget
+    var displacement = amount * 0.01;
+    if (fullResolution.x > resolution.x || fullResolution.y > resolution.y) {
+        let maxDisplacement = 256.0 / max(fullResolution.x, fullResolution.y);
+        displacement = min(displacement, maxDisplacement);
+    }
+
     if (mode == 0) {
-        uv.x = uv.x + cos(brightness * TAU) * amount * 0.01;
-        uv.y = uv.y + sin(brightness * TAU) * amount * 0.01;
+        uv.x = uv.x + cos(brightness * TAU) * displacement;
+        uv.y = uv.y + sin(brightness * TAU) * displacement;
     } else if (mode == 1) {
-        uv.y = uv.y + desaturate(derivX(uv, false)) * amount * 0.01;
-        uv.x = uv.x + desaturate(derivY(uv, false)) * amount * 0.01;
+        uv.y = uv.y + desaturate(derivX(uv, false)) * displacement;
+        uv.x = uv.x + desaturate(derivY(uv, false)) * displacement;
     }
 
     if (wrap == 0) {
         // mirror (default)
-        uv = abs(((uv + 1.0) % 2.0 + 2.0) % 2.0 - 1.0);
+        uv = abs((uv + 1.0) - 2.0 * floor((uv + 1.0) / 2.0) - 1.0);
     } else if (wrap == 1) {
         // repeat
-        uv = fract(uv);
+        uv = uv - 1.0 * floor(uv / 1.0);
     } else if (wrap == 2) {
         // clamp
         uv = clamp(uv, vec2<f32>(0.0), vec2<f32>(1.0));
     }
 
-    color = textureSample(inputTex, samp, uv);
+    // Convert warped global UV to local UV for sampling
+    let warpedLocalUV = (uv * fullResolution - tileOffset) / vec2<f32>(textureDimensions(inputTex, 0));
+    color = textureSample(inputTex, samp, warpedLocalUV);
     color = vec4<f32>(blend_colors(inputColor, color), color.a);
 
     return color;
@@ -488,4 +506,4 @@ noise(seed: 1, ridges: true)
 
 render(o0)
 \`\`\`
-`;if(n&&Object.keys(l).length>0){n.shaders||(n.shaders={});for(let[r,e]of Object.entries(l))n.shaders[r]={...e}}n&&t&&(n.help=t);var s="classicNoisedeck/refract",f="classicNoisedeck",u="refract",m=n;export{m as default,s as effectId,u as effectName,t as help,f as namespace};
+`;if(n&&Object.keys(r).length>0){n.shaders||(n.shaders={});for(let[l,e]of Object.entries(r))n.shaders[l]={...e}}n&&t&&(n.help=t);var d="classicNoisedeck/refract",f="classicNoisedeck",u="refract",m=n;export{m as default,d as effectId,u as effectName,t as help,f as namespace};

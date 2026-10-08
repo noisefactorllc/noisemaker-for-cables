@@ -1,5 +1,5 @@
 /* filter/sobel */
-var n=class{constructor(e={}){this.state={},this.uniforms={},e.name&&(this.name=e.name),e.namespace&&(this.namespace=e.namespace),e.func&&(this.func=e.func),e.description&&(this.description=e.description),e.tags&&(this.tags=e.tags),e.globals&&(this.globals=e.globals),e.passes&&(this.passes=e.passes),e.textures&&(this.textures=e.textures),e.textures3d&&(this.textures3d=e.textures3d),e.shaders&&(this.shaders=e.shaders),e.externalTexture&&(this.externalTexture=e.externalTexture),e.externalMesh&&(this.externalMesh=e.externalMesh),e.builtinMeshes&&(this.builtinMeshes=e.builtinMeshes),e.outputTex3d&&(this.outputTex3d=e.outputTex3d),e.outputGeo&&(this.outputGeo=e.outputGeo),e.uniformLayout&&(this.uniformLayout=e.uniformLayout),e.uniformLayouts&&(this.uniformLayouts=e.uniformLayouts),e.paramAliases&&(this.paramAliases=e.paramAliases),e.openCategories&&(this.openCategories=e.openCategories),e.defaultProgram&&(this.defaultProgram=e.defaultProgram),e.hidden&&(this.hidden=!0),e.deprecatedBy&&(this.deprecatedBy=e.deprecatedBy),e.onInit&&(this._configOnInit=e.onInit),e.onUpdate&&(this._configOnUpdate=e.onUpdate),e.onDestroy&&(this._configOnDestroy=e.onDestroy),e.asyncInit&&(this._configAsyncInit=e.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(e){return this._configOnUpdate?this._configOnUpdate.call(this,e):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(e){return this._configAsyncInit?this._configAsyncInit.call(this,e):Promise.resolve()}};var t=new n({name:"Sobel",namespace:"filter",func:"sobel",tags:["edges"],description:"Classic Sobel edge detection",globals:{amount:{type:"float",default:1,uniform:"amount",min:.1,max:5,zero:0,randMin:.5,ui:{label:"amount",control:"slider"}},alpha:{type:"float",default:1,min:0,max:1,step:.01,uniform:"alpha",ui:{label:"alpha",control:"slider"}}},passes:[{name:"render",program:"sobel",inputs:{inputTex:"inputTex"},outputs:{fragColor:"outputTex"}}]});var o={sobel:{glsl:`/*
+var n=class{constructor(e={}){this.state={},this.uniforms={},e.name&&(this.name=e.name),e.namespace&&(this.namespace=e.namespace),e.func&&(this.func=e.func),e.description&&(this.description=e.description),e.tags&&(this.tags=e.tags),e.globals&&(this.globals=e.globals),e.passes&&(this.passes=e.passes),e.textures&&(this.textures=e.textures),e.textures3d&&(this.textures3d=e.textures3d),e.shaders&&(this.shaders=e.shaders),e.externalTexture&&(this.externalTexture=e.externalTexture),e.externalMesh&&(this.externalMesh=e.externalMesh),e.builtinMeshes&&(this.builtinMeshes=e.builtinMeshes),e.outputTex3d&&(this.outputTex3d=e.outputTex3d),e.outputGeo&&(this.outputGeo=e.outputGeo),e.uniformLayout&&(this.uniformLayout=e.uniformLayout),e.uniformLayouts&&(this.uniformLayouts=e.uniformLayouts),e.paramAliases&&(this.paramAliases=e.paramAliases),e.openCategories&&(this.openCategories=e.openCategories),e.defaultProgram&&(this.defaultProgram=e.defaultProgram),e.hidden&&(this.hidden=!0),e.deprecatedBy&&(this.deprecatedBy=e.deprecatedBy),e.onInit&&(this._configOnInit=e.onInit),e.onUpdate&&(this._configOnUpdate=e.onUpdate),e.onDestroy&&(this._configOnDestroy=e.onDestroy),e.asyncInit&&(this._configAsyncInit=e.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(e){return this._configOnUpdate?this._configOnUpdate.call(this,e):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(e){return this._configAsyncInit?this._configAsyncInit.call(this,e):Promise.resolve()}};var t=new n({name:"Sobel",namespace:"filter",func:"sobel",tags:["edges"],description:"Classic Sobel edge detection",globals:{amount:{type:"float",default:1,uniform:"amount",min:.1,max:5,zero:0,randMin:.5,ui:{label:"amount",control:"slider"}},alpha:{type:"float",default:1,min:0,max:1,step:.01,uniform:"alpha",ui:{label:"alpha",control:"slider"}}},passes:[{name:"render",program:"sobel",inputs:{inputTex:"inputTex"},outputs:{fragColor:"outputTex"}}]});var s={sobel:{glsl:`/*
  * Sobel edge detection effect
  * Classic Sobel operator for edge detection
  */
@@ -76,8 +76,10 @@ void main() {
 struct Uniforms {
     amount: f32,
     alpha: f32,
-    _pad2: f32,
+    renderScale: f32,
     _pad3: f32,
+    tileOffset: vec2<f32>,
+    fullResolution: vec2<f32>,
 }
 
 @group(0) @binding(0) var inputSampler: sampler;
@@ -86,11 +88,12 @@ struct Uniforms {
 
 @fragment
 fn main(@builtin(position) pos: vec4<f32>) -> @location(0) vec4<f32> {
+    let globalCoord = pos.xy + uniforms.tileOffset;
     let texSize = vec2<f32>(textureDimensions(inputTex));
-    let uv = pos.xy / texSize;
+    let uv = globalCoord / uniforms.fullResolution;
     let texelSize = 1.0 / texSize;
     
-    let origColor = textureSample(inputTex, inputSampler, uv);
+    let origColor = textureSample(inputTex, inputSampler, pos.xy / texSize);
     
     // Sobel X and Y kernels
     let sobel_x = array<f32, 9>(1.0, 0.0, -1.0, 2.0, 0.0, -2.0, 1.0, 0.0, -1.0);
@@ -112,7 +115,7 @@ fn main(@builtin(position) pos: vec4<f32>) -> @location(0) vec4<f32> {
     var convY = vec3<f32>(0.0);
     
     for (var i = 0; i < 9; i = i + 1) {
-        let sample = textureSample(inputTex, inputSampler, uv + offsets[i] * uniforms.amount).rgb;
+        let sample = textureSample(inputTex, inputSampler, ((uv + offsets[i] * uniforms.amount * uniforms.renderScale) * uniforms.fullResolution - uniforms.tileOffset) / texSize).rgb;
         convX = convX + sample * sobel_x[i];
         convY = convY + sample * sobel_y[i];
     }
@@ -149,4 +152,4 @@ noise(seed: 1, ridges: true)
 
 render(o0)
 \`\`\`
-`;if(t&&Object.keys(o).length>0){t.shaders||(t.shaders={});for(let[s,e]of Object.entries(o))t.shaders[s]={...e}}t&&i&&(t.help=i);var f="filter/sobel",x="filter",p="sobel",c=t;export{c as default,f as effectId,p as effectName,i as help,x as namespace};
+`;if(t&&Object.keys(s).length>0){t.shaders||(t.shaders={});for(let[o,e]of Object.entries(s))t.shaders[o]={...e}}t&&i&&(t.help=i);var f="filter/sobel",x="filter",p="sobel",c=t;export{c as default,f as effectId,p as effectName,i as help,x as namespace};

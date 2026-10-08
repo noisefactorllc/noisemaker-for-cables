@@ -46,6 +46,8 @@ void main() {
 @group(0) @binding(2) var<uniform> lineColor: vec3<f32>;
 @group(0) @binding(3) var<uniform> lineThickness: f32;
 @group(0) @binding(4) var<uniform> gain: f32;
+@group(0) @binding(5) var<uniform> tileOffset: vec2<f32>;
+@group(0) @binding(6) var<uniform> fullResolution: vec2<f32>;
 
 fn sampleWaveform(index: u32) -> f32 {
     return audioWaveform[index / 4u][index % 4u];
@@ -53,7 +55,8 @@ fn sampleWaveform(index: u32) -> f32 {
 
 @fragment
 fn main(@builtin(position) position: vec4<f32>) -> @location(0) vec4<f32> {
-    let uv = vec2<f32>(position.x, resolution.y - position.y) / resolution;
+    let globalCoord = position.xy + tileOffset;
+    let uv = globalCoord / fullResolution;
 
     // Sample the waveform at this x position
     // Map uv.x [0,1] to array index [0,127]
@@ -71,7 +74,7 @@ fn main(@builtin(position) position: vec4<f32>) -> @location(0) vec4<f32> {
     let gained = 0.5 + (wval - 0.5) * gain;
 
     // Distance from fragment to waveform line, in pixels
-    let dist = abs(uv.y - gained) * resolution.y;
+    let dist = abs(uv.y - gained) * fullResolution.y;
 
     // Anti-aliased line
     let line = smoothstep(lineThickness + 1.0, lineThickness, dist);
@@ -101,4 +104,4 @@ scope()
 
 render(o0)
 \`\`\`
-`;if(n&&Object.keys(s).length>0){n.shaders||(n.shaders={});for(let[i,e]of Object.entries(s))n.shaders[i]={...e}}n&&o&&(n.help=o);var f="synth/scope",p="synth",d="scope",c=n;export{c as default,f as effectId,d as effectName,o as help,p as namespace};
+`;if(n&&Object.keys(s).length>0){n.shaders||(n.shaders={});for(let[i,e]of Object.entries(s))n.shaders[i]={...e}}n&&o&&(n.help=o);var f="synth/scope",p="synth",d="scope",m=n;export{m as default,f as effectId,d as effectName,o as help,p as namespace};
