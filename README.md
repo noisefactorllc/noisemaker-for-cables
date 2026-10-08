@@ -46,9 +46,9 @@ effects that `parity/coverage-matrix.json` qualifies for the vendored core.
 [installation](docs/installation.md).
 
 On every push the export-kit workflow runs `npm run check` and the
-compatibility gate before it releases the kit. The browser suites and the
-Standalone smoke render through software GL, so the workflow runs them weekly
-and on manual dispatch.
+compatibility gate. The browser suites and the Standalone smoke render through
+software GL, so the workflow runs them weekly and on manual dispatch, and it
+releases the kit only after such a run passes every job.
 
 ## License
 
