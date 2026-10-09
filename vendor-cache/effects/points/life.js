@@ -606,7 +606,7 @@ fn main(@builtin(position) position: vec4f) -> Outputs {
         outColor = vec4f(typeColor(i32(typeId), u.typeCount), 1.0);
     } else {
         // Sample from input texture based on position
-        outColor = textureSampleLevel(inputTex, inputSampler, vec2f(pos.x, 1.0 - pos.y), 0.0);
+        outColor = textureSampleLevel(inputTex, inputSampler, pos, 0.0);
     }
 
     // Output updated state
@@ -753,19 +753,12 @@ void main() {
 }
 `,wgsl:`// Passthrough shader - copy input to output for 2D chain continuity
 
-struct Uniforms {
-    resolution: vec2f,
-    time: f32,
-}
-
-@group(0) @binding(0) var<uniform> u: Uniforms;
-@group(0) @binding(1) var inputTex: texture_2d<f32>;
-@group(0) @binding(2) var inputSampler: sampler;
+@group(0) @binding(0) var inputTex: texture_2d<f32>;
 
 @fragment
 fn main(@builtin(position) position: vec4f) -> @location(0) vec4f {
-    let uv = position.xy / u.resolution;
-    return textureSampleLevel(inputTex, inputSampler, vec2f(uv.x, 1.0 - uv.y), 0.0);
+    let coord = vec2<i32>(position.xy);
+    return textureLoad(inputTex, coord, 0);
 }
 `}},a=`# life
 
@@ -805,4 +798,4 @@ noise()
 
 render(o0)
 \`\`\`
-`;if(n&&Object.keys(o).length>0){n.shaders||(n.shaders={});for(let[i,e]of Object.entries(o))n.shaders[i]={...e}}n&&a&&(n.help=a);var c="points/life",p="points",f="life",d=n;export{d as default,c as effectId,f as effectName,a as help,p as namespace};
+`;if(n&&Object.keys(o).length>0){n.shaders||(n.shaders={});for(let[i,e]of Object.entries(o))n.shaders[i]={...e}}n&&a&&(n.help=a);var u="points/life",p="points",d="life",f=n;export{f as default,u as effectId,d as effectName,a as help,p as namespace};

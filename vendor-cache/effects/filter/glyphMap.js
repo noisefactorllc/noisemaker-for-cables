@@ -1,5 +1,5 @@
 /* filter/glyphMap */
-var t=class{constructor(n={}){this.state={},this.uniforms={},n.name&&(this.name=n.name),n.namespace&&(this.namespace=n.namespace),n.func&&(this.func=n.func),n.description&&(this.description=n.description),n.tags&&(this.tags=n.tags),n.globals&&(this.globals=n.globals),n.passes&&(this.passes=n.passes),n.textures&&(this.textures=n.textures),n.textures3d&&(this.textures3d=n.textures3d),n.shaders&&(this.shaders=n.shaders),n.externalTexture&&(this.externalTexture=n.externalTexture),n.externalMesh&&(this.externalMesh=n.externalMesh),n.builtinMeshes&&(this.builtinMeshes=n.builtinMeshes),n.outputTex3d&&(this.outputTex3d=n.outputTex3d),n.outputGeo&&(this.outputGeo=n.outputGeo),n.uniformLayout&&(this.uniformLayout=n.uniformLayout),n.uniformLayouts&&(this.uniformLayouts=n.uniformLayouts),n.paramAliases&&(this.paramAliases=n.paramAliases),n.openCategories&&(this.openCategories=n.openCategories),n.defaultProgram&&(this.defaultProgram=n.defaultProgram),n.hidden&&(this.hidden=!0),n.deprecatedBy&&(this.deprecatedBy=n.deprecatedBy),n.onInit&&(this._configOnInit=n.onInit),n.onUpdate&&(this._configOnUpdate=n.onUpdate),n.onDestroy&&(this._configOnDestroy=n.onDestroy),n.asyncInit&&(this._configAsyncInit=n.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(n){return this._configOnUpdate?this._configOnUpdate.call(this,n):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(n){return this._configAsyncInit?this._configAsyncInit.call(this,n):Promise.resolve()}};var e=new t({name:"Glyph Map",namespace:"filter",func:"glyphMap",tags:["color","pixel"],description:"ASCII/glyph art conversion using procedural glyphs",globals:{cellSize:{type:"int",default:16,uniform:"cellSize",min:4,max:32,ui:{label:"cell size",control:"slider"}},seed:{type:"int",default:1,uniform:"seed",min:1,max:100,ui:{label:"seed",control:"slider"}},colorMode:{type:"int",default:1,uniform:"colorMode",choices:{mono:0,rgb:1},ui:{label:"color mode",control:"dropdown"}}},passes:[{name:"render",program:"glyphMap",inputs:{inputTex:"inputTex"},outputs:{fragColor:"outputTex"}}]});var i={glyphMap:{glsl:`/*
+var t=class{constructor(n={}){this.state={},this.uniforms={},n.name&&(this.name=n.name),n.namespace&&(this.namespace=n.namespace),n.func&&(this.func=n.func),n.description&&(this.description=n.description),n.tags&&(this.tags=n.tags),n.globals&&(this.globals=n.globals),n.passes&&(this.passes=n.passes),n.textures&&(this.textures=n.textures),n.textures3d&&(this.textures3d=n.textures3d),n.shaders&&(this.shaders=n.shaders),n.externalTexture&&(this.externalTexture=n.externalTexture),n.externalMesh&&(this.externalMesh=n.externalMesh),n.builtinMeshes&&(this.builtinMeshes=n.builtinMeshes),n.outputTex3d&&(this.outputTex3d=n.outputTex3d),n.outputGeo&&(this.outputGeo=n.outputGeo),n.uniformLayout&&(this.uniformLayout=n.uniformLayout),n.uniformLayouts&&(this.uniformLayouts=n.uniformLayouts),n.paramAliases&&(this.paramAliases=n.paramAliases),n.openCategories&&(this.openCategories=n.openCategories),n.defaultProgram&&(this.defaultProgram=n.defaultProgram),n.hidden&&(this.hidden=!0),n.deprecatedBy&&(this.deprecatedBy=n.deprecatedBy),n.onInit&&(this._configOnInit=n.onInit),n.onUpdate&&(this._configOnUpdate=n.onUpdate),n.onDestroy&&(this._configOnDestroy=n.onDestroy),n.asyncInit&&(this._configAsyncInit=n.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(n){return this._configOnUpdate?this._configOnUpdate.call(this,n):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(n){return this._configAsyncInit?this._configAsyncInit.call(this,n):Promise.resolve()}};var e=new t({name:"Glyph Map",namespace:"filter",func:"glyphMap",tags:["color","pixel"],description:"ASCII/glyph art conversion using procedural glyphs",globals:{cellSize:{type:"int",default:16,uniform:"cellSize",min:4,max:32,ui:{label:"cell size",control:"slider"}},seed:{type:"int",default:1,uniform:"seed",min:1,max:100,ui:{label:"seed",control:"slider"}},colorMode:{type:"int",default:1,uniform:"colorMode",choices:{mono:0,rgb:1},ui:{label:"color mode",control:"dropdown"}}},passes:[{name:"render",program:"glyphMap",inputs:{inputTex:"inputTex"},outputs:{fragColor:"outputTex"}}]});var l={glyphMap:{glsl:`/*
  * Glyph Map effect
  * Converts image to ASCII/glyph art using hardcoded 5x7 glyph bitmaps
  * ordered by density. Each cell maps input brightness to a glyph.
@@ -313,9 +313,9 @@ void main() {
 
     vec2 localPos = fract(pixelCoord / csf);
     int gx = int(floor(localPos.x * 5.0));
-    int gy = int(floor(localPos.y * 7.0));
+    // Glyph row 0 is the top row, while localPos.y runs up the cell.
+    int gy = 6 - clamp(int(floor(localPos.y * 7.0)), 0, 6);
     gx = clamp(gx, 0, 4);
-    gy = clamp(gy, 0, 6);
 
     vec2 cellCenter = (cellIndex + 0.5) * csf;
     vec2 sampleUV = (cellCenter - tileOffset) / resolution;
@@ -525,9 +525,9 @@ fn main(@builtin(position) pos: vec4<f32>) -> @location(0) vec4<f32> {
     // Local position within the cell, mapped to 5x7 glyph grid
     let localPos = fract(pixelCoord / csf);
     var gx = i32(floor(localPos.x * 5.0));
-    var gy = i32(floor(localPos.y * 7.0));
+    // Glyph row 0 is the top row, while localPos.y runs up the cell.
+    let gy = 6 - clamp(i32(floor(localPos.y * 7.0)), 0, 6);
     gx = clamp(gx, 0, 4);
-    gy = clamp(gy, 0, 6);
 
     // Sample the center of the cell for brightness
     let cellCenter = (cellIndex + 0.5) * csf;
@@ -561,7 +561,7 @@ fn main(@builtin(position) pos: vec4<f32>) -> @location(0) vec4<f32> {
         return vec4<f32>(vec3<f32>(glyphVal), 1.0);
     }
 }
-`}},l=`# glyphMap
+`}},i=`# glyphMap
 
 ASCII/glyph art conversion using procedural glyphs
 
@@ -584,4 +584,4 @@ noise(seed: 1, ridges: true)
 
 render(o0)
 \`\`\`
-`;if(e&&Object.keys(i).length>0){e.shaders||(e.shaders={});for(let[r,n]of Object.entries(i))e.shaders[r]={...n}}e&&l&&(e.help=l);var a="filter/glyphMap",p="filter",u="glyphMap",h=e;export{h as default,a as effectId,u as effectName,l as help,p as namespace};
+`;if(e&&Object.keys(l).length>0){e.shaders||(e.shaders={});for(let[r,n]of Object.entries(l))e.shaders[r]={...n}}e&&i&&(e.help=i);var a="filter/glyphMap",p="filter",u="glyphMap",h=e;export{h as default,a as effectId,u as effectName,i as help,p as namespace};
