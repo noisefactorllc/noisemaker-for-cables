@@ -649,13 +649,14 @@ void main() {
         uv.x = 1.0 - uv.x;
     }
 #elif FLIP == 13
-    // mirror ud
-    if (uv.y > 0.5) {
+    // mirror ud. uv.y runs up the frame, so the top half is uv.y > 0.5 and
+    // the bottom half samples its reflection.
+    if (uv.y < 0.5) {
         uv.y = 1.0 - uv.y;
     }
 #elif FLIP == 14
     // mirror du
-    if (uv.y < 0.5) {
+    if (uv.y > 0.5) {
         uv.y = 1.0 - uv.y;
     }
 #elif FLIP == 15
@@ -663,7 +664,7 @@ void main() {
     if (uv.x > 0.5) {
         uv.x = 1.0 - uv.x;
     }
-    if (uv.y > 0.5) {
+    if (uv.y < 0.5) {
         uv.y = 1.0 - uv.y;
     }
 #elif FLIP == 16
@@ -671,7 +672,7 @@ void main() {
     if (uv.x > 0.5) {
         uv.x = 1.0 - uv.x;
     }
-    if (uv.y < 0.5) {
+    if (uv.y > 0.5) {
         uv.y = 1.0 - uv.y;
     }
 #elif FLIP == 17
@@ -679,7 +680,7 @@ void main() {
     if (uv.x < 0.5) {
         uv.x = 1.0 - uv.x;
     }
-    if (uv.y > 0.5) {
+    if (uv.y < 0.5) {
         uv.y = 1.0 - uv.y;
     }
 #elif FLIP == 18
@@ -687,7 +688,7 @@ void main() {
     if (uv.x < 0.5) {
         uv.x = 1.0 - uv.x;
     }
-    if (uv.y < 0.5) {
+    if (uv.y > 0.5) {
         uv.y = 1.0 - uv.y;
     }
 #endif
@@ -1109,18 +1110,19 @@ fn main(@builtin(position) fragCoord: vec4f) -> @location(0) vec4f {
     uv.y -= mapRange(u.offsetY, -100.0, 100.0, -u.resolution.y / imageSize.y * scale, u.resolution.y / imageSize.y * scale) * 1.5;
     uv = fract(uv);
 
-    // flip/mirror
+    // flip/mirror. uv.y runs up the frame, so "up to down" keeps uv.y > 0.5
+    // and reflects it onto the bottom half.
     if (FLIP == 1) { uv = 1.0 - uv; }
     else if (FLIP == 2) { uv.x = 1.0 - uv.x; }
     else if (FLIP == 3) { uv.y = 1.0 - uv.y; }
     else if (FLIP == 11) { if (uv.x > 0.5) { uv.x = 1.0 - uv.x; } }
     else if (FLIP == 12) { if (uv.x < 0.5) { uv.x = 1.0 - uv.x; } }
-    else if (FLIP == 13) { if (uv.y > 0.5) { uv.y = 1.0 - uv.y; } }
-    else if (FLIP == 14) { if (uv.y < 0.5) { uv.y = 1.0 - uv.y; } }
-    else if (FLIP == 15) { if (uv.x > 0.5) { uv.x = 1.0 - uv.x; } if (uv.y > 0.5) { uv.y = 1.0 - uv.y; } }
-    else if (FLIP == 16) { if (uv.x > 0.5) { uv.x = 1.0 - uv.x; } if (uv.y < 0.5) { uv.y = 1.0 - uv.y; } }
-    else if (FLIP == 17) { if (uv.x < 0.5) { uv.x = 1.0 - uv.x; } if (uv.y > 0.5) { uv.y = 1.0 - uv.y; } }
-    else if (FLIP == 18) { if (uv.x < 0.5) { uv.x = 1.0 - uv.x; } if (uv.y < 0.5) { uv.y = 1.0 - uv.y; } }
+    else if (FLIP == 13) { if (uv.y < 0.5) { uv.y = 1.0 - uv.y; } }
+    else if (FLIP == 14) { if (uv.y > 0.5) { uv.y = 1.0 - uv.y; } }
+    else if (FLIP == 15) { if (uv.x > 0.5) { uv.x = 1.0 - uv.x; } if (uv.y < 0.5) { uv.y = 1.0 - uv.y; } }
+    else if (FLIP == 16) { if (uv.x > 0.5) { uv.x = 1.0 - uv.x; } if (uv.y > 0.5) { uv.y = 1.0 - uv.y; } }
+    else if (FLIP == 17) { if (uv.x < 0.5) { uv.x = 1.0 - uv.x; } if (uv.y < 0.5) { uv.y = 1.0 - uv.y; } }
+    else if (FLIP == 18) { if (uv.x < 0.5) { uv.x = 1.0 - uv.x; } if (uv.y > 0.5) { uv.y = 1.0 - uv.y; } }
 
     var color = textureSample(inputTex, samp, inputCoord(uv));
 

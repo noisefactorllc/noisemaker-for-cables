@@ -3,8 +3,8 @@
  * Includes: CanvasRenderer + UIController + EffectSelect
  * Copyright (c) 2017-2026 Noise Factor LLC. https://noisefactor.io/
  * SPDX-License-Identifier: MIT
- * Build: 700ac32e
- * Date: 2026-10-09T03:55:07.623Z
+ * Build: 735e1fdc
+ * Date: 2026-10-09T05:11:33.898Z
  */
 var NoisemakerCablesGL=(()=>{var Da=Object.defineProperty;var Ab=Object.getOwnPropertyDescriptor;var Ib=Object.getOwnPropertyNames;var Db=Object.prototype.hasOwnProperty;var w=(e,t,o)=>()=>{if(o)throw o[0];try{return e&&(t=e(e=0)),t}catch(r){throw o=[r],r}};var Pa=(e,t)=>{for(var o in t)Da(e,o,{get:t[o],enumerable:!0})},Pb=(e,t,o,r)=>{if(t&&typeof t=="object"||typeof t=="function")for(let i of Ib(t))!Db.call(e,i)&&i!==o&&Da(e,i,{get:()=>t[i],enumerable:!(r=Ab(t,i))||r.enumerable});return e};var Mb=e=>Pb(Da({},"__esModule",{value:!0}),e);function Ms(e){let t=[],o=[],r=[],i=[],s=[],a=[],n=e.split(`
 `);for(let f of n){let g=f.trim();if(g.length===0||g.startsWith("#"))continue;let x=g.split(/\s+/);switch(x[0]){case"v":{let _=parseFloat(x[1])||0,T=parseFloat(x[2])||0,d=parseFloat(x[3])||0;t.push([_,T,d]);break}case"vn":{let _=parseFloat(x[1])||0,T=parseFloat(x[2])||0,d=parseFloat(x[3])||0;o.push([_,T,d]);break}case"vt":{let _=parseFloat(x[1])||0,T=parseFloat(x[2])||0;r.push([_,T]);break}case"f":{let _=[];for(let T=1;T<x.length;T++){let d=x[T].split("/"),O=parseInt(d[0],10)-1,F=d[1]?parseInt(d[1],10)-1:-1,b=d[2]?parseInt(d[2],10)-1:-1;_.push({vIdx:O,vtIdx:F,vnIdx:b})}for(let T=1;T<_.length-1;T++){let d=_[0],O=_[T],F=_[T+1];l(d),l(F),l(O)}break}}}function l(f){f.vIdx>=0&&f.vIdx<t.length?i.push(...t[f.vIdx]):i.push(0,0,0),f.vnIdx>=0&&f.vnIdx<o.length?s.push(...o[f.vnIdx]):s.push(0,0,1),f.vtIdx>=0&&f.vtIdx<r.length?a.push(...r[f.vtIdx]):a.push(0,0)}let c=i.length/3;return o.length===0&&c>0&&vy(i,s),{positions:new Float32Array(i),normals:new Float32Array(s),uvs:new Float32Array(a),vertexCount:c}}function vy(e,t){let o=e.length/3,r=o/3,i=new Float32Array(r*3);for(let n=0;n<r;n++){let l=n*9,c=l+3,f=l+6,g=e[l],x=e[l+1],v=e[l+2],_=e[c],T=e[c+1],d=e[c+2],O=e[f],F=e[f+1],b=e[f+2],A=_-g,P=T-x,X=d-v,V=O-g,ce=F-x,se=b-v,he=P*se-X*ce,ne=X*V-A*se,ue=A*ce-P*V,ve=Math.sqrt(he*he+ne*ne+ue*ue);ve>1e-4?(he/=ve,ne/=ve,ue/=ve):(he=0,ne=0,ue=1),i[n*3]=he,i[n*3+1]=ne,i[n*3+2]=ue}let s=new Map,a=n=>Math.round(n*1e4)/1e4;for(let n=0;n<o;n++){let l=e[n*3],c=e[n*3+1],f=e[n*3+2],g=`${a(l)},${a(c)},${a(f)}`,x=Math.floor(n/3),v=i[x*3],_=i[x*3+1],T=i[x*3+2];s.has(g)||s.set(g,{nx:0,ny:0,nz:0,count:0});let d=s.get(g);d.nx+=v,d.ny+=_,d.nz+=T,d.count++}for(let n of s.values()){let l=Math.sqrt(n.nx*n.nx+n.ny*n.ny+n.nz*n.nz);l>1e-4?(n.nx/=l,n.ny/=l,n.nz/=l):(n.nx=0,n.ny=0,n.nz=1)}for(let n=0;n<o;n++){let l=e[n*3],c=e[n*3+1],f=e[n*3+2],g=`${a(l)},${a(c)},${a(f)}`,x=s.get(g);t[n*3]=x.nx,t[n*3+1]=x.ny,t[n*3+2]=x.nz}}async function gy(e){let t=await fetch(e);if(!t.ok)throw new Error(`Failed to load OBJ: ${t.status} ${t.statusText}`);let o=await t.text();return Ms(o)}function xy(e,t,o,r,i){let s=r*i,a=e.length/3;a>s&&console.warn(`[OBJ] Mesh has ${a} vertices, but texture can only hold ${s}. Truncating.`);let n=Math.min(a,s),l=r*i,c=new Float32Array(l*4),f=new Float32Array(l*4),g=new Float32Array(l*4);for(let x=0;x<n;x++){let v=x*4,_=x*3,T=x*2;c[v]=e[_],c[v+1]=e[_+1],c[v+2]=e[_+2],c[v+3]=1,f[v]=t[_],f[v+1]=t[_+1],f[v+2]=t[_+2],f[v+3]=0,g[v]=o[T],g[v+1]=o[T+1],g[v+2]=0,g[v+3]=0}for(let x=n;x<l;x++){let v=x*4;c[v+3]=0}return{positionData:c,normalData:f,uvData:g,vertexCount:n}}function _y(e){let t=[],o=0,r=1,i=1,s=1,a=1,n=0;function l(v,_,T,d,O){for(let P=n;P<o;P++)e[P]===`
@@ -6308,13 +6308,14 @@ void main() {
         uv.x = 1.0 - uv.x;
     }
 #elif FLIP == 13
-    // mirror ud
-    if (uv.y > 0.5) {
+    // mirror ud. uv.y runs up the frame, so the top half is uv.y > 0.5 and
+    // the bottom half samples its reflection.
+    if (uv.y < 0.5) {
         uv.y = 1.0 - uv.y;
     }
 #elif FLIP == 14
     // mirror du
-    if (uv.y < 0.5) {
+    if (uv.y > 0.5) {
         uv.y = 1.0 - uv.y;
     }
 #elif FLIP == 15
@@ -6322,7 +6323,7 @@ void main() {
     if (uv.x > 0.5) {
         uv.x = 1.0 - uv.x;
     }
-    if (uv.y > 0.5) {
+    if (uv.y < 0.5) {
         uv.y = 1.0 - uv.y;
     }
 #elif FLIP == 16
@@ -6330,7 +6331,7 @@ void main() {
     if (uv.x > 0.5) {
         uv.x = 1.0 - uv.x;
     }
-    if (uv.y < 0.5) {
+    if (uv.y > 0.5) {
         uv.y = 1.0 - uv.y;
     }
 #elif FLIP == 17
@@ -6338,7 +6339,7 @@ void main() {
     if (uv.x < 0.5) {
         uv.x = 1.0 - uv.x;
     }
-    if (uv.y > 0.5) {
+    if (uv.y < 0.5) {
         uv.y = 1.0 - uv.y;
     }
 #elif FLIP == 18
@@ -6346,7 +6347,7 @@ void main() {
     if (uv.x < 0.5) {
         uv.x = 1.0 - uv.x;
     }
-    if (uv.y < 0.5) {
+    if (uv.y > 0.5) {
         uv.y = 1.0 - uv.y;
     }
 #endif
@@ -6768,18 +6769,19 @@ fn main(@builtin(position) fragCoord: vec4f) -> @location(0) vec4f {
     uv.y -= mapRange(u.offsetY, -100.0, 100.0, -u.resolution.y / imageSize.y * scale, u.resolution.y / imageSize.y * scale) * 1.5;
     uv = fract(uv);
 
-    // flip/mirror
+    // flip/mirror. uv.y runs up the frame, so "up to down" keeps uv.y > 0.5
+    // and reflects it onto the bottom half.
     if (FLIP == 1) { uv = 1.0 - uv; }
     else if (FLIP == 2) { uv.x = 1.0 - uv.x; }
     else if (FLIP == 3) { uv.y = 1.0 - uv.y; }
     else if (FLIP == 11) { if (uv.x > 0.5) { uv.x = 1.0 - uv.x; } }
     else if (FLIP == 12) { if (uv.x < 0.5) { uv.x = 1.0 - uv.x; } }
-    else if (FLIP == 13) { if (uv.y > 0.5) { uv.y = 1.0 - uv.y; } }
-    else if (FLIP == 14) { if (uv.y < 0.5) { uv.y = 1.0 - uv.y; } }
-    else if (FLIP == 15) { if (uv.x > 0.5) { uv.x = 1.0 - uv.x; } if (uv.y > 0.5) { uv.y = 1.0 - uv.y; } }
-    else if (FLIP == 16) { if (uv.x > 0.5) { uv.x = 1.0 - uv.x; } if (uv.y < 0.5) { uv.y = 1.0 - uv.y; } }
-    else if (FLIP == 17) { if (uv.x < 0.5) { uv.x = 1.0 - uv.x; } if (uv.y > 0.5) { uv.y = 1.0 - uv.y; } }
-    else if (FLIP == 18) { if (uv.x < 0.5) { uv.x = 1.0 - uv.x; } if (uv.y < 0.5) { uv.y = 1.0 - uv.y; } }
+    else if (FLIP == 13) { if (uv.y < 0.5) { uv.y = 1.0 - uv.y; } }
+    else if (FLIP == 14) { if (uv.y > 0.5) { uv.y = 1.0 - uv.y; } }
+    else if (FLIP == 15) { if (uv.x > 0.5) { uv.x = 1.0 - uv.x; } if (uv.y < 0.5) { uv.y = 1.0 - uv.y; } }
+    else if (FLIP == 16) { if (uv.x > 0.5) { uv.x = 1.0 - uv.x; } if (uv.y > 0.5) { uv.y = 1.0 - uv.y; } }
+    else if (FLIP == 17) { if (uv.x < 0.5) { uv.x = 1.0 - uv.x; } if (uv.y < 0.5) { uv.y = 1.0 - uv.y; } }
+    else if (FLIP == 18) { if (uv.x < 0.5) { uv.x = 1.0 - uv.x; } if (uv.y > 0.5) { uv.y = 1.0 - uv.y; } }
 
     var color = textureSample(inputTex, samp, inputCoord(uv));
 
@@ -75393,7 +75395,7 @@ void main() {
     
     // Camera setup - fixed position, volume rotates
     // Scale camera position from 0-1 UI range to world coords
-    vec3 ro = cameraPosition * vec3(-1.0, 1.0, 1.0) * 3.5;
+    vec3 ro = cameraPosition * 3.5;
     
     // Camera looks at origin; handle case when at origin
     vec3 forward;
@@ -75403,20 +75405,23 @@ void main() {
         forward = normalize(-ro);  // Look toward origin
     }
     vec3 worldUp = vec3(0.0, 1.0, 0.0);
-    // Handle looking straight up/down
+    // Looking straight down, screen up is -Z, as it is just short of straight
+    // down, so a top-down view shows the volume's far side at the top.
     if (abs(dot(forward, worldUp)) > 0.999) {
-        worldUp = vec3(0.0, 0.0, 1.0);
+        worldUp = vec3(0.0, 0.0, sign(forward.y));
     }
-    vec3 right = normalize(cross(worldUp, forward));
-    vec3 up = cross(forward, right);
+    // (right, up, -forward) is right-handed, so the volume is never mirrored.
+    vec3 right = normalize(cross(forward, worldUp));
+    vec3 up = cross(right, forward);
     
     vec3 rd = normalize(forward + uv.x * right + uv.y * up);
     
     // Light direction is fixed in world space (not view space)
-    vec3 worldLightDir = normalize(lightDirection * vec3(-1.0, 1.0, 1.0));
+    vec3 worldLightDir = normalize(lightDirection);
     
-    // Rotate ray into volume space
-    float angle = time * TAU * float(orbitSpeed);
+    // Rotate ray into volume space. The angle is negated so the volume spins
+    // on screen in the same direction as in earlier releases.
+    float angle = -time * TAU * float(orbitSpeed);
     float c = cos(angle);
     float s = sin(angle);
     // Rotation around Y axis
@@ -75827,7 +75832,7 @@ fn fragmentMain(input: VertexOutput) -> FragmentOutput {
     
     // Camera setup - fixed position, volume rotates
     // Scale camera position from 0-1 UI range to world coords
-    let ro = u.cameraPosition * vec3f(-1.0, 1.0, 1.0) * 3.5;
+    let ro = u.cameraPosition * 3.5;
     
     // Camera looks at origin; handle case when at origin
     var forward: vec3f;
@@ -75837,20 +75842,23 @@ fn fragmentMain(input: VertexOutput) -> FragmentOutput {
         forward = normalize(-ro);  // Look toward origin
     }
     var worldUp = vec3f(0.0, 1.0, 0.0);
-    // Handle looking straight up/down
+    // Looking straight down, screen up is -Z, as it is just short of straight
+    // down, so a top-down view shows the volume's far side at the top.
     if (abs(dot(forward, worldUp)) > 0.999) {
-        worldUp = vec3f(0.0, 0.0, 1.0);
+        worldUp = vec3f(0.0, 0.0, sign(forward.y));
     }
-    let right = normalize(cross(worldUp, forward));
-    let up = cross(forward, right);
+    // (right, up, -forward) is right-handed, so the volume is never mirrored.
+    let right = normalize(cross(forward, worldUp));
+    let up = cross(right, forward);
     
     let rd = normalize(forward + uv.x * right + uv.y * up);
     
     // Light direction is fixed in world space (not view space)
-    let worldLightDir = normalize(u.lightDirection * vec3f(-1.0, 1.0, 1.0));
+    let worldLightDir = normalize(u.lightDirection);
     
-    // Rotate ray into volume space
-    let angle = u.time * TAU * f32(u.orbitSpeed);
+    // Rotate ray into volume space. The angle is negated so the volume spins
+    // on screen in the same direction as in earlier releases.
+    let angle = -u.time * TAU * f32(u.orbitSpeed);
     let c = cos(angle);
     let s = sin(angle);
     // Rotation around Y axis
@@ -93687,8 +93695,6 @@ uniform float juliaX;
 uniform float juliaY;
 uniform float juliaZ;
 uniform int colorMode;
-uniform vec2 tileOffset;
-uniform float renderScale;
 
 // MRT outputs: volume cache and geometry buffer
 layout(location = 0) out vec4 fragColor;
@@ -93880,23 +93886,24 @@ vec3 computeFractal(vec3 p, vec3 juliaC) {
 
 void main() {
     int volSize = volumeSize;
-    int scaledVolSize = int(float(volSize) * renderScale);
-    float scaledVolSizeF = float(scaledVolSize);
+    float volSizeF = float(volSize);
     
-    vec2 globalPixelCoord = gl_FragCoord.xy + tileOffset;
-    ivec2 pixelCoord = ivec2(globalPixelCoord);
+    // Atlas is volSize x (volSize * volSize). Pixel (x, y) maps to voxel
+    // (x, y % volSize, y / volSize). The volume is the same for every
+    // screen tile, so a large-format export builds the volume it previews.
+    ivec2 pixelCoord = ivec2(gl_FragCoord.xy);
     
-    int x = int(mod(float(pixelCoord.x), scaledVolSizeF));
-    int y = pixelCoord.y % scaledVolSize;
-    int z = pixelCoord.y / scaledVolSize;
+    int x = pixelCoord.x;
+    int y = pixelCoord.y % volSize;
+    int z = pixelCoord.y / volSize;
     
-    if (x >= scaledVolSize || y >= scaledVolSize || z >= scaledVolSize) {
+    if (x >= volSize || y >= volSize || z >= volSize) {
         fragColor = vec4(0.0);
         geoOut = vec4(0.5, 0.5, 0.5, 0.0);
         return;
     }
     
-    vec3 p = (vec3(float(x), float(y), float(z)) / (scaledVolSizeF - 1.0) * 2.0 - 1.0) * 1.5;
+    vec3 p = (vec3(float(x), float(y), float(z)) / (volSizeF - 1.0) * 2.0 - 1.0) * 1.5;
     
     vec3 juliaC = vec3(juliaX, juliaY, juliaZ) * 0.01;
     
@@ -93936,8 +93943,6 @@ void main() {
 @group(0) @binding(6) var<uniform> juliaY: f32;
 @group(0) @binding(7) var<uniform> juliaZ: f32;
 @group(0) @binding(8) var<uniform> colorMode: i32;
-@group(0) @binding(9) var<uniform> tileOffset: vec2<f32>;
-@group(0) @binding(10) var<uniform> renderScale: f32;
 
 const PI: f32 = 3.141592653589793;
 
@@ -94140,28 +94145,25 @@ struct FragOutput {
 @fragment
 fn main(@builtin(position) position: vec4<f32>) -> FragOutput {
     let volSize = volumeSize;
-    let scaledVolSize = i32(f32(volSize) * renderScale);
-    let scaledVolSizeF = f32(scaledVolSize);
+    let volSizeF = f32(volSize);
     
-    // Atlas is scaledVolSize x (scaledVolSize * scaledVolSize)
-    // Pixel (x, y) maps to 3D coordinate (x, y % scaledVolSize, y / scaledVolSize)
-    let globalPixelCoord = position.xy + tileOffset;
-    let pixelCoord = vec2<i32>(globalPixelCoord);
+    // Atlas is volSize x (volSize * volSize). Pixel (x, y) maps to voxel
+    // (x, y % volSize, y / volSize). The volume is the same for every
+    // screen tile, so a large-format export builds the volume it previews.
+    let pixelCoord = vec2<i32>(position.xy);
     
-    // GLSL mod(x, y) = x - y * floor(x / y)
-    let xF = f32(pixelCoord.x);
-    let x = i32(xF - scaledVolSizeF * floor(xF / scaledVolSizeF));
-    let y = pixelCoord.y % scaledVolSize;
-    let z = pixelCoord.y / scaledVolSize;
+    let x = pixelCoord.x;
+    let y = pixelCoord.y % volSize;
+    let z = pixelCoord.y / volSize;
     
     // Bounds check
-    if (x >= scaledVolSize || y >= scaledVolSize || z >= scaledVolSize) {
+    if (x >= volSize || y >= volSize || z >= volSize) {
         return FragOutput(vec4<f32>(0.0), vec4<f32>(0.5, 0.5, 0.5, 0.0));
     }
     
     // Convert to normalized 3D coordinates in [-1.5, 1.5] world space
     // Slightly larger than [-1,1] to capture the full fractal
-    let p = (vec3<f32>(f32(x), f32(y), f32(z)) / (scaledVolSizeF - 1.0) * 2.0 - 1.0) * 1.5;
+    let p = (vec3<f32>(f32(x), f32(y), f32(z)) / (volSizeF - 1.0) * 2.0 - 1.0) * 1.5;
     
     // Julia constant from uniforms (normalized from -100..100 to -1..1)
     let juliaC = vec3<f32>(juliaX, juliaY, juliaZ) * 0.01;

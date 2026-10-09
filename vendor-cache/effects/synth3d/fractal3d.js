@@ -11,8 +11,6 @@ uniform float juliaX;
 uniform float juliaY;
 uniform float juliaZ;
 uniform int colorMode;
-uniform vec2 tileOffset;
-uniform float renderScale;
 
 // MRT outputs: volume cache and geometry buffer
 layout(location = 0) out vec4 fragColor;
@@ -204,23 +202,24 @@ vec3 computeFractal(vec3 p, vec3 juliaC) {
 
 void main() {
     int volSize = volumeSize;
-    int scaledVolSize = int(float(volSize) * renderScale);
-    float scaledVolSizeF = float(scaledVolSize);
+    float volSizeF = float(volSize);
     
-    vec2 globalPixelCoord = gl_FragCoord.xy + tileOffset;
-    ivec2 pixelCoord = ivec2(globalPixelCoord);
+    // Atlas is volSize x (volSize * volSize). Pixel (x, y) maps to voxel
+    // (x, y % volSize, y / volSize). The volume is the same for every
+    // screen tile, so a large-format export builds the volume it previews.
+    ivec2 pixelCoord = ivec2(gl_FragCoord.xy);
     
-    int x = int(mod(float(pixelCoord.x), scaledVolSizeF));
-    int y = pixelCoord.y % scaledVolSize;
-    int z = pixelCoord.y / scaledVolSize;
+    int x = pixelCoord.x;
+    int y = pixelCoord.y % volSize;
+    int z = pixelCoord.y / volSize;
     
-    if (x >= scaledVolSize || y >= scaledVolSize || z >= scaledVolSize) {
+    if (x >= volSize || y >= volSize || z >= volSize) {
         fragColor = vec4(0.0);
         geoOut = vec4(0.5, 0.5, 0.5, 0.0);
         return;
     }
     
-    vec3 p = (vec3(float(x), float(y), float(z)) / (scaledVolSizeF - 1.0) * 2.0 - 1.0) * 1.5;
+    vec3 p = (vec3(float(x), float(y), float(z)) / (volSizeF - 1.0) * 2.0 - 1.0) * 1.5;
     
     vec3 juliaC = vec3(juliaX, juliaY, juliaZ) * 0.01;
     
@@ -260,8 +259,6 @@ void main() {
 @group(0) @binding(6) var<uniform> juliaY: f32;
 @group(0) @binding(7) var<uniform> juliaZ: f32;
 @group(0) @binding(8) var<uniform> colorMode: i32;
-@group(0) @binding(9) var<uniform> tileOffset: vec2<f32>;
-@group(0) @binding(10) var<uniform> renderScale: f32;
 
 const PI: f32 = 3.141592653589793;
 
@@ -464,28 +461,25 @@ struct FragOutput {
 @fragment
 fn main(@builtin(position) position: vec4<f32>) -> FragOutput {
     let volSize = volumeSize;
-    let scaledVolSize = i32(f32(volSize) * renderScale);
-    let scaledVolSizeF = f32(scaledVolSize);
+    let volSizeF = f32(volSize);
     
-    // Atlas is scaledVolSize x (scaledVolSize * scaledVolSize)
-    // Pixel (x, y) maps to 3D coordinate (x, y % scaledVolSize, y / scaledVolSize)
-    let globalPixelCoord = position.xy + tileOffset;
-    let pixelCoord = vec2<i32>(globalPixelCoord);
+    // Atlas is volSize x (volSize * volSize). Pixel (x, y) maps to voxel
+    // (x, y % volSize, y / volSize). The volume is the same for every
+    // screen tile, so a large-format export builds the volume it previews.
+    let pixelCoord = vec2<i32>(position.xy);
     
-    // GLSL mod(x, y) = x - y * floor(x / y)
-    let xF = f32(pixelCoord.x);
-    let x = i32(xF - scaledVolSizeF * floor(xF / scaledVolSizeF));
-    let y = pixelCoord.y % scaledVolSize;
-    let z = pixelCoord.y / scaledVolSize;
+    let x = pixelCoord.x;
+    let y = pixelCoord.y % volSize;
+    let z = pixelCoord.y / volSize;
     
     // Bounds check
-    if (x >= scaledVolSize || y >= scaledVolSize || z >= scaledVolSize) {
+    if (x >= volSize || y >= volSize || z >= volSize) {
         return FragOutput(vec4<f32>(0.0), vec4<f32>(0.5, 0.5, 0.5, 0.0));
     }
     
     // Convert to normalized 3D coordinates in [-1.5, 1.5] world space
     // Slightly larger than [-1,1] to capture the full fractal
-    let p = (vec3<f32>(f32(x), f32(y), f32(z)) / (scaledVolSizeF - 1.0) * 2.0 - 1.0) * 1.5;
+    let p = (vec3<f32>(f32(x), f32(y), f32(z)) / (volSizeF - 1.0) * 2.0 - 1.0) * 1.5;
     
     // Julia constant from uniforms (normalized from -100..100 to -1..1)
     let juliaC = vec3<f32>(juliaX, juliaY, juliaZ) * 0.01;
@@ -592,4 +586,4 @@ fractal3d()
 
 render(o0)
 \`\`\`
-`;if(n&&Object.keys(a).length>0){n.shaders||(n.shaders={});for(let[i,e]of Object.entries(a))n.shaders[i]={...e}}n&&r&&(n.help=r);var d="synth3d/fractal3d",u="synth3d",c="fractal3d",p=n;export{p as default,d as effectId,c as effectName,r as help,u as namespace};
+`;if(n&&Object.keys(a).length>0){n.shaders||(n.shaders={});for(let[i,e]of Object.entries(a))n.shaders[i]={...e}}n&&r&&(n.help=r);var u="synth3d/fractal3d",d="synth3d",c="fractal3d",p=n;export{p as default,u as effectId,c as effectName,r as help,d as namespace};

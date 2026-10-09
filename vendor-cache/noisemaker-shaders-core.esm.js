@@ -3,8 +3,8 @@
  * Includes: CanvasRenderer + UIController + EffectSelect
  * Copyright (c) 2017-2026 Noise Factor LLC. https://noisefactor.io/
  * SPDX-License-Identifier: MIT
- * Build: 700ac32e
- * Date: 2026-10-09T03:55:07.623Z
+ * Build: 735e1fdc
+ * Date: 2026-10-09T05:11:33.898Z
  */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
@@ -10151,6 +10151,102 @@ var WebGPUBackend = class _WebGPUBackend extends Backend {
    */
   parseEntryPointBindings(source, bindings) {
     const entryPointBindings = /* @__PURE__ */ new Map();
+    source = this.stripWGSLComments(source);
+    const functionBodies = /* @__PURE__ */ new Map();
+    const functionRegex = /\bfn\s+(\w+)\s*\(/g;
+    let functionMatch;
+    while ((functionMatch = functionRegex.exec(source)) !== null) {
+      const parametersStart = functionRegex.lastIndex;
+      let parametersEnd = parametersStart;
+      let parentheses = 1;
+      for (; parametersEnd < source.length && parentheses > 0; parametersEnd++) {
+        if (source[parametersEnd] === "(") parentheses++;
+        else if (source[parametersEnd] === ")") parentheses--;
+      }
+      if (parentheses !== 0) continue;
+      const parameters = /* @__PURE__ */ new Set();
+      const parameterSource = source.slice(parametersStart, parametersEnd - 1);
+      const parameterRegex = /(?:^|,)\s*(?:@\w+\s*\([^)]*\)\s*)*([A-Za-z_]\w*)\s*:/g;
+      for (const parameter of parameterSource.matchAll(parameterRegex)) parameters.add(parameter[1]);
+      const openingBrace = source.indexOf("{", parametersEnd);
+      if (openingBrace < 0) continue;
+      const start = openingBrace + 1;
+      let depth = 1;
+      let end = start;
+      for (; end < source.length && depth > 0; end++) {
+        if (source[end] === "{") depth++;
+        else if (source[end] === "}") depth--;
+      }
+      functionBodies.set(functionMatch[1], { body: source.slice(start, end - 1), parameters });
+      functionRegex.lastIndex = end;
+    }
+    const bindingByName = new Map(bindings.map((binding) => [binding.name, binding.binding]));
+    const analyzeBody = ({ body, parameters }) => {
+      const tokens = body.match(/[A-Za-z_]\w*|\d+\w*|[{}().,:;<>]/g) || [];
+      const scopes = [new Set(parameters)];
+      const used = /* @__PURE__ */ new Set();
+      const calls = /* @__PURE__ */ new Set();
+      const forBodyOpens = /* @__PURE__ */ new Set();
+      const forBodyDepths = [];
+      const declarations = /* @__PURE__ */ new Set();
+      const pendingDeclarations = [];
+      for (let i = 0; i < tokens.length; i++) {
+        const token = tokens[i];
+        if (token === ";") {
+          for (const declaration of pendingDeclarations) declaration.scope.add(declaration.name);
+          pendingDeclarations.length = 0;
+          continue;
+        }
+        if (token === "for" && tokens[i + 1] === "(") {
+          let parentheses = 0;
+          let end = i + 1;
+          for (; end < tokens.length; end++) {
+            if (tokens[end] === "(") parentheses++;
+            else if (tokens[end] === ")" && --parentheses === 0) break;
+          }
+          if (tokens[end + 1] === "{") {
+            scopes.push(/* @__PURE__ */ new Set());
+            forBodyOpens.add(end + 1);
+          }
+          continue;
+        }
+        if (token === "{") {
+          scopes.push(/* @__PURE__ */ new Set());
+          if (forBodyOpens.has(i)) forBodyDepths.push(scopes.length);
+          continue;
+        }
+        if (token === "}") {
+          const closingDepth = scopes.length;
+          if (closingDepth > 1) scopes.pop();
+          if (forBodyDepths.at(-1) === closingDepth) {
+            scopes.pop();
+            forBodyDepths.pop();
+          }
+          continue;
+        }
+        if (token === "let" || token === "var" || token === "const") {
+          let nameIndex = i + 1;
+          if (token === "var" && tokens[nameIndex] === "<") {
+            let brackets = 1;
+            for (nameIndex++; nameIndex < tokens.length && brackets > 0; nameIndex++) {
+              if (tokens[nameIndex] === "<") brackets++;
+              else if (tokens[nameIndex] === ">") brackets--;
+            }
+          }
+          const localName = tokens[nameIndex];
+          if (localName && /^[A-Za-z_]\w*$/.test(localName)) {
+            declarations.add(nameIndex);
+            pendingDeclarations.push({ name: localName, scope: scopes.at(-1) });
+          }
+        }
+        if (declarations.has(i)) continue;
+        if (bindingByName.has(token) && tokens[i - 1] !== "." && !scopes.some((scope) => scope.has(token))) used.add(bindingByName.get(token));
+        if (functionBodies.has(token) && tokens[i + 1] === "(" && tokens[i - 1] !== ".") {
+          calls.add(token);
+        }
+      }
+      return { used, calls };
+    };
     const entryPointRegex = /@(?:compute|vertex|fragment)[^f]*fn\s+(\w+)\s*\([^)]*\)[^{]*\{/g;
     let match;
     while ((match = entryPointRegex.exec(source)) !== null) {
@@ -10163,12 +10259,19 @@ var WebGPUBackend = class _WebGPUBackend extends Backend {
         else if (source[i] === "}") braceCount--;
         endIdx = i;
       }
-      const functionBody = source.slice(startIdx, endIdx);
+      const reachable = [{
+        body: source.slice(startIdx, endIdx),
+        parameters: functionBodies.get(entryPoint)?.parameters || /* @__PURE__ */ new Set()
+      }];
+      const visited = /* @__PURE__ */ new Set([entryPoint]);
       const usedBindings = /* @__PURE__ */ new Set();
-      for (const binding of bindings) {
-        const nameRegex = new RegExp(`\\b${binding.name}\\b`);
-        if (nameRegex.test(functionBody)) {
-          usedBindings.add(binding.binding);
+      for (let index = 0; index < reachable.length; index++) {
+        const { used, calls } = analyzeBody(reachable[index]);
+        for (const binding of used) usedBindings.add(binding);
+        for (const name of calls) {
+          if (visited.has(name)) continue;
+          visited.add(name);
+          reachable.push(functionBodies.get(name));
         }
       }
       entryPointBindings.set(entryPoint, usedBindings);
@@ -11351,6 +11454,15 @@ var WebGPUBackend = class _WebGPUBackend extends Backend {
       if (pass.outputs) {
         for (const outputName of Object.keys(pass.outputs)) {
           neededBindingNames.add(outputName);
+        }
+      }
+      const usedBindings = program.entryPointBindings?.get(pass.entryPoint);
+      if (pass.storageTextures) {
+        for (const storageName of Object.keys(pass.storageTextures)) {
+          const binding = bindings.find((b) => b.name === storageName && b.type === "storage_texture");
+          if (binding && (!usedBindings || usedBindings.has(binding.binding))) {
+            neededBindingNames.add(storageName);
+          }
         }
       }
       neededBindingNames.add("params");

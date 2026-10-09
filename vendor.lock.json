@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "sourceBaseUrl": "https://shaders.noisedeck.app/1/",
-  "generatedAt": "2026-10-09T04:23:18.157Z",
+  "generatedAt": "2026-10-09T05:33:29.490Z",
   "effectCount": 210,
   "artifacts": [
     {
@@ -47,9 +47,9 @@
       "url": "https://shaders.noisedeck.app/1/effects/classicNoisedeck/composite.js"
     },
     {
-      "bytes": 41779,
+      "bytes": 41988,
       "path": "effects/classicNoisedeck/effects.js",
-      "sha256": "4ce844dfce95f508dbdb587341e36317a04c1ff13dcf627944cbe6a517e141da",
+      "sha256": "7cd89753708f199637df64e235a29eba5fab335df1a18041c3123f40ea3dd143",
       "url": "https://shaders.noisedeck.app/1/effects/classicNoisedeck/effects.js"
     },
     {
@@ -1043,9 +1043,9 @@
       "url": "https://shaders.noisedeck.app/1/effects/render/renderLandscape3d.js"
     },
     {
-      "bytes": 33415,
+      "bytes": 33939,
       "path": "effects/render/renderLit3d.js",
-      "sha256": "ac78c30446cee3efe19be4fdcb75eb6d1c30e1ed82b49a7dfb91522b87e5025f",
+      "sha256": "37c8633afbea211acc530eaa19327ce3a630d0d41ed2b5dcbaebedd62d79786f",
       "url": "https://shaders.noisedeck.app/1/effects/render/renderLit3d.js"
     },
     {
@@ -1241,9 +1241,9 @@
       "url": "https://shaders.noisedeck.app/1/effects/synth3d/flythrough3d.js"
     },
     {
-      "bytes": 21870,
+      "bytes": 21520,
       "path": "effects/synth3d/fractal3d.js",
-      "sha256": "35ed23df7701955ad30bee9da46ed30567eaa675dc263fc69ec53ec8a9a11f2a",
+      "sha256": "a44f4f2672f2f16c7a0dc70d7abe4ce72f57607730eae7274b1bb724504735a2",
       "url": "https://shaders.noisedeck.app/1/effects/synth3d/fractal3d.js"
     },
     {
@@ -1271,9 +1271,9 @@
       "url": "https://shaders.noisedeck.app/1/effects/synth3d/shape3d.js"
     },
     {
-      "bytes": 926059,
+      "bytes": 931036,
       "path": "noisemaker-shaders-core.esm.js",
-      "sha256": "25bdc3521ec68839c36516e0dcf1e4f2df717ba90da05b99fc4b2f846683903d",
+      "sha256": "ee054fc83d9eefabad130ee1d04a903b6869332364742d649e2262049ef8fd0f",
       "url": "https://shaders.noisedeck.app/1/noisemaker-shaders-core.esm.js"
     }
   ]
