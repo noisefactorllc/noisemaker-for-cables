@@ -134,7 +134,6 @@ export function createFakeWebGL2(options = {}) {
     'SAMPLE_COVERAGE',
     'DITHER',
     'FRONT',
-    'BACK',
     'FRONT_AND_BACK',
     'FUNC_ADD',
     'FUNC_SUBTRACT',

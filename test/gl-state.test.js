@@ -134,6 +134,11 @@ test('captureGLState and restoreGLState preserve complete shared WebGL2 state', 
 test('draw-buffer capture trims trailing NONE slots and restore replays the authored list', () => {
   const gl = createFakeWebGL2({ maxTextureUnits: 2 })
 
+  // The fake must carry WebGL2's real enum values so the assertions below
+  // compare against what getParameter returns in a browser.
+  assert.equal(gl.NONE, 0)
+  assert.equal(gl.BACK, 0x0405)
+
   // A fresh context's default framebuffer draws from BACK and every other
   // DRAW_BUFFERi slot is NONE; capture keeps only the authored slot.
   const neutral = captureGLState(gl, {})
