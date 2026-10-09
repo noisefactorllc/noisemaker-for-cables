@@ -131,6 +131,37 @@ test('captureGLState and restoreGLState preserve complete shared WebGL2 state', 
   assert.equal(gl.getParameter(gl.ACTIVE_TEXTURE), gl.TEXTURE0 + 1)
 })
 
+test('draw-buffer capture trims trailing NONE slots and restore replays the authored list', () => {
+  const gl = createFakeWebGL2({ maxTextureUnits: 2 })
+
+  // A fresh context's default framebuffer draws from BACK and every other
+  // DRAW_BUFFERi slot is NONE; capture keeps only the authored slot.
+  const neutral = captureGLState(gl, {})
+  assert.deepEqual(neutral.drawBuffers, [gl.BACK])
+
+  // A single-attachment host framebuffer: the trailing NONE slot is trimmed
+  // from the snapshot instead of being replayed as an authored draw buffer.
+  gl.drawBuffers([gl.COLOR_ATTACHMENT0])
+  const snapshot = captureGLState(gl, {})
+  assert.deepEqual(snapshot.drawBuffers, [gl.COLOR_ATTACHMENT0])
+
+  // A guest that authors both slots is restored to the captured state:
+  // the host attachment returns and the trimmed slot returns to NONE.
+  gl.drawBuffers([gl.COLOR_ATTACHMENT1, gl.COLOR_ATTACHMENT0])
+  restoreGLState(gl, snapshot)
+  assert.equal(gl.getParameter(gl.DRAW_BUFFER0), gl.COLOR_ATTACHMENT0)
+  assert.equal(gl.getParameter(gl.DRAW_BUFFER0 + 1), gl.NONE)
+
+  // A fully authored multi-slot state round-trips without any trimming.
+  gl.drawBuffers([gl.COLOR_ATTACHMENT0, gl.COLOR_ATTACHMENT1])
+  const authored = captureGLState(gl, {})
+  assert.deepEqual(authored.drawBuffers, [gl.COLOR_ATTACHMENT0, gl.COLOR_ATTACHMENT1])
+  gl.drawBuffers([gl.COLOR_ATTACHMENT1])
+  restoreGLState(gl, authored)
+  assert.equal(gl.getParameter(gl.DRAW_BUFFER0), gl.COLOR_ATTACHMENT0)
+  assert.equal(gl.getParameter(gl.DRAW_BUFFER0 + 1), gl.COLOR_ATTACHMENT1)
+})
+
 test('prepareNoisemakerGLState establishes a canonical guest baseline inside an exact host guard', () => {
   assert.equal(typeof glStateModule.prepareNoisemakerGLState, 'function')
 

@@ -16,6 +16,8 @@ export function createFakeWebGL2(options = {}) {
   define('TEXTURE0', 0x84c0)
   define('DRAW_BUFFER0', 0x8825)
   define('BROWSER_DEFAULT_WEBGL', 0x9244)
+  define('NONE', 0)
+  define('BACK', 0x0405)
 
   for (const name of [
     'CURRENT_PROGRAM',
@@ -178,7 +180,10 @@ export function createFakeWebGL2(options = {}) {
     () => ({ buffer: null, offset: 0, size: 0 }),
   )
   let activeTexture = gl.TEXTURE0
-  let drawBuffers = [gl.BACK_LEFT]
+  // WebGL2's default framebuffer draws from and reads from BACK; the
+  // un-authored DRAW_BUFFERi slots default to NONE, which real getParameter
+  // calls return so captureDrawBuffers can trim them.
+  let drawBuffers = [gl.BACK]
 
   const bindingEnumByTarget = new Map([
     [gl.ARRAY_BUFFER, gl.ARRAY_BUFFER_BINDING],
@@ -269,7 +274,7 @@ export function createFakeWebGL2(options = {}) {
     ['SAMPLE_COVERAGE_VALUE', 1],
     ['SAMPLE_COVERAGE_INVERT', false],
     ['LINE_WIDTH', 1],
-    ['READ_BUFFER', gl.BACK_LEFT],
+    ['READ_BUFFER', gl.BACK],
   ]) state.set(gl[name], value)
 
   const failures = new Map()
@@ -307,7 +312,7 @@ export function createFakeWebGL2(options = {}) {
       return samplers[activeTexture - gl.TEXTURE0]
     }
     if (parameter >= gl.DRAW_BUFFER0 && parameter < gl.DRAW_BUFFER0 + maxDrawBuffers) {
-      return drawBuffers[parameter - gl.DRAW_BUFFER0] ?? gl.ZERO
+      return drawBuffers[parameter - gl.DRAW_BUFFER0] ?? gl.NONE
     }
     if (!state.has(parameter)) throw new Error(`Unknown parameter ${parameter}`)
     return cloneValue(state.get(parameter))
