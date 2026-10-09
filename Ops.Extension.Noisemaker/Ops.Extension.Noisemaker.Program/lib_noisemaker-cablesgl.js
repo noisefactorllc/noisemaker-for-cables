@@ -3,8 +3,8 @@
  * Includes: CanvasRenderer + UIController + EffectSelect
  * Copyright (c) 2017-2026 Noise Factor LLC. https://noisefactor.io/
  * SPDX-License-Identifier: MIT
- * Build: a7ba29d7
- * Date: 2026-10-09T08:49:45.833Z
+ * Build: 00fb941c
+ * Date: 2026-10-09T10:58:25.147Z
  */
 var NoisemakerCablesGL=(()=>{var Da=Object.defineProperty;var Ab=Object.getOwnPropertyDescriptor;var Ib=Object.getOwnPropertyNames;var Db=Object.prototype.hasOwnProperty;var w=(e,t,o)=>()=>{if(o)throw o[0];try{return e&&(t=e(e=0)),t}catch(r){throw o=[r],r}};var Pa=(e,t)=>{for(var o in t)Da(e,o,{get:t[o],enumerable:!0})},Pb=(e,t,o,r)=>{if(t&&typeof t=="object"||typeof t=="function")for(let i of Ib(t))!Db.call(e,i)&&i!==o&&Da(e,i,{get:()=>t[i],enumerable:!(r=Ab(t,i))||r.enumerable});return e};var Mb=e=>Pb(Da({},"__esModule",{value:!0}),e);function Ms(e){let t=[],o=[],r=[],i=[],s=[],a=[],n=e.split(`
 `);for(let f of n){let g=f.trim();if(g.length===0||g.startsWith("#"))continue;let x=g.split(/\s+/);switch(x[0]){case"v":{let _=parseFloat(x[1])||0,T=parseFloat(x[2])||0,d=parseFloat(x[3])||0;t.push([_,T,d]);break}case"vn":{let _=parseFloat(x[1])||0,T=parseFloat(x[2])||0,d=parseFloat(x[3])||0;o.push([_,T,d]);break}case"vt":{let _=parseFloat(x[1])||0,T=parseFloat(x[2])||0;r.push([_,T]);break}case"f":{let _=[];for(let T=1;T<x.length;T++){let d=x[T].split("/"),O=parseInt(d[0],10)-1,F=d[1]?parseInt(d[1],10)-1:-1,b=d[2]?parseInt(d[2],10)-1:-1;_.push({vIdx:O,vtIdx:F,vnIdx:b})}for(let T=1;T<_.length-1;T++){let d=_[0],O=_[T],F=_[T+1];l(d),l(F),l(O)}break}}}function l(f){f.vIdx>=0&&f.vIdx<t.length?i.push(...t[f.vIdx]):i.push(0,0,0),f.vnIdx>=0&&f.vnIdx<o.length?s.push(...o[f.vnIdx]):s.push(0,0,1),f.vtIdx>=0&&f.vtIdx<r.length?a.push(...r[f.vtIdx]):a.push(0,0)}let c=i.length/3;return o.length===0&&c>0&&vy(i,s),{positions:new Float32Array(i),normals:new Float32Array(s),uvs:new Float32Array(a),vertexCount:c}}function vy(e,t){let o=e.length/3,r=o/3,i=new Float32Array(r*3);for(let n=0;n<r;n++){let l=n*9,c=l+3,f=l+6,g=e[l],x=e[l+1],v=e[l+2],_=e[c],T=e[c+1],d=e[c+2],O=e[f],F=e[f+1],b=e[f+2],A=_-g,P=T-x,X=d-v,V=O-g,ce=F-x,se=b-v,he=P*se-X*ce,ne=X*V-A*se,ue=A*ce-P*V,ve=Math.sqrt(he*he+ne*ne+ue*ue);ve>1e-4?(he/=ve,ne/=ve,ue/=ve):(he=0,ne=0,ue=1),i[n*3]=he,i[n*3+1]=ne,i[n*3+2]=ue}let s=new Map,a=n=>Math.round(n*1e4)/1e4;for(let n=0;n<o;n++){let l=e[n*3],c=e[n*3+1],f=e[n*3+2],g=`${a(l)},${a(c)},${a(f)}`,x=Math.floor(n/3),v=i[x*3],_=i[x*3+1],T=i[x*3+2];s.has(g)||s.set(g,{nx:0,ny:0,nz:0,count:0});let d=s.get(g);d.nx+=v,d.ny+=_,d.nz+=T,d.count++}for(let n of s.values()){let l=Math.sqrt(n.nx*n.nx+n.ny*n.ny+n.nz*n.nz);l>1e-4?(n.nx/=l,n.ny/=l,n.nz/=l):(n.nx=0,n.ny=0,n.nz=1)}for(let n=0;n<o;n++){let l=e[n*3],c=e[n*3+1],f=e[n*3+2],g=`${a(l)},${a(c)},${a(f)}`,x=s.get(g);t[n*3]=x.nx,t[n*3+1]=x.ny,t[n*3+2]=x.nz}}async function gy(e){let t=await fetch(e);if(!t.ok)throw new Error(`Failed to load OBJ: ${t.status} ${t.statusText}`);let o=await t.text();return Ms(o)}function xy(e,t,o,r,i){let s=r*i,a=e.length/3;a>s&&console.warn(`[OBJ] Mesh has ${a} vertices, but texture can only hold ${s}. Truncating.`);let n=Math.min(a,s),l=r*i,c=new Float32Array(l*4),f=new Float32Array(l*4),g=new Float32Array(l*4);for(let x=0;x<n;x++){let v=x*4,_=x*3,T=x*2;c[v]=e[_],c[v+1]=e[_+1],c[v+2]=e[_+2],c[v+3]=1,f[v]=t[_],f[v+1]=t[_+1],f[v+2]=t[_+2],f[v+3]=0,g[v]=o[T],g[v+1]=o[T+1],g[v+2]=0,g[v+3]=0}for(let x=n;x<l;x++){let v=x*4;c[v+3]=0}return{positionData:c,normalData:f,uvData:g,vertexCount:n}}function _y(e){let t=[],o=0,r=1,i=1,s=1,a=1,n=0;function l(v,_,T,d,O){for(let P=n;P<o;P++)e[P]===`
@@ -5787,7 +5787,16 @@ float random(vec2 p) {
 
 
 float map(float value, float inMin, float inMax, float outMin, float outMax) {
-    return outMin + (outMax - outMin) * (value - inMin) / (inMax - inMin);
+    // The final division lowers differently: Dawn computes x * rcp(span)
+    // (approximate reciprocal), ANGLE a correctly-rounded divide, so mapped
+    // values differ by ~1 ulp and knife-edge taps flip. One Newton-Raphson
+    // step pins the reciprocal to the same value on both backends (multiply
+    // and subtract are correctly rounded in both Metal math modes). The clamp
+    // keeps the span*rmul product from fusing into the (2.0 - ...) subtract.
+    float span = inMax - inMin;
+    float rmul = 1.0 / span;
+    float mc = min(max(span * rmul, -1e38), 1e38);
+    return outMin + (outMax - outMin) * ((value - inMin) * (rmul * (2.0 - mc)));
 }
 
 vec2 rotate2D(vec2 st, float rot) {
@@ -6314,7 +6323,14 @@ void main() {
 
     vec4 color = vec4(0.0);
 
-    float scale = 100.0 / scaleAmt; // 25 - 400 maps to 100 / 25 (4) to 100 / 400 (0.25)
+    // The division by a runtime uniform lowers differently (Dawn: x * rcp(y),
+    // ANGLE: correctly-rounded divide) — a ~1 ulp difference rescales every uv
+    // and flips knife-edge taps. One Newton-Raphson step pins the reciprocal
+    // on both backends; the clamp keeps the scaleAmt*sR product from fusing
+    // into the (2.0 - ...) subtract.
+    float sR = 1.0 / scaleAmt;
+    float sC = min(max(scaleAmt * sR, -1e38), 1e38);
+    float scale = 100.0 * (sR * (2.0 - sC)); // 25 - 400 maps to 100 / 25 (4) to 100 / 400 (0.25)
 
     if (scale == 0.0) {
         scale = 1.0;
@@ -6335,15 +6351,19 @@ void main() {
 
     // need to subtract 50% of image width and height
     // mid center
-    uv.x -= ceil((resolution.x / imageSize.x * scale * 0.5) - (0.5 - (1.0 / imageSize.x * scale)));
-    uv.y += ceil((resolution.y / imageSize.y * scale * 0.5) + (0.5 - (1.0 / imageSize.y * scale)) - (scale));
+    // imageSize is a copy of resolution, so resolution/imageSize is a value
+    // divided by itself: ANGLE computes exactly 1.0 while Dawn lowers the
+    // division to x * rcp(x) (~1 ulp off), which shifted the offset map's
+    // arguments and flipped knife-edge sampler taps. Use the exact 1.0.
+    uv.x -= ceil((scale * 0.5) - (0.5 - (1.0 / imageSize.x * scale)));
+    uv.y += ceil((scale * 0.5) + (0.5 - (1.0 / imageSize.y * scale)) - (scale));
 
     // Pin the offset-shift evaluation order with scalar clamps: the map
     // result feeds a multiply then a subtract, and relaxed math contracts
     // that pair into an fma while standard math double-rounds. The clamps
     // are value-exact for finite values.
-    float shiftXv = min(max(map(offsetX, -100.0, 100.0, -resolution.x / imageSize.x * scale, resolution.x / imageSize.x * scale) * 1.5, -1e38), 1e38);
-    float shiftYv = min(max(map(offsetY, -100.0, 100.0, -resolution.y / imageSize.y * scale, resolution.y / imageSize.y * scale) * 1.5, -1e38), 1e38);
+    float shiftXv = min(max(map(offsetX, -100.0, 100.0, -scale, scale) * 1.5, -1e38), 1e38);
+    float shiftYv = min(max(map(offsetY, -100.0, 100.0, -scale, scale) * 1.5, -1e38), 1e38);
     uv -= vec2(shiftXv, shiftYv);
 
     uv = fract(uv);
@@ -6493,7 +6513,16 @@ fn aspectRatio() -> f32 {
 }
 
 fn mapRange(value: f32, inMin: f32, inMax: f32, outMin: f32, outMax: f32) -> f32 {
-    return outMin + (outMax - outMin) * (value - inMin) / (inMax - inMin);
+    // The final division lowers differently: Dawn computes x * rcp(span)
+    // (approximate reciprocal), ANGLE a correctly-rounded divide, so mapped
+    // values differ by ~1 ulp and knife-edge taps flip. One Newton-Raphson
+    // step pins the reciprocal to the same value on both backends (multiply
+    // and subtract are correctly rounded in both Metal math modes). The clamp
+    // keeps the span*rmul product from fusing into the (2.0 - ...) subtract.
+    let span = inMax - inMin;
+    let rmul = 1.0 / span;
+    let mc = min(max(span * rmul, -1e38), 1e38);
+    return outMin + (outMax - outMin) * ((value - inMin) * (rmul * (2.0 - mc)));
 }
 
 // GLSL mod(): x - y * floor(x / y). WGSL % truncates instead, and its exact
@@ -6859,7 +6888,14 @@ fn main(@builtin(position) fragCoord: vec4f) -> @location(0) vec4f {
     // correctly-rounded multiply, so the uv chain is bit-identical.
     var uv = fragCoord.xy * u.invFullResolution;
 
-    var scale = 100.0 / u.scaleAmt;
+    // The division by a runtime uniform lowers differently (Dawn: x * rcp(y),
+    // ANGLE: correctly-rounded divide) — a ~1 ulp difference rescales every uv
+    // and flips knife-edge taps. One Newton-Raphson step pins the reciprocal
+    // on both backends; the clamp keeps the scaleAmt*sR product from fusing
+    // into the (2.0 - ...) subtract.
+    let sR = 1.0 / u.scaleAmt;
+    let sC = min(max(u.scaleAmt * sR, -1e38), 1e38);
+    var scale = 100.0 * (sR * (2.0 - sC));
     if (scale == 0.0) { scale = 1.0; }
 
     uv = rotate2D(uv, u.rotation);
@@ -6872,14 +6908,18 @@ fn main(@builtin(position) fragCoord: vec4f) -> @location(0) vec4f {
     uv += 0.5;
 
     let imageSize = u.resolution;
-    uv.x -= ceil((u.resolution.x / imageSize.x * scale * 0.5) - (0.5 - (1.0 / imageSize.x * scale)));
-    uv.y += ceil((u.resolution.y / imageSize.y * scale * 0.5) + (0.5 - (1.0 / imageSize.y * scale)) - scale);
+    // imageSize is a copy of u.resolution, so resolution/imageSize is a value
+    // divided by itself: ANGLE computes exactly 1.0 while Dawn lowers the
+    // division to x * rcp(x) (~1 ulp off), which shifted the offset map's
+    // arguments and flipped knife-edge sampler taps. Use the exact 1.0.
+    uv.x -= ceil((scale * 0.5) - (0.5 - (1.0 / imageSize.x * scale)));
+    uv.y += ceil((scale * 0.5) + (0.5 - (1.0 / imageSize.y * scale)) - scale);
     // Pin the offset-shift evaluation order with scalar clamps: the map
     // result feeds a multiply then a subtract, and relaxed math contracts
     // that pair into an fma while standard math double-rounds. The clamps
     // are value-exact for finite values.
-    let shiftXv = min(max(mapRange(u.offsetX, -100.0, 100.0, -u.resolution.x / imageSize.x * scale, u.resolution.x / imageSize.x * scale) * 1.5, -1e38), 1e38);
-    let shiftYv = min(max(mapRange(u.offsetY, -100.0, 100.0, -u.resolution.y / imageSize.y * scale, u.resolution.y / imageSize.y * scale) * 1.5, -1e38), 1e38);
+    let shiftXv = min(max(mapRange(u.offsetX, -100.0, 100.0, -scale, scale) * 1.5, -1e38), 1e38);
+    let shiftYv = min(max(mapRange(u.offsetY, -100.0, 100.0, -scale, scale) * 1.5, -1e38), 1e38);
     uv -= vec2f(shiftXv, shiftYv);
     uv = fract(uv);
 
@@ -11889,9 +11929,11 @@ float simplexValue(vec2 st, vec2 freq, float s, float blend) {
     vec2 uv = st * freq;
     uv.x += s;
 
-    // First corner
-    vec2 i  = floor(uv + dot(uv, C.yy) );
-    vec2 x0 = uv -   i + dot(i, C.xx);
+    // First corner. The dot feeds an add, so clamp it: without the barrier one
+    // backend can contract the dot's last product into the outer add (fma)
+    // while the other double-rounds.
+    vec2 i  = floor(uv + min(max(dot(uv, C.yy), -1e38), 1e38) );
+    vec2 x0 = uv -   i + min(max(dot(i, C.xx), -1e38), 1e38);
 
     // Other corners
     vec2 i1 = vec2(0.0);
@@ -11909,7 +11951,7 @@ float simplexValue(vec2 st, vec2 freq, float s, float blend) {
     vec3 p = permute( permute( i.y + vec3(0.0, i1.y, 1.0 ))
 		  + i.x + vec3(0.0, i1.x, 1.0 ));
 
-    vec3 m = max(0.5 - vec3(dot(x0,x0), dot(x12.xy,x12.xy), dot(x12.zw,x12.zw)), 0.0);
+    vec3 m = max(0.5 - min(max(vec3(dot(x0,x0), dot(x12.xy,x12.xy), dot(x12.zw,x12.zw)), vec3(-1e38)), vec3(1e38)), 0.0);
     m = m*m ;
     m = m*m ;
 
@@ -11923,12 +11965,12 @@ float simplexValue(vec2 st, vec2 freq, float s, float blend) {
 
     // Normalise gradients implicitly by scaling m
     // Approximation of: m *= inversesqrt( a0*a0 + h*h );
-    m *= 1.79284291400159 - 0.85373472095314 * ( a0*a0 + h*h );
+    m *= 1.79284291400159 - min(max(0.85373472095314 * ( min(max(a0*a0, -1e38), 1e38) + min(max(h*h, -1e38), 1e38) ), -1e38), 1e38);
 
     // Compute final noise value at P
     vec3 g;
-    g.x  = a0.x  * x0.x  + h.x  * x0.y;
-    g.yz = a0.yz * x12.xz + h.yz * x12.yw;
+    g.x  = min(max(a0.x  * x0.x, -1e38), 1e38)  + min(max(h.x  * x0.y, -1e38), 1e38);
+    g.yz = min(max(a0.yz * x12.xz, -1e38), 1e38) + min(max(h.yz * x12.yw, -1e38), 1e38);
 
     float v = 130.0 * dot(m, g);
 
@@ -12311,7 +12353,16 @@ vec3 multires(vec2 st, vec2 freq, int octaves, float s, float blend) {
         color.rgb += layer / multiplier;
     }
 
-    color.rgb /= multiplicand;
+    // The normalization divides by a runtime-accumulated value (e.g. 1.25 for
+    // two octaves). Dawn lowers the division to an approximate reciprocal
+    // multiply while ANGLE divides, so the two differ by ~1 ulp at knife-edge
+    // texels and the noise field is not bit-identical across backends. One
+    // Newton-Raphson step pins the reciprocal: both backends then compute the
+    // identical refined reciprocal and the identical quotient. The clamp keeps
+    // the multiplicand*rmul multiply from fusing into the (2.0 - ...) subtract.
+    float rmul = 1.0 / multiplicand;
+    float mc = min(max(multiplicand * rmul, -1e38), 1e38);
+    color.rgb *= rmul * (2.0 - mc);
 
 #if COLOR_MODE == 0
     // grayscale
@@ -12787,17 +12838,20 @@ fn simplexValue(st_in: vec2<f32>, freq: vec2<f32>, s: f32, blend: f32) -> f32 {
     var uv = vec2<f32>(st_in.x * freq.x, st_in.y * freq.y);
     uv.x = uv.x + s;
 
-    var i = floor(uv + dot(uv, C.yy));
-    var x0 = uv - i + dot(i, C.xx);
+    var i = floor(uv + min(max(dot(uv, C.yy), -1e38), 1e38));
+    var x0 = uv - i + min(max(dot(i, C.xx), -1e38), 1e38);
 
     let i1 = select(vec2<f32>(0.0, 1.0), vec2<f32>(1.0, 0.0), x0.x > x0.y);
-    let x1 = x0 - i1 + vec2<f32>(C.x, C.x);
-    let x2 = x0 - vec2<f32>(1.0, 1.0) + vec2<f32>(2.0 * C.x, 2.0 * C.x);
+    // Match the GLSL's expression shapes: x1 = (x0 + C.x) - i1, and x2 uses
+    // the single C.z literal rather than -1 + 2*C.x (equal in exact math,
+    // ~1 ulp apart in f32 — the third simplex corner shifts otherwise).
+    let x1 = x0 + vec2<f32>(C.x, C.x) - i1;
+    let x2 = x0 + vec2<f32>(C.z, C.z);
 
     i = mod289_2(i);
     var p = permute3(permute3(i.y + vec3<f32>(0.0, i1.y, 1.0)) + i.x + vec3<f32>(0.0, i1.x, 1.0));
 
-    var m = max(vec3<f32>(0.5) - vec3<f32>(dot(x0, x0), dot(x1, x1), dot(x2, x2)), vec3<f32>(0.0));
+    var m = max(vec3<f32>(0.5) - min(max(vec3<f32>(dot(x0, x0), dot(x1, x1), dot(x2, x2)), vec3<f32>(-1e38)), vec3<f32>(1e38)), vec3<f32>(0.0));
     m = m * m;
     m = m * m;
 
@@ -12806,11 +12860,11 @@ fn simplexValue(st_in: vec2<f32>, freq: vec2<f32>, s: f32, blend: f32) -> f32 {
     var ox = floor(x + 0.5);
     var a0 = x - ox;
 
-    m = m * (1.79284291400159 - 0.85373472095314 * (a0 * a0 + h * h));
+    m = m * (1.79284291400159 - min(max(0.85373472095314 * (min(max(a0 * a0, vec3<f32>(-1e38)), vec3<f32>(1e38)) + min(max(h * h, vec3<f32>(-1e38)), vec3<f32>(1e38))), vec3<f32>(-1e38)), vec3<f32>(1e38)));
 
     var g = vec3<f32>(0.0);
-    g.x = a0.x * x0.x + h.x * x0.y;
-    let gyz = a0.yz * vec2<f32>(x1.x, x2.x) + h.yz * vec2<f32>(x1.y, x2.y);
+    g.x = min(max(a0.x * x0.x, -1e38), 1e38) + min(max(h.x * x0.y, -1e38), 1e38);
+    let gyz = min(max(a0.yz * vec2<f32>(x1.x, x2.x), vec2<f32>(-1e38)), vec2<f32>(1e38)) + min(max(h.yz * vec2<f32>(x1.y, x2.y), vec2<f32>(-1e38)), vec2<f32>(1e38));
     g.y = gyz.x;
     g.z = gyz.y;
 
@@ -13118,7 +13172,16 @@ fn multires(st_in: vec2<f32>, freq: vec2<f32>, oct: i32, s: f32, blend: f32) -> 
         color = color + layer / multiplier;
     }
 
-    color = color / multiplicand;
+    // The normalization divides by a runtime-accumulated value (e.g. 1.25 for
+    // two octaves). Dawn lowers the division to an approximate reciprocal
+    // multiply while ANGLE divides, so the two differ by ~1 ulp at knife-edge
+    // texels and the noise field is not bit-identical across backends. One
+    // Newton-Raphson step pins the reciprocal: both backends then compute the
+    // identical refined reciprocal and the identical quotient. The clamp keeps
+    // the multiplicand*rmul multiply from fusing into the (2.0 - ...) subtract.
+    let rmul = 1.0 / multiplicand;
+    let mc = min(max(multiplicand * rmul, -1e38), 1e38);
+    color = color * (rmul * (2.0 - mc));
 
     var result = color;
     if (COLOR_MODE == 0) {
