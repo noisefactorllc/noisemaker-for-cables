@@ -37,9 +37,11 @@ void main() {
     vec3 heightColor = texture(heightTex, uv).rgb;
     float elevation = dot(heightColor, vec3(0.2126, 0.7152, 0.0722));
     // XZ ground plane, Y elevation. These are world coordinates, not UVs.
+    // The image's top row lies at -Z, so a view from above along -Y with
+    // screen right on +X shows the image as authored, not mirrored.
     outXYZ = vec4((uv.x - 0.5) * gridScale,
         elevation * heightScale + heightOffset,
-        (uv.y - 0.5) * gridScale, 1.0);
+        (0.5 - uv.y) * gridScale, 1.0);
     outVel = vec4(0.0, 0.0, 0.0, texelFetch(velTex, coord, 0).w);
     outRGBA = texture(diffuseTex, uv);
 }
@@ -71,10 +73,12 @@ fn main(@builtin(position) fragCoord: vec4f) -> Outputs {
     let imageUV = uv;
     let heightColor = textureSampleLevel(heightTex, heightSampler, imageUV, 0.0).rgb;
     let elevation = dot(heightColor, vec3f(0.2126, 0.7152, 0.0722));
+    // The image's top row lies at -Z, so a view from above along -Y with
+    // screen right on +X shows the image as authored, not mirrored.
     return Outputs(
         vec4f((uv.x - 0.5) * u.gridScale,
             elevation * u.heightScale + u.heightOffset,
-            (uv.y - 0.5) * u.gridScale, 1.0),
+            (0.5 - uv.y) * u.gridScale, 1.0),
         vec4f(0.0, 0.0, 0.0, textureLoad(velTex, coord, 0).w),
         textureSampleLevel(diffuseTex, diffuseSampler, imageUV, 0.0)
     );
@@ -104,7 +108,7 @@ fn main(@builtin(position) fragCoord: vec4f) -> @location(0) vec4f {
     let uv = fragCoord.xy / u.resolution;
     return textureSample(inputTex, inputTexSampler, uv);
 }
-`}},s=`# heightGrid
+`}},o=`# heightGrid
 
 Arrange every slot allocated by \`pointsEmit()\` in a square XZ grid and set its Y elevation from height-map luminance. Sample the diffuse surface at the same grid coordinates for each particle's RGBA color. Both surfaces update every frame, independent of the emitter's layout and attrition. Velocities are reset to zero; per-particle seeds are retained.
 
@@ -131,4 +135,4 @@ noise()
 
 render(o0)
 \`\`\`
-`;if(t&&Object.keys(r).length>0){t.shaders||(t.shaders={});for(let[n,e]of Object.entries(r))t.shaders[n]={...e}}t&&s&&(t.help=s);var h="points/heightGrid",f="points",d="heightGrid",p=t;export{p as default,h as effectId,d as effectName,s as help,f as namespace};
+`;if(t&&Object.keys(r).length>0){t.shaders||(t.shaders={});for(let[n,e]of Object.entries(r))t.shaders[n]={...e}}t&&o&&(t.help=o);var h="points/heightGrid",f="points",d="heightGrid",p=t;export{p as default,h as effectId,d as effectName,o as help,f as namespace};

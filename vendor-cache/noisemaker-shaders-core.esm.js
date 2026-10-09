@@ -3,8 +3,8 @@
  * Includes: CanvasRenderer + UIController + EffectSelect
  * Copyright (c) 2017-2026 Noise Factor LLC. https://noisefactor.io/
  * SPDX-License-Identifier: MIT
- * Build: 247f452b
- * Date: 2026-10-08T23:06:07.311Z
+ * Build: 6b2d5d6d
+ * Date: 2026-10-09T02:25:50.314Z
  */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
@@ -9448,6 +9448,7 @@ var WebGPUBackend = class _WebGPUBackend extends Backend {
     this.bindGroups = /* @__PURE__ */ new Map();
     this.samplers = /* @__PURE__ */ new Map();
     this.storageBuffers = /* @__PURE__ */ new Map();
+    this.retiredStorageBuffers = [];
     this.commandEncoder = null;
     this.defaultVertexModule = null;
     this.canvasFormat = typeof navigator !== "undefined" && navigator.gpu?.getPreferredCanvasFormat ? navigator.gpu.getPreferredCanvasFormat() : null;
@@ -11651,9 +11652,6 @@ var WebGPUBackend = class _WebGPUBackend extends Backend {
    */
   createStorageBuffer(binding, pass, state) {
     const bufferName = binding.name;
-    if (this.storageBuffers.has(bufferName)) {
-      return this.storageBuffers.get(bufferName);
-    }
     let byteSize = 0;
     if (bufferName === "output_buffer" || bufferName === "outputBuffer") {
       const width = state?.screenWidth || 1280;
@@ -11677,10 +11675,13 @@ var WebGPUBackend = class _WebGPUBackend extends Backend {
     }
     byteSize = Math.max(256, byteSize);
     byteSize = Math.ceil(byteSize / 256) * 256;
+    const existing = this.storageBuffers.get(bufferName);
+    if (existing?.size >= byteSize) return existing;
     const buffer = this.device.createBuffer({
       size: byteSize,
       usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST
     });
+    if (existing) this.retiredStorageBuffers.push(existing);
     this.storageBuffers.set(bufferName, buffer);
     return buffer;
   }
@@ -12150,6 +12151,13 @@ var WebGPUBackend = class _WebGPUBackend extends Backend {
       const commandBuffer = this.commandEncoder.finish();
       this.queue.submit([commandBuffer]);
       this.commandEncoder = null;
+      if (this.retiredStorageBuffers.length > 0) {
+        const retired = this.retiredStorageBuffers.splice(0);
+        this.queue.onSubmittedWorkDone().then(
+          () => retired.forEach((buffer) => buffer.destroy()),
+          () => retired.forEach((buffer) => buffer.destroy())
+        );
+      }
     }
   }
   present(textureId) {
@@ -12192,6 +12200,10 @@ var WebGPUBackend = class _WebGPUBackend extends Backend {
     this.pipelines.clear();
     this.bindGroups.clear();
     this.samplers.clear();
+    for (const buffer of this.storageBuffers.values()) buffer.destroy();
+    this.storageBuffers.clear();
+    for (const buffer of this.retiredStorageBuffers) buffer.destroy();
+    this.retiredStorageBuffers = [];
     for (const buffer of this.uniformBufferPool) {
       buffer?.destroy?.();
     }
@@ -15167,7 +15179,8 @@ var Pipeline = class {
   /**
    * Swap double-buffered surfaces at end of frame.
    *
-   * For state surfaces (xyz, vel, rgba, trail) and graph feedback surfaces,
+   * For state surfaces (xyz, vel, rgba, trail), graph feedback surfaces, and
+   * surfaces explicitly marked persistent,
    * persist the frame's final read/write bindings so the next frame reads
    * the latest write even when an intervening update pass was skipped.
    *
@@ -15191,7 +15204,7 @@ var Pipeline = class {
     };
     for (const [name, surface] of this.surfaces.entries()) {
       surface.currentFrame = this.frameIndex;
-      if (isStateSurface(name) || this._feedbackSurfaces?.has(name)) {
+      if (isStateSurface(name) || this._feedbackSurfaces?.has(name) || this.graph?.textures?.get?.(`global_${name}`)?.persistent === true) {
         const finalRead = this.frameReadTextures?.get(name);
         const finalWrite = this.frameWriteTextures?.get(name);
         if (finalRead && finalWrite) {

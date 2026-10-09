@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "sourceBaseUrl": "https://shaders.noisedeck.app/1/",
-  "generatedAt": "2026-10-08T23:09:38.071Z",
+  "generatedAt": "2026-10-09T02:28:52.975Z",
   "effectCount": 210,
   "artifacts": [
     {
@@ -65,9 +65,9 @@
       "url": "https://shaders.noisedeck.app/1/effects/classicNoisedeck/glitch.js"
     },
     {
-      "bytes": 54532,
+      "bytes": 54587,
       "path": "effects/classicNoisedeck/kaleido.js",
-      "sha256": "69fcc239e3641f69369c006f1a6e044e19f4b779ff21367d919e3150810f07e0",
+      "sha256": "f6dd9668d73231fc1c64c97c07d3bce1e460fd944cac967cecf5de167e91cce8",
       "url": "https://shaders.noisedeck.app/1/effects/classicNoisedeck/kaleido.js"
     },
     {
@@ -539,9 +539,9 @@
       "url": "https://shaders.noisedeck.app/1/effects/filter/ridge.js"
     },
     {
-      "bytes": 5505,
+      "bytes": 5643,
       "path": "effects/filter/rotate.js",
-      "sha256": "fc1335acd42c7a659788837e1718c75489d94a373ffac7c5a98f2bfd353cc2cf",
+      "sha256": "cb737653c64df12aeeaa79873e292d8a2e9bedb77eef4376e7e325e03536bb1e",
       "url": "https://shaders.noisedeck.app/1/effects/filter/rotate.js"
     },
     {
@@ -941,9 +941,9 @@
       "url": "https://shaders.noisedeck.app/1/effects/points/flow.js"
     },
     {
-      "bytes": 8164,
+      "bytes": 8450,
       "path": "effects/points/heightGrid.js",
-      "sha256": "9a7e4629e967fd219698b801d0b4b9f55812105b6752050bcc8b141b95ac8c9c",
+      "sha256": "af1f7990a62488159365c48bd6c6c9ae91303f5ef3cfcf14d835bcdd1c521b0a",
       "url": "https://shaders.noisedeck.app/1/effects/points/heightGrid.js"
     },
     {
@@ -1271,9 +1271,9 @@
       "url": "https://shaders.noisedeck.app/1/effects/synth3d/shape3d.js"
     },
     {
-      "bytes": 925320,
+      "bytes": 926059,
       "path": "noisemaker-shaders-core.esm.js",
-      "sha256": "848128e746b02f71e0920172df8ab5af598e2bba2e43b0c4dc851f680cdecdb3",
+      "sha256": "d16f8d12ff2c44b6d2eb83302a82ec785926bf692d5801798619e6eb00d1f51e",
       "url": "https://shaders.noisedeck.app/1/noisemaker-shaders-core.esm.js"
     }
   ]
