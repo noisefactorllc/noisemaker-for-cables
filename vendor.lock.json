@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "sourceBaseUrl": "https://shaders.noisedeck.app/1/",
-  "generatedAt": "2026-10-09T05:33:29.490Z",
+  "generatedAt": "2026-10-09T09:02:36.708Z",
   "effectCount": 210,
   "artifacts": [
     {
@@ -47,9 +47,9 @@
       "url": "https://shaders.noisedeck.app/1/effects/classicNoisedeck/composite.js"
     },
     {
-      "bytes": 41988,
+      "bytes": 48692,
       "path": "effects/classicNoisedeck/effects.js",
-      "sha256": "7cd89753708f199637df64e235a29eba5fab335df1a18041c3123f40ea3dd143",
+      "sha256": "2b5cf82440c01a985bc44f744b45e1925ff65945561d2d4c3676bf28371178fb",
       "url": "https://shaders.noisedeck.app/1/effects/classicNoisedeck/effects.js"
     },
     {
@@ -1271,9 +1271,9 @@
       "url": "https://shaders.noisedeck.app/1/effects/synth3d/shape3d.js"
     },
     {
-      "bytes": 931036,
+      "bytes": 931284,
       "path": "noisemaker-shaders-core.esm.js",
-      "sha256": "ee054fc83d9eefabad130ee1d04a903b6869332364742d649e2262049ef8fd0f",
+      "sha256": "628822b01c1598a262e7da3865916c743f21525db74bb5c6c980f10734b80900",
       "url": "https://shaders.noisedeck.app/1/noisemaker-shaders-core.esm.js"
     }
   ]

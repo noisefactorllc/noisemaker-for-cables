@@ -3,8 +3,8 @@
  * Includes: CanvasRenderer + UIController + EffectSelect
  * Copyright (c) 2017-2026 Noise Factor LLC. https://noisefactor.io/
  * SPDX-License-Identifier: MIT
- * Build: 735e1fdc
- * Date: 2026-10-09T05:11:33.898Z
+ * Build: a7ba29d7
+ * Date: 2026-10-09T08:49:45.833Z
  */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
@@ -15083,11 +15083,18 @@ var Pipeline = class {
       const fullAspect = this._fullResolution[0] / this._fullResolution[1];
       g.aspect = fullAspect;
       g.aspectRatio = fullAspect;
+      g.aspectInv = 1 / fullAspect;
+      g.invFullResolution = [
+        1 / this._fullResolution[0],
+        1 / this._fullResolution[1]
+      ];
     } else {
       g.fullResolution[0] = this.width;
       g.fullResolution[1] = this.height;
       g.aspect = aspectValue;
       g.aspectRatio = aspectValue;
+      g.aspectInv = 1 / aspectValue;
+      g.invFullResolution = [1 / this.width, 1 / this.height];
     }
     g.renderScale = this._renderScale || 1;
     if (this.externalState.audio?.waveform) {

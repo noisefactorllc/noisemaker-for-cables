@@ -28,6 +28,13 @@ uniform sampler2D inputTex;
 uniform vec2 resolution;
 uniform vec2 tileOffset;
 uniform vec2 fullResolution;
+// CPU-computed reciprocals of fullResolution. The uv chain multiplies by this
+// instead of dividing: Dawn's relaxed math lowers a vec2 division to an
+// approximate reciprocal multiply while ANGLE divides correctly, and the
+// 1-2 ulp uv difference flips sampler taps. A multiply of identical values
+// is bit-deterministic.
+uniform vec2 invFullResolution;
+uniform float aspectInv;
 uniform float renderScale;
 uniform float time;
 uniform float effectAmt;
@@ -125,13 +132,29 @@ float map(float value, float inMin, float inMax, float outMin, float outMax) {
 }
 
 vec2 rotate2D(vec2 st, float rot) {
+    // min/max clamps pin the evaluation order at every multiply that feeds an
+    // add or the caller's arithmetic: relaxed math contracts those pairs into
+    // fma while standard math double-rounds, and the 1 ulp difference flips
+    // sampler taps. The clamps are value-exact for finite values. The final
+    // rescale multiplies by the CPU-computed reciprocal (aspectInv) instead
+    // of dividing, so both backends evaluate the same correctly-rounded
+    // multiply.
     st.x *= aspectRatio;
+    st.x = min(max(st.x, -1e38), 1e38);
     rot = map(rot, 0.0, 360.0, 0.0, 2.0);
     float angle = rot * PI;
-    st -= vec2(0.5 * aspectRatio, 0.5);
-    st = mat2(cos(angle), -sin(angle), sin(angle), cos(angle)) * st;
-    st += vec2(0.5 * aspectRatio, 0.5);
-    st.x /= aspectRatio;
+    float ox = min(max(0.5 * aspectRatio, -1e38), 1e38);
+    st -= vec2(ox, 0.5);
+    float ca = cos(angle);
+    float sa = sin(angle);
+    float px = min(max(ca * st.x, -1e38), 1e38);
+    float py = min(max(sa * st.y, -1e38), 1e38);
+    float qx = min(max(-sa * st.x, -1e38), 1e38);
+    float qy = min(max(ca * st.y, -1e38), 1e38);
+    st = vec2(px + py, qx + qy);
+    st += vec2(ox, 0.5);
+    st.x *= aspectInv;
+    st = min(max(st, vec2(-1e38)), vec2(1e38));
     return st;
 }
 
@@ -576,17 +599,43 @@ vec3 zoomBlur(vec2 st) {
 
     /* randomize the lookup values to hide the fixed number of samples */
     float offset = prng(vec3(12.9898, 78.233, 151.7182)).x;
-    
+
+    // Pin the evaluation order of the tap chain: relaxed math reassociates
+    // toCenter * percent * strength as toCenter * (percent * strength), which
+    // shifts tap coordinates by 1 ulp and flips nearest-sampler taps. The
+    // min/max clamps are value-exact for finite values and force both
+    // backends to evaluate fl(fl(toCenter * percent) * strength). The
+    // accumulation clamp keeps the add's operand from being a raw multiply
+    // result, which relaxed math fuses into an fma and standard math
+    // double-rounds.
+    vec3 products[41];
     for (float t = 0.0; t <= 40.0; t++) {
         float percent = (t + offset) / 40.0;
-        float weight = 4.0 * (percent - percent * percent);
+        float percentSq = min(max(percent * percent, -1e38), 1e38);
+        float weight = 4.0 * (percent - percentSq);
         float strength = map(effectAmt, 0.0, 20.0, 0.0, 1.0);
-        vec4 tex = texture(inputTex, st + toCenter * percent * strength);
-        color += tex.rgb * weight;
-        total += weight;
+        vec2 tapA = toCenter * percent;
+        vec2 tap = min(max(tapA, vec2(-1e38)), vec2(1e38)) * strength;
+        vec2 tapB = min(max(tap, vec2(-1e38)), vec2(1e38));
+        vec4 tex = texture(inputTex, st + tapB);
+        products[int(t)] = min(max(tex.rgb * weight, vec3(-1e38)), vec3(1e38));
+        total += min(max(weight, -1e38), 1e38);
     }
-    
-    color /= total;
+    for (int i = 0; i < 41; i++) {
+        color += products[i];
+    }
+
+    // Refine the reciprocal with one Newton-Raphson step: the raw division
+    // lowers differently (Dawn: x * rcp(x), ANGLE: correctly-rounded divide),
+    // and the ~1 ulp difference flips the final 8-bit rounding when the value
+    // sits on an x.5 boundary. Multiply/subtract are correctly rounded in both
+    // Metal math modes, so both backends converge to the same reciprocal. The
+    // min/max clamp pins the inner multiply's order (relaxed math would fuse
+    // it into the subtract as an fma; standard math double-rounds).
+    float r = 1.0 / total;
+    float tr = min(max(total * r, -1e38), 1e38);
+    r = r * (2.0 - tr);
+    color *= r;
     return color;
 }
 
@@ -599,7 +648,10 @@ float offsets(vec2 st) {
 
 void main() {
     vec2 globalCoord = gl_FragCoord.xy + tileOffset;
-    vec2 uv = globalCoord / fullResolution;
+    // Multiply by the CPU-computed reciprocal instead of dividing (see the
+    // invFullResolution declaration): both backends then evaluate the same
+    // correctly-rounded multiply, so the uv chain is bit-identical.
+    vec2 uv = globalCoord * invFullResolution;
 
     vec4 color = vec4(0.0);
 
@@ -613,6 +665,10 @@ void main() {
     uv = rotate2D(uv, rotation);
     uv -= 0.5;
     uv *= scale;
+    // Clamp before the add: relaxed math contracts the multiply into the
+    // add as an fma while standard math double-rounds, and the 1 ulp
+    // difference flips sampler taps at x.5 rounding boundaries.
+    uv = min(max(uv, vec2(-1e38)), vec2(1e38));
     uv += 0.5;
 
     // no
@@ -623,8 +679,13 @@ void main() {
     uv.x -= ceil((resolution.x / imageSize.x * scale * 0.5) - (0.5 - (1.0 / imageSize.x * scale)));
     uv.y += ceil((resolution.y / imageSize.y * scale * 0.5) + (0.5 - (1.0 / imageSize.y * scale)) - (scale));
 
-    uv.x -= map(offsetX, -100.0, 100.0, -resolution.x / imageSize.x * scale, resolution.x / imageSize.x * scale) * 1.5;
-    uv.y -= map(offsetY, -100.0, 100.0, -resolution.y / imageSize.y * scale, resolution.y / imageSize.y * scale) * 1.5;
+    // Pin the offset-shift evaluation order with scalar clamps: the map
+    // result feeds a multiply then a subtract, and relaxed math contracts
+    // that pair into an fma while standard math double-rounds. The clamps
+    // are value-exact for finite values.
+    float shiftXv = min(max(map(offsetX, -100.0, 100.0, -resolution.x / imageSize.x * scale, resolution.x / imageSize.x * scale) * 1.5, -1e38), 1e38);
+    float shiftYv = min(max(map(offsetY, -100.0, 100.0, -resolution.y / imageSize.y * scale, resolution.y / imageSize.y * scale) * 1.5, -1e38), 1e38);
+    uv -= vec2(shiftXv, shiftYv);
 
     uv = fract(uv);
 
@@ -761,6 +822,8 @@ struct Uniforms {
     offsetY: f32,
     intensity: f32,
     saturation: f32,
+    aspectInv: f32,
+    invFullResolution: vec2f,
 }
 
 const PI: f32 = 3.14159265359;
@@ -811,16 +874,29 @@ fn random(p: vec2f) -> f32 {
 }
 
 fn rotate2D(st_in: vec2f, rot: f32) -> vec2f {
+    // min/max clamps pin the evaluation order at every multiply that feeds an
+    // add or the caller's arithmetic: relaxed math contracts those pairs into
+    // fma while standard math double-rounds, and the 1 ulp difference flips
+    // sampler taps. The clamps are value-exact for finite values. The aspect
+    // scalars are CPU-computed uniforms, so neither backend evaluates an
+    // in-shader division here.
     var st = st_in;
-    st.x *= aspectRatio();
+    st.x *= u.aspect;
+    st.x = min(max(st.x, -1e38), 1e38);
     let r = mapRange(rot, 0.0, 360.0, 0.0, 2.0);
     let angle = r * PI;
-    st -= vec2f(0.5 * aspectRatio(), 0.5);
+    let ox = min(max(0.5 * u.aspect, -1e38), 1e38);
+    st -= vec2f(ox, 0.5);
     let c = cos(angle);
     let s = sin(angle);
-    st = vec2f(c * st.x + s * st.y, -s * st.x + c * st.y);
-    st += vec2f(0.5 * aspectRatio(), 0.5);
-    st.x /= aspectRatio();
+    let px = min(max(c * st.x, -1e38), 1e38);
+    let py = min(max(s * st.y, -1e38), 1e38);
+    let qx = min(max(-s * st.x, -1e38), 1e38);
+    let qy = min(max(c * st.y, -1e38), 1e38);
+    st = vec2f(px + py, qx + qy);
+    st += vec2f(ox, 0.5);
+    st.x *= u.aspectInv;
+    st = min(max(st, vec2f(-1e38)), vec2f(1e38));
     return st;
 }
 
@@ -1072,15 +1148,41 @@ fn zoomBlur(st: vec2f) -> vec3f {
     var total = 0.0;
     let toCenter = st - 0.5;
     let offset = prng(vec3f(12.9898, 78.233, 151.7182)).x;
+    // Pin the evaluation order of the tap chain: relaxed math reassociates
+    // toCenter * percent * strength as toCenter * (percent * strength), which
+    // shifts tap coordinates by 1 ulp and flips nearest-sampler taps. The
+    // min/max clamps are value-exact for finite values and force both
+    // backends to evaluate fl(fl(toCenter * percent) * strength). The
+    // accumulation clamp keeps the add's operand from being a raw multiply
+    // result, which relaxed math fuses into an fma and standard math
+    // double-rounds.
+    var products: array<vec3f, 41>;
     for (var t = 0.0; t <= 40.0; t += 1.0) {
         let percent = (t + offset) / 40.0;
-        let weight = 4.0 * (percent - percent * percent);
+        let percentSq = min(max(percent * percent, -1e38), 1e38);
+        let weight = 4.0 * (percent - percentSq);
         let strength = mapRange(u.effectAmt, 0.0, 20.0, 0.0, 1.0);
-        let tex = textureSample(inputTex, samp, st + toCenter * percent * strength);
-        color += tex.rgb * weight;
-        total += weight;
+        let tapA = toCenter * percent;
+        let tap = min(max(tapA, vec2f(-1e38)), vec2f(1e38)) * strength;
+        let tapB = min(max(tap, vec2f(-1e38)), vec2f(1e38));
+        let tex = textureSample(inputTex, samp, st + tapB);
+        products[u32(t)] = min(max(tex.rgb * weight, vec3f(-1e38)), vec3f(1e38));
+        total += min(max(weight, -1e38), 1e38);
     }
-    return color / total;
+    for (var i = 0u; i < 41u; i += 1u) {
+        color += products[i];
+    }
+    // Refine the reciprocal with one Newton-Raphson step: the raw division
+    // lowers differently (Dawn: x * rcp(x), ANGLE: correctly-rounded divide),
+    // and the ~1 ulp difference flips the final 8-bit rounding when the value
+    // sits on an x.5 boundary. Multiply/subtract are correctly rounded in both
+    // Metal math modes, so both backends converge to the same reciprocal. The
+    // min/max clamp pins the inner multiply's order (relaxed math would fuse
+    // it into the subtract as an fma; standard math double-rounds).
+    var r = 1.0 / total;
+    let tr = min(max(total * r, -1e38), 1e38);
+    r = r * (2.0 - tr);
+    return color * r;
 }
 
 fn periodicFunction(p: f32) -> f32 {
@@ -1093,7 +1195,10 @@ fn offsets(st: vec2f) -> f32 {
 
 @fragment
 fn main(@builtin(position) fragCoord: vec4f) -> @location(0) vec4f {
-    var uv = fragCoord.xy / u.resolution;
+    // Multiply by the CPU-computed reciprocal instead of dividing (see the
+    // invFullResolution declaration): both backends then evaluate the same
+    // correctly-rounded multiply, so the uv chain is bit-identical.
+    var uv = fragCoord.xy * u.invFullResolution;
 
     var scale = 100.0 / u.scaleAmt;
     if (scale == 0.0) { scale = 1.0; }
@@ -1101,13 +1206,22 @@ fn main(@builtin(position) fragCoord: vec4f) -> @location(0) vec4f {
     uv = rotate2D(uv, u.rotation);
     uv -= 0.5;
     uv *= scale;
+    // Clamp before the add: relaxed math contracts the multiply into the
+    // add as an fma while standard math double-rounds, and the 1 ulp
+    // difference flips sampler taps at x.5 rounding boundaries.
+    uv = min(max(uv, vec2f(-1e38)), vec2f(1e38));
     uv += 0.5;
 
     let imageSize = u.resolution;
     uv.x -= ceil((u.resolution.x / imageSize.x * scale * 0.5) - (0.5 - (1.0 / imageSize.x * scale)));
     uv.y += ceil((u.resolution.y / imageSize.y * scale * 0.5) + (0.5 - (1.0 / imageSize.y * scale)) - scale);
-    uv.x -= mapRange(u.offsetX, -100.0, 100.0, -u.resolution.x / imageSize.x * scale, u.resolution.x / imageSize.x * scale) * 1.5;
-    uv.y -= mapRange(u.offsetY, -100.0, 100.0, -u.resolution.y / imageSize.y * scale, u.resolution.y / imageSize.y * scale) * 1.5;
+    // Pin the offset-shift evaluation order with scalar clamps: the map
+    // result feeds a multiply then a subtract, and relaxed math contracts
+    // that pair into an fma while standard math double-rounds. The clamps
+    // are value-exact for finite values.
+    let shiftXv = min(max(mapRange(u.offsetX, -100.0, 100.0, -u.resolution.x / imageSize.x * scale, u.resolution.x / imageSize.x * scale) * 1.5, -1e38), 1e38);
+    let shiftYv = min(max(mapRange(u.offsetY, -100.0, 100.0, -u.resolution.y / imageSize.y * scale, u.resolution.y / imageSize.y * scale) * 1.5, -1e38), 1e38);
+    uv -= vec2f(shiftXv, shiftYv);
     uv = fract(uv);
 
     // flip/mirror. uv.y runs up the frame, so "up to down" keeps uv.y > 0.5
@@ -1170,4 +1284,4 @@ noise(seed: 1, ridges: true)
 
 render(o0)
 \`\`\`
-`;if(n&&Object.keys(r).length>0){n.shaders||(n.shaders={});for(let[o,e]of Object.entries(r))n.shaders[o]={...e}}n&&l&&(n.help=l);var c="classicNoisedeck/effects",v="classicNoisedeck",u="effects",d=n;export{d as default,c as effectId,u as effectName,l as help,v as namespace};
+`;if(n&&Object.keys(r).length>0){n.shaders||(n.shaders={});for(let[o,e]of Object.entries(r))n.shaders[o]={...e}}n&&l&&(n.help=l);var f="classicNoisedeck/effects",u="classicNoisedeck",v="effects",d=n;export{d as default,f as effectId,v as effectName,l as help,u as namespace};
