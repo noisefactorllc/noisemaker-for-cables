@@ -1,4 +1,5 @@
 import { runFullCatalog, runRepresentativeParity } from './harness/pipeline.js'
+import { createOrientationHarness } from './harness/orientation.js'
 import { runStateHygiene } from './harness/state-hygiene.js'
 import {
   createHarnessContext,
@@ -22,3 +23,5 @@ window.task9Harness = Object.freeze({
   runRepresentativeParity,
   runStateHygiene,
 })
+
+window.orientationHarness = createOrientationHarness()
