@@ -60,6 +60,14 @@ test('WebGPU uploads willReadFrequently canvases from getImageData', () => {
   assert.match(
     core,
     /getContextAttributes\?\.\(\)\.willReadFrequently/,
+    'vendored core no longer gates the getImageData upload on willReadFrequently',
+  )
+  // ...and uploads those bytes through queue.writeTexture (not
+  // copyExternalImageToTexture, which would unpremultiply on the GPU).
+  assert.match(
+    core,
+    /this\.device\.queue\.writeTexture\(\s*\n\s*\{ texture: tex\.handle \},\s*\n\s*data,/,
+    'vendored core no longer uploads willReadFrequently canvas pixels through queue.writeTexture',
   )
 })
 
