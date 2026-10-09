@@ -3,8 +3,8 @@
  * Includes: CanvasRenderer + UIController + EffectSelect
  * Copyright (c) 2017-2026 Noise Factor LLC. https://noisefactor.io/
  * SPDX-License-Identifier: MIT
- * Build: 6b2d5d6d
- * Date: 2026-10-09T02:25:50.314Z
+ * Build: 16d97cdf
+ * Date: 2026-10-09T03:23:11.988Z
  */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
