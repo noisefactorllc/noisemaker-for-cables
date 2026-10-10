@@ -1,6 +1,7 @@
 import { createCGLCacheInvalidator } from './cgl-cache.js'
 
 const MINIMUMS = Object.freeze({
+  maxColorAttachments: 4,
   maxDrawBuffers: 4,
   maxTextureSize: 4096,
   maxTextureUnits: 9,
@@ -13,6 +14,7 @@ const CAPABILITY_CODES = Object.freeze({
   colorBufferFloat: 'ERR_CAPABILITY_COLOR_BUFFER_FLOAT',
   floatBlend: 'ERR_CAPABILITY_FLOAT_BLEND',
   floatLinear: 'ERR_CAPABILITY_FLOAT_LINEAR',
+  maxColorAttachments: 'ERR_CAPABILITY_MAX_COLOR_ATTACHMENTS',
   maxDrawBuffers: 'ERR_CAPABILITY_MAX_DRAW_BUFFERS',
   maxTextureSize: 'ERR_CAPABILITY_MAX_TEXTURE_SIZE',
   maxTextureUnits: 'ERR_CAPABILITY_MAX_TEXTURE_UNITS',
@@ -78,6 +80,7 @@ export function inspectCapabilities(cgl, options = {}) {
     floatTextureLinear: queryExtension(gl, 'OES_texture_float_linear'),
   })
   const limits = Object.freeze({
+    maxColorAttachments: queryLimit(gl, 'MAX_COLOR_ATTACHMENTS'),
     maxDrawBuffers: queryLimit(gl, 'MAX_DRAW_BUFFERS'),
     maxTextureSize: queryLimit(gl, 'MAX_TEXTURE_SIZE'),
     maxTextureUnits: queryLimit(gl, 'MAX_TEXTURE_IMAGE_UNITS'),

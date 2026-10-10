@@ -57,6 +57,7 @@ function completeCapabilityReport({ extensions = {}, limits = {} } = {}) {
     failures: Object.freeze([]),
     issues: Object.freeze([]),
     limits: Object.freeze({
+      maxColorAttachments: 4,
       maxDrawBuffers: 4,
       maxTextureSize: 4096,
       maxTextureUnits: 9,
@@ -81,6 +82,7 @@ function createHarness(options = {}) {
     width: options.canvasWidth ?? 320,
   }
   const gl = {
+    MAX_COLOR_ATTACHMENTS: 0x8cdb,
     MAX_DRAW_BUFFERS: 0x8824,
     MAX_TEXTURE_IMAGE_UNITS: 0x8872,
     MAX_TEXTURE_SIZE: 0x0d33,
@@ -93,6 +95,9 @@ function createHarness(options = {}) {
     },
     getParameter(parameter) {
       if (parameter === this.MAX_TEXTURE_SIZE) return options.deviceMaxSize ?? 4096
+      if (parameter === this.MAX_COLOR_ATTACHMENTS) {
+        return options.deviceMaxColorAttachments ?? 4
+      }
       if (parameter === this.MAX_DRAW_BUFFERS) return options.deviceMaxDrawBuffers ?? 4
       if (parameter === this.MAX_TEXTURE_IMAGE_UNITS) {
         return options.deviceMaxTextureUnits ?? 9
@@ -897,6 +902,7 @@ test('every shared complete-catalog failure stops before backend creation, init,
     ['floatLinear', { missingExtension: 'OES_texture_float_linear' }],
     ['floatBlend', { missingExtension: 'EXT_float_blend' }],
     ['maxTextureSize', { deviceMaxSize: 4095 }],
+    ['maxColorAttachments', { deviceMaxColorAttachments: 3 }],
     ['maxDrawBuffers', { deviceMaxDrawBuffers: 3 }],
     ['maxTextureUnits', { deviceMaxTextureUnits: 8 }],
     ['maxUniformBlockSize', { deviceMaxUniformBlockSize: 16_383 }],
@@ -1010,6 +1016,14 @@ test('all graph-specific defenses retain shared public capability identities', a
         deviceMaxDrawBuffers: 3,
       },
       pass: { outputs: { a: {}, b: {}, c: {} } },
+      required: 3,
+    },
+    {
+      actual: 2,
+      capability: 'maxColorAttachments',
+      harnessOptions: { deviceMaxColorAttachments: 2 },
+      pass: { outputs: { a: {}, b: {}, c: {} } },
+      reportOptions: { limits: { maxColorAttachments: 2 } },
       required: 3,
     },
     {

@@ -116,7 +116,19 @@ function graphCapabilityRequirements(graph) {
       packedUniformLayoutSize(spec?.uniformLayout),
     )
   }
-  return { maxDrawBuffers, maxTextureUnits, maxUniformBlockBytes, needsFloatBlend }
+  // The core's createMRTFBO attaches one texture per simultaneous output at
+  // COLOR_ATTACHMENT0..N-1, so a pass needing N draw buffers also needs N
+  // attachable color attachments. MAX_DRAW_BUFFERS and MAX_COLOR_ATTACHMENTS
+  // are independent limits in WebGL2 (each with a spec minimum of 4), and an
+  // attachment shortfall fails open there: the incomplete MRT framebuffer is
+  // only reported on the console while every draw into it is dropped.
+  return {
+    maxColorAttachments: maxDrawBuffers,
+    maxDrawBuffers,
+    maxTextureUnits,
+    maxUniformBlockBytes,
+    needsFloatBlend,
+  }
 }
 
 function finiteMinimum(...values) {
@@ -151,6 +163,21 @@ function assertCandidateCapabilities(candidate) {
       maxDrawBuffers,
       required.maxDrawBuffers,
       `Program requires ${required.maxDrawBuffers} simultaneous draw buffers`,
+    )
+  }
+  const maxColorAttachments = finiteMinimum(
+    limits.maxColorAttachments,
+    backendCapabilities.maxColorAttachments,
+  )
+  if (
+    !Number.isFinite(maxColorAttachments) ||
+    maxColorAttachments < required.maxColorAttachments
+  ) {
+    fail(
+      'maxColorAttachments',
+      maxColorAttachments,
+      required.maxColorAttachments,
+      `Program requires ${required.maxColorAttachments} simultaneous color attachments`,
     )
   }
   const maxTextureUnits = finiteMinimum(

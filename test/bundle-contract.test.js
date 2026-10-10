@@ -360,6 +360,7 @@ render(o0)`)
     'OES_texture_float_linear',
   ])
   const limits = new Map([
+    [0, 4],
     [1, 4096],
     [2, 4],
     [3, 9],
@@ -369,6 +370,7 @@ render(o0)`)
   const cgl = {
     currentProgram: null,
     gl: {
+      MAX_COLOR_ATTACHMENTS: 0,
       MAX_TEXTURE_SIZE: 1,
       MAX_DRAW_BUFFERS: 2,
       MAX_TEXTURE_IMAGE_UNITS: 3,

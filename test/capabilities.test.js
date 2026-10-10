@@ -10,6 +10,7 @@ const EXTENSIONS = Object.freeze([
 ])
 
 const LIMITS = Object.freeze({
+  MAX_COLOR_ATTACHMENTS: 4,
   MAX_DRAW_BUFFERS: 4,
   MAX_TEXTURE_IMAGE_UNITS: 9,
   MAX_TEXTURE_SIZE: 4096,
@@ -80,6 +81,7 @@ const FAILURE_CASES = Object.freeze([
   }),
   ...[
     ['MAX_TEXTURE_SIZE', 'maxTextureSize', 'ERR_CAPABILITY_MAX_TEXTURE_SIZE', 4096],
+    ['MAX_COLOR_ATTACHMENTS', 'maxColorAttachments', 'ERR_CAPABILITY_MAX_COLOR_ATTACHMENTS', 4],
     ['MAX_DRAW_BUFFERS', 'maxDrawBuffers', 'ERR_CAPABILITY_MAX_DRAW_BUFFERS', 4],
     [
       'MAX_TEXTURE_IMAGE_UNITS',
@@ -162,6 +164,7 @@ test('the exact documented complete-catalog boundary is supported with the publi
     floatTextureLinear: true,
   })
   assert.deepEqual(report.limits, {
+    maxColorAttachments: 4,
     maxDrawBuffers: 4,
     maxTextureSize: 4096,
     maxTextureUnits: 9,
