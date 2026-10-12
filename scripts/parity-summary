@@ -27,7 +27,8 @@
 // otherwise (including when the run itself aborts mid-sweep).
 import { spawn } from 'node:child_process'
 import { readFile } from 'node:fs/promises'
-import { fileURLToPath } from 'node:url'
+import { createRequire } from 'node:module'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 import { countCases } from './parity-summary-counting.mjs'
 
 const projectRoot = new URL('..', import.meta.url)
@@ -38,6 +39,55 @@ const BASE_URL = `http://127.0.0.1:${Number(process.env.CABLES_FIXTURE_PORT) || 
 const BATCH_OVERHEAD_WAIT_MS = 100
 
 const requestedIds = process.argv.slice(2)
+
+// Self-provisioning keeps the entrypoint runnable in a bare checkout of the
+// published head: without it, a fresh clone with no node_modules or no
+// Playwright browsers aborts with an environment error instead of a parity
+// measurement. Provisioning installs exactly what package.json and the
+// installed Playwright version pin; it never changes a dependency pin.
+const runTool = (command, args, options = {}) => new Promise((resolve) => {
+  const child = spawn(command, args, { stdio: 'inherit', ...options })
+  child.on('error', () => resolve(false))
+  child.on('close', (code) => resolve(code === 0))
+})
+
+const loadChromium = async () => {
+  try {
+    return (await import('playwright')).chromium
+  } catch (error) {
+    if (error?.code !== 'ERR_MODULE_NOT_FOUND') throw error
+    console.error('parity-summary: playwright is not installed; running npm install --no-save')
+    if (!await runTool('npm', ['install', '--no-save', '--no-audit', '--no-fund'], {
+      cwd: fileURLToPath(projectRoot),
+    })) {
+      throw new Error('npm install failed; self-provisioning needs the npm CLI and network access')
+    }
+    return (await import('playwright')).chromium
+  }
+}
+
+const launchSweepBrowser = async (chromium, launchOptions) => {
+  try {
+    return await chromium.launch(launchOptions)
+  } catch (error) {
+    const missingExecutable = typeof error?.message === 'string'
+      && error.message.includes("Executable doesn't exist")
+    // An explicit PLAYWRIGHT_BROWSERS_PATH is caller intent; provisioning must
+    // not install somewhere the caller did not choose.
+    if (!missingExecutable || process.env.PLAYWRIGHT_BROWSERS_PATH) throw error
+    const playwrightDir = fileURLToPath(new URL('.', pathToFileURL(
+      createRequire(fileURLToPath(projectRoot) + 'package.json').resolve('playwright/package.json'))))
+    const cliPath = playwrightDir + 'cli.js'
+    console.error('parity-summary: Playwright browsers are missing; running playwright install chromium')
+    let installed = false
+    try {
+      await readFile(cliPath)
+      installed = await runTool(process.execPath, [cliPath, 'install', 'chromium'])
+    } catch {}
+    if (!installed) throw error
+    return await chromium.launch(launchOptions)
+  }
+}
 
 const manifest = JSON.parse(await readFile(MANIFEST_PATH, 'utf8'))
 const catalogIds = Object.keys(manifest).sort()
@@ -121,7 +171,7 @@ try {
   })
 
   try {
-    const { chromium } = await import('playwright')
+    const chromium = await loadChromium()
     // CABLES_CHROME_CHANNEL opts the sweep onto the host's real Chrome (for
     // example the Apple-silicon GPU host's installed Google Chrome): the
     // default headless shell falls back to SwiftShader for WebGL even where a
@@ -131,7 +181,7 @@ try {
       launchOptions.channel = process.env.CABLES_CHROME_CHANNEL
       launchOptions.args = ['--headless=new']
     }
-    browser = await chromium.launch(launchOptions)
+    browser = await launchSweepBrowser(chromium, launchOptions)
     const page = await browser.newPage()
     await page.goto(BASE_URL)
     await page.evaluate(() => window.task9Harness.ready)
