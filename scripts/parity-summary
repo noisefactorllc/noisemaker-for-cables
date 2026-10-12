@@ -32,7 +32,9 @@ import { countCases } from './parity-summary-counting.mjs'
 
 const projectRoot = new URL('..', import.meta.url)
 const MANIFEST_PATH = new URL('vendor-cache/effects/manifest.json', projectRoot)
-const BASE_URL = 'http://127.0.0.1:4173/test/browser/fixture.html'
+// Must match test/browser/server.mjs: CABLES_FIXTURE_PORT overrides the
+// fixture port where only a narrow loopback range is bindable; default 4173.
+const BASE_URL = `http://127.0.0.1:${Number(process.env.CABLES_FIXTURE_PORT) || 4173}/test/browser/fixture.html`
 const BATCH_OVERHEAD_WAIT_MS = 100
 
 const requestedIds = process.argv.slice(2)
@@ -120,7 +122,16 @@ try {
 
   try {
     const { chromium } = await import('playwright')
-    browser = await chromium.launch({ headless: true })
+    // CABLES_CHROME_CHANNEL opts the sweep onto the host's real Chrome (for
+    // example the Apple-silicon GPU host's installed Google Chrome): the
+    // default headless shell falls back to SwiftShader for WebGL even where a
+    // physical GPU exists, so the physical-GPU measurement needs this opt-in.
+    const launchOptions = { headless: true }
+    if (process.env.CABLES_CHROME_CHANNEL) {
+      launchOptions.channel = process.env.CABLES_CHROME_CHANNEL
+      launchOptions.args = ['--headless=new']
+    }
+    browser = await chromium.launch(launchOptions)
     const page = await browser.newPage()
     await page.goto(BASE_URL)
     await page.evaluate(() => window.task9Harness.ready)
