@@ -116,6 +116,7 @@ fn main(@builtin(position) position: vec4<f32>) -> @location(0) vec4<f32> {
 }
 `},deposit:{vertex:`#version 300 es
 precision highp float;
+precision highp sampler2D;
 
 // Billboard Deposit Vertex Shader - Scatter agents as billboard quads
 
@@ -812,6 +813,7 @@ fn fragmentMain(in: VertexOutput) -> @location(0) vec4f {
 }
 `},depthKeys:{glsl:`#version 300 es
 precision highp float;
+precision highp sampler2D;
 precision highp int;
 
 uniform sampler2D xyzTex;
@@ -864,6 +866,7 @@ fn main(@builtin(position) fragCoord: vec4f) -> @location(0) vec4f {
 }
 `},depthMerge:{glsl:`#version 300 es
 precision highp float;
+precision highp sampler2D;
 precision highp int;
 
 uniform sampler2D orderTex;

@@ -5,8 +5,8 @@
     "authority": {
       "kind": "vendored Noisemaker runtime pinned by vendor.lock.json",
       "package": "noisemaker",
-      "runtime": "38064f6c61f5",
-      "coreSha256": "bc0b8fab2c19ef85d2c8046b977ac2fa8a20280994e5f8e28183b4354c070413",
+      "runtime": "3f5775c64d55",
+      "coreSha256": "af34ab47f76ac035b58da0d61ca939f32bcc75a3afdb8713c1eb86cfa887a58d",
       "coreFile": "vendor-cache/noisemaker-shaders-core.esm.js"
     },
     "frameSize": { "width": 64, "height": 48 },

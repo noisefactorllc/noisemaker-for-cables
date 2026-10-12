@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "sourceBaseUrl": "https://shaders.noisedeck.app/1/",
-  "generatedAt": "2026-10-11T21:18:20.659Z",
+  "generatedAt": "2026-10-12T13:31:17.422Z",
   "effectCount": 210,
   "artifacts": [
     {
@@ -1001,9 +1001,9 @@
       "url": "https://shaders.noisedeck.app/1/effects/render/meshRender.js"
     },
     {
-      "bytes": 56436,
+      "bytes": 56517,
       "path": "effects/render/pointsBillboardRender.js",
-      "sha256": "7219d9ce1784b215a3c57a69a3b42b0a37ac501e72f0c768df5ae251eda70b76",
+      "sha256": "af9c353e6d258090a3c53138dacc4d6d0032a376d0700fef4734216897b5fc48",
       "url": "https://shaders.noisedeck.app/1/effects/render/pointsBillboardRender.js"
     },
     {
@@ -1273,7 +1273,7 @@
     {
       "bytes": 931284,
       "path": "noisemaker-shaders-core.esm.js",
-      "sha256": "bc0b8fab2c19ef85d2c8046b977ac2fa8a20280994e5f8e28183b4354c070413",
+      "sha256": "af34ab47f76ac035b58da0d61ca939f32bcc75a3afdb8713c1eb86cfa887a58d",
       "url": "https://shaders.noisedeck.app/1/noisemaker-shaders-core.esm.js"
     }
   ]
