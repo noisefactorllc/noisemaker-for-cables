@@ -1,0 +1,7 @@
+# Machine-generated artifact: scripts/build.mjs builds this op bundle from the
+# vendored sources, and the export-kit push gate (`.github/workflows/export-kit.yml`,
+# runtime job) regenerates it with `npm run check` and enforces zero drift with
+# `git diff --exit-code -- Ops.Extension.Noisemaker`. Content is never
+# hand-edited; it changes only through the documented catalog refresh in
+# docs/catalog-update.md.
+Ops.Extension.Noisemaker/**/lib_*.js linguist-generated
