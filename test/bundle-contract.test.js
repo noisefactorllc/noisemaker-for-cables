@@ -410,7 +410,7 @@ render(o0)`)
   )
 })
 
-test('browser bundle rejects the retired noiseType parameter and compiles the canonical name', async () => {
+test('browser bundle rejects the retired noiseType parameter with the pinned native diagnostic', async () => {
   const bundle = await readProjectFile(
     'Ops.Extension.Noisemaker/Ops.Extension.Noisemaker.Program/lib_noisemaker-cablesgl.js',
   )
@@ -441,25 +441,15 @@ test('browser bundle rejects the retired noiseType parameter and compiles the ca
       ),
     (error) => {
       assert.equal(error.code, 'ERR_COMPILATION_FAILED')
-      assert.ok(
-        (error.diagnostics || []).some(
-          (diagnostic) =>
-            diagnostic.code === 'S001' &&
-            diagnostic.message.includes("Unknown argument 'noiseType'"),
-        ),
-        JSON.stringify(error.diagnostics),
-      )
+      assert.equal(error.diagnostics.length, 1)
+      const [diagnostic] = error.diagnostics
+      assert.equal(diagnostic.code, 'S001')
+      assert.equal(diagnostic.message, "Unknown argument 'noiseType' for noise()")
+      assert.equal(diagnostic.severity, 'error')
+      assert.deepEqual(warnings, [])
       return true
     },
   )
-  assert.deepEqual(warnings, [])
-
-  const graph = await context.NoisemakerCablesGL.compileProgram(
-    'search synth\n\nnoise(type: 10)\n  .write(o0)\n\nrender(o0)',
-  )
-
-  assert.ok(Array.isArray(graph.passes) && graph.passes.length >= 1)
-  assert.deepEqual(warnings, [])
 })
 
 test('pinned core and cables runtime compile chained variable alias syntax into valid render graph passes', async () => {

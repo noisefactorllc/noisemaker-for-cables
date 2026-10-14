@@ -3,8 +3,8 @@
  * Includes: CanvasRenderer + UIController + EffectSelect
  * Copyright (c) 2017-2026 Noise Factor LLC. https://noisefactor.io/
  * SPDX-License-Identifier: MIT
- * Build: 1f3bfd01
- * Date: 2026-10-12T21:19:56.540Z
+ * Build: 6cb1a3c3
+ * Date: 2026-10-13T22:50:58.160Z
  */
 var NoisemakerCablesGL=(()=>{var Aa=Object.defineProperty;var zb=Object.getOwnPropertyDescriptor;var Ob=Object.getOwnPropertyNames;var Rb=Object.prototype.hasOwnProperty;var _=(e,t,o)=>()=>{if(o)throw o[0];try{return e&&(t=e(e=0)),t}catch(r){throw o=[r],r}};var Ma=(e,t)=>{for(var o in t)Aa(e,o,{get:t[o],enumerable:!0})},Ib=(e,t,o,r)=>{if(t&&typeof t=="object"||typeof t=="function")for(let i of Ob(t))!Rb.call(e,i)&&i!==o&&Aa(e,i,{get:()=>t[i],enumerable:!(r=zb(t,i))||r.enumerable});return e};var Db=e=>Ib(Aa({},"__esModule",{value:!0}),e);function Ms(e){let t=[],o=[],r=[],i=[],s=[],a=[],n=e.split(`
 `);for(let f of n){let v=f.trim();if(v.length===0||v.startsWith("#"))continue;let x=v.split(/\s+/);switch(x[0]){case"v":{let w=parseFloat(x[1])||0,C=parseFloat(x[2])||0,m=parseFloat(x[3])||0;t.push([w,C,m]);break}case"vn":{let w=parseFloat(x[1])||0,C=parseFloat(x[2])||0,m=parseFloat(x[3])||0;o.push([w,C,m]);break}case"vt":{let w=parseFloat(x[1])||0,C=parseFloat(x[2])||0;r.push([w,C]);break}case"f":{let w=[];for(let C=1;C<x.length;C++){let m=x[C].split("/"),R=parseInt(m[0],10)-1,U=m[1]?parseInt(m[1],10)-1:-1,b=m[2]?parseInt(m[2],10)-1:-1;w.push({vIdx:R,vtIdx:U,vnIdx:b})}for(let C=1;C<w.length-1;C++){let m=w[0],R=w[C],U=w[C+1];l(m),l(U),l(R)}break}}}function l(f){f.vIdx>=0&&f.vIdx<t.length?i.push(...t[f.vIdx]):i.push(0,0,0),f.vnIdx>=0&&f.vnIdx<o.length?s.push(...o[f.vnIdx]):s.push(0,0,1),f.vtIdx>=0&&f.vtIdx<r.length?a.push(...r[f.vtIdx]):a.push(0,0)}let c=i.length/3;return o.length===0&&c>0&&py(i,s),{positions:new Float32Array(i),normals:new Float32Array(s),uvs:new Float32Array(a),vertexCount:c}}function py(e,t){let o=e.length/3,r=o/3,i=new Float32Array(r*3);for(let n=0;n<r;n++){let l=n*9,c=l+3,f=l+6,v=e[l],x=e[l+1],g=e[l+2],w=e[c],C=e[c+1],m=e[c+2],R=e[f],U=e[f+1],b=e[f+2],I=w-v,P=C-x,X=m-g,V=R-v,ce=U-x,se=b-g,he=P*se-X*ce,ne=X*V-I*se,ue=I*ce-P*V,ve=Math.sqrt(he*he+ne*ne+ue*ue);ve>1e-4?(he/=ve,ne/=ve,ue/=ve):(he=0,ne=0,ue=1),i[n*3]=he,i[n*3+1]=ne,i[n*3+2]=ue}let s=new Map,a=n=>Math.round(n*1e4)/1e4;for(let n=0;n<o;n++){let l=e[n*3],c=e[n*3+1],f=e[n*3+2],v=`${a(l)},${a(c)},${a(f)}`,x=Math.floor(n/3),g=i[x*3],w=i[x*3+1],C=i[x*3+2];s.has(v)||s.set(v,{nx:0,ny:0,nz:0,count:0});let m=s.get(v);m.nx+=g,m.ny+=w,m.nz+=C,m.count++}for(let n of s.values()){let l=Math.sqrt(n.nx*n.nx+n.ny*n.ny+n.nz*n.nz);l>1e-4?(n.nx/=l,n.ny/=l,n.nz/=l):(n.nx=0,n.ny=0,n.nz=1)}for(let n=0;n<o;n++){let l=e[n*3],c=e[n*3+1],f=e[n*3+2],v=`${a(l)},${a(c)},${a(f)}`,x=s.get(v);t[n*3]=x.nx,t[n*3+1]=x.ny,t[n*3+2]=x.nz}}async function my(e){let t=await fetch(e);if(!t.ok)throw new Error(`Failed to load OBJ: ${t.status} ${t.statusText}`);let o=await t.text();return Ms(o)}function hy(e,t,o,r,i){let s=r*i,a=e.length/3;a>s&&console.warn(`[OBJ] Mesh has ${a} vertices, but texture can only hold ${s}. Truncating.`);let n=Math.min(a,s),l=r*i,c=new Float32Array(l*4),f=new Float32Array(l*4),v=new Float32Array(l*4);for(let x=0;x<n;x++){let g=x*4,w=x*3,C=x*2;c[g]=e[w],c[g+1]=e[w+1],c[g+2]=e[w+2],c[g+3]=1,f[g]=t[w],f[g+1]=t[w+1],f[g+2]=t[w+2],f[g+3]=0,v[g]=o[C],v[g+1]=o[C+1],v[g+2]=0,v[g+3]=0}for(let x=n;x<l;x++){let g=x*4;c[g+3]=0}return{positionData:c,normalData:f,uvData:v,vertexCount:n}}function xy(e){let t=[],o=0,r=1,i=1,s=1,a=1,n=0;function l(g,w,C,m,R){for(let P=n;P<o;P++)e[P]===`
@@ -5924,12 +5924,16 @@ vec3 pixellate(vec2 uv, float size) {
 
     size *= 4.0;
 
-    float dx = size * (1.0 / resolution.x);
-    float dy = size * (1.0 / resolution.y);
+    // The block grid is anchored to the full image, so its cell size is a
+    // fraction of fullResolution (the tile size under tiling). Untiled the
+    // two resolutions are equal, so this is byte-identical to the previous
+    // resolution-based grid.
+    float dx = size * (1.0 / fullResolution.x);
+    float dy = size * (1.0 / fullResolution.y);
     uv -= 0.5;
     vec2 coord = vec2(dx * floor(uv.x / dx), dy * floor(uv.y / dy));
     coord += 0.5;
-    return texture(inputTex, coord).rgb;
+    return texture(inputTex, (coord * fullResolution - tileOffset) / vec2(textureSize(inputTex, 0))).rgb;
 }
 
 vec3 desaturate(vec3 color) {
@@ -5938,7 +5942,10 @@ vec3 desaturate(vec3 color) {
 }
 
 vec3 convolve(vec2 uv, float kernel[9], bool divide) {
-    vec2 steps = 1.0 / resolution; // 1.0 / width = 1 texel
+    // One kernel step is one full-image pixel. Untiled the full resolution
+    // equals the canvas resolution; under tiling the canvas is the tile, so
+    // the tile resolution would double every kernel step.
+    vec2 steps = 1.0 / fullResolution;
     vec2 offset[9];
     offset[0] = vec2(-steps.x, -steps.y);     // top left
     offset[1] = vec2(0.0, -steps.y);         // top middle
@@ -6151,14 +6158,18 @@ vec3 cga(vec4 color, vec2 st) {
 	float size = 2. * pixelDensity;
 	float dSize = 2. * size;
 
-	float amount = resolution.x / size;
+	// The block grid is anchored to the full image, so the block count uses
+	// the full resolution (the tile resolution under tiling).
+	float amount = fullResolution.x / size;
 	float d = 1.0 / amount;
 	float ar = fullResolution.x / fullResolution.y;
 	float sx = floor( st.x / d ) * d;
 	d = ar / amount;
 	float sy = floor( st.y / d ) * d;
 
-	vec4 base = texture( inputTex, vec2( sx, sy ) );
+	// The block grid is globally anchored, so the snapped block center is a
+	// full-image coordinate; map it into this tile's input texture.
+	vec4 base = texture( inputTex, (vec2( sx, sy ) * fullResolution - tileOffset) / vec2(textureSize(inputTex, 0)) );
 
 	float lum = .2126 * base.r + .7152 * base.g + .0722 * base.b;
 	float o = floor( 6. * lum );
@@ -6186,14 +6197,16 @@ vec3 cga(vec4 color, vec2 st) {
 	if( o == 5. ) { c1 = light; c2 = white; }
 	if( o == 6. ) { c1 = white; c2 = c1; }
 
-	if( mod( gl_FragCoord.x, dSize ) > size ) {
-		if( mod( gl_FragCoord.y, dSize ) > size ) {
+	// The checker phase is anchored to the full image (tileOffset is 0
+	// untiled), so the pattern does not restart at every tile boundary.
+	if( mod( gl_FragCoord.x + tileOffset.x, dSize ) > size ) {
+		if( mod( gl_FragCoord.y + tileOffset.y, dSize ) > size ) {
 			base.rgb = c1;
 		} else {
 			base.rgb = c2;	
 		}
 	} else {
-		if( mod( gl_FragCoord.y, dSize ) > size ) {
+		if( mod( gl_FragCoord.y + tileOffset.y, dSize ) > size ) {
 			base.rgb = c2;
 		} else {
 			base.rgb = c1;		
@@ -6211,7 +6224,10 @@ vec3 subpixel(vec2 st, float scale) {
 	vec3 orig = pixellate(st, 4.0 * scale);
     vec3 color = orig;
 
-    st *= resolution;
+    // The stripe mask is anchored to the full image in full-image pixels
+    // (equal to tile pixels untiled), so the stripes do not shift or
+    // rescale at tile boundaries.
+    st *= fullResolution;
     st = floor(st);
 
     float m = mod(st.x, 4.0 * scale);
@@ -6234,15 +6250,17 @@ vec3 subpixel(vec2 st, float scale) {
 
 // Bloom - MIT License
 // Modified from https://github.com/spite/Wagner/blob/master/fragment-shaders/bloom-fs.glsl
+// Bloom samples a small neighborhood of the full-image coordinate st, so
+// every tap maps through the tile mapping (identity untiled).
 vec3 bloom(vec2 st) {
     vec3 sum = vec3(0.0);
     vec3 color = vec3(0.0);
-    vec3 orig = texture(inputTex, st).rgb;
+    vec3 orig = texture(inputTex, (st * fullResolution - tileOffset) / vec2(textureSize(inputTex, 0))).rgb;
     float strength = map(effectAmt, 0.0, 20.0, 0.0, 0.25);
 
     for (int i = -4; i < 4; i++) {
         for (int j = -3; j < 3; j++) {
-            sum += texture(inputTex, st + vec2(j, i) * 0.004).rgb * strength;
+            sum += texture(inputTex, ((st + vec2(j, i) * 0.004) * fullResolution - tileOffset) / vec2(textureSize(inputTex, 0))).rgb * strength;
         }
     }
 
@@ -6285,7 +6303,16 @@ vec3 zoomBlur(vec2 st) {
         vec2 tapA = toCenter * percent;
         vec2 tap = min(max(tapA, vec2(-1e38)), vec2(1e38)) * strength;
         vec2 tapB = min(max(tap, vec2(-1e38)), vec2(1e38));
-        vec4 tex = texture(inputTex, st + tapB);
+        // Under tiling, clamp each tap component to an absolute 256 px
+        // budget (as filter/lens and filter/parallax do): the raw
+        // displacement is a fraction of fullResolution, so an unclamped tap
+        // would reach past the fixed 1024 px tile overlap on large prints.
+        // Untiled the clamp is off and the output is byte-identical.
+        if (tileOffset.x != 0.0 || tileOffset.y != 0.0) {
+            vec2 tapBudget = vec2(256.0) * invFullResolution;
+            tapB = min(max(tapB, -tapBudget), tapBudget);
+        }
+        vec4 tex = texture(inputTex, ((st + tapB) * fullResolution - tileOffset) / vec2(textureSize(inputTex, 0)));
         products[int(t)] = min(max(tex.rgb * weight, vec3(-1e38)), vec3(1e38));
         total += min(max(weight, -1e38), 1e38);
     }
@@ -6347,14 +6374,17 @@ void main() {
     uv += 0.5;
 
     // no
-    vec2 imageSize = resolution;
+    // The zoom center is anchored to the full image; the tile resolution
+    // would shift it under tiling. Untiled the two are equal.
+    vec2 imageSize = fullResolution;
 
     // need to subtract 50% of image width and height
     // mid center
-    // imageSize is a copy of resolution, so resolution/imageSize is a value
-    // divided by itself: ANGLE computes exactly 1.0 while Dawn lowers the
-    // division to x * rcp(x) (~1 ulp off), which shifted the offset map's
-    // arguments and flipped knife-edge sampler taps. Use the exact 1.0.
+    // imageSize is a copy of fullResolution, so a resolution/imageSize style
+    // self-division would be a value divided by itself: ANGLE computes exactly
+    // 1.0 while Dawn lowers the division to x * rcp(x) (~1 ulp off), which
+    // shifted the offset map's arguments and flipped knife-edge sampler taps.
+    // Use the exact 1.0.
     uv.x -= ceil((scale * 0.5) - (0.5 - (1.0 / imageSize.x * scale)));
     uv.y += ceil((scale * 0.5) + (0.5 - (1.0 / imageSize.y * scale)) - (scale));
 
@@ -6503,6 +6533,9 @@ struct Uniforms {
     saturation: f32,
     aspectInv: f32,
     invFullResolution: vec2f,
+    tileOffset: vec2f,
+    fullResolution: vec2f,
+    renderScale: f32,
 }
 
 const PI: f32 = 3.14159265359;
@@ -6536,7 +6569,7 @@ fn glslMod(x: f32, y: f32) -> f32 {
 // and fullResolution is the frame size. The division by the texture size is
 // x * rcp(size), which need not return uv exactly; compute it the same way.
 fn inputCoord(uv: vec2f) -> vec2f {
-    return (uv * u.resolution) / vec2f(textureDimensions(inputTex, 0));
+    return (uv * u.fullResolution - u.tileOffset) / vec2f(textureDimensions(inputTex, 0));
 }
 
 // PCG PRNG
@@ -6652,11 +6685,15 @@ fn pixellate(uv_in: vec2f, sizeIn: f32) -> vec3f {
     var size = sizeIn;
     if (size < 1.0) { return textureSample(inputTex, samp, inputCoord(uv_in)).rgb; }
     size *= 4.0;
-    let dx = size * (1.0 / u.resolution.x);
-    let dy = size * (1.0 / u.resolution.y);
+    // The block grid is anchored to the full image, so its cell size is a
+    // fraction of fullResolution (the tile size under tiling). Untiled the
+    // two resolutions are equal, so this is byte-identical to the previous
+    // resolution-based grid.
+    let dx = size * (1.0 / u.fullResolution.x);
+    let dy = size * (1.0 / u.fullResolution.y);
     var uv = uv_in - 0.5;
     let coord = vec2f(dx * floor(uv.x / dx), dy * floor(uv.y / dy)) + 0.5;
-    return textureSample(inputTex, samp, coord).rgb;
+    return textureSample(inputTex, samp, inputCoord(coord)).rgb;
 }
 
 fn desaturate(color: vec3f) -> vec3f {
@@ -6665,7 +6702,10 @@ fn desaturate(color: vec3f) -> vec3f {
 }
 
 fn convolve(uv: vec2f, kernel: array<f32, 9>, divide: bool) -> vec3f {
-    let steps = 1.0 / u.resolution;
+    // One kernel step is one full-image pixel. Untiled the full resolution
+    // equals the canvas resolution; under tiling the canvas is the tile, so
+    // the tile resolution would double every kernel step.
+    let steps = 1.0 / u.fullResolution;
     let offsets = array<vec2f, 9>(
         vec2f(-steps.x, -steps.y), vec2f(0.0, -steps.y), vec2f(steps.x, -steps.y),
         vec2f(-steps.x, 0.0), vec2f(0.0, 0.0), vec2f(steps.x, 0.0),
@@ -6752,22 +6792,28 @@ fn convolutionEffect(color: vec3f, uv: vec2f) -> vec3f {
     return color;
 }
 
-// fragCoord is the output pixel. The dither pattern is fixed to the screen,
-// as gl_FragCoord fixes it in the GLSL, while st (the transformed coordinate)
+// globalCoord is the output pixel's full-image coordinate (the GLSL phase
+// uses gl_FragCoord + tileOffset), while st (the transformed coordinate)
 // picks the sampled block.
-fn cga(color: vec4f, st: vec2f, fragCoord: vec2f) -> vec3f {
+fn cga(color: vec4f, st: vec2f, globalCoord: vec2f) -> vec3f {
     let amt = mapRange(u.effectAmt, 0.0, 20.0, 0.0, 5.0);
     if (amt < 0.01) { return color.rgb; }
-    let pixelDensity = amt;
+    let pixelDensity = amt * u.renderScale;
     let size = 2.0 * pixelDensity;
     let dSize = 2.0 * size;
-    let amount = u.resolution.x / size;
+    // The block grid is anchored to the full image, so the block count uses
+    // the full resolution (the tile resolution under tiling).
+    let amount = u.fullResolution.x / size;
     var d = 1.0 / amount;
-    let ar = u.resolution.x / u.resolution.y;
+    // The GLSL takes this ratio from fullResolution, so the block grid keeps
+    // its shape across print tiles.
+    let ar = u.fullResolution.x / u.fullResolution.y;
     let sx = floor(st.x / d) * d;
     d = ar / amount;
     let sy = floor(st.y / d) * d;
-    let base = textureSample(inputTex, samp, vec2f(sx, sy));
+    // The block grid is globally anchored, so the snapped block center is a
+    // full-image coordinate; map it into this tile's input texture.
+    let base = textureSample(inputTex, samp, inputCoord(vec2f(sx, sy)));
     let lum = 0.2126 * base.r + 0.7152 * base.g + 0.0722 * base.b;
     let o = floor(6.0 * lum);
     let black = vec3f(0.0);
@@ -6786,19 +6832,26 @@ fn cga(color: vec4f, st: vec2f, fragCoord: vec2f) -> vec3f {
     else if (o == 5.0) { c1 = light; c2 = white; }
     else if (o == 6.0) { c1 = white; c2 = white; }
     var result = c1;
-    if (glslMod(fragCoord.x, dSize) > size) {
-        if (glslMod(fragCoord.y, dSize) > size) { result = c1; } else { result = c2; }
+    // The checker phase is anchored to the full image (tileOffset is 0
+    // untiled), so the pattern does not restart at every tile boundary.
+    if (glslMod(globalCoord.x, dSize) > size) {
+        if (glslMod(globalCoord.y, dSize) > size) { result = c1; } else { result = c2; }
     } else {
-        if (glslMod(fragCoord.y, dSize) > size) { result = c2; } else { result = c1; }
+        if (glslMod(globalCoord.y, dSize) > size) { result = c2; } else { result = c1; }
     }
     return result;
 }
 
 fn subpixel(st: vec2f, scaleIn: f32) -> vec3f {
-    let scale = mapRange(scaleIn, 0.0, 100.0, 0.0, 10.0);
+    // The GLSL scales the stripe width by renderScale for whole-canvas
+    // high-resolution export.
+    let scale = mapRange(scaleIn, 0.0, 100.0, 0.0, 10.0) * u.renderScale;
     let orig = pixellate(st, 4.0 * scale);
     var color = orig;
-    let coord = floor(st * u.resolution);
+    // The stripe mask is anchored to the full image in full-image pixels
+    // (equal to tile pixels untiled), so the stripes do not shift or
+    // rescale at tile boundaries.
+    let coord = floor(st * u.fullResolution);
     let m = glslMod(coord.x, 4.0 * scale);
     if (glslMod(coord.y, 4.0 * scale) <= scale) {
         color *= vec3f(0.0);
@@ -6815,13 +6868,15 @@ fn subpixel(st: vec2f, scaleIn: f32) -> vec3f {
     return mix(orig, color, factor);
 }
 
+// Bloom samples a small neighborhood of the full-image coordinate st, so
+// every tap maps through the tile mapping (identity untiled).
 fn bloom(st: vec2f) -> vec3f {
     var sum = vec3f(0.0);
-    let orig = textureSample(inputTex, samp, st).rgb;
+    let orig = textureSample(inputTex, samp, inputCoord(st)).rgb;
     let strength = mapRange(u.effectAmt, 0.0, 20.0, 0.0, 0.25);
     for (var i = -4; i < 4; i++) {
         for (var j = -3; j < 3; j++) {
-            sum += textureSample(inputTex, samp, st + vec2f(f32(j), f32(i)) * 0.004).rgb * strength;
+            sum += textureSample(inputTex, samp, inputCoord(st + vec2f(f32(j), f32(i)) * 0.004)).rgb * strength;
         }
     }
     var color: vec3f;
@@ -6852,8 +6907,17 @@ fn zoomBlur(st: vec2f) -> vec3f {
         let strength = mapRange(u.effectAmt, 0.0, 20.0, 0.0, 1.0);
         let tapA = toCenter * percent;
         let tap = min(max(tapA, vec2f(-1e38)), vec2f(1e38)) * strength;
-        let tapB = min(max(tap, vec2f(-1e38)), vec2f(1e38));
-        let tex = textureSample(inputTex, samp, st + tapB);
+        var tapB = min(max(tap, vec2f(-1e38)), vec2f(1e38));
+        // Under tiling, clamp each tap component to an absolute 256 px
+        // budget (as filter/lens and filter/parallax do): the raw
+        // displacement is a fraction of fullResolution, so an unclamped tap
+        // would reach past the fixed 1024 px tile overlap on large prints.
+        // Untiled the clamp is off and the output is byte-identical.
+        if (u.tileOffset.x != 0.0 || u.tileOffset.y != 0.0) {
+            let tapBudget = vec2f(256.0) * u.invFullResolution;
+            tapB = min(max(tapB, -tapBudget), tapBudget);
+        }
+        let tex = textureSample(inputTex, samp, inputCoord(st + tapB));
         products[u32(t)] = min(max(tex.rgb * weight, vec3f(-1e38)), vec3f(1e38));
         total += min(max(weight, -1e38), 1e38);
     }
@@ -6883,10 +6947,13 @@ fn offsets(st: vec2f) -> f32 {
 
 @fragment
 fn main(@builtin(position) fragCoord: vec4f) -> @location(0) vec4f {
-    // Multiply by the CPU-computed reciprocal instead of dividing (see the
-    // invFullResolution declaration): both backends then evaluate the same
-    // correctly-rounded multiply, so the uv chain is bit-identical.
-    var uv = fragCoord.xy * u.invFullResolution;
+    // The GLSL builds a full-image coordinate (gl_FragCoord.xy + tileOffset)
+    // and scales it by the CPU-computed reciprocal of fullResolution instead
+    // of dividing (see the invFullResolution declaration): both backends then
+    // evaluate the same correctly-rounded multiply, so the uv chain is
+    // bit-identical and every tile maps the same full-image uv.
+    var globalCoord = fragCoord.xy + u.tileOffset;
+    var uv = globalCoord * u.invFullResolution;
 
     // The division by a runtime uniform lowers differently (Dawn: x * rcp(y),
     // ANGLE: correctly-rounded divide) — a ~1 ulp difference rescales every uv
@@ -6907,11 +6974,14 @@ fn main(@builtin(position) fragCoord: vec4f) -> @location(0) vec4f {
     uv = min(max(uv, vec2f(-1e38)), vec2f(1e38));
     uv += 0.5;
 
-    let imageSize = u.resolution;
-    // imageSize is a copy of u.resolution, so resolution/imageSize is a value
-    // divided by itself: ANGLE computes exactly 1.0 while Dawn lowers the
-    // division to x * rcp(x) (~1 ulp off), which shifted the offset map's
-    // arguments and flipped knife-edge sampler taps. Use the exact 1.0.
+    // The zoom center is anchored to the full image; the tile resolution
+    // would shift it under tiling. Untiled the two are equal.
+    let imageSize = u.fullResolution;
+    // imageSize is a copy of u.fullResolution, so a resolution/imageSize style
+    // self-division would be a value divided by itself: ANGLE computes exactly
+    // 1.0 while Dawn lowers the division to x * rcp(x) (~1 ulp off), which
+    // shifted the offset map's arguments and flipped knife-edge sampler taps.
+    // Use the exact 1.0.
     uv.x -= ceil((scale * 0.5) - (0.5 - (1.0 / imageSize.x * scale)));
     uv.y += ceil((scale * 0.5) + (0.5 - (1.0 / imageSize.y * scale)) - scale);
     // Pin the offset-shift evaluation order with scalar clamps: the map
@@ -6942,7 +7012,7 @@ fn main(@builtin(position) fragCoord: vec4f) -> @location(0) vec4f {
     if (u.effectAmt != 0.0 && EFFECT != 0) {
         if (EFFECT == 100) { color = vec4f(pixellate(uv, u.effectAmt), color.a); }
         else if (EFFECT == 110) { color = vec4f(posterize(color.rgb, u.effectAmt), color.a); }
-        else if (EFFECT == 200) { color = vec4f(cga(color, uv, fragCoord.xy), color.a); }
+        else if (EFFECT == 200) { color = vec4f(cga(color, uv, globalCoord), color.a); }
         else if (EFFECT == 210) { color = vec4f(subpixel(uv, u.effectAmt), color.a); }
         else if (EFFECT == 220) { color = vec4f(bloom(uv), color.a); }
         else if (EFFECT == 230) { color = vec4f(zoomBlur(uv), color.a); }
@@ -29865,7 +29935,10 @@ void main() {
     // Cell-size cap and the edge clamp below apply only when tiling, so
     // normal-size output is byte-identical to the pre-tile-aware shader
     // (zero baseline regression for all parameters).
-    bool isTileRendering = length(tileOffset) > 0.0;
+    // Tiling is detected from the full-image size differing from the local
+    // render size. tileOffset alone cannot detect tiling: the origin tile's
+    // offset is (0, 0), the same value the runtime writes when not tiling.
+    bool isTileRendering = any(notEqual(fullResolution, resolution));
     if (isTileRendering) { cs = min(cs, 512); }
     float csf = float(cs);
 
@@ -30067,15 +30140,19 @@ fn glyphPixel(g: i32, x: i32, y: i32) -> f32 {
 fn main(@builtin(position) pos: vec4<f32>) -> @location(0) vec4<f32> {
     let texSize = vec2<f32>(textureDimensions(inputTex));
     let tileOffset = uniforms.tileOffset;
-    let isTile = length(tileOffset) > 0.0;
+    // Tiling is detected from the full-image size differing from the local
+    // render size. tileOffset alone cannot detect tiling: the origin tile's
+    // offset is (0, 0), the same value the runtime writes when not tiling.
+    let isTile = any(uniforms.fullResolution != texSize);
     // Non-tiling path is byte-identical to the previous shader. When tiling,
     // mirror glsl/glyphMap.glsl: global pixel grid + renderScale-scaled cell
-    // (clamped to 512) so cells align across tiles.
+    // (clamped to 512) so cells align across tiles. The renderScale multiply
+    // is unconditional, matching the GLSL at every tile including the origin.
     var pixelCoord = pos.xy;
-    var cs = max(uniforms.cellSize, 1);
+    var cs = max(i32(f32(uniforms.cellSize) * uniforms.renderScale), 1);
     if (isTile) {
         pixelCoord = pos.xy + tileOffset;
-        cs = clamp(i32(f32(uniforms.cellSize) * uniforms.renderScale), 1, 512);
+        cs = min(cs, 512);
     }
     let csf = f32(cs);
 

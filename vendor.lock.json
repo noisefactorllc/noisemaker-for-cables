@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "sourceBaseUrl": "https://shaders.noisedeck.app/1.0.291/",
-  "generatedAt": "2026-10-14T01:40:42.574Z",
+  "sourceBaseUrl": "https://shaders.noisedeck.app/1/",
+  "generatedAt": "2026-10-14T05:34:13.670Z",
   "effectCount": 210,
   "artifacts": [
     {
@@ -47,9 +47,9 @@
       "url": "https://shaders.noisedeck.app/1/effects/classicNoisedeck/composite.js"
     },
     {
-      "bytes": 50933,
+      "bytes": 55812,
       "path": "effects/classicNoisedeck/effects.js",
-      "sha256": "8d7c8eab238402506abb52317d376a1f09be53d75f33e7ea2822f82201d0b696",
+      "sha256": "4c0f104c58b095a831fbbd064955c3acd02c136c085ae242106c42ee1f710184",
       "url": "https://shaders.noisedeck.app/1/effects/classicNoisedeck/effects.js"
     },
     {
@@ -287,9 +287,9 @@
       "url": "https://shaders.noisedeck.app/1/effects/filter/glowingEdge.js"
     },
     {
-      "bytes": 17008,
+      "bytes": 17582,
       "path": "effects/filter/glyphMap.js",
-      "sha256": "f4ca316024ba542e56876a45f0db54d2edee7d0d422079eebabed9f19a7ad7ee",
+      "sha256": "7cbb37bdab20c152f184a41bfb868d0889350b4825f93fb980647e9d62e6b073",
       "url": "https://shaders.noisedeck.app/1/effects/filter/glyphMap.js"
     },
     {
@@ -1273,7 +1273,7 @@
     {
       "bytes": 929281,
       "path": "noisemaker-shaders-core.esm.js",
-      "sha256": "dee4ed74378fddd8e86a6d92e47b8e7f70a869494e19046331c02c249756028f",
+      "sha256": "bd957e94e7a720c53ab2ac80b33a556295f68f84e7b21bd6fc8e2124592e385a",
       "url": "https://shaders.noisedeck.app/1/noisemaker-shaders-core.esm.js"
     }
   ]

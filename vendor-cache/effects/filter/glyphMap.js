@@ -1,5 +1,5 @@
 /* filter/glyphMap */
-var t=class{constructor(n={}){this.state={},this.uniforms={},n.name&&(this.name=n.name),n.namespace&&(this.namespace=n.namespace),n.func&&(this.func=n.func),n.description&&(this.description=n.description),n.tags&&(this.tags=n.tags),n.globals&&(this.globals=n.globals),n.passes&&(this.passes=n.passes),n.textures&&(this.textures=n.textures),n.textures3d&&(this.textures3d=n.textures3d),n.shaders&&(this.shaders=n.shaders),n.externalTexture&&(this.externalTexture=n.externalTexture),n.externalMesh&&(this.externalMesh=n.externalMesh),n.builtinMeshes&&(this.builtinMeshes=n.builtinMeshes),n.outputTex3d&&(this.outputTex3d=n.outputTex3d),n.outputGeo&&(this.outputGeo=n.outputGeo),n.uniformLayout&&(this.uniformLayout=n.uniformLayout),n.uniformLayouts&&(this.uniformLayouts=n.uniformLayouts),n.openCategories&&(this.openCategories=n.openCategories),n.defaultProgram&&(this.defaultProgram=n.defaultProgram),n.hidden&&(this.hidden=!0),n.deprecatedBy&&(this.deprecatedBy=n.deprecatedBy),n.onInit&&(this._configOnInit=n.onInit),n.onUpdate&&(this._configOnUpdate=n.onUpdate),n.onDestroy&&(this._configOnDestroy=n.onDestroy),n.asyncInit&&(this._configAsyncInit=n.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(n){return this._configOnUpdate?this._configOnUpdate.call(this,n):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(n){return this._configAsyncInit?this._configAsyncInit.call(this,n):Promise.resolve()}};var e=new t({name:"Glyph Map",namespace:"filter",func:"glyphMap",tags:["color","pixel"],description:"ASCII/glyph art conversion using procedural glyphs",globals:{cellSize:{type:"int",default:16,uniform:"cellSize",min:4,max:32,ui:{label:"cell size",control:"slider"}},seed:{type:"int",default:1,uniform:"seed",min:1,max:100,ui:{label:"seed",control:"slider"}},colorMode:{type:"int",default:1,uniform:"colorMode",choices:{mono:0,rgb:1},ui:{label:"color mode",control:"dropdown"}}},passes:[{name:"render",program:"glyphMap",inputs:{inputTex:"inputTex"},outputs:{fragColor:"outputTex"}}]});var l={glyphMap:{glsl:`/*
+var t=class{constructor(n={}){this.state={},this.uniforms={},n.name&&(this.name=n.name),n.namespace&&(this.namespace=n.namespace),n.func&&(this.func=n.func),n.description&&(this.description=n.description),n.tags&&(this.tags=n.tags),n.globals&&(this.globals=n.globals),n.passes&&(this.passes=n.passes),n.textures&&(this.textures=n.textures),n.textures3d&&(this.textures3d=n.textures3d),n.shaders&&(this.shaders=n.shaders),n.externalTexture&&(this.externalTexture=n.externalTexture),n.externalMesh&&(this.externalMesh=n.externalMesh),n.builtinMeshes&&(this.builtinMeshes=n.builtinMeshes),n.outputTex3d&&(this.outputTex3d=n.outputTex3d),n.outputGeo&&(this.outputGeo=n.outputGeo),n.uniformLayout&&(this.uniformLayout=n.uniformLayout),n.uniformLayouts&&(this.uniformLayouts=n.uniformLayouts),n.openCategories&&(this.openCategories=n.openCategories),n.defaultProgram&&(this.defaultProgram=n.defaultProgram),n.hidden&&(this.hidden=!0),n.deprecatedBy&&(this.deprecatedBy=n.deprecatedBy),n.onInit&&(this._configOnInit=n.onInit),n.onUpdate&&(this._configOnUpdate=n.onUpdate),n.onDestroy&&(this._configOnDestroy=n.onDestroy),n.asyncInit&&(this._configAsyncInit=n.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(n){return this._configOnUpdate?this._configOnUpdate.call(this,n):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(n){return this._configAsyncInit?this._configAsyncInit.call(this,n):Promise.resolve()}};var e=new t({name:"Glyph Map",namespace:"filter",func:"glyphMap",tags:["color","pixel"],description:"ASCII/glyph art conversion using procedural glyphs",globals:{cellSize:{type:"int",default:16,uniform:"cellSize",min:4,max:32,ui:{label:"cell size",control:"slider"}},seed:{type:"int",default:1,uniform:"seed",min:1,max:100,ui:{label:"seed",control:"slider"}},colorMode:{type:"int",default:1,uniform:"colorMode",choices:{mono:0,rgb:1},ui:{label:"color mode",control:"dropdown"}}},passes:[{name:"render",program:"glyphMap",inputs:{inputTex:"inputTex"},outputs:{fragColor:"outputTex"}}]});var i={glyphMap:{glsl:`/*
  * Glyph Map effect
  * Converts image to ASCII/glyph art using hardcoded 5x7 glyph bitmaps
  * ordered by density. Each cell maps input brightness to a glyph.
@@ -305,7 +305,10 @@ void main() {
     // Cell-size cap and the edge clamp below apply only when tiling, so
     // normal-size output is byte-identical to the pre-tile-aware shader
     // (zero baseline regression for all parameters).
-    bool isTileRendering = length(tileOffset) > 0.0;
+    // Tiling is detected from the full-image size differing from the local
+    // render size. tileOffset alone cannot detect tiling: the origin tile's
+    // offset is (0, 0), the same value the runtime writes when not tiling.
+    bool isTileRendering = any(notEqual(fullResolution, resolution));
     if (isTileRendering) { cs = min(cs, 512); }
     float csf = float(cs);
 
@@ -507,15 +510,19 @@ fn glyphPixel(g: i32, x: i32, y: i32) -> f32 {
 fn main(@builtin(position) pos: vec4<f32>) -> @location(0) vec4<f32> {
     let texSize = vec2<f32>(textureDimensions(inputTex));
     let tileOffset = uniforms.tileOffset;
-    let isTile = length(tileOffset) > 0.0;
+    // Tiling is detected from the full-image size differing from the local
+    // render size. tileOffset alone cannot detect tiling: the origin tile's
+    // offset is (0, 0), the same value the runtime writes when not tiling.
+    let isTile = any(uniforms.fullResolution != texSize);
     // Non-tiling path is byte-identical to the previous shader. When tiling,
     // mirror glsl/glyphMap.glsl: global pixel grid + renderScale-scaled cell
-    // (clamped to 512) so cells align across tiles.
+    // (clamped to 512) so cells align across tiles. The renderScale multiply
+    // is unconditional, matching the GLSL at every tile including the origin.
     var pixelCoord = pos.xy;
-    var cs = max(uniforms.cellSize, 1);
+    var cs = max(i32(f32(uniforms.cellSize) * uniforms.renderScale), 1);
     if (isTile) {
         pixelCoord = pos.xy + tileOffset;
-        cs = clamp(i32(f32(uniforms.cellSize) * uniforms.renderScale), 1, 512);
+        cs = min(cs, 512);
     }
     let csf = f32(cs);
 
@@ -561,7 +568,7 @@ fn main(@builtin(position) pos: vec4<f32>) -> @location(0) vec4<f32> {
         return vec4<f32>(vec3<f32>(glyphVal), 1.0);
     }
 }
-`}},i=`# glyphMap
+`}},l=`# glyphMap
 
 ASCII/glyph art conversion using procedural glyphs
 
@@ -584,4 +591,4 @@ noise(seed: 1, ridges: true)
 
 render(o0)
 \`\`\`
-`;if(e&&Object.keys(l).length>0){e.shaders||(e.shaders={});for(let[r,n]of Object.entries(l))e.shaders[r]={...n}}e&&i&&(e.help=i);var a="filter/glyphMap",p="filter",u="glyphMap",h=e;export{h as default,a as effectId,u as effectName,i as help,p as namespace};
+`;if(e&&Object.keys(i).length>0){e.shaders||(e.shaders={});for(let[r,n]of Object.entries(i))e.shaders[r]={...n}}e&&l&&(e.help=l);var a="filter/glyphMap",p="filter",u="glyphMap",h=e;export{h as default,a as effectId,u as effectName,l as help,p as namespace};

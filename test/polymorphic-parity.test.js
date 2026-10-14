@@ -104,18 +104,15 @@ async function captureWarnings(run) {
   }
 }
 
-async function captureRejection(run) {
-  const previousWarn = console.warn
-  console.warn = () => {}
-  try {
-    await run()
-  } catch (error) {
-    assert.equal(error.code, 'ERR_COMPILATION_FAILED')
-    return { diagnostics: error.diagnostics }
-  } finally {
-    console.warn = previousWarn
-  }
-  assert.fail('expected the compilation to fail')
+async function captureOutcome(run) {
+  const { value, warnings } = await captureWarnings(async () => {
+    try {
+      return { error: null, threw: false, value: await run() }
+    } catch (error) {
+      return { error, threw: true, value: null }
+    }
+  })
+  return { ...value, warnings }
 }
 
 async function loadCompatibilityCases() {
@@ -154,39 +151,65 @@ async function loadCompatibilityCases() {
   return { deprecatedEffects, parameterAliases }
 }
 
-test('retired parameter names fail compilation with the pinned reference diagnostic', async () => {
+test('retired noiseType parameter fails compilation identically in the port and the pinned reference', async () => {
   installTestDomShim()
   const dsl = `search synth\n\nnoise(noiseType: 10)\n  .write(o0)\n\nrender(o0)`
   const { compileProgram } = await import('../src/runtime/engine.js')
   const reference = await createReferenceCompiler()
 
-  const expected = await captureRejection(() => reference.compileGraph(dsl))
-  const actual = await captureRejection(() => compileProgram(dsl))
+  const expected = await captureOutcome(() => reference.compileGraph(dsl))
+  const actual = await captureOutcome(() => compileProgram(dsl))
 
-  assert.deepEqual(actual.diagnostics, expected.diagnostics)
+  assert.equal(expected.threw, true)
+  assert.equal(actual.threw, true)
+  assert.equal(actual.error.code, expected.error.code)
+  assert.deepEqual(actual.error.diagnostics, expected.error.diagnostics)
+  assert.deepEqual(actual.warnings, expected.warnings)
   assert.ok(
-    actual.diagnostics.some(
-      (diagnostic) =>
-        diagnostic.code === 'S001' && diagnostic.message.includes("Unknown argument 'noiseType'"),
+    actual.error.diagnostics.some(
+      (diagnostic) => diagnostic.code === 'S001' && diagnostic.message.includes("Unknown argument 'noiseType'"),
     ),
-    JSON.stringify(actual.diagnostics),
+    JSON.stringify(actual.error.diagnostics),
   )
-  assert.ok(!actual.diagnostics.some((diagnostic) => diagnostic.code === 'S007'))
+  assert.ok(!actual.error.diagnostics.some((diagnostic) => diagnostic.code === 'S007'))
+  assert.deepEqual(actual.warnings, [])
 })
 
-test('canonical parameter names compile without the retired alias diagnostics', async () => {
+test('canonical parameters compile where mixing a retired name fails identically in both compilers', async () => {
   installTestDomShim()
-  const dsl = `search synth\n\nnoise(type: 10)\n  .write(o0)\n\nrender(o0)`
+  const mixedDsl = `search synth\n\nnoise(noiseType: 0, type: 10)\n  .write(o0)\n\nrender(o0)`
+  const canonicalDsl = `search synth\n\nnoise(type: 10)\n  .write(o0)\n\nrender(o0)`
   const { compileProgram } = await import('../src/runtime/engine.js')
   const reference = await createReferenceCompiler()
 
-  const expected = await captureWarnings(() => reference.compileGraph(dsl))
-  const actual = await captureWarnings(() => compileProgram(dsl))
+  const mixedExpected = await captureOutcome(() => reference.compileGraph(mixedDsl))
+  const mixedActual = await captureOutcome(() => compileProgram(mixedDsl))
 
-  assert.deepEqual(normalizeCompilerValue(actual.value), normalizeCompilerValue(expected.value))
-  assert.ok(Object.keys(actual.value.programs).some((name) => name.includes('NOISE_TYPE_10')))
-  assert.deepEqual(actual.warnings, expected.warnings)
-  assert.deepEqual(actual.warnings, [])
+  assert.equal(mixedExpected.threw, true)
+  assert.equal(mixedActual.threw, true)
+  assert.equal(mixedActual.error.code, mixedExpected.error.code)
+  assert.deepEqual(mixedActual.error.diagnostics, mixedExpected.error.diagnostics)
+  assert.ok(
+    mixedActual.error.diagnostics.some(
+      (diagnostic) => diagnostic.code === 'S001' && diagnostic.message.includes("Unknown argument 'noiseType'"),
+    ),
+    JSON.stringify(mixedActual.error.diagnostics),
+  )
+  assert.ok(!mixedActual.error.diagnostics.some((diagnostic) => diagnostic.code === 'S007'))
+  assert.deepEqual(mixedActual.warnings, mixedExpected.warnings)
+  assert.deepEqual(mixedActual.warnings, [])
+
+  const canonicalExpected = await captureOutcome(() => reference.compileGraph(canonicalDsl))
+  const canonicalActual = await captureOutcome(() => compileProgram(canonicalDsl))
+
+  assert.equal(canonicalActual.threw, false)
+  assert.deepEqual(
+    normalizeCompilerValue(canonicalActual.value),
+    normalizeCompilerValue(canonicalExpected.value),
+  )
+  assert.ok(Object.keys(canonicalActual.value.programs).some((name) => name.includes('NOISE_TYPE_10')))
+  assert.deepEqual(canonicalActual.warnings, canonicalExpected.warnings)
+  assert.deepEqual(canonicalActual.warnings, [])
 })
 
 test('legacy aliases do not leak into a same-named effect in another namespace', async () => {
@@ -203,7 +226,7 @@ test('legacy aliases do not leak into a same-named effect in another namespace',
   assert.deepEqual(actual.warnings, [])
 })
 
-test('the pinned catalog carries no legacy parameter alias', async () => {
+test('no vendored effect definition retains a legacy parameter alias', async () => {
   installTestDomShim()
   const { parameterAliases } = await loadCompatibilityCases()
 
