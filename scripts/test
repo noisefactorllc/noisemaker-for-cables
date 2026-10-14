@@ -1,0 +1,6 @@
+#!/bin/sh
+# Test entrypoint for pre-publish gating: verify the vendored artifacts against
+# vendor.lock.json, run the unit suite, rebuild the op bundle from the vendored
+# sources, and confirm the package still packs. Mirrors `npm run check` so a
+# gate that runs this entrypoint also regenerates the marked generated bundle.
+exec npm run check
