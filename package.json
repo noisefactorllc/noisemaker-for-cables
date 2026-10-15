@@ -25,6 +25,7 @@
   "scripts": {
     "test": "node --test test/*.test.js",
     "build": "node tools/build.mjs",
+    "prepublishOnly": "./scripts/before-publish",
     "vendor:update": "node tools/vendor.mjs update",
     "vendor:verify": "node tools/vendor.mjs verify",
     "test:browser": "playwright test",

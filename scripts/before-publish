@@ -1,0 +1,6 @@
+#!/bin/sh
+# Before-publication check for the machine-generated op bundle:
+# regenerates Ops.Extension.Noisemaker/**/lib_*.js from the vendored
+# sources (npm run build), matching the export-kit push gate's zero-drift
+# requirement. Content is never hand-edited.
+exec npm run build --silent
