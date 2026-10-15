@@ -1,7 +1,5 @@
-// The published core keeps its alias registries internal. Generic adapters retain a copy here,
-// while runtimes with validator-hook support receive equivalent keyword compatibility below.
-const ALIAS_EOL_DATE = '2026-09-01'
-const aliasCompatibilityByCore = new WeakMap()
+// The published core keeps its deprecated-effect diagnostics internal. Generic adapters retain a copy here,
+// while runtimes with validator-hook support receive equivalent effect compatibility below.
 const bootedCores = new WeakSet()
 const finalizedChoicesByCore = new WeakMap()
 const registeredEffectsByCore = new WeakMap()
@@ -33,15 +31,6 @@ function effectSetFor(core) {
     registeredEffectsByCore.set(core, registered)
   }
   return registered
-}
-
-function aliasMapFor(core) {
-  let aliases = aliasCompatibilityByCore.get(core)
-  if (!aliases) {
-    aliases = new Map()
-    aliasCompatibilityByCore.set(core, aliases)
-  }
-  return aliases
 }
 
 function choiceSetFor(core) {
@@ -92,38 +81,23 @@ function resolveValidatorOperation(dispatch, func, call, resolvedArgs) {
   return null
 }
 
-function registerValidatorCompatibility(core, namespace, func, instance, args) {
+function registerValidatorCompatibility(core, namespace, func, instance) {
   if (typeof core.registerValidatorHook !== 'function') return []
 
-  const aliases = Object.entries(instance.paramAliases || {})
   const deprecatedBy = instance.hidden && instance.deprecatedBy ? instance.deprecatedBy : null
   const dispatch = validatorDispatchFor(core, func)
   const opName = `${namespace}.${func}`
-  const hasCompatibility = aliases.length > 0 || !!deprecatedBy
-  const markerName = hasCompatibility
+  const markerName = deprecatedBy
     ? `__noisemakerCompatibility_${namespace}_${func}`.replace(/[^A-Za-z0-9_]/g, '_')
     : null
   const compatibility = {
-    deprecatedBy: null,
+    deprecatedBy: deprecatedBy || null,
     markerName,
     opName,
-    paramAliases: new Map(),
   }
   dispatch.operations.set(opName, compatibility)
 
-  const aliasArgs = []
-  for (const [oldName, newName] of aliases) {
-    compatibility.paramAliases.set(oldName, newName)
-
-    const canonical = args.find(({ name }) => name === newName)
-    if (canonical) aliasArgs.push({ ...canonical, name: oldName })
-  }
-
-  if (deprecatedBy) {
-    compatibility.deprecatedBy = deprecatedBy
-  }
-
-  if (hasCompatibility && !dispatch.installed) {
+  if (deprecatedBy && !dispatch.installed) {
     core.registerValidatorHook(func, ({ args: resolvedArgs, call, pushDiagnostic }) => {
       const selected = resolveValidatorOperation(dispatch, func, call, resolvedArgs)
       if (!selected) return
@@ -133,42 +107,15 @@ function registerValidatorCompatibility(core, namespace, func, instance, args) {
         pushDiagnostic(
           'S008',
           call,
-          `effect '${func}' is deprecated, use '${selected.deprecatedBy}' instead. ` +
-            `Aliases will be removed on ${ALIAS_EOL_DATE}.`,
+          `effect '${func}' is deprecated, use '${selected.deprecatedBy}' instead.`,
         )
-      }
-
-      const kwargs = call?.kwargs
-      for (const [oldName, newName] of selected.paramAliases) {
-        if (!Object.prototype.hasOwnProperty.call(resolvedArgs, oldName)) continue
-
-        if (kwargs && Object.prototype.hasOwnProperty.call(kwargs, oldName)) {
-          if (!Object.prototype.hasOwnProperty.call(kwargs, newName)) {
-            resolvedArgs[newName] = resolvedArgs[oldName]
-            kwargs[newName] = kwargs[oldName]
-          }
-          delete kwargs[oldName]
-          pushDiagnostic(
-            'S007',
-            call,
-            `param '${oldName}' is deprecated, use '${newName}' instead. ` +
-              `Aliases will be removed on ${ALIAS_EOL_DATE}.`,
-          )
-        }
-        delete resolvedArgs[oldName]
       }
     })
     dispatch.installed = true
   }
 
-  if (!markerName) return aliasArgs
-  if (args.some(({ name }) => name === markerName)) {
-    throw new Error(`Reserved compatibility parameter '${markerName}' is already in use`)
-  }
-  return [
-    ...aliasArgs,
-    { name: markerName, type: 'boolean', default: true, min: false, max: true },
-  ]
+  if (!markerName) return []
+  return [{ name: markerName, type: 'boolean', default: true, min: false, max: true }]
 }
 
 function isStarter(instance) {
@@ -232,6 +179,9 @@ export async function registerEffectInstance(
       if (!instance.shaders && exported.shaders) instance.shaders = exported.shaders
     }
 
+    if (instance.paramAliases !== undefined) {
+      throw new Error('paramAliases is no longer supported')
+    }
     if (!instance.namespace) instance.namespace = namespace
     const func = instance.func || effectName
     const aliases = [
@@ -263,12 +213,9 @@ export async function registerEffectInstance(
       }
     })
 
-    const aliasArgs = registerValidatorCompatibility(core, namespace, func, instance, args)
+    const compatArgs = registerValidatorCompatibility(core, namespace, func, instance)
     if (core.registerOp) {
-      core.registerOp(`${namespace}.${func}`, { name: func, args: [...args, ...aliasArgs] })
-    }
-    if (instance.paramAliases) {
-      aliasMapFor(core).set(`${namespace}.${func}`, { ...instance.paramAliases })
+      core.registerOp(`${namespace}.${func}`, { name: func, args: [...args, ...compatArgs] })
     }
     if (isStarter(instance) && core.registerStarterOps) {
       core.registerStarterOps([func, `${namespace}.${func}`])
@@ -301,8 +248,3 @@ export async function finalizeEnums(core, allChoices) {
   }
 }
 
-export function getParamAliasCompatibility(core, opName) {
-  requireCore(core)
-  const aliases = aliasCompatibilityByCore.get(core)?.get(opName)
-  return aliases ? { ...aliases } : {}
-}

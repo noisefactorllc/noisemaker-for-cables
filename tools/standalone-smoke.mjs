@@ -916,8 +916,9 @@ try {
   // Standalone instances. This exercises the ordinary saved-project lifecycle:
   // the project loads after a full editor restart and renders again, the
   // Noisemaker op can be removed from the saved project and the reduced project
-  // still loads cleanly, and a legacy-parameter saved project (deprecated
-  // parameter aliases) still loads and renders through the current op.
+  // still loads cleanly, and a legacy-parameter saved project (retired
+  // parameter aliases) fails closed through the current op with the compiler's
+  // unknown-argument diagnostic.
   // CDP websocket connects on CI runners can hang after a successful
   // /json/version poll (observed on windows-2025); boot the instance again
   // once before giving up.
@@ -1096,8 +1097,10 @@ try {
   }
 
   // Saved-project upgrade: a project saved against an older parameter surface
-  // (deprecated parameter aliases) must still load and render through the
-  // current op.
+  // (retired parameter aliases) must fail closed through the current op: the
+  // retired names no longer compile, and the op surfaces the compiler's
+  // unknown-argument diagnostic on its Error port instead of rendering or
+  // crashing the editor.
   const upgradePatchPath = join(reloadProjectDirectory, 'noisemaker-program-legacy-parameters.cables')
   const upgradedProject = JSON.parse(await readFile(patchPath, 'utf8'))
   const legacyDsl = 'search classicNoisedeck\ncellNoise(cellSmooth: 20, cellVariation: 50, loopAmp: 2).write(o0)\nrender(o0)'
@@ -1114,15 +1117,16 @@ try {
   try {
     const upgradedState = await waitFor(async () => {
       const state = await upgradeInstance.readProgramState()
-      return state?.ready && state.texture && state.error === '' ? state : null
-    }, 'legacy-parameter saved project did not render through the current op')
+      return state?.error && !state.ready ? state : null
+    }, 'legacy-parameter saved project did not surface the retired-parameter compile error')
     assert.match(upgradedState.dsl, /cellSmooth:/)
+    assert.match(upgradedState.error, /Unknown argument 'cellSmooth'/)
+    assert.equal(upgradedState.ready, false)
     const upgradeTerminalErrors = renderErrorsIn(upgradeInstance.terminalLines)
     assertNoRenderErrors(upgradeTerminalErrors, 'the legacy-parameter saved project logged errors on reload')
     savedProjectUpgrade = {
+      error: upgradedState.error,
       ready: upgradedState.ready,
-      rendered: upgradedState.texture,
-      size: { height: upgradedState.height, width: upgradedState.width },
     }
   } finally {
     if (upgradeInstance.browser) await upgradeInstance.browser.close().catch(() => {})

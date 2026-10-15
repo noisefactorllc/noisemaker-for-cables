@@ -4,7 +4,6 @@ import { test } from 'node:test'
 import {
   bootCore,
   finalizeEnums,
-  getParamAliasCompatibility,
   registerEffectInstance,
 } from '../src/runtime/register-effect.js'
 
@@ -71,7 +70,6 @@ test('registerEffectInstance registers aliases, op metadata, starters, enums, an
         type: 'int',
       },
     },
-    paramAliases: { oldTint: 'tint' },
     passes: [{ inputs: {}, name: 'render' }],
   }
   const choices = {}
@@ -139,10 +137,23 @@ test('registerEffectInstance registers aliases, op metadata, starters, enums, an
       },
     },
   })
-  assert.deepEqual(getParamAliasCompatibility(firstCore, 'synth.spark'), {
-    oldTint: 'tint',
-  })
-  assert.equal(getParamAliasCompatibility(secondCore, 'synth.spark').oldTint, 'tint')
+})
+
+test('registerEffectInstance rejects retired parameter-alias metadata', async () => {
+  const core = createFakeCore()
+  const instance = {
+    func: 'spark',
+    globals: { tint: { default: [1, 0.5, 0.25, 1], type: 'vec4' } },
+    paramAliases: { oldTint: 'tint' },
+    passes: [{ inputs: {}, name: 'render' }],
+  }
+
+  await assert.rejects(
+    () => registerEffectInstance(core, 'synth', 'sparkle', instance, {}),
+    /paramAliases is no longer supported/,
+  )
+  assert.deepEqual(core.calls.effects, [])
+  assert.deepEqual(core.calls.ops, [])
 })
 
 test('registerEffectInstance instantiates class exports and attaches static shaders', async () => {

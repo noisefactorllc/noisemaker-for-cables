@@ -104,55 +104,18 @@ async function captureWarnings(run) {
   }
 }
 
-function valueToDsl(value, type) {
-  if (type === 'member') return String(value)
-  if (type === 'boolean') return value ? 'true' : 'false'
-  if (type === 'color') {
-    if (typeof value === 'string') return value
-    const channels = value.map((channel) =>
-      Math.max(0, Math.min(255, Math.round(channel * 255)))
-        .toString(16)
-        .padStart(2, '0'),
-    )
-    return `#${channels.join('')}`
+async function captureRejection(run) {
+  const previousWarn = console.warn
+  console.warn = () => {}
+  try {
+    await run()
+  } catch (error) {
+    assert.equal(error.code, 'ERR_COMPILATION_FAILED')
+    return { diagnostics: error.diagnostics }
+  } finally {
+    console.warn = previousWarn
   }
-  assert.equal(typeof value, 'number', `unsupported ${type} alias value`)
-  return String(value)
-}
-
-function replaceOrInsertKeyword(program, func, canonicalName, keywordName, value) {
-  const callPattern = new RegExp(`\\b${func}\\s*\\(`)
-  const match = callPattern.exec(program)
-  assert.ok(match, `${func}() is missing from its catalog program`)
-  const argsStart = match.index + match[0].length
-  let depth = 1
-  let argsEnd = argsStart
-  let quote = null
-  for (; argsEnd < program.length; argsEnd += 1) {
-    const character = program[argsEnd]
-    if (quote) {
-      if (character === '\\') argsEnd += 1
-      else if (character === quote) quote = null
-      continue
-    }
-    if (character === '"' || character === "'") {
-      quote = character
-      continue
-    }
-    if (character === '(') depth += 1
-    if (character === ')') depth -= 1
-    if (depth === 0) break
-  }
-  assert.ok(argsEnd < program.length, `${func}() has an unterminated argument list`)
-
-  const args = program.slice(argsStart, argsEnd)
-  const canonicalPattern = new RegExp(`\\b${canonicalName}(?=\\s*:)`)
-  const updatedArgs = canonicalPattern.test(args)
-    ? args.replace(canonicalPattern, keywordName)
-    : args.trim()
-      ? `${keywordName}: ${value}, ${args}`
-      : `${keywordName}: ${value}`
-  return `${program.slice(0, argsStart)}${updatedArgs}${program.slice(argsEnd)}`
+  assert.fail('expected the compilation to fail')
 }
 
 async function loadCompatibilityCases() {
@@ -191,25 +154,29 @@ async function loadCompatibilityCases() {
   return { deprecatedEffects, parameterAliases }
 }
 
-test('legacy noiseType parameter compiles with the pinned reference diagnostic', async () => {
+test('retired parameter names fail compilation with the pinned reference diagnostic', async () => {
   installTestDomShim()
   const dsl = `search synth\n\nnoise(noiseType: 10)\n  .write(o0)\n\nrender(o0)`
   const { compileProgram } = await import('../src/runtime/engine.js')
   const reference = await createReferenceCompiler()
 
-  const expected = await captureWarnings(() => reference.compileGraph(dsl))
-  const actual = await captureWarnings(() => compileProgram(dsl))
+  const expected = await captureRejection(() => reference.compileGraph(dsl))
+  const actual = await captureRejection(() => compileProgram(dsl))
 
-  assert.deepEqual(normalizeCompilerValue(actual.value), normalizeCompilerValue(expected.value))
-  assert.deepEqual(actual.warnings, expected.warnings)
-  assert.deepEqual(actual.warnings, [
-    "[noisemaker] S007: param 'noiseType' is deprecated, use 'type' instead. Aliases will be removed on 2026-09-01.",
-  ])
+  assert.deepEqual(actual.diagnostics, expected.diagnostics)
+  assert.ok(
+    actual.diagnostics.some(
+      (diagnostic) =>
+        diagnostic.code === 'S001' && diagnostic.message.includes("Unknown argument 'noiseType'"),
+    ),
+    JSON.stringify(actual.diagnostics),
+  )
+  assert.ok(!actual.diagnostics.some((diagnostic) => diagnostic.code === 'S007'))
 })
 
-test('canonical parameters win over legacy aliases while retaining the native warning', async () => {
+test('canonical parameter names compile without the retired alias diagnostics', async () => {
   installTestDomShim()
-  const dsl = `search synth\n\nnoise(noiseType: 0, type: 10)\n  .write(o0)\n\nrender(o0)`
+  const dsl = `search synth\n\nnoise(type: 10)\n  .write(o0)\n\nrender(o0)`
   const { compileProgram } = await import('../src/runtime/engine.js')
   const reference = await createReferenceCompiler()
 
@@ -219,9 +186,7 @@ test('canonical parameters win over legacy aliases while retaining the native wa
   assert.deepEqual(normalizeCompilerValue(actual.value), normalizeCompilerValue(expected.value))
   assert.ok(Object.keys(actual.value.programs).some((name) => name.includes('NOISE_TYPE_10')))
   assert.deepEqual(actual.warnings, expected.warnings)
-  assert.deepEqual(actual.warnings, [
-    "[noisemaker] S007: param 'noiseType' is deprecated, use 'type' instead. Aliases will be removed on 2026-09-01.",
-  ])
+  assert.deepEqual(actual.warnings, [])
 })
 
 test('legacy aliases do not leak into a same-named effect in another namespace', async () => {
@@ -238,52 +203,11 @@ test('legacy aliases do not leak into a same-named effect in another namespace',
   assert.deepEqual(actual.warnings, [])
 })
 
-test('every pinned legacy parameter alias matches the independently registered reference', async () => {
+test('the pinned catalog carries no legacy parameter alias', async () => {
   installTestDomShim()
-  const { createCatalogProgram } = await import('../parity/catalog-inputs.js')
-  const { compileProgram } = await import('../src/runtime/engine.js')
-  const reference = await createReferenceCompiler()
   const { parameterAliases } = await loadCompatibilityCases()
 
-  assert.equal(parameterAliases.length, 84)
-  assert.ok(
-    parameterAliases.some(
-      ({ effectId, newName, oldName }) =>
-        effectId === 'synth/noise' && oldName === 'noiseType' && newName === 'type',
-    ),
-  )
-
-  for (const alias of parameterAliases) {
-    const { definition, effectId, func, metadata, newName, oldName } = alias
-    const canonical = definition.globals[newName]
-    const fixture = createCatalogProgram({ effectId, definition, metadata })
-    const dsl = replaceOrInsertKeyword(
-      fixture,
-      func,
-      newName,
-      oldName,
-      valueToDsl(canonical.default, canonical.type),
-    )
-    const expected = await captureWarnings(() => reference.compileGraph(dsl))
-    const actual = await captureWarnings(() => compileProgram(dsl))
-
-    assert.deepEqual(
-      normalizeCompilerValue(actual.value),
-      normalizeCompilerValue(expected.value),
-      `${effectId} alias ${oldName} diverged from the pinned compiler`,
-    )
-    assert.deepEqual(
-      actual.warnings,
-      expected.warnings,
-      `${effectId} alias ${oldName} warning diverged from the pinned compiler`,
-    )
-    assert.ok(
-      actual.warnings.includes(
-        `[noisemaker] S007: param '${oldName}' is deprecated, use '${newName}' instead. Aliases will be removed on 2026-09-01.`,
-      ),
-      `${effectId} alias ${oldName} did not emit its deprecation warning`,
-    )
-  }
+  assert.deepEqual(parameterAliases, [])
 })
 
 test('every pinned deprecated effect emits the reference deprecation diagnostic', async () => {
