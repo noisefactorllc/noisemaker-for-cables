@@ -209,7 +209,7 @@ try {
 
   const cdpUrl = `http://127.0.0.1:${cdpPort}`
   await waitFor(async () => {
-    const response = await fetch(`${cdpUrl}/json/version`)
+    const response = await fetch(`${cdpUrl}/json/version`, { signal: AbortSignal.timeout(5_000) })
     return response.ok
   }, 'Cables Standalone did not expose CDP')
   await waitForCdpPageTarget(cdpUrl, 'Cables Standalone did not expose an editor page target')
@@ -922,9 +922,13 @@ try {
   // CDP websocket connects on CI runners can hang after a successful
   // /json/version poll (observed on windows-2025); boot the instance again
   // once before giving up.
-  const bootProjectInstance = async (patchPath, cdpPort) => {
+  // Each attempt listens on its own port, so a retry never meets a DevTools
+  // socket an earlier attempt's process left behind. Instances use base ports a
+  // step apart, so the attempt offsets never collide with another instance.
+  const bootProjectInstance = async (patchPath, basePort) => {
     let lastError
-    for (let attempt = 1; attempt <= 2; attempt += 1) {
+    for (let attempt = 1; attempt <= 3; attempt += 1) {
+      const cdpPort = basePort + (attempt - 1) * 10
       const profile = await mkdtemp(join(tmpdir(), 'noisemaker-cables-project-profile-'))
       const terminalLines = []
       const url = `http://127.0.0.1:${cdpPort}`
@@ -945,8 +949,10 @@ try {
       let browser
       let frame
       try {
+        // Abort each probe so a stalled endpoint cannot hold one fetch past
+        // the wait's own deadline.
         await waitFor(async () => {
-          const response = await fetch(`${url}/json/version`)
+          const response = await fetch(`${url}/json/version`, { signal: AbortSignal.timeout(5_000) })
           return response.ok
         }, 'reloaded saved project did not expose CDP', 90_000)
         await waitForCdpPageTarget(url, 'reloaded saved project did not expose an editor page target')
@@ -985,7 +991,7 @@ try {
       } catch (error) {
         // Sandboxed or cold-start hosts can exceed the default 30 s CDP wait;
         // surface the instance's own output before failing or retrying.
-        console.error(`[smoke] project instance attempt ${attempt} terminal tail:\n${terminalLines.slice(-30).join('\n')}`)
+        console.error(`[smoke] project instance attempt ${attempt} on port ${cdpPort} failed: ${error.message}\nterminal tail:\n${terminalLines.slice(-30).join('\n')}`)
         lastError = error
         if (browser) await browser.close().catch(() => {})
         await stopChild(child)

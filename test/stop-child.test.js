@@ -69,3 +69,56 @@ test('releases the child stdio pipes once the child is gone', async () => {
   await stopChild(runningChild, { delay: () => new Promise(() => {}) })
   assert.deepEqual(destroyed.sort(), ['stderr', 'stdout'])
 })
+
+test('ends the whole process tree on Windows before waiting for exit', async () => {
+  const child = Object.assign(new EventEmitter(), { exitCode: null, pid: 4242 })
+  const signals = []
+  const trees = []
+  child.kill = (signal) => {
+    signals.push(signal)
+    return true
+  }
+  const killTree = async (pid) => {
+    trees.push(pid)
+    child.exitCode = 1
+    child.emit('exit', 1, null)
+    return true
+  }
+  await stopChild(child, { platform: 'win32', killTree, delay: () => new Promise(() => {}) })
+  assert.deepEqual(trees, [4242])
+  assert.deepEqual(signals, [], 'a tree kill must not fall back to signalling the main process alone')
+})
+
+test('falls back to SIGKILL on Windows when the tree kill leaves the child running', async () => {
+  const child = Object.assign(new EventEmitter(), { exitCode: null, pid: 4243 })
+  const signals = []
+  child.kill = (signal) => {
+    signals.push(signal)
+    if (signal === 'SIGKILL') {
+      child.exitCode = 1
+      child.emit('exit', 1, 'SIGKILL')
+    }
+    return true
+  }
+  await stopChild(child, { platform: 'win32', killTree: async () => false, delay: async () => {} })
+  assert.deepEqual(signals, ['SIGKILL'])
+})
+
+test('signals the main process directly off Windows', async () => {
+  const child = Object.assign(new EventEmitter(), { exitCode: null, pid: 4244 })
+  const signals = []
+  const trees = []
+  child.kill = (signal) => {
+    signals.push(signal)
+    child.exitCode = 0
+    child.emit('exit', 0, signal)
+    return true
+  }
+  await stopChild(child, {
+    platform: 'darwin',
+    killTree: async (pid) => trees.push(pid),
+    delay: () => new Promise(() => {}),
+  })
+  assert.deepEqual(signals, ['SIGTERM'])
+  assert.deepEqual(trees, [])
+})
