@@ -162,7 +162,7 @@ if (cablesStandalone.platform === 'linux') {
   )
 }
 
-const userDataDirectory = await mkdtemp(join(tmpdir(), 'noisemaker-cables-smoke-'))
+let userDataDirectory = await mkdtemp(join(tmpdir(), 'noisemaker-cables-smoke-'))
 // On Linux the editor opens folders and links through xdg-open, which can
 // start a browser or file manager on the test display. Put a stub first on the
 // editor's PATH that records each request and opens nothing.
@@ -188,36 +188,60 @@ try {
     )
   }
   await mkdir(reportRoot, { recursive: true })
-  child = spawn(executable, [
-    `--patch=${patchPath}`,
-    `--remote-debugging-port=${cdpPort}`,
-    `--user-data-dir=${userDataDirectory}`,
-    // Chromium helper processes (renderer, GPU) refuse to start inside
-    // sandboxed automation hosts when their own sandbox cannot initialize,
-    // which kills the GPU process on macOS hosts; --no-sandbox is also
-    // required for the Linux CI container's chrome-sandbox SUID helper.
-    '--no-sandbox',
-    ...graphicsFlags(),
-  ], {
-    env: childEnvironment,
-    stdio: ['ignore', 'pipe', 'pipe'],
-  })
-  for (const stream of [child.stdout, child.stderr]) {
-    stream.setEncoding('utf8')
-    stream.on('data', (chunk) => terminalLines.push(...chunk.split(/\r?\n/).filter(Boolean)))
+  // A stuck editor process cannot be recovered by reconnecting to it: on
+  // LARGEBOI (Windows 11, Standalone 0.11.0) the network service crashed and
+  // restarted after launch, and all three 60 s connects to the first instance's
+  // DevTools websocket hung. Relaunch the editor, like the project instances
+  // below, on a fresh port and profile after ending the stuck process tree.
+  // Attempt ports stay clear of the project instances' ports.
+  for (let attempt = 1; ; attempt += 1) {
+    const attemptPort = cdpPort + (attempt - 1) * 30
+    child = spawn(executable, [
+      `--patch=${patchPath}`,
+      `--remote-debugging-port=${attemptPort}`,
+      `--user-data-dir=${userDataDirectory}`,
+      // Chromium helper processes (renderer, GPU) refuse to start inside
+      // sandboxed automation hosts when their own sandbox cannot initialize,
+      // which kills the GPU process on macOS hosts; --no-sandbox is also
+      // required for the Linux CI container's chrome-sandbox SUID helper.
+      '--no-sandbox',
+      ...graphicsFlags(),
+    ], {
+      env: childEnvironment,
+      stdio: ['ignore', 'pipe', 'pipe'],
+    })
+    for (const stream of [child.stdout, child.stderr]) {
+      stream.setEncoding('utf8')
+      stream.on('data', (chunk) => terminalLines.push(...chunk.split(/\r?\n/).filter(Boolean)))
+    }
+
+    const cdpUrl = `http://127.0.0.1:${attemptPort}`
+    try {
+      await waitFor(async () => {
+        const response = await fetch(`${cdpUrl}/json/version`, { signal: AbortSignal.timeout(5_000) })
+        return response.ok
+      }, 'Cables Standalone did not expose CDP')
+      await waitForCdpPageTarget(cdpUrl, 'Cables Standalone did not expose an editor page target')
+      browser = await connectOverCDPWithRetry(
+        cdpUrl,
+        'Cables Standalone DevTools endpoint did not accept the CDP connection',
+        [60_000, 60_000],
+      )
+      break
+    } catch (error) {
+      if (attempt === 3) throw error
+      console.error(`[smoke] editor instance attempt ${attempt} on port ${attemptPort} failed: ${error.message}\nterminal tail:\n${terminalLines.slice(-30).join('\n')}`)
+      if (browser) await browser.close().catch(() => {})
+      browser = undefined
+      await stopChild(child)
+      child = undefined
+      // The relaunched editor starts from a fresh profile, and only its own
+      // output counts toward the render-error checks.
+      terminalLines.length = 0
+      await removeTemporaryDirectory(userDataDirectory)
+      userDataDirectory = await mkdtemp(join(tmpdir(), 'noisemaker-cables-smoke-'))
+    }
   }
-
-  const cdpUrl = `http://127.0.0.1:${cdpPort}`
-  await waitFor(async () => {
-    const response = await fetch(`${cdpUrl}/json/version`, { signal: AbortSignal.timeout(5_000) })
-    return response.ok
-  }, 'Cables Standalone did not expose CDP')
-  await waitForCdpPageTarget(cdpUrl, 'Cables Standalone did not expose an editor page target')
-
-  browser = await connectOverCDPWithRetry(
-    cdpUrl,
-    'Cables Standalone DevTools endpoint did not accept the CDP connection',
-  )
   gpuInfo = await browser.newBrowserCDPSession()
     .then((session) => Promise.race([
       session.send('SystemInfo.getInfo'),
