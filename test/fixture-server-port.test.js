@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url'
 
 const script = fileURLToPath(new URL('../test/browser/server.mjs', import.meta.url))
 
-// Candidate fixture ports: the sandboxed macOS GPU host broker only allows
+// Candidate fixture ports: the sandboxed macOS GPU host only allows
 // listeners on 43117-43126 (binding 0 or 4173 fails with EPERM there), and the
 // same range binds fine in ordinary environments. The first candidate the
 // server can actually bind wins, so the test never silently skips.

@@ -7,7 +7,7 @@ const root = resolve(import.meta.dirname, '../..')
 const host = '127.0.0.1'
 // CABLES_FIXTURE_PORT overrides the fixture port for environments that only
 // allow loopback listeners in a narrow range (the sandboxed macOS GPU host
-// broker serves hosted runs on ports 43117-43126); the default stays 4173.
+// serves hosted runs on ports 43117-43126); the default stays 4173.
 const port = Number(process.env.CABLES_FIXTURE_PORT) || 4173
 
 const contentTypes = new Map([

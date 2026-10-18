@@ -189,7 +189,7 @@ try {
   }
   await mkdir(reportRoot, { recursive: true })
   // A stuck editor process cannot be recovered by reconnecting to it: on
-  // LARGEBOI (Windows 11, Standalone 0.11.0) the network service crashed and
+  // a Windows 11 PC (Standalone 0.11.0) the network service crashed and
   // restarted after launch, and all three 60 s connects to the first instance's
   // DevTools websocket hung. Relaunch the editor, like the project instances
   // below, on a fresh port and profile after ending the stuck process tree.
