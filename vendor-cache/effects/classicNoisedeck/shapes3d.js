@@ -1013,6 +1013,8 @@ fn main(@builtin(position) pos : vec4<f32>) -> @location(0) vec4<f32> {
 | cameraDist | float | 8 | 5-20 | Cam distance |
 | bgColor | color | 1,1,1 | - | Bkg color |
 | bgAlpha | float | 0 | 0-100 | Bkg opacity |
+| tex | surface | none | - | Texture |
+| weight | float | 0 | 0-100 | Input weight |
 | colorMode | int | palette | depth/diffuse/palette | Color mode |
 | palette | palette | silvermane | none/seventiesShirt/fiveG/afterimage/barstow/bloob/blueSkies/brushedMetal/burningSky/california/columbia/cottonCandy/darkSatin/dealerHat/dreamy/eventHorizon/ghostly/grayscale/hazySunset/heatmap/hypercolor/jester/justBlue/justCyan/justGreen/justPurple/justRed/justYellow/mars/modesto/moss/neptune/netOfGems/organic/papaya/radioactive/royal/santaCruz/sherbet/sherbetDouble/silvermane/skykissed/solaris/spooky/springtime/sproingtime/sulphur/summoning/superhero/toxic/tropicalia/tungsten/vaporwave/vibrant/vintage/vintagePhoto | Palette |
 | cyclePalette | int | forward | off/forward/backward | Cycle palette |
@@ -1041,4 +1043,4 @@ shapes3d(tex: read(o0))
 
 render(o1)
 \`\`\`
-`;if(t&&Object.keys(c).length>0){t.shaders||(t.shaders={});for(let[n,e]of Object.entries(c))t.shaders[n]={...e}}t&&m&&(t.help=m);var N="classicNoisedeck/shapes3d",O="classicNoisedeck",T="shapes3d",H=t;export{H as default,N as effectId,T as effectName,m as help,O as namespace};
+`;if(t&&Object.keys(c).length>0){t.shaders||(t.shaders={});for(let[n,e]of Object.entries(c))t.shaders[n]={...e}}t&&m&&(t.help=m);var N="classicNoisedeck/shapes3d",T="classicNoisedeck",O="shapes3d",H=t;export{H as default,N as effectId,O as effectName,m as help,T as namespace};

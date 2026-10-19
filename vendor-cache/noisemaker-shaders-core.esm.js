@@ -3,8 +3,8 @@
  * Includes: CanvasRenderer + UIController + EffectSelect
  * Copyright (c) 2017-2026 Noise Factor LLC. https://noisefactor.io/
  * SPDX-License-Identifier: MIT
- * Build: 6cb1a3c3
- * Date: 2026-10-13T22:50:58.160Z
+ * Build: 0553e242
+ * Date: 2026-10-19T04:16:42.596Z
  */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
@@ -810,6 +810,15 @@ var _namespaces = new Map(
 var _builtinIds = new Set(_namespaces.keys());
 var _RESERVED_FUNCTION_NAMES = ["from", "osc", "midi", "audio", "null", "undefined"];
 var _ID_PATTERN = /^[a-z][a-zA-Z0-9]*$/;
+function _lexesAsIdentifier(id) {
+  let tokens;
+  try {
+    tokens = lex(id);
+  } catch {
+    return false;
+  }
+  return tokens.length === 2 && tokens[0].type === "IDENT" && tokens[0].lexeme === id;
+}
 var NAMESPACE_DESCRIPTIONS = new Proxy({}, {
   get(target, key, receiver) {
     if (typeof key === "string" && _namespaces.has(key)) {
@@ -877,6 +886,9 @@ function registerNamespace(id, descriptor) {
   }
   if (Object.prototype.hasOwnProperty.call(RESERVED_KEYWORDS, id)) {
     throw new Error(`Cannot register namespace '${id}': reserved DSL keyword`);
+  }
+  if (!_lexesAsIdentifier(id)) {
+    throw new Error(`Cannot register namespace '${id}': the DSL reads it as a surface reference`);
   }
   if (IO_FUNCTIONS.includes(id)) {
     throw new Error(`Cannot register namespace '${id}': reserved IO function name`);
@@ -3423,6 +3435,12 @@ function validate(ast) {
               }
             }
             args[argKey] = surf;
+          } else if (node && node.type === "Call" && node.args?.length === (node.name === "vec2" ? 2 : 4) && (def.type === "vec2" && node.name === "vec2" || def.type === "color" && node.name === "vec4" && Array.isArray(def.default) && def.default.length === 4)) {
+            args[argKey] = node.args.map((arg) => {
+              if (arg.type === "Number") return arg.value;
+              pushDiag("S002", arg, `Argument out of range for '${def.name}' in ${call.name}()`);
+              return 0;
+            });
           } else if (def.type === "color") {
             if (node && node.type === "String") {
               pushDiag("S001", node, `String literal not allowed for color parameter '${def.name}'`);
@@ -3505,7 +3523,7 @@ function validate(ast) {
             } else if (node && node.type === "Func") {
               try {
                 const fn = new Function("state", `with(state){ return ${node.src}; }`);
-                value = { fn: (state) => !!fn(state) };
+                value = { fn: (state) => !!fn(state), _ast: node };
               } catch {
                 pushDiag("S001", node, `Invalid function for '${def.name}': '${node.src?.slice(0, 50) || "unknown"}'`);
                 value = def.default !== void 0 ? !!def.default : false;
@@ -3690,7 +3708,7 @@ function validate(ast) {
             } else if (node && node.type === "Func") {
               try {
                 const fn = new Function("state", `with(state){ return ${node.src}; }`);
-                value = { fn, min: def.min, max: def.max };
+                value = { fn, min: def.min, max: def.max, _ast: node };
               } catch {
                 pushDiag("S001", node, `Invalid function for '${def.name}': '${node.src?.slice(0, 50) || "unknown"}'`);
                 value = def.default;
@@ -3896,19 +3914,19 @@ function formatOscillator(osc) {
   const typeName = oscKindNames[osc.oscType] || "sine";
   const parts = [`type: oscKind.${typeName}`];
   if (osc.min !== 0) {
-    parts.push(`min: ${osc.min}`);
+    parts.push(`min: ${formatNumberText(osc.min)}`);
   }
   if (osc.max !== 1) {
-    parts.push(`max: ${osc.max}`);
+    parts.push(`max: ${formatNumberText(osc.max)}`);
   }
   if (osc.speed !== 1) {
-    parts.push(`speed: ${osc.speed}`);
+    parts.push(`speed: ${formatNumberText(osc.speed)}`);
   }
   if (osc.offset !== 0) {
-    parts.push(`offset: ${osc.offset}`);
+    parts.push(`offset: ${formatNumberText(osc.offset)}`);
   }
   if (osc.seed !== 1 && (osc.oscType === 5 || osc.oscType === 6)) {
-    parts.push(`seed: ${osc.seed}`);
+    parts.push(`seed: ${formatNumberText(osc.seed)}`);
   }
   return `osc(${parts.join(", ")})`;
 }
@@ -3926,13 +3944,13 @@ function formatMidi(midi) {
   if (midi.cc !== void 0) parts.push(`cc: ${midi.cc}`);
   if (midi.nrpn !== void 0) parts.push(`nrpn: ${midi.nrpn}`);
   if (midi.min !== 0) {
-    parts.push(`min: ${midi.min}`);
+    parts.push(`min: ${formatNumberText(midi.min)}`);
   }
   if (midi.max !== 1) {
-    parts.push(`max: ${midi.max}`);
+    parts.push(`max: ${formatNumberText(midi.max)}`);
   }
   if (midi.sensitivity !== 1) {
-    parts.push(`sensitivity: ${midi.sensitivity}`);
+    parts.push(`sensitivity: ${formatNumberText(midi.sensitivity)}`);
   }
   if (typeof midi.name === "string" && midi.name.length > 0) {
     parts.push(`name: ${JSON.stringify(midi.name)}`);
@@ -3950,10 +3968,10 @@ function formatAudio(audio) {
   const bandName = audioBandNames[audio.band] || "low";
   const parts = [`band: audioBand.${bandName}`];
   if (audio.min !== 0) {
-    parts.push(`min: ${audio.min}`);
+    parts.push(`min: ${formatNumberText(audio.min)}`);
   }
   if (audio.max !== 1) {
-    parts.push(`max: ${audio.max}`);
+    parts.push(`max: ${formatNumberText(audio.max)}`);
   }
   if (Number.isInteger(audio.channel) && audio.channel >= 1) {
     parts.push(`channel: ${audio.channel}`);
@@ -3973,6 +3991,9 @@ function formatEnumName(name) {
   return name;
 }
 function formatLosslessNumber(value) {
+  if (Number.isNaN(value)) return "0 / 0";
+  if (value === Infinity) return "1 / 0";
+  if (value === -Infinity) return "-1 / 0";
   const text = String(value);
   if (!/[eE]/.test(text)) return text;
   const [coefficient, exponentText] = text.toLowerCase().split("e");
@@ -3990,6 +4011,37 @@ function formatLosslessNumber(value) {
     return `${sign}${digits}${"0".repeat(decimalIndex - digits.length)}`;
   }
   return `${sign}${digits.slice(0, decimalIndex)}.${digits.slice(decimalIndex)}`;
+}
+function formatNumberText(value) {
+  return typeof value === "number" ? formatLosslessNumber(value) : String(value);
+}
+function quotedScanEndsAtClose(value, quote) {
+  const text = value + quote;
+  let i = 0;
+  while (i < text.length && text[i] !== quote && text[i] !== "\n") {
+    i += text[i] === "\\" && i + 1 < text.length ? 2 : 1;
+  }
+  return i === value.length;
+}
+function stringQuoteFor(value) {
+  const forms = value.includes("\n") ? ['"""', '"', "'"] : ['"', "'", '"""'];
+  return forms.find((form) => form === '"""' ? (value + '"""').indexOf('"""') === value.length : quotedScanEndsAtClose(value, form)) ?? null;
+}
+function formatStringLiteral(value) {
+  let content = value;
+  if (!stringQuoteFor(content)) {
+    content = "";
+    for (let i = 0; i < value.length; i++) {
+      const char = value[i];
+      if (char === "\\") {
+        content += i + 1 < value.length ? char + value[++i] : "\\\\";
+      } else {
+        content += char === '"' || char === "\n" ? `\\${char}` : char;
+      }
+    }
+  }
+  const quote = stringQuoteFor(content);
+  return `${quote}${content}${quote}`;
 }
 function formatValue(value, spec, options = {}, sourceForm) {
   if (value?.kind === "temp" && options.formatTemp) {
@@ -4018,6 +4070,9 @@ function formatValue(value, spec, options = {}, sourceForm) {
   }
   if (value?._ast?.type === "Ident") {
     return value._ast.name;
+  }
+  if (value?._ast?.type === "Func") {
+    return formatLetExpr(value._ast, options);
   }
   if (typeof value === "boolean") {
     return value ? "true" : "false";
@@ -4126,11 +4181,7 @@ function formatValue(value, spec, options = {}, sourceForm) {
     const isEnumPath = /^[a-zA-Z_][a-zA-Z0-9_]*(\.[a-zA-Z_][a-zA-Z0-9_]*)+$/.test(value);
     const needsQuoting = type === "string" || !isValidIdentifier2 && !isEnumPath;
     if (needsQuoting) {
-      if (value.includes("\n")) {
-        return `"""${value}"""`;
-      }
-      const escaped = value.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
-      return `"${escaped}"`;
+      return formatStringLiteral(value);
     }
     return value;
   }
@@ -4176,8 +4227,7 @@ function formatValue(value, spec, options = {}, sourceForm) {
   }
   if (typeof value === "object") {
     if (value.type === "String") {
-      const escaped = value.value.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
-      return `"${escaped}"`;
+      return formatStringLiteral(value.value);
     }
     if (value.type === "Oscillator") {
       return formatOscillator(value);
@@ -4207,19 +4257,19 @@ function formatValue(value, spec, options = {}, sourceForm) {
       }
       const parts = [`type: oscKind.${typeName}`];
       if (value.min && value.min.type === "Number" && value.min.value !== 0) {
-        parts.push(`min: ${value.min.value}`);
+        parts.push(`min: ${formatLosslessNumber(value.min.value)}`);
       }
       if (value.max && value.max.type === "Number" && value.max.value !== 1) {
-        parts.push(`max: ${value.max.value}`);
+        parts.push(`max: ${formatLosslessNumber(value.max.value)}`);
       }
       if (value.speed && value.speed.type === "Number" && value.speed.value !== 1) {
-        parts.push(`speed: ${value.speed.value}`);
+        parts.push(`speed: ${formatLosslessNumber(value.speed.value)}`);
       }
       if (value.offset && value.offset.type === "Number" && value.offset.value !== 0) {
-        parts.push(`offset: ${value.offset.value}`);
+        parts.push(`offset: ${formatLosslessNumber(value.offset.value)}`);
       }
       if (value.seed && value.seed.type === "Number" && value.seed.value !== 1) {
-        parts.push(`seed: ${value.seed.value}`);
+        parts.push(`seed: ${formatLosslessNumber(value.seed.value)}`);
       }
       return `osc(${parts.join(", ")})`;
     }
@@ -4243,13 +4293,13 @@ function formatValue(value, spec, options = {}, sourceForm) {
         if (value[field] !== void 0) parts.push(`${field}: ${formatLetExpr(value[field], options)}`);
       }
       if (value.min && value.min.type === "Number" && value.min.value !== 0) {
-        parts.push(`min: ${value.min.value}`);
+        parts.push(`min: ${formatLosslessNumber(value.min.value)}`);
       }
       if (value.max && value.max.type === "Number" && value.max.value !== 1) {
-        parts.push(`max: ${value.max.value}`);
+        parts.push(`max: ${formatLosslessNumber(value.max.value)}`);
       }
       if (value.sensitivity && value.sensitivity.type === "Number" && value.sensitivity.value !== 1) {
-        parts.push(`sensitivity: ${value.sensitivity.value}`);
+        parts.push(`sensitivity: ${formatLosslessNumber(value.sensitivity.value)}`);
       }
       return `midi(${parts.join(", ")})`;
     }
@@ -4265,10 +4315,10 @@ function formatValue(value, spec, options = {}, sourceForm) {
       }
       const parts = [`band: ${bandStr}`];
       if (value.min && value.min.type === "Number" && value.min.value !== 0) {
-        parts.push(`min: ${value.min.value}`);
+        parts.push(`min: ${formatLosslessNumber(value.min.value)}`);
       }
       if (value.max && value.max.type === "Number" && value.max.value !== 1) {
-        parts.push(`max: ${value.max.value}`);
+        parts.push(`max: ${formatLosslessNumber(value.max.value)}`);
       }
       if (value.channel?.type === "Number") parts.push(`channel: ${value.channel.value}`);
       if (value.name?.type === "String") {
@@ -4386,9 +4436,9 @@ function formatLetExpr(expr, options = {}) {
   const numVal = (node) => node && node.type === "Number" ? node.value : void 0;
   switch (expr.type) {
     case "Number":
-      return String(expr.value);
+      return formatLosslessNumber(expr.value);
     case "String":
-      return JSON.stringify(expr.value);
+      return formatStringLiteral(expr.value);
     case "Boolean":
       return expr.value ? "true" : "false";
     case "Ident":
@@ -4479,7 +4529,7 @@ function formatLetExpr(expr, options = {}) {
     case "Chain":
       return unparseChain(expr.chain, options);
     case "Func":
-      return `() => ${formatLetExpr(expr.body, options)}`;
+      return `() => ${expr.src}`;
     default:
       return formatValue(expr, null, options);
   }
@@ -4666,8 +4716,8 @@ function unparse(compiled, overrides = {}, options = {}) {
         const name = step.args?.name;
         const id = step.args?.id;
         const parts = [];
-        if (name) parts.push(`name: "${name}"`);
-        if (id) parts.push(`id: "${id}"`);
+        if (name) parts.push(`name: ${formatStringLiteral(name)}`);
+        if (id) parts.push(`id: ${formatStringLiteral(id)}`);
         const argsStr = parts.length > 0 ? parts.join(", ") : "";
         const elem = { code: `subchain(${argsStr}) {`, isSubchainBegin: true };
         if (step.leadingComments && step.leadingComments.length > 0) {
@@ -17141,6 +17191,16 @@ function cloneParamValue(value) {
 function isValidIdentifier(name) {
   return /^[a-zA-Z_][a-zA-Z0-9_]*$/.test(name);
 }
+function parsesAsUserEffectCall(name) {
+  let chain;
+  try {
+    chain = parse(lex(`search user
+${name}()`)).plans?.[0]?.chain;
+  } catch {
+    return false;
+  }
+  return chain?.length === 1 && chain[0].type === "Call" && chain[0].name === name;
+}
 function sanitizeEnumName(name) {
   let result = name.replace(/\s+(.)/g, (_, c) => c.toUpperCase()).replace(/\s+/g, "");
   result = result.replace(/[^a-zA-Z0-9_]/g, "");
@@ -17832,7 +17892,16 @@ var CanvasRenderer = class {
    * Reset the canvas element (for backend switching)
    */
   resetCanvas() {
-    if (!this._canvasContainer || !this._canvas) {
+    this._replaceCanvas(this._canvasContainer);
+  }
+  /**
+   * @private Put a fresh copy of the canvas in its place inside `parent`.
+   * A canvas keeps the context type that it got first, so a new backend
+   * needs a new canvas element.
+   * @param {Node|null} parent - The canvas's parent node
+   */
+  _replaceCanvas(parent) {
+    if (!parent || !this._canvas) {
       return;
     }
     this._removeContextLossHandlers();
@@ -17840,7 +17909,7 @@ var CanvasRenderer = class {
     newCanvas.id = this._canvas.id;
     newCanvas.width = this._canvas.width;
     newCanvas.height = this._canvas.height;
-    this._canvasContainer.replaceChild(newCanvas, this._canvas);
+    parent.replaceChild(newCanvas, this._canvas);
     this._canvas = newCanvas;
     this._isContextLost = false;
     this._setupContextLossHandlers();
@@ -17894,11 +17963,26 @@ var CanvasRenderer = class {
     pending.then(clear, clear);
     return pending;
   }
-  /** @private Compile after earlier requests for this canvas have settled. */
+  /**
+   * @private Compile after earlier requests for this canvas have settled.
+   * A rejected compile keeps the previous pipeline, so `currentDsl` returns
+   * to the source of that pipeline. A context restore then rebuilds the
+   * program that was rendering, not the rejected one.
+   */
   async _compile(dsl, options = {}) {
+    const previousDsl = this._currentDsl;
+    this._currentDsl = dsl;
+    try {
+      return await this._compileSource(dsl, options);
+    } catch (err) {
+      if (this._currentDsl === dsl) this._currentDsl = previousDsl;
+      throw err;
+    }
+  }
+  /** @private Build the pipeline for `dsl`, or recompile the active one. */
+  async _compileSource(dsl, options = {}) {
     const shaderOverrides = options.shaderOverrides;
     const lifecycleGeneration = this._lifecycleGeneration ?? 0;
-    this._currentDsl = dsl;
     if (!this._pipeline) {
       let initialPipeline;
       try {
@@ -18001,7 +18085,9 @@ var CanvasRenderer = class {
     }
   }
   /**
-   * Switch rendering backend
+   * Switch rendering backend. Call compile() again to render on the new
+   * backend. The new backend presents on a fresh canvas element in the old
+   * canvas's place, so read `renderer.canvas` after the switch.
    * @param {string} backend - 'glsl' or 'wgsl'
    */
   async switchBackend(backend) {
@@ -18015,6 +18101,9 @@ var CanvasRenderer = class {
       loseContext: previousBackend === "glsl",
       resetCanvas: true
     });
+    if (!this._canvasContainer) {
+      this._replaceCanvas(this._canvas?.parentNode);
+    }
   }
   // =========================================================================
   // Lazy Effect Loading
@@ -18213,6 +18302,7 @@ var CanvasRenderer = class {
     const { namespace, passes, shaders, globals, starter } = definition;
     const func = definition.func ?? definition.name;
     if (typeof func !== "string" || !isValidIdentifier(func)) fail("func must be a DSL identifier");
+    if (!parsesAsUserEffectCall(func)) fail(`reserved func ${func}`);
     const reserved = [...Object.getOwnPropertyNames(Object.prototype), "prototype"];
     if (reserved.includes(func)) fail(`reserved func ${func}`);
     const pending = [definition];
@@ -20666,66 +20756,51 @@ function createEffectDefCallback(getEffect2) {
 function extractEffectNamesFromDsl(dsl, manifest) {
   const effects2 = [];
   if (!dsl || typeof dsl !== "string") return effects2;
-  const lines = dsl.split("\n");
-  let searchNamespaces = [];
-  for (const line of lines) {
-    const trimmed = line.trim();
-    const statements = trimmed.split(";").map((s) => s.trim()).filter((s) => s);
-    for (const stmt of statements) {
-      if (stmt.startsWith("search ")) {
-        searchNamespaces = stmt.slice(7).split(",").map((s) => s.trim());
-        continue;
-      }
-      if (!stmt || stmt.startsWith("//")) continue;
-      const fromPattern = /\bfrom\s*\(\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*,\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*\(/g;
-      let fromMatch;
-      while ((fromMatch = fromPattern.exec(stmt)) !== null) {
-        const namespace = fromMatch[1];
-        const name = fromMatch[2];
-        const effectId = `${namespace}/${name}`;
-        if (manifest[effectId] && !effects2.find((e) => e.effectId === effectId)) {
-          effects2.push({ effectId, namespace, name });
-        }
-      }
-      const callPattern = /\b([a-zA-Z_][a-zA-Z0-9_]*(?:\.[a-zA-Z_][a-zA-Z0-9_]*)?)\s*\(/g;
-      let match;
-      while ((match = callPattern.exec(stmt)) !== null) {
-        const fullName = match[1];
-        let namespace = null;
-        let name = fullName;
-        if (fullName.includes(".")) {
-          const parts = fullName.split(".");
-          namespace = parts[0];
-          name = parts[1];
-        }
-        const builtins = ["read", "out", "vec2", "vec3", "vec4", "from"];
-        if (builtins.includes(name)) continue;
-        if (!namespace && searchNamespaces.length > 0) {
-          for (const ns of searchNamespaces) {
-            const testId = `${ns}/${name}`;
-            if (manifest[testId]) {
-              namespace = ns;
-              break;
-            }
-          }
-        }
-        if (!namespace) {
-          for (const ns of ["classicNoisedeck", "filter", "mixer", "synth"]) {
-            const testId = `${ns}/${name}`;
-            if (manifest[testId]) {
-              namespace = ns;
-              break;
-            }
-          }
-        }
-        if (namespace) {
-          const effectId = `${namespace}/${name}`;
-          if (!effects2.find((e) => e.effectId === effectId)) {
-            effects2.push({ effectId, namespace, name });
-          }
-        }
-      }
+  let tokens;
+  try {
+    tokens = lex(dsl).filter((token) => token.type !== "COMMENT");
+  } catch (_err) {
+    return effects2;
+  }
+  const searchOrder = [];
+  const searchIndex = tokens.findIndex((token) => token.type === "SEARCH");
+  if (searchIndex !== -1) {
+    for (let i = searchIndex + 1; i < tokens.length && tokens[i].type !== "EOF"; i += 2) {
+      searchOrder.push(tokens[i].lexeme);
+      if (tokens[i + 1]?.type !== "COMMA") break;
     }
+  }
+  const symbols = /* @__PURE__ */ new Map();
+  for (let i = 0; i + 3 < tokens.length; i++) {
+    if (tokens[i].type === "LET" && tokens[i + 1].type === "IDENT" && tokens[i + 2].type === "EQUAL" && tokens[i + 3].type === "IDENT") {
+      symbols.set(tokens[i + 1].lexeme, tokens[i + 3].lexeme);
+    }
+  }
+  const resolveSymbol = (name) => {
+    const seen = /* @__PURE__ */ new Set();
+    while (symbols.has(name) && !seen.has(name)) {
+      seen.add(name);
+      name = symbols.get(name);
+    }
+    return name;
+  };
+  const seenIds = /* @__PURE__ */ new Set();
+  const addEffect = (name, namespaces) => {
+    const namespace = namespaces.find((ns) => manifest[`${ns}/${name}`]);
+    if (namespace === void 0) return;
+    const effectId = `${namespace}/${name}`;
+    if (seenIds.has(effectId)) return;
+    seenIds.add(effectId);
+    effects2.push({ effectId, namespace, name });
+  };
+  for (let i = 0; i + 1 < tokens.length; i++) {
+    if (tokens[i].type !== "IDENT" || tokens[i + 1].type !== "LPAREN") continue;
+    if (tokens[i].lexeme === "from" && tokens[i + 2]?.type === "IDENT" && tokens[i + 3]?.type === "COMMA" && tokens[i + 4]?.type === "IDENT" && tokens[i + 5]?.type === "LPAREN") {
+      addEffect(tokens[i + 4].lexeme, [tokens[i + 2].lexeme]);
+      i += 4;
+      continue;
+    }
+    addEffect(resolveSymbol(tokens[i].lexeme), searchOrder);
   }
   return effects2;
 }
