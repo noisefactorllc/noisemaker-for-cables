@@ -1,5 +1,5 @@
 /* points/hydraulic */
-var t=class{constructor(e={}){this.state={},this.uniforms={},e.name&&(this.name=e.name),e.namespace&&(this.namespace=e.namespace),e.func&&(this.func=e.func),e.description&&(this.description=e.description),e.tags&&(this.tags=e.tags),e.globals&&(this.globals=e.globals),e.passes&&(this.passes=e.passes),e.textures&&(this.textures=e.textures),e.textures3d&&(this.textures3d=e.textures3d),e.shaders&&(this.shaders=e.shaders),e.externalTexture&&(this.externalTexture=e.externalTexture),e.externalMesh&&(this.externalMesh=e.externalMesh),e.builtinMeshes&&(this.builtinMeshes=e.builtinMeshes),e.outputTex3d&&(this.outputTex3d=e.outputTex3d),e.outputGeo&&(this.outputGeo=e.outputGeo),e.uniformLayout&&(this.uniformLayout=e.uniformLayout),e.uniformLayouts&&(this.uniformLayouts=e.uniformLayouts),e.openCategories&&(this.openCategories=e.openCategories),e.defaultProgram&&(this.defaultProgram=e.defaultProgram),e.hidden&&(this.hidden=!0),e.deprecatedBy&&(this.deprecatedBy=e.deprecatedBy),e.onInit&&(this._configOnInit=e.onInit),e.onUpdate&&(this._configOnUpdate=e.onUpdate),e.onDestroy&&(this._configOnDestroy=e.onDestroy),e.asyncInit&&(this._configAsyncInit=e.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(e){return this._configOnUpdate?this._configOnUpdate.call(this,e):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(e){return this._configAsyncInit?this._configAsyncInit.call(this,e):Promise.resolve()}};var n=new t({name:"Hydraulic",namespace:"points",func:"hydraulic",tags:["sim"],description:"Hydraulic erosion flow simulation (gradient descent)",textures:{},outputXyz:"global_xyz",outputVel:"global_vel",outputRgba:"global_rgba",globals:{stride:{type:"float",default:10,uniform:"stride",min:1,max:1e3,step:1,ui:{label:"stride",control:"slider",category:"agents"}},quantize:{type:"boolean",default:!1,uniform:"quantize",ui:{label:"quantize",control:"checkbox",category:"agents"}},inverse:{type:"boolean",default:!1,uniform:"inverse",ui:{label:"inverse",control:"checkbox",category:"agents"}},inputWeight:{type:"float",default:100,uniform:"inputWeight",min:0,max:100,step:1,ui:{label:"input weight",control:"slider",category:"agents"}}},passes:[{name:"agent",program:"agent",drawBuffers:3,inputs:{xyzTex:"global_xyz",velTex:"global_vel",rgbaTex:"global_rgba",inputTex:"inputTex"},uniforms:{stride:"stride",quantize:"quantize",inverse:"inverse",inputWeight:"inputWeight"},outputs:{outXYZ:"global_xyz",outVel:"global_vel",outRGBA:"global_rgba"}},{name:"passthrough",program:"passthrough",inputs:{inputTex:"inputTex"},outputs:{fragColor:"outputTex"}}]});var r={agent:{glsl:`#version 300 es
+var t=class{constructor(e={}){this.state={},this.uniforms={},e.name&&(this.name=e.name),e.namespace&&(this.namespace=e.namespace),e.func&&(this.func=e.func),e.description&&(this.description=e.description),e.tags&&(this.tags=e.tags),e.globals&&(this.globals=e.globals),e.passes&&(this.passes=e.passes),e.textures&&(this.textures=e.textures),e.textures3d&&(this.textures3d=e.textures3d),e.shaders&&(this.shaders=e.shaders),e.externalTexture&&(this.externalTexture=e.externalTexture),e.externalMesh&&(this.externalMesh=e.externalMesh),e.builtinMeshes&&(this.builtinMeshes=e.builtinMeshes),e.outputTex3d&&(this.outputTex3d=e.outputTex3d),e.outputGeo&&(this.outputGeo=e.outputGeo),e.uniformLayout&&(this.uniformLayout=e.uniformLayout),e.uniformLayouts&&(this.uniformLayouts=e.uniformLayouts),e.openCategories&&(this.openCategories=e.openCategories),e.defaultProgram&&(this.defaultProgram=e.defaultProgram),e.hidden&&(this.hidden=!0),e.deprecatedBy&&(this.deprecatedBy=e.deprecatedBy),e.onInit&&(this._configOnInit=e.onInit),e.onUpdate&&(this._configOnUpdate=e.onUpdate),e.onDestroy&&(this._configOnDestroy=e.onDestroy),e.asyncInit&&(this._configAsyncInit=e.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(e){return this._configOnUpdate?this._configOnUpdate.call(this,e):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(e){return this._configAsyncInit?this._configAsyncInit.call(this,e):Promise.resolve()}};var n=new t({name:"Hydraulic",namespace:"points",func:"hydraulic",tags:["sim"],description:"Hydraulic erosion flow simulation (gradient descent)",textures:{},outputXyz:"global_xyz",outputVel:"global_vel",outputRgba:"global_rgba",globals:{diffuseTex:{type:"surface",default:"none",colorModeUniform:"diffuseActive",ui:{label:"diffuse map",category:"agents"}},heightTex:{type:"surface",default:"none",colorModeUniform:"fieldActive",ui:{label:"height map",category:"agents"}},stride:{type:"float",default:10,uniform:"stride",min:1,max:1e3,step:1,ui:{label:"stride",control:"slider",category:"agents"}},quantize:{type:"boolean",default:!1,uniform:"quantize",ui:{label:"quantize",control:"checkbox",category:"agents"}},inverse:{type:"boolean",default:!1,uniform:"inverse",ui:{label:"inverse",control:"checkbox",category:"agents"}},inputWeight:{type:"float",default:100,uniform:"inputWeight",min:0,max:100,step:1,ui:{label:"input weight",control:"slider",category:"agents"}}},passes:[{name:"agent",program:"agent",drawBuffers:3,inputs:{xyzTex:"global_xyz",velTex:"global_vel",rgbaTex:"global_rgba",inputTex:"inputTex",heightTex:"heightTex",diffuseTex:"diffuseTex"},uniforms:{diffuseActive:"diffuseActive",fieldActive:"fieldActive",stride:"stride",quantize:"quantize",inverse:"inverse",inputWeight:"inputWeight"},outputs:{outXYZ:"global_xyz",outVel:"global_vel",outRGBA:"global_rgba"}},{name:"passthrough",program:"passthrough",inputs:{inputTex:"inputTex"},outputs:{fragColor:"outputTex"}}]});var r={agent:{glsl:`#version 300 es
 precision highp float;
 precision highp int;
 
@@ -12,8 +12,10 @@ uniform float stride;
 uniform float quantize;
 uniform float inverse;
 uniform float inputWeight;
+uniform float fieldActive;
 
 // Input state from pipeline (from pointsEmit)
+uniform sampler2D heightTex;
 uniform sampler2D inputTex;  // Source texture for gradient descent
 uniform sampler2D xyzTex;    // [x, y, z, alive]
 uniform sampler2D velTex;    // [x_dir, y_dir, inertia, 0]
@@ -23,6 +25,15 @@ uniform sampler2D rgbaTex;   // [r, g, b, a]
 layout(location = 0) out vec4 outXYZ;
 layout(location = 1) out vec4 outVel;
 layout(location = 2) out vec4 outRGBA;
+
+uniform sampler2D diffuseTex;
+uniform float diffuseActive;
+
+vec4 selectedDiffuse(vec2 uv) {
+    ivec2 size = textureSize(diffuseTex, 0);
+    ivec2 pixel = clamp(ivec2(clamp(uv, vec2(0.0), vec2(0.999999)) * vec2(size)), ivec2(0), size - 1);
+    return texelFetch(diffuseTex, pixel, 0);
+}
 
 // === ORIGINAL HFLOW HELPER FUNCTIONS (PRESERVED EXACTLY) ===
 
@@ -75,7 +86,7 @@ float oklab_l(vec3 rgb) {
 vec4 fetch_texel(int x, int y, int width, int height) {
     int wrapped_x = wrap_int(x, width);
     int wrapped_y = wrap_int(y, height);
-    return texelFetch(inputTex, ivec2(wrapped_x, wrapped_y), 0);
+    return fieldActive > 0.5 ? texelFetch(heightTex, ivec2(wrapped_x, wrapped_y), 0) : texelFetch(inputTex, ivec2(wrapped_x, wrapped_y), 0);
 }
 
 float luminance_at(int x, int y, int width, int height) {
@@ -199,7 +210,7 @@ void main() {
     
     outXYZ = vec4(newPx, newPy, xyz.z, alive);
     outVel = vec4(normVx, normVy, vz, seed_f);
-    outRGBA = rgba;
+    outRGBA = diffuseActive > 0.5 ? selectedDiffuse(outXYZ.xy) : rgba;
 }
 `,wgsl:`// Hflow agent pass - Common Agent Architecture middleware
 // Reads from global_xyz/vel/rgba, applies gradient descent, writes back
@@ -207,12 +218,14 @@ void main() {
 // Positions in normalized coords [0,1], velocities in pixel-space
 
 struct Uniforms {
+    diffuseActive: f32,
     resolution: vec2f,
     time: f32,
     stride: f32,
     quantize: f32,
     inverse: f32,
     inputWeight: f32,
+    fieldActive: f32,
 }
 
 struct Outputs {
@@ -223,9 +236,18 @@ struct Outputs {
 
 @group(0) @binding(0) var<uniform> u: Uniforms;
 @group(0) @binding(1) var inputTex: texture_2d<f32>;
+@group(0) @binding(7) var heightTex: texture_2d<f32>;
 @group(0) @binding(3) var xyzTex: texture_2d<f32>;
 @group(0) @binding(4) var velTex: texture_2d<f32>;
 @group(0) @binding(5) var rgbaTex: texture_2d<f32>;
+@group(0) @binding(6) var diffuseTex: texture_2d<f32>;
+
+fn selectedDiffuse(uv: vec2f) -> vec4f {
+    let size = textureDimensions(diffuseTex, 0);
+    let pixel = clamp(vec2i(clamp(uv, vec2f(0.0), vec2f(0.999999)) * vec2f(size)), vec2i(0), vec2i(size) - vec2i(1));
+    return textureLoad(diffuseTex, pixel, 0);
+}
+
 
 // === ORIGINAL HFLOW HELPER FUNCTIONS (PRESERVED EXACTLY) ===
 
@@ -278,7 +300,7 @@ fn oklab_l(rgb: vec3f) -> f32 {
 fn fetch_texel(x: i32, y: i32, width: i32, height: i32) -> vec4f {
     let wrapped_x = wrap_int(x, width);
     let wrapped_y = wrap_int(y, height);
-    return textureLoad(inputTex, vec2i(wrapped_x, wrapped_y), 0);
+    return select(textureLoad(inputTex, vec2i(wrapped_x, wrapped_y), 0), textureLoad(heightTex, vec2i(wrapped_x, wrapped_y), 0), u.fieldActive > 0.5);
 }
 
 fn luminance_at(x: i32, y: i32, width: i32, height: i32) -> f32 {
@@ -401,7 +423,7 @@ fn main(@builtin(position) fragCoord: vec4f) -> Outputs {
     return Outputs(
         vec4f(newPx, newPy, xyz.z, alive),
         vec4f(normVx, normVy, vz, seed_f),
-        rgba
+        select(rgba, selectedDiffuse(vec2f(newPx, newPy)), u.diffuseActive > 0.5)
     );
 }
 `},passthrough:{glsl:`#version 300 es
@@ -441,6 +463,8 @@ Agents flow downhill following the steepest descent of the input texture brightn
 
 | Parameter | Type | Default | Range | Description |
 |-----------|------|---------|-------|-------------|
+| diffuseTex | surface | none | - | Particle color map; none preserves the existing particle color |
+| heightTex | surface | none | - | Height field; defaults to the chained input |
 | stride | float | 10 | 1-1000 | Stride |
 | quantize | boolean | false | - | Quantize |
 | inverse | boolean | false | - | Inverse |
@@ -459,4 +483,4 @@ noise()
 
 render(o0)
 \`\`\`
-`;if(n&&Object.keys(r).length>0){n.shaders||(n.shaders={});for(let[i,e]of Object.entries(r))n.shaders[i]={...e}}n&&o&&(n.help=o);var d="points/hydraulic",f="points",p="hydraulic",x=n;export{x as default,d as effectId,p as effectName,o as help,f as namespace};
+`;if(n&&Object.keys(r).length>0){n.shaders||(n.shaders={});for(let[i,e]of Object.entries(r))n.shaders[i]={...e}}n&&o&&(n.help=o);var f="points/hydraulic",d="points",c="hydraulic",p=n;export{p as default,f as effectId,c as effectName,o as help,d as namespace};

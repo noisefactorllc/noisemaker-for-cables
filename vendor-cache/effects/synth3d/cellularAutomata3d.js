@@ -20,6 +20,7 @@ uniform int neighborMode;
 uniform float speed;
 uniform float density;
 uniform float weight;
+uniform int colorMode;
 uniform bool resetState;
 uniform sampler2D stateTex;
 uniform sampler2D seedTex;  // 3D input volume atlas (inputTex3d)
@@ -53,6 +54,15 @@ vec4 sampleState(ivec3 voxel, int volSize) {
 // Sample seed texture at voxel coordinate (for inputTex3d seeding)
 vec4 sampleSeed(ivec3 voxel, int volSize) {
     return texelFetch(seedTex, atlasTexel(voxel, volSize), 0);
+}
+
+// The state keeps alive in red and age in green. render3d reads density from
+// red and shades with the RGB color unless it is gray, so mono writes alive to
+// every channel, and age keeps the age in green and shades young cells red and
+// older cells toward yellow.
+vec4 packState(float alive, float age) {
+    if (colorMode == 1) return vec4(alive, age, 0.0, 1.0);
+    return vec4(alive, alive, alive, 1.0);
 }
 
 // Count alive neighbors using Moore neighborhood (26 neighbors)
@@ -193,7 +203,7 @@ void main() {
             }
         }
         
-        fragColor = vec4(alive, alive, alive, 1.0);
+        fragColor = packState(alive, age);
         return;
     }
     
@@ -241,7 +251,7 @@ void main() {
         finalAlive = mix(finalAlive, seedLum, weight * 0.01);
     }
     
-    fragColor = vec4(finalAlive, finalAlive, finalAlive, 1.0);
+    fragColor = packState(finalAlive, finalAge);
 }
 `,wgsl:`/*
  * 3D Cellular Automata simulation shader (WGSL)
@@ -259,6 +269,7 @@ void main() {
 @group(0) @binding(7) var<uniform> resetState: i32;
 @group(0) @binding(8) var stateTex: texture_2d<f32>;
 @group(0) @binding(9) var seedTex: texture_2d<f32>;  // 3D input volume atlas (inputTex3d)
+@group(0) @binding(10) var<uniform> colorMode: i32;
 
 // Hash for initialization
 fn hash3(p: vec3<f32>, s: f32) -> f32 {
@@ -287,6 +298,17 @@ fn sampleState(voxel: vec3<i32>, volSize: i32) -> vec4<f32> {
 // Sample seed texture at voxel coordinate (for inputTex3d seeding)
 fn sampleSeed(voxel: vec3<i32>, volSize: i32) -> vec4<f32> {
     return textureLoad(seedTex, atlasTexel(voxel, volSize), 0);
+}
+
+// The state keeps alive in red and age in green. render3d reads density from
+// red and shades with the RGB color unless it is gray, so mono writes alive to
+// every channel, and age keeps the age in green and shades young cells red and
+// older cells toward yellow.
+fn packState(alive: f32, age: f32) -> vec4<f32> {
+    if (colorMode == 1) {
+        return vec4<f32>(alive, age, 0.0, 1.0);
+    }
+    return vec4<f32>(alive, alive, alive, 1.0);
 }
 
 // Count alive neighbors using Moore neighborhood (26 neighbors)
@@ -415,7 +437,7 @@ fn main(@builtin(position) position: vec4<f32>) -> @location(0) vec4<f32> {
             }
         }
         
-        return vec4<f32>(alive, alive, alive, 1.0);
+        return packState(alive, age);
     }
     
     // Count neighbors based on neighborhood mode
@@ -462,7 +484,7 @@ fn main(@builtin(position) position: vec4<f32>) -> @location(0) vec4<f32> {
         finalAlive = mix(finalAlive, seedLum, weight * 0.01);
     }
     
-    return vec4<f32>(finalAlive, finalAlive, finalAlive, 1.0);
+    return packState(finalAlive, finalAge);
 }
 `}},r=`# cellularAutomata3d
 
@@ -478,7 +500,7 @@ fn main(@builtin(position) position: vec4<f32>) -> @location(0) vec4<f32> {
 | neighborMode | int | moore | moore/vonNeumann | Neighborhood |
 | speed | int | 1 | 0-10 | Sim speed |
 | density | float | 50 | 1-100 | Initial density % |
-| colorMode | int | mono | mono/age | Color mode |
+| colorMode | int | mono | mono/age | Mono uses grayscale. In age mode, live cells shift from red toward yellow as they age. |
 | resetState | boolean | false | - | State |
 | source | volume | vol0 | - | Source volume |
 | geoSource | geometry | geo0 | - | Source geometry |

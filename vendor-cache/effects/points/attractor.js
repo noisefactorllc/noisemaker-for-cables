@@ -1,5 +1,5 @@
 /* points/attractor */
-var t=class{constructor(e={}){this.state={},this.uniforms={},e.name&&(this.name=e.name),e.namespace&&(this.namespace=e.namespace),e.func&&(this.func=e.func),e.description&&(this.description=e.description),e.tags&&(this.tags=e.tags),e.globals&&(this.globals=e.globals),e.passes&&(this.passes=e.passes),e.textures&&(this.textures=e.textures),e.textures3d&&(this.textures3d=e.textures3d),e.shaders&&(this.shaders=e.shaders),e.externalTexture&&(this.externalTexture=e.externalTexture),e.externalMesh&&(this.externalMesh=e.externalMesh),e.builtinMeshes&&(this.builtinMeshes=e.builtinMeshes),e.outputTex3d&&(this.outputTex3d=e.outputTex3d),e.outputGeo&&(this.outputGeo=e.outputGeo),e.uniformLayout&&(this.uniformLayout=e.uniformLayout),e.uniformLayouts&&(this.uniformLayouts=e.uniformLayouts),e.openCategories&&(this.openCategories=e.openCategories),e.defaultProgram&&(this.defaultProgram=e.defaultProgram),e.hidden&&(this.hidden=!0),e.deprecatedBy&&(this.deprecatedBy=e.deprecatedBy),e.onInit&&(this._configOnInit=e.onInit),e.onUpdate&&(this._configOnUpdate=e.onUpdate),e.onDestroy&&(this._configOnDestroy=e.onDestroy),e.asyncInit&&(this._configAsyncInit=e.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(e){return this._configOnUpdate?this._configOnUpdate.call(this,e):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(e){return this._configAsyncInit?this._configAsyncInit.call(this,e):Promise.resolve()}};var n=new t({name:"Attractor",namespace:"points",func:"attractor",tags:["sim"],description:"Strange attractors: chaotic dynamic systems visualization",textures:{},outputXyz:"global_xyz",outputVel:"global_vel",outputRgba:"global_rgba",globals:{stateSize:{type:"int",default:256,uniform:"stateSize",ui:{control:!1}},attractor:{type:"int",default:0,uniform:"attractor",choices:{lorenz:0,rossler:1,aizawa:2,thomas:3,halvorsen:4,chen:5,dadras:6},ui:{label:"attractor",control:"dropdown"}},speed:{type:"float",default:1,uniform:"speed",min:.01,max:2,step:.01,ui:{label:"speed",control:"slider"}},viewMode:{type:"int",default:1,uniform:"viewMode",ui:{control:!1}}},passes:[{name:"agent",program:"agent",drawBuffers:3,inputs:{xyzTex:"global_xyz",velTex:"global_vel",rgbaTex:"global_rgba"},uniforms:{attractor:"attractor",speed:"speed"},outputs:{outXYZ:"global_xyz",outVel:"global_vel",outRGBA:"global_rgba"}},{name:"passthrough",program:"passthrough",inputs:{inputTex:"inputTex"},outputs:{fragColor:"outputTex"}}]});var r={agent:{glsl:`#version 300 es
+var t=class{constructor(e={}){this.state={},this.uniforms={},e.name&&(this.name=e.name),e.namespace&&(this.namespace=e.namespace),e.func&&(this.func=e.func),e.description&&(this.description=e.description),e.tags&&(this.tags=e.tags),e.globals&&(this.globals=e.globals),e.passes&&(this.passes=e.passes),e.textures&&(this.textures=e.textures),e.textures3d&&(this.textures3d=e.textures3d),e.shaders&&(this.shaders=e.shaders),e.externalTexture&&(this.externalTexture=e.externalTexture),e.externalMesh&&(this.externalMesh=e.externalMesh),e.builtinMeshes&&(this.builtinMeshes=e.builtinMeshes),e.outputTex3d&&(this.outputTex3d=e.outputTex3d),e.outputGeo&&(this.outputGeo=e.outputGeo),e.uniformLayout&&(this.uniformLayout=e.uniformLayout),e.uniformLayouts&&(this.uniformLayouts=e.uniformLayouts),e.openCategories&&(this.openCategories=e.openCategories),e.defaultProgram&&(this.defaultProgram=e.defaultProgram),e.hidden&&(this.hidden=!0),e.deprecatedBy&&(this.deprecatedBy=e.deprecatedBy),e.onInit&&(this._configOnInit=e.onInit),e.onUpdate&&(this._configOnUpdate=e.onUpdate),e.onDestroy&&(this._configOnDestroy=e.onDestroy),e.asyncInit&&(this._configAsyncInit=e.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(e){return this._configOnUpdate?this._configOnUpdate.call(this,e):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(e){return this._configAsyncInit?this._configAsyncInit.call(this,e):Promise.resolve()}};var n=new t({name:"Attractor",namespace:"points",func:"attractor",tags:["sim"],description:"Strange attractors: chaotic dynamic systems visualization",textures:{},outputXyz:"global_xyz",outputVel:"global_vel",outputRgba:"global_rgba",globals:{diffuseTex:{type:"surface",default:"none",colorModeUniform:"diffuseActive",ui:{label:"diffuse map",category:"general"}},stateSize:{type:"int",default:256,uniform:"stateSize",ui:{control:!1}},attractor:{type:"int",default:0,uniform:"attractor",choices:{lorenz:0,rossler:1,aizawa:2,thomas:3,halvorsen:4,chen:5,dadras:6},ui:{label:"attractor",control:"dropdown"}},speed:{type:"float",default:1,uniform:"speed",min:.01,max:2,step:.01,ui:{label:"speed",control:"slider"}},viewMode:{type:"int",default:1,uniform:"viewMode",ui:{control:!1}}},passes:[{name:"agent",program:"agent",drawBuffers:3,inputs:{xyzTex:"global_xyz",velTex:"global_vel",rgbaTex:"global_rgba",diffuseTex:"diffuseTex"},uniforms:{diffuseActive:"diffuseActive",attractor:"attractor",speed:"speed"},outputs:{outXYZ:"global_xyz",outVel:"global_vel",outRGBA:"global_rgba"}},{name:"passthrough",program:"passthrough",inputs:{inputTex:"inputTex"},outputs:{fragColor:"outputTex"}}]});var a={agent:{glsl:`#version 300 es
 precision highp float;
 precision highp int;
 
@@ -21,6 +21,15 @@ uniform sampler2D rgbaTex;
 layout(location = 0) out vec4 outXYZ;
 layout(location = 1) out vec4 outVel;
 layout(location = 2) out vec4 outRGBA;
+
+uniform sampler2D diffuseTex;
+uniform float diffuseActive;
+
+vec4 selectedDiffuse(vec2 uv) {
+    ivec2 size = textureSize(diffuseTex, 0);
+    ivec2 pixel = clamp(ivec2(clamp(uv, vec2(0.0), vec2(0.999999)) * vec2(size)), ivec2(0), size - 1);
+    return texelFetch(diffuseTex, pixel, 0);
+}
 
 // Integer-based hash for cross-platform determinism
 uint hash_uint(uint seed) {
@@ -159,7 +168,7 @@ void main() {
         
         outXYZ = vec4(pos.xyz, 1.0);
         outVel = vel;
-        outRGBA = col;
+        outRGBA = diffuseActive > 0.5 ? selectedDiffuse(fract(outXYZ.xy)) : col;
         return;
     }
     
@@ -186,12 +195,13 @@ void main() {
     
     outXYZ = vec4(newPos, 1.0);
     outVel = vel;
-    outRGBA = col;
+    outRGBA = diffuseActive > 0.5 ? selectedDiffuse(fract(outXYZ.xy)) : col;
 }
 `,wgsl:`// Strange Attractors Agent Shader
 // Updates particle positions based on attractor dynamics
 
 struct Uniforms {
+    diffuseActive: f32,
     time: f32,
     resolution: vec2<f32>,
     seed: i32,
@@ -203,6 +213,14 @@ struct Uniforms {
 @group(0) @binding(1) var xyzTex: texture_2d<f32>;
 @group(0) @binding(3) var velTex: texture_2d<f32>;
 @group(0) @binding(5) var rgbaTex: texture_2d<f32>;
+@group(0) @binding(6) var diffuseTex: texture_2d<f32>;
+
+fn selectedDiffuse(uv: vec2f) -> vec4f {
+    let size = textureDimensions(diffuseTex, 0);
+    let pixel = clamp(vec2i(clamp(uv, vec2f(0.0), vec2f(0.999999)) * vec2f(size)), vec2i(0), vec2i(size) - vec2i(1));
+    return textureLoad(diffuseTex, pixel, 0);
+}
+
 
 struct Outputs {
     @location(0) outXYZ: vec4<f32>,
@@ -347,7 +365,7 @@ fn main(@builtin(position) fragCoord: vec4<f32>) -> Outputs {
         return Outputs(
             vec4<f32>(newX, newY, newZ, 1.0),
             vel,
-            col
+            select(col, selectedDiffuse(fract(vec2f(newX, newY))), u.diffuseActive > 0.5)
         );
     }
     
@@ -375,7 +393,7 @@ fn main(@builtin(position) fragCoord: vec4<f32>) -> Outputs {
     return Outputs(
         vec4<f32>(newPos, 1.0),
         vel,
-        col
+        select(col, selectedDiffuse(fract(newPos.xy)), u.diffuseActive > 0.5)
     );
 }
 `},passthrough:{glsl:`#version 300 es
@@ -417,6 +435,7 @@ Particles follow trajectories in 3D attractor space, creating complex orbital pa
 
 | Parameter | Type | Default | Range | Description |
 |-----------|------|---------|-------|-------------|
+| diffuseTex | surface | none | - | Particle color map; none preserves the existing particle color |
 | stateSize | int | 256 | - | - |
 | attractor | int | lorenz | lorenz/rossler/aizawa/thomas/halvorsen/chen/dadras | Attractor |
 | speed | float | 1 | 0.01-2 | Speed |
@@ -435,4 +454,4 @@ noise()
 
 render(o0)
 \`\`\`
-`;if(n&&Object.keys(r).length>0){n.shaders||(n.shaders={});for(let[a,e]of Object.entries(r))n.shaders[a]={...e}}n&&o&&(n.help=o);var c="points/attractor",u="points",d="attractor",f=n;export{f as default,c as effectId,d as effectName,o as help,u as namespace};
+`;if(n&&Object.keys(a).length>0){n.shaders||(n.shaders={});for(let[r,e]of Object.entries(a))n.shaders[r]={...e}}n&&o&&(n.help=o);var l="points/attractor",u="points",f="attractor",d=n;export{d as default,l as effectId,f as effectName,o as help,u as namespace};

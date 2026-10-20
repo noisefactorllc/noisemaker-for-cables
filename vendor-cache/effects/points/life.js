@@ -1,5 +1,5 @@
 /* points/life */
-var t=class{constructor(e={}){this.state={},this.uniforms={},e.name&&(this.name=e.name),e.namespace&&(this.namespace=e.namespace),e.func&&(this.func=e.func),e.description&&(this.description=e.description),e.tags&&(this.tags=e.tags),e.globals&&(this.globals=e.globals),e.passes&&(this.passes=e.passes),e.textures&&(this.textures=e.textures),e.textures3d&&(this.textures3d=e.textures3d),e.shaders&&(this.shaders=e.shaders),e.externalTexture&&(this.externalTexture=e.externalTexture),e.externalMesh&&(this.externalMesh=e.externalMesh),e.builtinMeshes&&(this.builtinMeshes=e.builtinMeshes),e.outputTex3d&&(this.outputTex3d=e.outputTex3d),e.outputGeo&&(this.outputGeo=e.outputGeo),e.uniformLayout&&(this.uniformLayout=e.uniformLayout),e.uniformLayouts&&(this.uniformLayouts=e.uniformLayouts),e.openCategories&&(this.openCategories=e.openCategories),e.defaultProgram&&(this.defaultProgram=e.defaultProgram),e.hidden&&(this.hidden=!0),e.deprecatedBy&&(this.deprecatedBy=e.deprecatedBy),e.onInit&&(this._configOnInit=e.onInit),e.onUpdate&&(this._configOnUpdate=e.onUpdate),e.onDestroy&&(this._configOnDestroy=e.onDestroy),e.asyncInit&&(this._configAsyncInit=e.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(e){return this._configOnUpdate?this._configOnUpdate.call(this,e):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(e){return this._configAsyncInit?this._configAsyncInit.call(this,e):Promise.resolve()}};var n=new t({name:"Life",namespace:"points",func:"life",tags:["sim"],description:"Type-based attraction/repulsion particle simulation",textures:{global_life_data:{width:{param:"stateSize",default:256},height:{param:"stateSize",default:256},format:"rgba16f"},forceMatrix:{width:8,height:8,format:"rgba16f"}},outputXyz:"global_xyz",outputVel:"global_vel",outputRgba:"global_rgba",globals:{stateSize:{type:"int",default:256,uniform:"stateSize",ui:{control:!1}},typeCount:{type:"int",default:6,uniform:"typeCount",min:2,max:8,step:1,ui:{label:"types",control:"slider",category:"types"}},attractionScale:{type:"float",default:1,uniform:"attractionScale",min:0,max:5,step:.1,ui:{label:"attraction",control:"slider",category:"forces"}},repulsionScale:{type:"float",default:1,uniform:"repulsionScale",min:0,max:5,step:.1,ui:{label:"repulsion",control:"slider",category:"forces"}},minRadius:{type:"float",default:.01,uniform:"minRadius",min:.001,max:.05,step:.001,ui:{label:"min radius",control:"slider",category:"forces"}},maxRadius:{type:"float",default:.08,uniform:"maxRadius",min:.02,max:.2,step:.01,ui:{label:"max radius",control:"slider",category:"forces"}},maxSpeed:{type:"float",default:.003,uniform:"maxSpeed",min:5e-4,max:.01,step:1e-4,ui:{label:"max speed",control:"slider",category:"motion"}},friction:{type:"float",default:.1,uniform:"friction",min:0,max:1,step:.01,ui:{label:"friction",control:"slider",category:"motion"}},boundaryMode:{type:"int",default:0,uniform:"boundaryMode",choices:{wrap:0,bounce:1},ui:{label:"boundary",control:"dropdown",category:"motion"}},matrixSeed:{type:"float",default:42,uniform:"matrixSeed",min:0,max:1e3,step:1,ui:{label:"matrix seed",control:"slider",category:"types"}},symmetricForces:{type:"boolean",default:!1,uniform:"symmetricForces",ui:{label:"symmetric",control:"checkbox",category:"types"}},useTypeColor:{type:"boolean",default:!1,uniform:"useTypeColor",ui:{label:"show types",control:"checkbox",category:"types"}}},passes:[{name:"matrix",program:"matrix",inputs:{},uniforms:{typeCount:"typeCount",matrixSeed:"matrixSeed",symmetricForces:"symmetricForces"},outputs:{fragColor:"forceMatrix"}},{name:"agent",program:"agent",drawBuffers:4,inputs:{xyzTex:"global_xyz",velTex:"global_vel",rgbaTex:"global_rgba",dataTex:"global_life_data",forceMatrix:"forceMatrix",inputTex:"inputTex"},uniforms:{typeCount:"typeCount",attractionScale:"attractionScale",repulsionScale:"repulsionScale",minRadius:"minRadius",maxRadius:"maxRadius",maxSpeed:"maxSpeed",friction:"friction",boundaryMode:"boundaryMode",matrixSeed:"matrixSeed",symmetricForces:"symmetricForces",useTypeColor:"useTypeColor"},outputs:{outXYZ:"global_xyz",outVel:"global_vel",outRGBA:"global_rgba",outData:"global_life_data"}},{name:"passthrough",program:"passthrough",inputs:{inputTex:"inputTex"},outputs:{fragColor:"outputTex"}}]});var i={agent:{glsl:`#version 300 es
+var t=class{constructor(e={}){this.state={},this.uniforms={},e.name&&(this.name=e.name),e.namespace&&(this.namespace=e.namespace),e.func&&(this.func=e.func),e.description&&(this.description=e.description),e.tags&&(this.tags=e.tags),e.globals&&(this.globals=e.globals),e.passes&&(this.passes=e.passes),e.textures&&(this.textures=e.textures),e.textures3d&&(this.textures3d=e.textures3d),e.shaders&&(this.shaders=e.shaders),e.externalTexture&&(this.externalTexture=e.externalTexture),e.externalMesh&&(this.externalMesh=e.externalMesh),e.builtinMeshes&&(this.builtinMeshes=e.builtinMeshes),e.outputTex3d&&(this.outputTex3d=e.outputTex3d),e.outputGeo&&(this.outputGeo=e.outputGeo),e.uniformLayout&&(this.uniformLayout=e.uniformLayout),e.uniformLayouts&&(this.uniformLayouts=e.uniformLayouts),e.openCategories&&(this.openCategories=e.openCategories),e.defaultProgram&&(this.defaultProgram=e.defaultProgram),e.hidden&&(this.hidden=!0),e.deprecatedBy&&(this.deprecatedBy=e.deprecatedBy),e.onInit&&(this._configOnInit=e.onInit),e.onUpdate&&(this._configOnUpdate=e.onUpdate),e.onDestroy&&(this._configOnDestroy=e.onDestroy),e.asyncInit&&(this._configAsyncInit=e.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(e){return this._configOnUpdate?this._configOnUpdate.call(this,e):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(e){return this._configAsyncInit?this._configAsyncInit.call(this,e):Promise.resolve()}};var n=new t({name:"Life",namespace:"points",func:"life",tags:["sim"],description:"Type-based attraction/repulsion particle simulation",textures:{global_life_data:{width:{param:"stateSize",default:256},height:{param:"stateSize",default:256},format:"rgba16f"},forceMatrix:{width:8,height:8,format:"rgba16f"}},outputXyz:"global_xyz",outputVel:"global_vel",outputRgba:"global_rgba",globals:{diffuseTex:{type:"surface",default:"none",colorModeUniform:"diffuseActive",ui:{label:"diffuse map",category:"types"}},stateSize:{type:"int",default:256,uniform:"stateSize",ui:{control:!1}},typeCount:{type:"int",default:6,uniform:"typeCount",min:2,max:8,step:1,ui:{label:"types",control:"slider",category:"types"}},attractionScale:{type:"float",default:1,uniform:"attractionScale",min:0,max:5,step:.1,ui:{label:"attraction",control:"slider",category:"forces"}},repulsionScale:{type:"float",default:1,uniform:"repulsionScale",min:0,max:5,step:.1,ui:{label:"repulsion",control:"slider",category:"forces"}},minRadius:{type:"float",default:.01,uniform:"minRadius",min:.001,max:.05,step:.001,ui:{label:"min radius",control:"slider",category:"forces"}},maxRadius:{type:"float",default:.08,uniform:"maxRadius",min:.02,max:.2,step:.01,ui:{label:"max radius",control:"slider",category:"forces"}},maxSpeed:{type:"float",default:.003,uniform:"maxSpeed",min:5e-4,max:.01,step:1e-4,ui:{label:"max speed",control:"slider",category:"motion"}},friction:{type:"float",default:.1,uniform:"friction",min:0,max:1,step:.01,ui:{label:"friction",control:"slider",category:"motion"}},boundaryMode:{type:"int",default:0,uniform:"boundaryMode",choices:{wrap:0,bounce:1},ui:{label:"boundary",control:"dropdown",category:"motion"}},matrixSeed:{type:"float",default:42,uniform:"matrixSeed",min:0,max:1e3,step:1,ui:{label:"matrix seed",control:"slider",category:"types"}},symmetricForces:{type:"boolean",default:!1,uniform:"symmetricForces",ui:{label:"symmetric",control:"checkbox",category:"types"}},useTypeColor:{type:"boolean",default:!1,uniform:"useTypeColor",ui:{label:"show types",control:"checkbox",category:"types"}}},passes:[{name:"matrix",program:"matrix",inputs:{},uniforms:{typeCount:"typeCount",matrixSeed:"matrixSeed",symmetricForces:"symmetricForces"},outputs:{fragColor:"forceMatrix"}},{name:"agent",program:"agent",drawBuffers:4,inputs:{xyzTex:"global_xyz",velTex:"global_vel",rgbaTex:"global_rgba",dataTex:"global_life_data",forceMatrix:"forceMatrix",inputTex:"inputTex",diffuseTex:"diffuseTex"},uniforms:{diffuseActive:"diffuseActive",typeCount:"typeCount",attractionScale:"attractionScale",repulsionScale:"repulsionScale",minRadius:"minRadius",maxRadius:"maxRadius",maxSpeed:"maxSpeed",friction:"friction",boundaryMode:"boundaryMode",matrixSeed:"matrixSeed",symmetricForces:"symmetricForces",useTypeColor:"useTypeColor"},outputs:{outXYZ:"global_xyz",outVel:"global_vel",outRGBA:"global_rgba",outData:"global_life_data"}},{name:"passthrough",program:"passthrough",inputs:{inputTex:"inputTex"},outputs:{fragColor:"outputTex"}}]});var o={agent:{glsl:`#version 300 es
 precision highp float;
 precision highp int;
 
@@ -24,6 +24,7 @@ uniform int boundaryMode;
 uniform float matrixSeed;
 uniform bool symmetricForces;
 uniform bool useTypeColor;
+uniform float diffuseActive;
 
 // Input state from pipeline (from pointsEmit)
 uniform sampler2D xyzTex;      // [x, y, 0, alive] - normalized coords
@@ -32,6 +33,7 @@ uniform sampler2D rgbaTex;     // [r, g, b, a]
 uniform sampler2D dataTex;     // [typeId, mass, 0, 0] - internal
 uniform sampler2D forceMatrix; // [strength, prefDist, curveShape, 1]
 uniform sampler2D inputTex;    // Source texture for color sampling
+uniform sampler2D diffuseTex;
 
 // Output state (MRT with 4 outputs)
 layout(location = 0) out vec4 outXYZ;
@@ -297,7 +299,9 @@ void main() {
     outXYZ = vec4(pos, 0.0, 1.0);
     outVel = vec4(velocity, age, seed);
     
-    if (useTypeColor) {
+    if (diffuseActive > 0.5) {
+        outRGBA = texture(diffuseTex, pos);
+    } else if (useTypeColor) {
         outRGBA = vec4(typeColor(int(typeId), typeCount), 1.0);
     } else {
         outRGBA = texture(inputTex, pos);
@@ -324,6 +328,7 @@ struct Uniforms {
     matrixSeed: f32,
     symmetricForces: i32,
     useTypeColor: i32,
+    diffuseActive: f32,
 }
 
 struct Outputs {
@@ -341,6 +346,7 @@ struct Outputs {
 @group(0) @binding(7) var forceMatrix: texture_2d<f32>;
 @group(0) @binding(8) var inputTex: texture_2d<f32>;
 @group(0) @binding(9) var inputSampler: sampler;
+@group(0) @binding(10) var diffuseTex: texture_2d<f32>;
 
 // === HASH FUNCTIONS ===
 
@@ -602,7 +608,9 @@ fn main(@builtin(position) position: vec4f) -> Outputs {
     age += 0.016;
     
     var outColor = rgba;
-    if (u.useTypeColor != 0) {
+    if (u.diffuseActive > 0.5) {
+        outColor = textureSampleLevel(diffuseTex, inputSampler, pos, 0.0);
+    } else if (u.useTypeColor != 0) {
         outColor = vec4f(typeColor(i32(typeId), u.typeCount), 1.0);
     } else {
         // Sample from input texture based on position
@@ -772,6 +780,7 @@ Each particle has a type, and type pairs have randomly generated attraction/repu
 
 | Parameter | Type | Default | Range | Description |
 |-----------|------|---------|-------|-------------|
+| diffuseTex | surface | none | - | Particle color; none preserves the existing input and type color behavior |
 | stateSize | int | 256 | - | - |
 | typeCount | int | 6 | 2-8 | Types |
 | attractionScale | float | 1 | 0-5 | Attraction |
@@ -798,4 +807,4 @@ noise()
 
 render(o0)
 \`\`\`
-`;if(n&&Object.keys(i).length>0){n.shaders||(n.shaders={});for(let[o,e]of Object.entries(i))n.shaders[o]={...e}}n&&a&&(n.help=a);var u="points/life",p="points",d="life",f=n;export{f as default,u as effectId,d as effectName,a as help,p as namespace};
+`;if(n&&Object.keys(o).length>0){n.shaders||(n.shaders={});for(let[i,e]of Object.entries(o))n.shaders[i]={...e}}n&&a&&(n.help=a);var c="points/life",f="points",p="life",d=n;export{d as default,c as effectId,p as effectName,a as help,f as namespace};

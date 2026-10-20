@@ -1,5 +1,5 @@
 /* points/dla */
-var t=class{constructor(e={}){this.state={},this.uniforms={},e.name&&(this.name=e.name),e.namespace&&(this.namespace=e.namespace),e.func&&(this.func=e.func),e.description&&(this.description=e.description),e.tags&&(this.tags=e.tags),e.globals&&(this.globals=e.globals),e.passes&&(this.passes=e.passes),e.textures&&(this.textures=e.textures),e.textures3d&&(this.textures3d=e.textures3d),e.shaders&&(this.shaders=e.shaders),e.externalTexture&&(this.externalTexture=e.externalTexture),e.externalMesh&&(this.externalMesh=e.externalMesh),e.builtinMeshes&&(this.builtinMeshes=e.builtinMeshes),e.outputTex3d&&(this.outputTex3d=e.outputTex3d),e.outputGeo&&(this.outputGeo=e.outputGeo),e.uniformLayout&&(this.uniformLayout=e.uniformLayout),e.uniformLayouts&&(this.uniformLayouts=e.uniformLayouts),e.openCategories&&(this.openCategories=e.openCategories),e.defaultProgram&&(this.defaultProgram=e.defaultProgram),e.hidden&&(this.hidden=!0),e.deprecatedBy&&(this.deprecatedBy=e.deprecatedBy),e.onInit&&(this._configOnInit=e.onInit),e.onUpdate&&(this._configOnUpdate=e.onUpdate),e.onDestroy&&(this._configOnDestroy=e.onDestroy),e.asyncInit&&(this._configAsyncInit=e.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(e){return this._configOnUpdate?this._configOnUpdate.call(this,e):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(e){return this._configAsyncInit?this._configAsyncInit.call(this,e):Promise.resolve()}};var n=new t({name:"Dla",namespace:"points",func:"dla",tags:["sim"],description:"Diffusion-limited aggregation",textures:{global_dla_grid:{width:"100%",height:"100%",format:"rgba16f"}},outputXyz:"global_xyz",outputVel:"global_vel",outputRgba:"global_rgba",globals:{stateSize:{type:"int",default:256,uniform:"stateSize",ui:{control:!1}},anchorDensity:{type:"float",default:.5,uniform:"anchorDensity",min:.01,max:5,step:.01,ui:{label:"anchors",control:"slider",category:"chemistry"}},stride:{type:"float",default:15,uniform:"stride",min:1,max:50,step:1,ui:{label:"stride",control:"slider",category:"agents"}},inputWeight:{type:"float",default:15,uniform:"inputWeight",min:0,max:100,step:1,ui:{label:"input weight",control:"slider",category:"agents"}},decay:{type:"float",default:.25,uniform:"decay",min:0,max:.5,step:.01,ui:{label:"decay",control:"slider",category:"chemistry"}},deposit:{type:"float",default:17.5,uniform:"deposit",min:.5,max:20,step:.5,ui:{label:"deposit",control:"slider",category:"chemistry"}},attrition:{type:"float",default:7.5,uniform:"attrition",min:0,max:10,step:.1,ui:{label:"attrition",control:"slider",category:"agents"}},matteOpacity:{type:"float",default:1,uniform:"matteOpacity",min:0,max:1,ui:{label:"bg opacity",control:"slider",category:"output"}}},passes:[{name:"initGrid",program:"initGrid",inputs:{gridTex:"global_dla_grid"},uniforms:{decay:"decay",anchorDensity:"anchorDensity"},outputs:{fragColor:"global_dla_grid"}},{name:"copyGrid",program:"copyGrid",inputs:{gridTex:"global_dla_grid"},outputs:{fragColor:"global_dla_grid"}},{name:"agent",program:"agent",drawBuffers:3,inputs:{xyzTex:"global_xyz",velTex:"global_vel",rgbaTex:"global_rgba",gridTex:"global_dla_grid",inputTex:"inputTex"},uniforms:{stride:"stride",inputWeight:"inputWeight",attrition:"attrition",stateSize:"stateSize"},outputs:{outXYZ:"global_xyz",outVel:"global_vel",outRGBA:"global_rgba"}},{name:"depositGrid",program:"depositGrid",drawMode:"points",count:"input",blend:["one","one"],inputs:{xyzTex:"global_xyz",velTex:"global_vel",rgbaTex:"global_rgba"},uniforms:{deposit:"deposit"},outputs:{fragColor:"global_dla_grid"}},{name:"passthrough",program:"passthrough",inputs:{inputTex:"inputTex",gridTex:"global_dla_grid"},uniforms:{matteOpacity:"matteOpacity"},outputs:{fragColor:"outputTex"}}]});var r={agent:{glsl:`#version 300 es
+var t=class{constructor(e={}){this.state={},this.uniforms={},e.name&&(this.name=e.name),e.namespace&&(this.namespace=e.namespace),e.func&&(this.func=e.func),e.description&&(this.description=e.description),e.tags&&(this.tags=e.tags),e.globals&&(this.globals=e.globals),e.passes&&(this.passes=e.passes),e.textures&&(this.textures=e.textures),e.textures3d&&(this.textures3d=e.textures3d),e.shaders&&(this.shaders=e.shaders),e.externalTexture&&(this.externalTexture=e.externalTexture),e.externalMesh&&(this.externalMesh=e.externalMesh),e.builtinMeshes&&(this.builtinMeshes=e.builtinMeshes),e.outputTex3d&&(this.outputTex3d=e.outputTex3d),e.outputGeo&&(this.outputGeo=e.outputGeo),e.uniformLayout&&(this.uniformLayout=e.uniformLayout),e.uniformLayouts&&(this.uniformLayouts=e.uniformLayouts),e.openCategories&&(this.openCategories=e.openCategories),e.defaultProgram&&(this.defaultProgram=e.defaultProgram),e.hidden&&(this.hidden=!0),e.deprecatedBy&&(this.deprecatedBy=e.deprecatedBy),e.onInit&&(this._configOnInit=e.onInit),e.onUpdate&&(this._configOnUpdate=e.onUpdate),e.onDestroy&&(this._configOnDestroy=e.onDestroy),e.asyncInit&&(this._configAsyncInit=e.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(e){return this._configOnUpdate?this._configOnUpdate.call(this,e):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(e){return this._configAsyncInit?this._configAsyncInit.call(this,e):Promise.resolve()}};var n=new t({name:"Dla",namespace:"points",func:"dla",tags:["sim"],description:"Diffusion-limited aggregation",textures:{global_dla_grid:{width:"100%",height:"100%",format:"rgba16f"}},outputXyz:"global_xyz",outputVel:"global_vel",outputRgba:"global_rgba",globals:{diffuseTex:{type:"surface",default:"none",colorModeUniform:"diffuseActive",ui:{label:"diffuse map",category:"chemistry"}},fieldTex:{type:"surface",default:"none",colorModeUniform:"fieldActive",ui:{label:"field map",category:"chemistry"}},stateSize:{type:"int",default:256,uniform:"stateSize",ui:{control:!1}},anchorDensity:{type:"float",default:.5,uniform:"anchorDensity",min:.01,max:5,step:.01,ui:{label:"anchors",control:"slider",category:"chemistry"}},stride:{type:"float",default:15,uniform:"stride",min:1,max:50,step:1,ui:{label:"stride",control:"slider",category:"agents"}},inputWeight:{type:"float",default:15,uniform:"inputWeight",min:0,max:100,step:1,ui:{label:"input weight",control:"slider",category:"agents"}},decay:{type:"float",default:.25,uniform:"decay",min:0,max:.5,step:.01,ui:{label:"decay",control:"slider",category:"chemistry"}},deposit:{type:"float",default:17.5,uniform:"deposit",min:.5,max:20,step:.5,ui:{label:"deposit",control:"slider",category:"chemistry"}},attrition:{type:"float",default:7.5,uniform:"attrition",min:0,max:10,step:.1,ui:{label:"attrition",control:"slider",category:"agents"}},matteOpacity:{type:"float",default:1,uniform:"matteOpacity",min:0,max:1,ui:{label:"bg opacity",control:"slider",category:"output"}}},passes:[{name:"initGrid",program:"initGrid",inputs:{gridTex:"global_dla_grid"},uniforms:{decay:"decay",anchorDensity:"anchorDensity"},outputs:{fragColor:"global_dla_grid"}},{name:"copyGrid",program:"copyGrid",inputs:{gridTex:"global_dla_grid"},outputs:{fragColor:"global_dla_grid"}},{name:"agent",program:"agent",drawBuffers:3,inputs:{xyzTex:"global_xyz",velTex:"global_vel",rgbaTex:"global_rgba",gridTex:"global_dla_grid",inputTex:"inputTex",fieldTex:"fieldTex",diffuseTex:"diffuseTex"},uniforms:{diffuseActive:"diffuseActive",fieldActive:"fieldActive",stride:"stride",inputWeight:"inputWeight",attrition:"attrition",stateSize:"stateSize"},outputs:{outXYZ:"global_xyz",outVel:"global_vel",outRGBA:"global_rgba"}},{name:"depositGrid",program:"depositGrid",drawMode:"points",count:"input",blend:["one","one"],inputs:{xyzTex:"global_xyz",velTex:"global_vel",rgbaTex:"global_rgba"},uniforms:{deposit:"deposit"},outputs:{fragColor:"global_dla_grid"}},{name:"passthrough",program:"passthrough",inputs:{inputTex:"inputTex",gridTex:"global_dla_grid"},uniforms:{matteOpacity:"matteOpacity"},outputs:{fragColor:"outputTex"}}]});var r={agent:{glsl:`#version 300 es
 precision highp float;
 precision highp int;
 
@@ -11,6 +11,7 @@ uniform int frame;
 // DLA parameters
 uniform float stride;
 uniform float inputWeight;
+uniform float fieldActive;
 uniform float attrition;
 uniform int stateSize;
 uniform bool resetState;
@@ -22,12 +23,22 @@ uniform sampler2D rgbaTex;   // [r, g, b, a]
 
 // DLA internal textures
 uniform sampler2D gridTex;   // Anchor grid (internal, not rendered)
+uniform sampler2D fieldTex;
 uniform sampler2D inputTex;  // For input-weighted movement
 
 // Output state (MRT)
 layout(location = 0) out vec4 outXYZ;
 layout(location = 1) out vec4 outVel;
 layout(location = 2) out vec4 outRGBA;
+
+uniform sampler2D diffuseTex;
+uniform float diffuseActive;
+
+vec4 selectedDiffuse(vec2 uv) {
+    ivec2 size = textureSize(diffuseTex, 0);
+    ivec2 pixel = clamp(ivec2(clamp(uv, vec2(0.0), vec2(0.999999)) * vec2(size)), ivec2(0), size - 1);
+    return texelFetch(diffuseTex, pixel, 0);
+}
 
 // Integer-based hash for deterministic randomness
 uint hash_uint(uint seed) {
@@ -128,9 +139,9 @@ void main() {
     float inputW = inputWeight / 100.0;
     vec2 stepDir = randomDir;
     if (inputW > 0.0) {
-        ivec2 inputDims = textureSize(inputTex, 0);
+        ivec2 inputDims = fieldActive > 0.5 ? textureSize(fieldTex, 0) : textureSize(inputTex, 0);
         ivec2 inputCoord = ivec2(wrap01(pos) * vec2(inputDims));
-        vec4 inputVal = texelFetch(inputTex, inputCoord, 0);
+        vec4 inputVal = fieldActive > 0.5 ? texelFetch(fieldTex, inputCoord, 0) : texelFetch(inputTex, inputCoord, 0);
         vec2 inputDir = inputVal.xy * 2.0 - 1.0;
         if (length(inputDir) > 0.01) {
             inputDir = normalize(inputDir);
@@ -168,25 +179,27 @@ void main() {
         // Agent stuck: mark as dead for respawn, flag justStuck for deposit
         outXYZ = vec4(candidate, 0.0, 0.0);  // w=0 signals death to pointsEmit
         outVel = vec4(seed, 1.0, 0.0, agentRand);  // y=1 signals "just stuck" for depositGrid
-        outRGBA = rgba;
+        outRGBA = diffuseActive > 0.5 ? selectedDiffuse(candidate) : rgba;
     } else if (needsRespawn) {
         // Attrition death: mark for respawn
         outXYZ = vec4(candidate, 0.0, 0.0);  // w=0 signals death
         outVel = vec4(seed, 0.0, 0.0, agentRand);  // y=0, not stuck
-        outRGBA = rgba;
+        outRGBA = diffuseActive > 0.5 ? selectedDiffuse(candidate) : rgba;
     } else {
         // Continue walking
         outXYZ = vec4(candidate, 0.0, 1.0);  // w=1 alive
         outVel = vec4(seed, 0.0, 0.0, agentRand);
-        outRGBA = rgba;
+        outRGBA = diffuseActive > 0.5 ? selectedDiffuse(candidate) : rgba;
     }
 }
 `,wgsl:`// DLA - Agent Walk Pass (Common Agent Architecture)
 // Reads agent state from pointsEmit, performs random walk, detects sticking
 
 struct Uniforms {
+    diffuseActive: f32,
     stride: f32,
     inputWeight: f32,
+    fieldActive: f32,
     attrition: f32,
     stateSize: i32,
 }
@@ -206,8 +219,17 @@ struct FragmentOutputs {
 @group(0) @binding(1) var xyzTex: texture_2d<f32>;
 @group(0) @binding(2) var velTex: texture_2d<f32>;
 @group(0) @binding(3) var rgbaTex: texture_2d<f32>;
+@group(0) @binding(6) var diffuseTex: texture_2d<f32>;
+
+fn selectedDiffuse(uv: vec2f) -> vec4f {
+    let size = textureDimensions(diffuseTex, 0);
+    let pixel = clamp(vec2i(clamp(uv, vec2f(0.0), vec2f(0.999999)) * vec2f(size)), vec2i(0), vec2i(size) - vec2i(1));
+    return textureLoad(diffuseTex, pixel, 0);
+}
+
 @group(0) @binding(4) var gridTex: texture_2d<f32>;
 @group(0) @binding(5) var inputTex: texture_2d<f32>;
+@group(0) @binding(7) var fieldTex: texture_2d<f32>;
 
 // Integer-based hash for deterministic randomness
 fn hash_uint(seed: u32) -> u32 {
@@ -307,9 +329,9 @@ fn main(in: VertexOutput) -> FragmentOutputs {
     let inputW = u.inputWeight / 100.0;
     var stepDir = randomDir;
     if (inputW > 0.0) {
-        let inputDims = textureDimensions(inputTex);
+        let inputDims = select(textureDimensions(inputTex), textureDimensions(fieldTex), u.fieldActive > 0.5);
         let inputCoord = vec2<i32>(wrap01(pos) * vec2<f32>(inputDims));
-        let inputVal = textureLoad(inputTex, inputCoord, 0);
+        let inputVal = select(textureLoad(inputTex, inputCoord, 0), textureLoad(fieldTex, inputCoord, 0), u.fieldActive > 0.5);
         var inputDir = inputVal.xy * 2.0 - 1.0;
         if (length(inputDir) > 0.01) {
             inputDir = normalize(inputDir);
@@ -348,21 +370,21 @@ fn main(in: VertexOutput) -> FragmentOutputs {
         return FragmentOutputs(
             vec4<f32>(candidate, 0.0, 0.0),  // w=0 signals death to pointsEmit
             vec4<f32>(seed, 1.0, 0.0, agentRand),  // y=1 signals "just stuck" for depositGrid
-            rgba
+            select(rgba, selectedDiffuse(candidate), u.diffuseActive > 0.5)
         );
     } else if (needsRespawn) {
         // Attrition death: mark for respawn
         return FragmentOutputs(
             vec4<f32>(candidate, 0.0, 0.0),  // w=0 signals death
             vec4<f32>(seed, 0.0, 0.0, agentRand),  // y=0, not stuck
-            rgba
+            select(rgba, selectedDiffuse(candidate), u.diffuseActive > 0.5)
         );
     } else {
         // Continue walking
         return FragmentOutputs(
             vec4<f32>(candidate, 0.0, 1.0),  // w=1 alive
             vec4<f32>(seed, 0.0, 0.0, agentRand),
-            rgba
+            select(rgba, selectedDiffuse(candidate), u.diffuseActive > 0.5)
         );
     }
 }
@@ -745,6 +767,8 @@ Agents perform random walks until they contact existing structure, then stick an
 
 | Parameter | Type | Default | Range | Description |
 |-----------|------|---------|-------|-------------|
+| diffuseTex | surface | none | - | Particle color map; none preserves the existing particle color |
+| fieldTex | surface | none | - | Movement field; defaults to the chained input |
 | stateSize | int | 256 | - | - |
 | anchorDensity | float | 0.5 | 0.01-5 | Anchor density |
 | stride | float | 15 | 1-50 | Stride |
@@ -767,4 +791,4 @@ noise()
 
 render(o0)
 \`\`\`
-`;if(n&&Object.keys(r).length>0){n.shaders||(n.shaders={});for(let[i,e]of Object.entries(r))n.shaders[i]={...e}}n&&o&&(n.help=o);var d="points/dla",c="points",p="dla",g=n;export{g as default,d as effectId,p as effectName,o as help,c as namespace};
+`;if(n&&Object.keys(r).length>0){n.shaders||(n.shaders={});for(let[i,e]of Object.entries(r))n.shaders[i]={...e}}n&&o&&(n.help=o);var l="points/dla",c="points",p="dla",f=n;export{f as default,l as effectId,p as effectName,o as help,c as namespace};

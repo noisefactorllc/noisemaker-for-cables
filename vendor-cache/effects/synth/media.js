@@ -1,5 +1,5 @@
 /* synth/media */
-var f=Object.defineProperty;var c=(i,e,s)=>e in i?f(i,e,{enumerable:!0,configurable:!0,writable:!0,value:s}):i[e]=s;var n=(i,e,s)=>c(i,typeof e!="symbol"?e+"":e,s);var o=class{constructor(e={}){this.state={},this.uniforms={},e.name&&(this.name=e.name),e.namespace&&(this.namespace=e.namespace),e.func&&(this.func=e.func),e.description&&(this.description=e.description),e.tags&&(this.tags=e.tags),e.globals&&(this.globals=e.globals),e.passes&&(this.passes=e.passes),e.textures&&(this.textures=e.textures),e.textures3d&&(this.textures3d=e.textures3d),e.shaders&&(this.shaders=e.shaders),e.externalTexture&&(this.externalTexture=e.externalTexture),e.externalMesh&&(this.externalMesh=e.externalMesh),e.builtinMeshes&&(this.builtinMeshes=e.builtinMeshes),e.outputTex3d&&(this.outputTex3d=e.outputTex3d),e.outputGeo&&(this.outputGeo=e.outputGeo),e.uniformLayout&&(this.uniformLayout=e.uniformLayout),e.uniformLayouts&&(this.uniformLayouts=e.uniformLayouts),e.openCategories&&(this.openCategories=e.openCategories),e.defaultProgram&&(this.defaultProgram=e.defaultProgram),e.hidden&&(this.hidden=!0),e.deprecatedBy&&(this.deprecatedBy=e.deprecatedBy),e.onInit&&(this._configOnInit=e.onInit),e.onUpdate&&(this._configOnUpdate=e.onUpdate),e.onDestroy&&(this._configOnDestroy=e.onDestroy),e.asyncInit&&(this._configAsyncInit=e.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(e){return this._configOnUpdate?this._configOnUpdate.call(this,e):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(e){return this._configAsyncInit?this._configAsyncInit.call(this,e):Promise.resolve()}};var t=class extends o{constructor(){super(...arguments);n(this,"name","Media");n(this,"namespace","synth");n(this,"func","media");n(this,"tags",["image","video"]);n(this,"description","Video/camera/image input");n(this,"externalTexture","imageTex");n(this,"uniformLayout",{resolution:{slot:0,components:"xy"},time:{slot:0,components:"z"},position:{slot:1,components:"x"},rotation:{slot:1,components:"y"},scaleAmt:{slot:1,components:"z"},offsetX:{slot:1,components:"w"},offsetY:{slot:2,components:"x"},tiling:{slot:2,components:"y"},flip:{slot:2,components:"z"},bgAlpha:{slot:2,components:"w"},bgColor:{slot:3,components:"xyz"},imageSize:{slot:4,components:"xy"}});n(this,"globals",{position:{type:"int",default:4,uniform:"position",choices:{topLeft:0,topCenter:1,topRight:2,midLeft:3,midCenter:4,midRight:5,bottomLeft:6,bottomCenter:7,bottomRight:8},ui:{label:"position",control:"dropdown",category:"orientation"}},tiling:{type:"int",default:0,uniform:"tiling",choices:{none:0,horizAndVert:1,horizOnly:2,vertOnly:3},ui:{label:"tiling",control:"dropdown",category:"orientation"}},flip:{type:"int",default:0,uniform:"flip",choices:{none:0,all:1,horizontal:2,vertical:3,mirrorLtoR:11,mirrorRtoL:12,mirrorUtoD:13,mirrorDtoU:14,mirrorLtoRUtoD:15,mirrorLtoRDtoU:16,mirrorRtoLUtoD:17,mirrorRtoLDtoU:18},ui:{label:"flip/mirror",control:"dropdown",category:"orientation"}},scaleAmt:{type:"float",default:100,min:25,max:400,uniform:"scaleAmt",ui:{label:"scale %",control:"slider",category:"transform"}},rotation:{type:"float",default:0,min:-180,max:180,uniform:"rotation",ui:{label:"rotate",control:"slider",category:"transform"}},offsetX:{type:"float",default:0,min:-100,max:100,uniform:"offsetX",ui:{label:"offset x",control:"slider",category:"transform"}},offsetY:{type:"float",default:0,min:-100,max:100,uniform:"offsetY",ui:{label:"offset y",control:"slider",category:"transform"}},bgColor:{type:"color",default:[0,0,0],uniform:"bgColor",ui:{label:"bg color",control:"color",category:"background"}},bgAlpha:{type:"float",default:0,min:0,max:1,uniform:"bgAlpha",ui:{label:"bg opacity",control:"slider",category:"background"}},imageSize:{type:"vec2",default:[1024,1024],uniform:"imageSize",ui:{control:!1}}});n(this,"passes",[{name:"main",program:"mediaInput",inputs:{imageTex:"imageTex"},outputs:{fragColor:"outputTex"}}])}onInit(){this.state.imageWidth=1,this.state.imageHeight=1}onUpdate(){return{imageSize:[this.state.imageWidth||1,this.state.imageHeight||1]}}setMediaDimensions(s,l){this.state.imageWidth=s,this.state.imageHeight=l}};var a={mediaInput:{glsl:`/*
+var f=Object.defineProperty;var c=(s,e,i)=>e in s?f(s,e,{enumerable:!0,configurable:!0,writable:!0,value:i}):s[e]=i;var n=(s,e,i)=>c(s,typeof e!="symbol"?e+"":e,i);var o=class{constructor(e={}){this.state={},this.uniforms={},e.name&&(this.name=e.name),e.namespace&&(this.namespace=e.namespace),e.func&&(this.func=e.func),e.description&&(this.description=e.description),e.tags&&(this.tags=e.tags),e.globals&&(this.globals=e.globals),e.passes&&(this.passes=e.passes),e.textures&&(this.textures=e.textures),e.textures3d&&(this.textures3d=e.textures3d),e.shaders&&(this.shaders=e.shaders),e.externalTexture&&(this.externalTexture=e.externalTexture),e.externalMesh&&(this.externalMesh=e.externalMesh),e.builtinMeshes&&(this.builtinMeshes=e.builtinMeshes),e.outputTex3d&&(this.outputTex3d=e.outputTex3d),e.outputGeo&&(this.outputGeo=e.outputGeo),e.uniformLayout&&(this.uniformLayout=e.uniformLayout),e.uniformLayouts&&(this.uniformLayouts=e.uniformLayouts),e.openCategories&&(this.openCategories=e.openCategories),e.defaultProgram&&(this.defaultProgram=e.defaultProgram),e.hidden&&(this.hidden=!0),e.deprecatedBy&&(this.deprecatedBy=e.deprecatedBy),e.onInit&&(this._configOnInit=e.onInit),e.onUpdate&&(this._configOnUpdate=e.onUpdate),e.onDestroy&&(this._configOnDestroy=e.onDestroy),e.asyncInit&&(this._configAsyncInit=e.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(e){return this._configOnUpdate?this._configOnUpdate.call(this,e):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(e){return this._configAsyncInit?this._configAsyncInit.call(this,e):Promise.resolve()}};var t=class extends o{constructor(){super(...arguments);n(this,"name","Media");n(this,"namespace","synth");n(this,"func","media");n(this,"tags",["image","video"]);n(this,"description","Video/camera/image input");n(this,"externalTexture","imageTex");n(this,"uniformLayout",{resolution:{slot:0,components:"xy"},time:{slot:0,components:"z"},position:{slot:1,components:"x"},rotation:{slot:1,components:"y"},scaleAmt:{slot:1,components:"z"},offsetX:{slot:1,components:"w"},offsetY:{slot:2,components:"x"},tiling:{slot:2,components:"y"},flip:{slot:2,components:"z"},bgAlpha:{slot:2,components:"w"},bgColor:{slot:3,components:"xyz"},imageSize:{slot:4,components:"xy"},tileOffset:{slot:5,components:"xy"},fullResolution:{slot:5,components:"zw"}});n(this,"globals",{position:{type:"int",default:4,uniform:"position",choices:{topLeft:0,topCenter:1,topRight:2,midLeft:3,midCenter:4,midRight:5,bottomLeft:6,bottomCenter:7,bottomRight:8},ui:{label:"position",control:"dropdown",category:"orientation"}},tiling:{type:"int",default:0,uniform:"tiling",choices:{none:0,horizAndVert:1,horizOnly:2,vertOnly:3},ui:{label:"tiling",control:"dropdown",category:"orientation"}},flip:{type:"int",default:0,uniform:"flip",choices:{none:0,all:1,horizontal:2,vertical:3,mirrorLtoR:11,mirrorRtoL:12,mirrorUtoD:13,mirrorDtoU:14,mirrorLtoRUtoD:15,mirrorLtoRDtoU:16,mirrorRtoLUtoD:17,mirrorRtoLDtoU:18},ui:{label:"flip/mirror",control:"dropdown",category:"orientation"}},scaleAmt:{type:"float",default:100,min:25,max:400,uniform:"scaleAmt",ui:{label:"scale %",control:"slider",category:"transform"}},rotation:{type:"float",default:0,min:-180,max:180,uniform:"rotation",ui:{label:"rotate",control:"slider",category:"transform"}},offsetX:{type:"float",default:0,min:-100,max:100,uniform:"offsetX",ui:{label:"offset x",control:"slider",category:"transform"}},offsetY:{type:"float",default:0,min:-100,max:100,uniform:"offsetY",ui:{label:"offset y",control:"slider",category:"transform"}},bgColor:{type:"color",default:[0,0,0],uniform:"bgColor",ui:{label:"bg color",control:"color",category:"background"}},bgAlpha:{type:"float",default:0,min:0,max:1,uniform:"bgAlpha",ui:{label:"bg opacity",control:"slider",category:"background"}},imageSize:{type:"vec2",default:[1024,1024],uniform:"imageSize",ui:{control:!1}}});n(this,"passes",[{name:"main",program:"mediaInput",inputs:{imageTex:"imageTex"},outputs:{fragColor:"outputTex"}}])}onInit(){this.state.imageWidth=1,this.state.imageHeight=1}onUpdate(){return{imageSize:[this.state.imageWidth||1,this.state.imageHeight||1]}}setMediaDimensions(i,r){this.state.imageWidth=i,this.state.imageHeight=r}};var l={mediaInput:{glsl:`/*
  * Media input shader.
  * Normalizes camera or video textures and exposes crop controls while preserving aspect ratio.
  * Offset sliders are remapped prior to sampling so live adjustments never read outside the source texture.
@@ -12,6 +12,8 @@ precision highp float;
 uniform sampler2D imageTex;
 uniform vec2 imageSize;
 uniform vec2 resolution;
+uniform vec2 tileOffset;
+uniform vec2 fullResolution;
 uniform float time;
 uniform int position;
 uniform float rotation;
@@ -80,7 +82,16 @@ vec4 sampleMedia(vec2 uv) {
 
 vec4 getImage(vec2 st) {
     vec2 size = imageSize;
-    st = gl_FragCoord.xy / size;
+    // Under tiled print export gl_FragCoord is tile-local. Add the tile's
+    // global offset so every tile and the untiled reference sample the same
+    // absolute image pixel. Branch on the runtime offset so the untiled
+    // path keeps the original expression bit-for-bit across compilers with
+    // relaxed math (tileOffset is 0 when not tiling).
+    if (tileOffset.x == 0.0 && tileOffset.y == 0.0) {
+        st = gl_FragCoord.xy / size;
+    } else {
+        st = (gl_FragCoord.xy + tileOffset) / size;
+    }
     st.y = 1.0 - st.y;
 
     float scale = 100.0 / scaleAmt;
@@ -90,44 +101,86 @@ vec4 getImage(vec2 st) {
     }
     st *= scale;
 
-    // Position adjustments based on anchor point
-    if (position == 0) {
-        // top left
-        st.y += (resolution.y / size.y * scale) - (scale - (1.0 / size.y * scale));
-    } else if (position == 1) {
-        // top center
-        st.x -= (resolution.x / size.x * scale * 0.5) - (0.5 - (1.0 / size.x * scale));
-        st.y += (resolution.y / size.y * scale) - (scale - (1.0 / size.y * scale));
-    } else if (position == 2) {
-        // top right
-        st.x -= (resolution.x / size.x * scale) - (1.0 - (1.0 / size.x * scale));
-        st.y += (resolution.y / size.y * scale) - (scale - (1.0 / size.y * scale));
-    } else if (position == 3) {
-        // mid left
-        st.y += (resolution.y / size.y * scale * 0.5) + (0.5 - (1.0 / size.y * scale)) - (scale);
-    } else if (position == 4) {
-        // mid center
-        st.x -= (resolution.x / size.x * scale * 0.5) - (0.5 - (1.0 / size.x * scale));
-        st.y += (resolution.y / size.y * scale * 0.5) + (0.5 - (1.0 / size.y * scale)) - (scale);
-    } else if (position == 5) {
-        // mid right
-        st.x -= (resolution.x / size.x * scale) - (1.0 - (1.0 / size.x * scale));
-        st.y += (resolution.y / size.y * scale * 0.5) + (0.5 - (1.0 / size.y * scale)) - (scale);
-    } else if (position == 6) {
-        // bottom left
-        st.y += 1.0 - (scale - (1.0 / size.y * scale));
-    } else if (position == 7) {
-        // bottom center
-        st.x -= (resolution.x / size.x * scale * 0.5) - (0.5 - (1.0 / size.x * scale));
-        st.y += 1.0 - (scale - (1.0 / size.y * scale));
-    } else if (position == 8) {
-        // bottom right
-        st.x -= (resolution.x / size.x * scale) - (1.0 - (1.0 / size.x * scale));
-        st.y += 1.0 - (scale - (1.0 / size.y * scale));
-    }
+    // Keep the original untiled math exact on both backends.
+    if (fullResolution.x > 0.0 && (fullResolution.x != resolution.x || fullResolution.y != resolution.y)) {
+        // Position adjustments based on anchor point
+        if (position == 0) {
+            // top left
+            st.y += (fullResolution.y / size.y * scale) - (scale - (1.0 / size.y * scale));
+        } else if (position == 1) {
+            // top center
+            st.x -= (fullResolution.x / size.x * scale * 0.5) - (0.5 - (1.0 / size.x * scale));
+            st.y += (fullResolution.y / size.y * scale) - (scale - (1.0 / size.y * scale));
+        } else if (position == 2) {
+            // top right
+            st.x -= (fullResolution.x / size.x * scale) - (1.0 - (1.0 / size.x * scale));
+            st.y += (fullResolution.y / size.y * scale) - (scale - (1.0 / size.y * scale));
+        } else if (position == 3) {
+            // mid left
+            st.y += (fullResolution.y / size.y * scale * 0.5) + (0.5 - (1.0 / size.y * scale)) - (scale);
+        } else if (position == 4) {
+            // mid center
+            st.x -= (fullResolution.x / size.x * scale * 0.5) - (0.5 - (1.0 / size.x * scale));
+            st.y += (fullResolution.y / size.y * scale * 0.5) + (0.5 - (1.0 / size.y * scale)) - (scale);
+        } else if (position == 5) {
+            // mid right
+            st.x -= (fullResolution.x / size.x * scale) - (1.0 - (1.0 / size.x * scale));
+            st.y += (fullResolution.y / size.y * scale * 0.5) + (0.5 - (1.0 / size.y * scale)) - (scale);
+        } else if (position == 6) {
+            // bottom left
+            st.y += 1.0 - (scale - (1.0 / size.y * scale));
+        } else if (position == 7) {
+            // bottom center
+            st.x -= (fullResolution.x / size.x * scale * 0.5) - (0.5 - (1.0 / size.x * scale));
+            st.y += 1.0 - (scale - (1.0 / size.y * scale));
+        } else if (position == 8) {
+            // bottom right
+            st.x -= (fullResolution.x / size.x * scale) - (1.0 - (1.0 / size.x * scale));
+            st.y += 1.0 - (scale - (1.0 / size.y * scale));
+        }
 
-    st.x -= map(offsetX, -100.0, 100.0, -resolution.x / size.x * scale, resolution.x / size.x * scale) * 1.5;
-    st.y -= map(offsetY, -100.0, 100.0, -resolution.y / size.y * scale, resolution.y / size.y * scale) * 1.5;
+        st.x -= map(offsetX, -100.0, 100.0, -fullResolution.x / size.x * scale, fullResolution.x / size.x * scale) * 1.5;
+        st.y -= map(offsetY, -100.0, 100.0, -fullResolution.y / size.y * scale, fullResolution.y / size.y * scale) * 1.5;
+    } else {
+        // Position adjustments based on anchor point
+        if (position == 0) {
+            // top left
+            st.y += (resolution.y / size.y * scale) - (scale - (1.0 / size.y * scale));
+        } else if (position == 1) {
+            // top center
+            st.x -= (resolution.x / size.x * scale * 0.5) - (0.5 - (1.0 / size.x * scale));
+            st.y += (resolution.y / size.y * scale) - (scale - (1.0 / size.y * scale));
+        } else if (position == 2) {
+            // top right
+            st.x -= (resolution.x / size.x * scale) - (1.0 - (1.0 / size.x * scale));
+            st.y += (resolution.y / size.y * scale) - (scale - (1.0 / size.y * scale));
+        } else if (position == 3) {
+            // mid left
+            st.y += (resolution.y / size.y * scale * 0.5) + (0.5 - (1.0 / size.y * scale)) - (scale);
+        } else if (position == 4) {
+            // mid center
+            st.x -= (resolution.x / size.x * scale * 0.5) - (0.5 - (1.0 / size.x * scale));
+            st.y += (resolution.y / size.y * scale * 0.5) + (0.5 - (1.0 / size.y * scale)) - (scale);
+        } else if (position == 5) {
+            // mid right
+            st.x -= (resolution.x / size.x * scale) - (1.0 - (1.0 / size.x * scale));
+            st.y += (resolution.y / size.y * scale * 0.5) + (0.5 - (1.0 / size.y * scale)) - (scale);
+        } else if (position == 6) {
+            // bottom left
+            st.y += 1.0 - (scale - (1.0 / size.y * scale));
+        } else if (position == 7) {
+            // bottom center
+            st.x -= (resolution.x / size.x * scale * 0.5) - (0.5 - (1.0 / size.x * scale));
+            st.y += 1.0 - (scale - (1.0 / size.y * scale));
+        } else if (position == 8) {
+            // bottom right
+            st.x -= (resolution.x / size.x * scale) - (1.0 - (1.0 / size.x * scale));
+            st.y += 1.0 - (scale - (1.0 / size.y * scale));
+        }
+
+        st.x -= map(offsetX, -100.0, 100.0, -resolution.x / size.x * scale, resolution.x / size.x * scale) * 1.5;
+        st.y -= map(offsetY, -100.0, 100.0, -resolution.y / size.y * scale, resolution.y / size.y * scale) * 1.5;
+    }
 
     // Correct for aspect ratio before rotation
     st.x *= size.x / size.y;
@@ -229,7 +282,7 @@ void main() {
  */
 
 struct Uniforms {
-    data : array<vec4<f32>, 5>,
+    data : array<vec4<f32>, 6>,
 };
 @group(0) @binding(0) var<uniform> uniforms : Uniforms;
 @group(0) @binding(1) var samp : sampler;
@@ -247,6 +300,8 @@ var<private> flip : i32;
 var<private> bgColor : vec3<f32>;
 var<private> bgAlpha : f32;
 var<private> imageSize : vec2<f32>;
+var<private> tileOffset : vec2<f32>;
+var<private> fullResolution : vec2<f32>;
 
 const PI : f32 = 3.14159265359;
 const TAU : f32 = 6.28318530718;
@@ -298,41 +353,81 @@ fn sampleMedia(uv: vec2<f32>) -> vec4<f32> {
 }
 
 fn getImage(pos: vec2<f32>) -> vec4<f32> {
+    // Under tiled print export the fragment position is tile-local. Add the
+    // tile's global offset so every tile and the untiled reference sample
+    // the same absolute image pixel. Branch on the runtime offset so the
+    // untiled path keeps the original expression bit-for-bit across
+    // compilers with relaxed math (tileOffset is 0 when not tiling).
     var st = pos / imageSize;
+    if (tileOffset.x != 0.0 || tileOffset.y != 0.0) {
+        st = (pos + tileOffset) / imageSize;
+    }
     st.y = 1.0 - st.y;
 
     var scale = 100.0 / scaleAmt;
     if (scale == 0.0) { scale = 1.0; }
     st = st * scale;
 
-    if (posIndex == 0) {
-        st.y = st.y + (resolution.y / imageSize.y * scale) - (scale - (1.0 / imageSize.y * scale));
-    } else if (posIndex == 1) {
-        st.x = st.x - (resolution.x / imageSize.x * scale * 0.5) + (0.5 - (1.0 / imageSize.x * scale));
-        st.y = st.y + (resolution.y / imageSize.y * scale) - (scale - (1.0 / imageSize.y * scale));
-    } else if (posIndex == 2) {
-        st.x = st.x - (resolution.x / imageSize.x * scale) + (1.0 - (1.0 / imageSize.x * scale));
-        st.y = st.y + (resolution.y / imageSize.y * scale) - (scale - (1.0 / imageSize.y * scale));
-    } else if (posIndex == 3) {
-        st.y = st.y + (resolution.y / imageSize.y * scale * 0.5) + (0.5 - (1.0 / imageSize.y * scale)) - scale;
-    } else if (posIndex == 4) {
-        st.x = st.x - (resolution.x / imageSize.x * scale * 0.5) + (0.5 - (1.0 / imageSize.x * scale));
-        st.y = st.y + (resolution.y / imageSize.y * scale * 0.5) + (0.5 - (1.0 / imageSize.y * scale)) - scale;
-    } else if (posIndex == 5) {
-        st.x = st.x - (resolution.x / imageSize.x * scale) + (1.0 - (1.0 / imageSize.x * scale));
-        st.y = st.y + (resolution.y / imageSize.y * scale * 0.5) + (0.5 - (1.0 / imageSize.y * scale)) - scale;
-    } else if (posIndex == 6) {
-        st.y = st.y + 1.0 - (scale - (1.0 / imageSize.y * scale));
-    } else if (posIndex == 7) {
-        st.x = st.x - (resolution.x / imageSize.x * scale * 0.5) + (0.5 - (1.0 / imageSize.x * scale));
-        st.y = st.y + 1.0 - (scale - (1.0 / imageSize.y * scale));
-    } else if (posIndex == 8) {
-        st.x = st.x - (resolution.x / imageSize.x * scale) + (1.0 - (1.0 / imageSize.x * scale));
-        st.y = st.y + 1.0 - (scale - (1.0 / imageSize.y * scale));
-    }
+    // Keep the original untiled math exact on both backends.
+    if (fullResolution.x > 0.0 && (fullResolution.x != resolution.x || fullResolution.y != resolution.y)) {
+        if (posIndex == 0) {
+            st.y = st.y + (fullResolution.y / imageSize.y * scale) - (scale - (1.0 / imageSize.y * scale));
+        } else if (posIndex == 1) {
+            st.x = st.x - (fullResolution.x / imageSize.x * scale * 0.5) + (0.5 - (1.0 / imageSize.x * scale));
+            st.y = st.y + (fullResolution.y / imageSize.y * scale) - (scale - (1.0 / imageSize.y * scale));
+        } else if (posIndex == 2) {
+            st.x = st.x - (fullResolution.x / imageSize.x * scale) + (1.0 - (1.0 / imageSize.x * scale));
+            st.y = st.y + (fullResolution.y / imageSize.y * scale) - (scale - (1.0 / imageSize.y * scale));
+        } else if (posIndex == 3) {
+            st.y = st.y + (fullResolution.y / imageSize.y * scale * 0.5) + (0.5 - (1.0 / imageSize.y * scale)) - scale;
+        } else if (posIndex == 4) {
+            st.x = st.x - (fullResolution.x / imageSize.x * scale * 0.5) + (0.5 - (1.0 / imageSize.x * scale));
+            st.y = st.y + (fullResolution.y / imageSize.y * scale * 0.5) + (0.5 - (1.0 / imageSize.y * scale)) - scale;
+        } else if (posIndex == 5) {
+            st.x = st.x - (fullResolution.x / imageSize.x * scale) + (1.0 - (1.0 / imageSize.x * scale));
+            st.y = st.y + (fullResolution.y / imageSize.y * scale * 0.5) + (0.5 - (1.0 / imageSize.y * scale)) - scale;
+        } else if (posIndex == 6) {
+            st.y = st.y + 1.0 - (scale - (1.0 / imageSize.y * scale));
+        } else if (posIndex == 7) {
+            st.x = st.x - (fullResolution.x / imageSize.x * scale * 0.5) + (0.5 - (1.0 / imageSize.x * scale));
+            st.y = st.y + 1.0 - (scale - (1.0 / imageSize.y * scale));
+        } else if (posIndex == 8) {
+            st.x = st.x - (fullResolution.x / imageSize.x * scale) + (1.0 - (1.0 / imageSize.x * scale));
+            st.y = st.y + 1.0 - (scale - (1.0 / imageSize.y * scale));
+        }
 
-    st.x = st.x - map(offsetX, -100.0, 100.0, -resolution.x / imageSize.x * scale, resolution.x / imageSize.x * scale) * 1.5;
-    st.y = st.y - map(offsetY, -100.0, 100.0, -resolution.y / imageSize.y * scale, resolution.y / imageSize.y * scale) * 1.5;
+        st.x = st.x - map(offsetX, -100.0, 100.0, -fullResolution.x / imageSize.x * scale, fullResolution.x / imageSize.x * scale) * 1.5;
+        st.y = st.y - map(offsetY, -100.0, 100.0, -fullResolution.y / imageSize.y * scale, fullResolution.y / imageSize.y * scale) * 1.5;
+    } else {
+        if (posIndex == 0) {
+            st.y = st.y + (resolution.y / imageSize.y * scale) - (scale - (1.0 / imageSize.y * scale));
+        } else if (posIndex == 1) {
+            st.x = st.x - (resolution.x / imageSize.x * scale * 0.5) + (0.5 - (1.0 / imageSize.x * scale));
+            st.y = st.y + (resolution.y / imageSize.y * scale) - (scale - (1.0 / imageSize.y * scale));
+        } else if (posIndex == 2) {
+            st.x = st.x - (resolution.x / imageSize.x * scale) + (1.0 - (1.0 / imageSize.x * scale));
+            st.y = st.y + (resolution.y / imageSize.y * scale) - (scale - (1.0 / imageSize.y * scale));
+        } else if (posIndex == 3) {
+            st.y = st.y + (resolution.y / imageSize.y * scale * 0.5) + (0.5 - (1.0 / imageSize.y * scale)) - scale;
+        } else if (posIndex == 4) {
+            st.x = st.x - (resolution.x / imageSize.x * scale * 0.5) + (0.5 - (1.0 / imageSize.x * scale));
+            st.y = st.y + (resolution.y / imageSize.y * scale * 0.5) + (0.5 - (1.0 / imageSize.y * scale)) - scale;
+        } else if (posIndex == 5) {
+            st.x = st.x - (resolution.x / imageSize.x * scale) + (1.0 - (1.0 / imageSize.x * scale));
+            st.y = st.y + (resolution.y / imageSize.y * scale * 0.5) + (0.5 - (1.0 / imageSize.y * scale)) - scale;
+        } else if (posIndex == 6) {
+            st.y = st.y + 1.0 - (scale - (1.0 / imageSize.y * scale));
+        } else if (posIndex == 7) {
+            st.x = st.x - (resolution.x / imageSize.x * scale * 0.5) + (0.5 - (1.0 / imageSize.x * scale));
+            st.y = st.y + 1.0 - (scale - (1.0 / imageSize.y * scale));
+        } else if (posIndex == 8) {
+            st.x = st.x - (resolution.x / imageSize.x * scale) + (1.0 - (1.0 / imageSize.x * scale));
+            st.y = st.y + 1.0 - (scale - (1.0 / imageSize.y * scale));
+        }
+
+        st.x = st.x - map(offsetX, -100.0, 100.0, -resolution.x / imageSize.x * scale, resolution.x / imageSize.x * scale) * 1.5;
+        st.y = st.y - map(offsetY, -100.0, 100.0, -resolution.y / imageSize.y * scale, resolution.y / imageSize.y * scale) * 1.5;
+    }
 
     st.x = st.x * (imageSize.x / imageSize.y);
     // Preserve exact texture coordinates for the identity transform.
@@ -399,11 +494,14 @@ fn main(@builtin(position) pos : vec4<f32>) -> @location(0) vec4<f32> {
 
     imageSize = uniforms.data[4].xy;
 
+    tileOffset = uniforms.data[5].xy;
+    fullResolution = uniforms.data[5].zw;
+
     // Internal rows match GLSL texture rows; presentation applies the final
     // Y conversion. Keep anchor, offset and rotation in that same space.
     return getImage(pos.xy);
 }
-`}},r=`# media
+`}},a=`# media
 
 Video/camera/image input
 
@@ -436,4 +534,4 @@ media()
 
 render(o0)
 \`\`\`
-`;if(t&&Object.keys(a).length>0){t.shaders||(t.shaders={});for(let[i,e]of Object.entries(a))t.shaders[i]={...e}}t&&r&&(t.help=r);var g="synth/media",h="synth",v="media",z=t;export{z as default,g as effectId,v as effectName,r as help,h as namespace};
+`;if(t&&Object.keys(l).length>0){t.shaders||(t.shaders={});for(let[s,e]of Object.entries(l))t.shaders[s]={...e}}t&&a&&(t.help=a);var g="synth/media",z="synth",h="media",v=t;export{v as default,g as effectId,h as effectName,a as help,z as namespace};

@@ -1,5 +1,5 @@
 /* points/flock */
-var t=class{constructor(e={}){this.state={},this.uniforms={},e.name&&(this.name=e.name),e.namespace&&(this.namespace=e.namespace),e.func&&(this.func=e.func),e.description&&(this.description=e.description),e.tags&&(this.tags=e.tags),e.globals&&(this.globals=e.globals),e.passes&&(this.passes=e.passes),e.textures&&(this.textures=e.textures),e.textures3d&&(this.textures3d=e.textures3d),e.shaders&&(this.shaders=e.shaders),e.externalTexture&&(this.externalTexture=e.externalTexture),e.externalMesh&&(this.externalMesh=e.externalMesh),e.builtinMeshes&&(this.builtinMeshes=e.builtinMeshes),e.outputTex3d&&(this.outputTex3d=e.outputTex3d),e.outputGeo&&(this.outputGeo=e.outputGeo),e.uniformLayout&&(this.uniformLayout=e.uniformLayout),e.uniformLayouts&&(this.uniformLayouts=e.uniformLayouts),e.openCategories&&(this.openCategories=e.openCategories),e.defaultProgram&&(this.defaultProgram=e.defaultProgram),e.hidden&&(this.hidden=!0),e.deprecatedBy&&(this.deprecatedBy=e.deprecatedBy),e.onInit&&(this._configOnInit=e.onInit),e.onUpdate&&(this._configOnUpdate=e.onUpdate),e.onDestroy&&(this._configOnDestroy=e.onDestroy),e.asyncInit&&(this._configAsyncInit=e.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(e){return this._configOnUpdate?this._configOnUpdate.call(this,e):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(e){return this._configAsyncInit?this._configAsyncInit.call(this,e):Promise.resolve()}};var n=new t({name:"Flock",namespace:"points",func:"flock",tags:["sim"],description:'2D "Boids" flocking agent simulation',textures:{},outputXyz:"global_xyz",outputVel:"global_vel",outputRgba:"global_rgba",globals:{separation:{type:"float",default:2,uniform:"separation",min:0,max:5,step:.1,ui:{label:"separation",control:"slider",category:"boids"}},alignment:{type:"float",default:1,uniform:"alignment",min:0,max:5,step:.1,ui:{label:"alignment",control:"slider",category:"boids"}},cohesion:{type:"float",default:1,uniform:"cohesion",min:0,max:5,step:.1,ui:{label:"cohesion",control:"slider",category:"boids"}},perceptionRadius:{type:"float",default:50,uniform:"perceptionRadius",min:10,max:200,step:1,ui:{label:"perception",control:"slider",category:"boids"}},separationRadius:{type:"float",default:25,uniform:"separationRadius",min:5,max:100,step:1,ui:{label:"sep radius",control:"slider",category:"boids"}},maxSpeed:{type:"float",default:4,uniform:"maxSpeed",min:.5,max:10,step:.1,ui:{label:"max speed",control:"slider",category:"motion"}},maxForce:{type:"float",default:.3,uniform:"maxForce",min:.01,max:1,step:.01,ui:{label:"max force",control:"slider",category:"motion"}},boundaryMode:{type:"int",default:0,uniform:"boundaryMode",choices:{wrap:0,softWall:1},ui:{label:"boundary",control:"dropdown",category:"motion"}},wallMargin:{type:"float",default:50,uniform:"wallMargin",min:10,max:200,step:1,ui:{label:"wall margin",control:"slider",category:"motion"}},noiseWeight:{type:"float",default:.1,uniform:"noiseWeight",min:0,max:1,step:.01,ui:{label:"noise",control:"slider",category:"motion"}}},passes:[{name:"agent",program:"agent",drawBuffers:3,inputs:{xyzTex:"global_xyz",velTex:"global_vel",rgbaTex:"global_rgba"},uniforms:{separation:"separation",alignment:"alignment",cohesion:"cohesion",perceptionRadius:"perceptionRadius",separationRadius:"separationRadius",maxSpeed:"maxSpeed",maxForce:"maxForce",boundaryMode:"boundaryMode",wallMargin:"wallMargin",noiseWeight:"noiseWeight"},outputs:{outXYZ:"global_xyz",outVel:"global_vel",outRGBA:"global_rgba"}},{name:"passthrough",program:"passthrough",inputs:{inputTex:"inputTex"},outputs:{fragColor:"outputTex"}}]});var i={agent:{glsl:`#version 300 es
+var t=class{constructor(e={}){this.state={},this.uniforms={},e.name&&(this.name=e.name),e.namespace&&(this.namespace=e.namespace),e.func&&(this.func=e.func),e.description&&(this.description=e.description),e.tags&&(this.tags=e.tags),e.globals&&(this.globals=e.globals),e.passes&&(this.passes=e.passes),e.textures&&(this.textures=e.textures),e.textures3d&&(this.textures3d=e.textures3d),e.shaders&&(this.shaders=e.shaders),e.externalTexture&&(this.externalTexture=e.externalTexture),e.externalMesh&&(this.externalMesh=e.externalMesh),e.builtinMeshes&&(this.builtinMeshes=e.builtinMeshes),e.outputTex3d&&(this.outputTex3d=e.outputTex3d),e.outputGeo&&(this.outputGeo=e.outputGeo),e.uniformLayout&&(this.uniformLayout=e.uniformLayout),e.uniformLayouts&&(this.uniformLayouts=e.uniformLayouts),e.openCategories&&(this.openCategories=e.openCategories),e.defaultProgram&&(this.defaultProgram=e.defaultProgram),e.hidden&&(this.hidden=!0),e.deprecatedBy&&(this.deprecatedBy=e.deprecatedBy),e.onInit&&(this._configOnInit=e.onInit),e.onUpdate&&(this._configOnUpdate=e.onUpdate),e.onDestroy&&(this._configOnDestroy=e.onDestroy),e.asyncInit&&(this._configAsyncInit=e.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(e){return this._configOnUpdate?this._configOnUpdate.call(this,e):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(e){return this._configAsyncInit?this._configAsyncInit.call(this,e):Promise.resolve()}};var n=new t({name:"Flock",namespace:"points",func:"flock",tags:["sim"],description:'2D "Boids" flocking agent simulation',textures:{},outputXyz:"global_xyz",outputVel:"global_vel",outputRgba:"global_rgba",globals:{diffuseTex:{type:"surface",default:"none",colorModeUniform:"diffuseActive",ui:{label:"diffuse map",category:"boids"}},separation:{type:"float",default:2,uniform:"separation",min:0,max:5,step:.1,ui:{label:"separation",control:"slider",category:"boids"}},alignment:{type:"float",default:1,uniform:"alignment",min:0,max:5,step:.1,ui:{label:"alignment",control:"slider",category:"boids"}},cohesion:{type:"float",default:1,uniform:"cohesion",min:0,max:5,step:.1,ui:{label:"cohesion",control:"slider",category:"boids"}},perceptionRadius:{type:"float",default:50,uniform:"perceptionRadius",min:10,max:200,step:1,ui:{label:"perception",control:"slider",category:"boids"}},separationRadius:{type:"float",default:25,uniform:"separationRadius",min:5,max:100,step:1,ui:{label:"sep radius",control:"slider",category:"boids"}},maxSpeed:{type:"float",default:4,uniform:"maxSpeed",min:.5,max:10,step:.1,ui:{label:"max speed",control:"slider",category:"motion"}},maxForce:{type:"float",default:.3,uniform:"maxForce",min:.01,max:1,step:.01,ui:{label:"max force",control:"slider",category:"motion"}},boundaryMode:{type:"int",default:0,uniform:"boundaryMode",choices:{wrap:0,softWall:1},ui:{label:"boundary",control:"dropdown",category:"motion"}},wallMargin:{type:"float",default:50,uniform:"wallMargin",min:10,max:200,step:1,ui:{label:"wall margin",control:"slider",category:"motion"}},noiseWeight:{type:"float",default:.1,uniform:"noiseWeight",min:0,max:1,step:.01,ui:{label:"noise",control:"slider",category:"motion"}}},passes:[{name:"agent",program:"agent",drawBuffers:3,inputs:{xyzTex:"global_xyz",velTex:"global_vel",rgbaTex:"global_rgba",diffuseTex:"diffuseTex"},uniforms:{diffuseActive:"diffuseActive",separation:"separation",alignment:"alignment",cohesion:"cohesion",perceptionRadius:"perceptionRadius",separationRadius:"separationRadius",maxSpeed:"maxSpeed",maxForce:"maxForce",boundaryMode:"boundaryMode",wallMargin:"wallMargin",noiseWeight:"noiseWeight"},outputs:{outXYZ:"global_xyz",outVel:"global_vel",outRGBA:"global_rgba"}},{name:"passthrough",program:"passthrough",inputs:{inputTex:"inputTex"},outputs:{fragColor:"outputTex"}}]});var i={agent:{glsl:`#version 300 es
 precision highp float;
 precision highp int;
 
@@ -28,6 +28,15 @@ uniform sampler2D rgbaTex;   // [r, g, b, a]
 layout(location = 0) out vec4 outXYZ;
 layout(location = 1) out vec4 outVel;
 layout(location = 2) out vec4 outRGBA;
+
+uniform sampler2D diffuseTex;
+uniform float diffuseActive;
+
+vec4 selectedDiffuse(vec2 uv) {
+    ivec2 size = textureSize(diffuseTex, 0);
+    ivec2 pixel = clamp(ivec2(clamp(uv, vec2(0.0), vec2(0.999999)) * vec2(size)), ivec2(0), size - 1);
+    return texelFetch(diffuseTex, pixel, 0);
+}
 
 // === ORIGINAL BOIDS HELPER FUNCTIONS (PRESERVED EXACTLY) ===
 
@@ -305,7 +314,7 @@ void main() {
     
     outXYZ = vec4(newPx, newPy, xyz.z, 1.0);
     outVel = vec4(velocity, age, seed);
-    outRGBA = rgba;
+    outRGBA = diffuseActive > 0.5 ? selectedDiffuse(outXYZ.xy) : rgba;
 }
 `,wgsl:`// Flock agent pass - Common Agent Architecture middleware
 // Reads from global_xyz/vel/rgba, applies boids flocking, writes back
@@ -313,6 +322,7 @@ void main() {
 // Positions in normalized coords [0,1]
 
 struct Uniforms {
+    diffuseActive: f32,
     resolution: vec2f,
     time: f32,
     separation: f32,
@@ -337,6 +347,14 @@ struct Outputs {
 @group(0) @binding(3) var xyzTex: texture_2d<f32>;
 @group(0) @binding(4) var velTex: texture_2d<f32>;
 @group(0) @binding(5) var rgbaTex: texture_2d<f32>;
+@group(0) @binding(6) var diffuseTex: texture_2d<f32>;
+
+fn selectedDiffuse(uv: vec2f) -> vec4f {
+    let size = textureDimensions(diffuseTex, 0);
+    let pixel = clamp(vec2i(clamp(uv, vec2f(0.0), vec2f(0.999999)) * vec2f(size)), vec2i(0), vec2i(size) - vec2i(1));
+    return textureLoad(diffuseTex, pixel, 0);
+}
+
 
 // === ORIGINAL BOIDS HELPER FUNCTIONS (PRESERVED EXACTLY) ===
 
@@ -614,7 +632,7 @@ fn main(@builtin(position) fragCoord: vec4f) -> Outputs {
     return Outputs(
         vec4f(newPx, newPy, xyz.z, 1.0),
         vec4f(velocity, age, seed),
-        rgba
+        select(rgba, selectedDiffuse(vec2f(newPx, newPy)), u.diffuseActive > 0.5)
     );
 }
 `},passthrough:{glsl:`#version 300 es
@@ -657,6 +675,7 @@ Agents follow classic flocking rules:
 
 | Parameter | Type | Default | Range | Description |
 |-----------|------|---------|-------|-------------|
+| diffuseTex | surface | none | - | Particle color map; none preserves the existing particle color |
 | separation | float | 2 | 0-5 | Separation |
 | alignment | float | 1 | 0-5 | Alignment |
 | cohesion | float | 1 | 0-5 | Cohesion |
@@ -681,4 +700,4 @@ noise()
 
 render(o0)
 \`\`\`
-`;if(n&&Object.keys(i).length>0){n.shaders||(n.shaders={});for(let[o,e]of Object.entries(i))n.shaders[o]={...e}}n&&a&&(n.help=a);var c="points/flock",d="points",f="flock",p=n;export{p as default,c as effectId,f as effectName,a as help,d as namespace};
+`;if(n&&Object.keys(i).length>0){n.shaders||(n.shaders={});for(let[o,e]of Object.entries(i))n.shaders[o]={...e}}n&&a&&(n.help=a);var c="points/flock",f="points",d="flock",p=n;export{p as default,c as effectId,d as effectName,a as help,f as namespace};

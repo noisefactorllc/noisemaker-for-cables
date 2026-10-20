@@ -1,5 +1,5 @@
 /* points/lenia */
-var t=class{constructor(e={}){this.state={},this.uniforms={},e.name&&(this.name=e.name),e.namespace&&(this.namespace=e.namespace),e.func&&(this.func=e.func),e.description&&(this.description=e.description),e.tags&&(this.tags=e.tags),e.globals&&(this.globals=e.globals),e.passes&&(this.passes=e.passes),e.textures&&(this.textures=e.textures),e.textures3d&&(this.textures3d=e.textures3d),e.shaders&&(this.shaders=e.shaders),e.externalTexture&&(this.externalTexture=e.externalTexture),e.externalMesh&&(this.externalMesh=e.externalMesh),e.builtinMeshes&&(this.builtinMeshes=e.builtinMeshes),e.outputTex3d&&(this.outputTex3d=e.outputTex3d),e.outputGeo&&(this.outputGeo=e.outputGeo),e.uniformLayout&&(this.uniformLayout=e.uniformLayout),e.uniformLayouts&&(this.uniformLayouts=e.uniformLayouts),e.openCategories&&(this.openCategories=e.openCategories),e.defaultProgram&&(this.defaultProgram=e.defaultProgram),e.hidden&&(this.hidden=!0),e.deprecatedBy&&(this.deprecatedBy=e.deprecatedBy),e.onInit&&(this._configOnInit=e.onInit),e.onUpdate&&(this._configOnUpdate=e.onUpdate),e.onDestroy&&(this._configOnDestroy=e.onDestroy),e.asyncInit&&(this._configAsyncInit=e.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(e){return this._configOnUpdate?this._configOnUpdate.call(this,e):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(e){return this._configAsyncInit?this._configAsyncInit.call(this,e):Promise.resolve()}};var n=new t({name:"Lenia",namespace:"points",func:"lenia",tags:["sim"],description:"Particle Lenia artificial life simulation",textures:{global_lenia_density:{width:"50%",height:"50%",format:"rgba16f"},global_lenia_field:{width:"50%",height:"50%",format:"rgba16f"}},outputXyz:"global_xyz",outputVel:"global_vel",outputRgba:"global_rgba",globals:{muK:{type:"float",default:25,uniform:"muK",min:1,max:30,step:.5,ui:{label:"kernel \u03BC",control:"slider",category:"kernel"}},sigmaK:{type:"float",default:5,uniform:"sigmaK",min:.1,max:10,step:.1,ui:{label:"kernel \u03C3",control:"slider",category:"kernel"}},muG:{type:"float",default:.25,uniform:"muG",min:.1,max:2,step:.01,ui:{label:"growth \u03BC",control:"slider",category:"growth"}},sigmaG:{type:"float",default:.15,uniform:"sigmaG",min:.01,max:.5,step:.01,ui:{label:"growth \u03C3",control:"slider",category:"growth"}},repulsion:{type:"float",default:.5,uniform:"repulsion",min:0,max:5,step:.1,ui:{label:"repulsion",control:"slider",category:"motion"}},dt:{type:"float",default:.25,uniform:"dt",min:.01,max:.5,step:.01,ui:{label:"time step",control:"slider",category:"motion"}},searchRadius:{type:"float",default:25,uniform:"searchRadius",min:5,max:40,step:1,ui:{label:"search radius",control:"slider",category:"kernel"}},depositAmount:{type:"float",default:3.6,uniform:"depositAmount",min:.1,max:5,step:.1,ui:{label:"deposit",control:"slider",category:"kernel"}}},passes:[{name:"clear",program:"clear",inputs:{},outputs:{fragColor:"global_lenia_density"}},{name:"deposit",program:"deposit",drawMode:"points",count:"input",blend:!0,inputs:{xyzTex:"global_xyz"},uniforms:{depositAmount:"depositAmount"},outputs:{fragColor:"global_lenia_density"}},{name:"convolve",program:"convolve",inputs:{densityTex:"global_lenia_density"},uniforms:{muK:"muK",sigmaK:"sigmaK",searchRadius:"searchRadius"},outputs:{fragColor:"global_lenia_field"}},{name:"agent",program:"agentField",drawBuffers:3,inputs:{xyzTex:"global_xyz",velTex:"global_vel",rgbaTex:"global_rgba",fieldTex:"global_lenia_field"},uniforms:{muG:"muG",sigmaG:"sigmaG",repulsion:"repulsion",dt:"dt"},outputs:{outXYZ:"global_xyz",outVel:"global_vel",outRGBA:"global_rgba"}},{name:"passthrough",program:"passthrough",inputs:{inputTex:"inputTex"},outputs:{fragColor:"outputTex"}}]});var r={agentField:{glsl:`#version 300 es
+var t=class{constructor(e={}){this.state={},this.uniforms={},e.name&&(this.name=e.name),e.namespace&&(this.namespace=e.namespace),e.func&&(this.func=e.func),e.description&&(this.description=e.description),e.tags&&(this.tags=e.tags),e.globals&&(this.globals=e.globals),e.passes&&(this.passes=e.passes),e.textures&&(this.textures=e.textures),e.textures3d&&(this.textures3d=e.textures3d),e.shaders&&(this.shaders=e.shaders),e.externalTexture&&(this.externalTexture=e.externalTexture),e.externalMesh&&(this.externalMesh=e.externalMesh),e.builtinMeshes&&(this.builtinMeshes=e.builtinMeshes),e.outputTex3d&&(this.outputTex3d=e.outputTex3d),e.outputGeo&&(this.outputGeo=e.outputGeo),e.uniformLayout&&(this.uniformLayout=e.uniformLayout),e.uniformLayouts&&(this.uniformLayouts=e.uniformLayouts),e.openCategories&&(this.openCategories=e.openCategories),e.defaultProgram&&(this.defaultProgram=e.defaultProgram),e.hidden&&(this.hidden=!0),e.deprecatedBy&&(this.deprecatedBy=e.deprecatedBy),e.onInit&&(this._configOnInit=e.onInit),e.onUpdate&&(this._configOnUpdate=e.onUpdate),e.onDestroy&&(this._configOnDestroy=e.onDestroy),e.asyncInit&&(this._configAsyncInit=e.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(e){return this._configOnUpdate?this._configOnUpdate.call(this,e):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(e){return this._configAsyncInit?this._configAsyncInit.call(this,e):Promise.resolve()}};var n=new t({name:"Lenia",namespace:"points",func:"lenia",tags:["sim"],description:"Particle Lenia artificial life simulation",textures:{global_lenia_density:{width:"50%",height:"50%",format:"rgba16f"},global_lenia_field:{width:"50%",height:"50%",format:"rgba16f"}},outputXyz:"global_xyz",outputVel:"global_vel",outputRgba:"global_rgba",globals:{diffuseTex:{type:"surface",default:"none",colorModeUniform:"diffuseActive",ui:{label:"diffuse map",category:"kernel"}},muK:{type:"float",default:25,uniform:"muK",min:1,max:30,step:.5,ui:{label:"kernel \u03BC",control:"slider",category:"kernel"}},sigmaK:{type:"float",default:5,uniform:"sigmaK",min:.1,max:10,step:.1,ui:{label:"kernel \u03C3",control:"slider",category:"kernel"}},muG:{type:"float",default:.25,uniform:"muG",min:.1,max:2,step:.01,ui:{label:"growth \u03BC",control:"slider",category:"growth"}},sigmaG:{type:"float",default:.15,uniform:"sigmaG",min:.01,max:.5,step:.01,ui:{label:"growth \u03C3",control:"slider",category:"growth"}},repulsion:{type:"float",default:.5,uniform:"repulsion",min:0,max:5,step:.1,ui:{label:"repulsion",control:"slider",category:"motion"}},dt:{type:"float",default:.25,uniform:"dt",min:.01,max:.5,step:.01,ui:{label:"time step",control:"slider",category:"motion"}},searchRadius:{type:"float",default:25,uniform:"searchRadius",min:5,max:40,step:1,ui:{label:"search radius",control:"slider",category:"kernel"}},depositAmount:{type:"float",default:3.6,uniform:"depositAmount",min:.1,max:5,step:.1,ui:{label:"deposit",control:"slider",category:"kernel"}}},passes:[{name:"clear",program:"clear",inputs:{},outputs:{fragColor:"global_lenia_density"}},{name:"deposit",program:"deposit",drawMode:"points",count:"input",blend:!0,inputs:{xyzTex:"global_xyz"},uniforms:{depositAmount:"depositAmount"},outputs:{fragColor:"global_lenia_density"}},{name:"convolve",program:"convolve",inputs:{densityTex:"global_lenia_density"},uniforms:{muK:"muK",sigmaK:"sigmaK",searchRadius:"searchRadius"},outputs:{fragColor:"global_lenia_field"}},{name:"agent",program:"agentField",drawBuffers:3,inputs:{xyzTex:"global_xyz",velTex:"global_vel",rgbaTex:"global_rgba",diffuseTex:"diffuseTex",fieldTex:"global_lenia_field"},uniforms:{diffuseActive:"diffuseActive",muG:"muG",sigmaG:"sigmaG",repulsion:"repulsion",dt:"dt"},outputs:{outXYZ:"global_xyz",outVel:"global_vel",outRGBA:"global_rgba"}},{name:"passthrough",program:"passthrough",inputs:{inputTex:"inputTex"},outputs:{fragColor:"outputTex"}}]});var r={agentField:{glsl:`#version 300 es
 precision highp float;
 
 // Agent update pass - samples pre-convolved U field
@@ -26,6 +26,15 @@ uniform float dt;        // Time step
 layout(location = 0) out vec4 outXYZ;
 layout(location = 1) out vec4 outVel;
 layout(location = 2) out vec4 outRGBA;
+
+uniform sampler2D diffuseTex;
+uniform float diffuseActive;
+
+vec4 selectedDiffuse(vec2 uv) {
+    ivec2 size = textureSize(diffuseTex, 0);
+    ivec2 pixel = clamp(ivec2(clamp(uv, vec2(0.0), vec2(0.999999)) * vec2(size)), ivec2(0), size - 1);
+    return texelFetch(diffuseTex, pixel, 0);
+}
 
 const float EPSILON = 0.0001;
 
@@ -114,13 +123,14 @@ void main() {
     // Output
     outXYZ = vec4(newPos, xyz.z, 1.0);  // Keep z, stay alive
     outVel = vec4(velocity, age, vel.w);  // Store velocity, age, seed
-    outRGBA = rgba;  // Color unchanged
+    outRGBA = diffuseActive > 0.5 ? selectedDiffuse(outXYZ.xy) : rgba;
 }
 `,wgsl:`// Agent update pass - samples pre-convolved U field
 // Much faster than O(n\xB2) as field is already computed
 // Binding order: loaded textures (0-2), sampled texture pair (3-4), uniforms (5)
 
 struct Uniforms {
+    diffuseActive: f32,
     resolution: vec2f,
     muG: f32,
     sigmaG: f32,
@@ -131,6 +141,14 @@ struct Uniforms {
 @group(0) @binding(0) var xyzTex: texture_2d<f32>;
 @group(0) @binding(1) var velTex: texture_2d<f32>;
 @group(0) @binding(2) var rgbaTex: texture_2d<f32>;
+@group(0) @binding(6) var diffuseTex: texture_2d<f32>;
+
+fn selectedDiffuse(uv: vec2f) -> vec4f {
+    let size = textureDimensions(diffuseTex, 0);
+    let pixel = clamp(vec2i(clamp(uv, vec2f(0.0), vec2f(0.999999)) * vec2f(size)), vec2i(0), vec2i(size) - vec2i(1));
+    return textureLoad(diffuseTex, pixel, 0);
+}
+
 @group(0) @binding(3) var fieldSampler: sampler;
 @group(0) @binding(4) var fieldTex: texture_2d<f32>;
 @group(0) @binding(5) var<uniform> uniforms: Uniforms;
@@ -229,7 +247,7 @@ fn main(@builtin(position) fragCoord: vec4f) -> FragmentOutput {
     // Output
     output.outXYZ = vec4f(newPos, xyz.z, 1.0);
     output.outVel = vec4f(velocity, age, vel.w);
-    output.outRGBA = rgba;
+    output.outRGBA = select(rgba, selectedDiffuse(newPos), uniforms.diffuseActive > 0.5);
 
     return output;
 }
@@ -524,6 +542,7 @@ Based on [Particle Lenia](https://google-research.github.io/self-organising-syst
 
 | Parameter | Type | Default | Range | Description |
 |-----------|------|---------|-------|-------------|
+| diffuseTex | surface | none | - | Particle color map; none preserves the existing particle color |
 | muK | float | 25 | 1-30 | Kernel \u03BC |
 | sigmaK | float | 5 | 0.1-10 | Kernel \u03C3 |
 | muG | float | 0.25 | 0.1-2 | Growth \u03BC |
@@ -560,4 +579,4 @@ noise()
 
 render(o0)
 \`\`\`
-`;if(n&&Object.keys(r).length>0){n.shaders||(n.shaders={});for(let[i,e]of Object.entries(r))n.shaders[i]={...e}}n&&o&&(n.help=o);var f="points/lenia",d="points",p="lenia",c=n;export{c as default,f as effectId,p as effectName,o as help,d as namespace};
+`;if(n&&Object.keys(r).length>0){n.shaders||(n.shaders={});for(let[i,e]of Object.entries(r))n.shaders[i]={...e}}n&&o&&(n.help=o);var f="points/lenia",d="points",c="lenia",p=n;export{p as default,f as effectId,c as effectName,o as help,d as namespace};

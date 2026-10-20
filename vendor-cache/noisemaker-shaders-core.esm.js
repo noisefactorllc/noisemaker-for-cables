@@ -3,8 +3,8 @@
  * Includes: CanvasRenderer + UIController + EffectSelect
  * Copyright (c) 2017-2026 Noise Factor LLC. https://noisefactor.io/
  * SPDX-License-Identifier: MIT
- * Build: 0553e242
- * Date: 2026-10-19T04:16:42.596Z
+ * Build: 8e62508b
+ * Date: 2026-10-20T20:07:16.318Z
  */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
@@ -1312,6 +1312,7 @@ function parse(tokens, options = {}) {
         return;
       }
       if (stmt.type === "VarAssign") {
+        Object.defineProperty(stmt, "planIndex", { value: plans.length, enumerable: false });
         vars.push(stmt);
       } else {
         plans.push(stmt);
@@ -1447,8 +1448,18 @@ function parse(tokens, options = {}) {
   function parseBlock() {
     expect("LBRACE", "Expect '{'");
     const body = [];
-    while (peek().type !== "RBRACE") {
+    while (true) {
+      const leadingComments = collectComments();
+      if (peek().type === "RBRACE") {
+        if (leadingComments.length > 0) {
+          Object.defineProperty(body, "trailingComments", { value: leadingComments, enumerable: false });
+        }
+        break;
+      }
       const stmt = parseStatement();
+      if (leadingComments.length > 0) {
+        stmt.leadingComments = leadingComments;
+      }
       body.push(stmt);
       while (peek().type === "SEMICOLON") advance();
     }
@@ -1940,7 +1951,14 @@ function parse(tokens, options = {}) {
         if (path.length > 1) {
           return { type: "Member", path };
         }
-        return { type: "Ident", name: path[0] };
+        const ident = { type: "Ident", name: path[0] };
+        if (token.position) {
+          Object.defineProperty(ident, "position", {
+            value: { line: token.position.line, column: token.position.column, start: token.position.start, end: token.position.end },
+            enumerable: false
+          });
+        }
+        return ident;
       }
       case "OUTPUT_REF":
         advance();
@@ -2433,7 +2451,9 @@ function callToSurface(node) {
 }
 function validate(ast) {
   const diagnosticsList = [];
+  const readsBeforeLet = /* @__PURE__ */ new WeakSet();
   function pushDiag(code, node, message = diagnostics_default[code].message) {
+    if (node && typeof node === "object" && readsBeforeLet.has(node)) return;
     let enrichedMessage = message;
     const identName = extractIdentifierName(node);
     if (identName && !message.includes(identName) && !message.includes("'")) {
@@ -2632,36 +2652,59 @@ function validate(ast) {
     }
     return node;
   }
-  if (Array.isArray(ast.vars)) {
-    for (const v of ast.vars) {
-      const expr = substitute(clone(v.expr), [v.name]);
-      if (expr && isStarterChain(expr)) {
-        const head = firstChainCall(expr);
-        if (head) pushDiag("S006", head);
-      }
-      if (expr == null || expr.type === "Ident" && (expr.name === "null" || expr.name === "undefined")) {
-        pushDiag("S004", v);
-        continue;
-      }
-      if (expr.type === "Ident" && !symbols.has(expr.name) && !stateValues.has(expr.name) && !ops[expr.name] && !canResolveOpName(expr.name)) {
-        pushDiag("S003", expr);
-        continue;
-      }
-      if (expr.type === "Chain" && expr.chain.length === 1) {
-        symbols.set(v.name, expr.chain[0]);
-      } else if (expr.type === "Member") {
-        const resolved = resolveEnum(expr.path);
-        if (typeof resolved === "number") {
-          symbols.set(v.name, { type: "Number", value: resolved });
-        } else if (resolved !== void 0) {
-          symbols.set(v.name, resolved);
-        } else {
-          symbols.set(v.name, expr);
-        }
+  function declareVar(v) {
+    const expr = substitute(clone(v.expr), [v.name]);
+    if (expr && isStarterChain(expr)) {
+      const head = firstChainCall(expr);
+      if (head) pushDiag("S006", head);
+    }
+    if (expr == null || expr.type === "Ident" && (expr.name === "null" || expr.name === "undefined")) {
+      pushDiag("S004", v);
+      return;
+    }
+    if (expr.type === "Ident" && !symbols.has(expr.name) && !stateValues.has(expr.name) && !ops[expr.name] && !canResolveOpName(expr.name)) {
+      pushDiag("S003", expr);
+      return;
+    }
+    if (expr.type === "Chain" && expr.chain.length === 1) {
+      symbols.set(v.name, expr.chain[0]);
+    } else if (expr.type === "Member") {
+      const resolved = resolveEnum(expr.path);
+      if (typeof resolved === "number") {
+        symbols.set(v.name, { type: "Number", value: resolved });
+      } else if (resolved !== void 0) {
+        symbols.set(v.name, resolved);
       } else {
         symbols.set(v.name, expr);
       }
+    } else {
+      symbols.set(v.name, expr);
     }
+  }
+  const topLevelVars = Array.isArray(ast.vars) ? ast.vars : [];
+  let nextVar = 0;
+  let pendingLets = /* @__PURE__ */ new Set();
+  function declareVarsBefore(planIndex) {
+    while (nextVar < topLevelVars.length && (topLevelVars[nextVar].planIndex ?? 0) <= planIndex) {
+      declareVar(topLevelVars[nextVar++]);
+    }
+    pendingLets = new Set(topLevelVars.slice(nextVar).map((v) => v.name));
+  }
+  function reportReadsBeforeLet(node) {
+    if (pendingLets.size === 0 || !node || typeof node !== "object") return;
+    if (Array.isArray(node)) {
+      for (const item of node) reportReadsBeforeLet(item);
+      return;
+    }
+    if (node.type === "Ident" && pendingLets.has(node.name) && !symbols.has(node.name)) {
+      if (!readsBeforeLet.has(node)) {
+        const position = node.position;
+        pushDiag("S003", position ? { type: "Ident", name: node.name, loc: { line: position.line, column: position.column } } : { type: "Ident", name: node.name });
+        readsBeforeLet.add(node);
+      }
+      return;
+    }
+    for (const value of Object.values(node)) reportReadsBeforeLet(value);
   }
   function evalExpr(node) {
     const expr = substitute(clone(node));
@@ -3102,6 +3145,7 @@ function validate(ast) {
   }
   function compileChainStatement(stmt) {
     const chain = [];
+    reportReadsBeforeLet(stmt.chain);
     const chainNode = { type: "Chain", chain: stmt.chain };
     const hasWrite = stmt.write || stmt.write3d;
     if (!hasWrite && isStarterChain(chainNode)) {
@@ -3860,46 +3904,72 @@ function validate(ast) {
   }
   function compileBlock(body) {
     const result2 = [];
+    const shadowed = /* @__PURE__ */ new Map();
     for (const s of body || []) {
+      if (s.type === "VarAssign") {
+        if (!shadowed.has(s.name)) {
+          shadowed.set(s.name, symbols.has(s.name) ? { value: symbols.get(s.name) } : null);
+        }
+        declareVar(s);
+        result2.push(s);
+        continue;
+      }
       const compiled = compileStmt(s);
       if (compiled) result2.push(compiled);
     }
+    for (const [name, previous] of shadowed) {
+      if (previous) symbols.set(name, previous.value);
+      else symbols.delete(name);
+    }
     return result2;
+  }
+  function withSource(plan, stmt) {
+    Object.defineProperty(plan, "source", { value: stmt, enumerable: false });
+    return plan;
   }
   function compileStmt(stmt) {
     if (stmt.type === "IfStmt") {
+      reportReadsBeforeLet(stmt.condition);
       const cond = evalCondition(stmt.condition);
       const thenBranch = compileBlock(stmt.then);
       const elif = [];
       for (const e of stmt.elif || []) {
+        reportReadsBeforeLet(e.condition);
         elif.push({ cond: evalCondition(e.condition), then: compileBlock(e.then) });
       }
       const elseBranch = compileBlock(stmt.else);
-      return { type: "Branch", cond, then: thenBranch, elif, else: elseBranch };
+      return withSource({ type: "Branch", cond, then: thenBranch, elif, else: elseBranch }, stmt);
     }
     if (stmt.type === "Break") {
-      return { type: "Break" };
+      return withSource({ type: "Break" }, stmt);
     }
     if (stmt.type === "Continue") {
-      return { type: "Continue" };
+      return withSource({ type: "Continue" }, stmt);
     }
     if (stmt.type === "Return") {
       const node = { type: "Return" };
-      if (stmt.value) node.value = evalExpr(stmt.value);
-      return node;
+      if (stmt.value) {
+        reportReadsBeforeLet(stmt.value);
+        node.value = evalExpr(stmt.value);
+      }
+      return withSource(node, stmt);
     }
     return compileChainStatement(stmt);
   }
-  for (const stmt of ast.plans || []) {
-    const compiled = compileStmt(stmt);
+  const statements = ast.plans || [];
+  for (let index = 0; index < statements.length; index++) {
+    declareVarsBefore(index);
+    const compiled = compileStmt(statements[index]);
     if (compiled) plans.push(compiled);
   }
+  declareVarsBefore(Infinity);
   const vars = ast.vars || [];
   const searchNamespaces = programSearchOrder || [];
   const result = { plans, diagnostics: diagnosticsList, render, vars, searchNamespaces };
   if (ast.trailingComments) {
     result.trailingComments = ast.trailingComments;
   }
+  Object.defineProperty(result, "planOrder", { value: plans.slice(), enumerable: false });
   return result;
 }
 
@@ -4534,6 +4604,47 @@ function formatLetExpr(expr, options = {}) {
       return formatValue(expr, null, options);
   }
 }
+function unparseControlFlow(plan, searchNamespaces, options) {
+  const source = plan.source;
+  const block = (plans, body) => {
+    const text2 = unparse(
+      { searchNamespaces, plans, trailingComments: body?.trailingComments },
+      {},
+      { ...options, omitSearchDirective: true }
+    );
+    return text2 ? `${text2}
+` : "";
+  };
+  let text;
+  if (plan.type === "Branch") {
+    const condition = (node) => node ? formatLetExpr(node, options) : formatValue(plan.cond, null, options);
+    text = `if (${condition(source?.condition)}) {
+${block(plan.then || [], source?.then)}}`;
+    const elif = plan.elif || [];
+    for (let index = 0; index < elif.length; index++) {
+      const elifSource = source?.elif?.[index];
+      const elifCondition = elifSource ? formatLetExpr(elifSource.condition, options) : formatValue(elif[index].cond, null, options);
+      text += ` elif (${elifCondition}) {
+${block(elif[index].then || [], elifSource?.then)}}`;
+    }
+    if (source ? source.else : plan.else?.length > 0) {
+      text += ` else {
+${block(plan.else || [], source?.else)}}`;
+    }
+  } else if (plan.type === "Break") {
+    text = "break";
+  } else if (plan.type === "Continue") {
+    text = "continue";
+  } else if (plan.type === "Return") {
+    const value = source ? source.value : plan.value;
+    text = value ? `return ${formatLetExpr(value, options)}` : "return";
+  } else if (plan.type === "VarAssign") {
+    text = `let ${plan.name} = ${formatLetExpr(plan.expr, options)}`;
+  } else {
+    return null;
+  }
+  return [...(source || plan).leadingComments || [], text].join("\n");
+}
 function unparse(compiled, overrides = {}, options = {}) {
   options = options.enums ? options : { ...options, enums: stdEnums };
   const lines = [];
@@ -4543,8 +4654,27 @@ function unparse(compiled, overrides = {}, options = {}) {
     lines.push(`search ${searchNamespaces.join(", ")}`);
     lines.push("");
   }
-  if (compiled.vars && compiled.vars.length > 0) {
-    for (const v of compiled.vars) {
+  const plans = compiled.plans || [];
+  const planOrder = compiled.planOrder || plans;
+  const remaining = new Set(plans);
+  const varsBefore = /* @__PURE__ */ new Map();
+  for (const v of compiled.vars || []) {
+    let at = plans.length;
+    for (let k = v.planIndex ?? 0; k < planOrder.length; k++) {
+      if (remaining.has(planOrder[k])) {
+        at = plans.indexOf(planOrder[k]);
+        break;
+      }
+    }
+    if (plans.length === 0) at = 0;
+    if (!varsBefore.has(at)) varsBefore.set(at, []);
+    varsBefore.get(at).push(v);
+  }
+  const emitVars = (at) => {
+    const group = varsBefore.get(at);
+    if (!group) return;
+    if (lines.length > 0 && lines[lines.length - 1] !== "") lines.push("");
+    for (const v of group) {
       if (v.leadingComments && v.leadingComments.length > 0) {
         for (const c of v.leadingComments) {
           lines.push(c);
@@ -4553,10 +4683,10 @@ function unparse(compiled, overrides = {}, options = {}) {
       const exprStr = formatLetExpr(v.expr, options);
       lines.push(`let ${v.name} = ${exprStr}`);
     }
-    lines.push("");
-  }
+    if (at < plans.length || plans.length === 0) lines.push("");
+  };
+  emitVars(0);
   let globalStepIndex = 0;
-  const plans = compiled.plans || [];
   for (let planIndex = 0; planIndex < plans.length; planIndex++) {
     let joinChainWithComments = function(chain) {
       const parts = [];
@@ -4599,7 +4729,16 @@ function unparse(compiled, overrides = {}, options = {}) {
       return parts.join("\n");
     };
     const plan = plans[planIndex];
-    if (!plan.chain || plan.chain.length === 0) continue;
+    if (planIndex > 0) emitVars(planIndex);
+    if (!plan.chain) {
+      const statement = unparseControlFlow(plan, searchNamespaces, options);
+      if (statement !== null) {
+        lines.push(statement);
+        if (planIndex < plans.length - 1) lines.push("");
+      }
+      continue;
+    }
+    if (plan.chain.length === 0) continue;
     const stepsByTemp = new Map(plan.chain.map((step, index) => [step.temp, {
       step,
       override: overrides[globalStepIndex + index] || {}
@@ -4831,6 +4970,7 @@ function unparse(compiled, overrides = {}, options = {}) {
       lines.push("");
     }
   }
+  if (plans.length > 0) emitVars(plans.length);
   if (compiled.render) {
     lines.push("");
     lines.push(`render(${compiled.render})`);
@@ -5604,6 +5744,7 @@ function expandPalette(index) {
 // shaders/src/runtime/expander.js
 var SURFACE_REF_PATTERN = /^(?:o|vol|geo|xyz|vel|rgba)[0-7]$/;
 var TEXTURE_ARG_KINDS = /* @__PURE__ */ new Set(["temp", "output", "source", "feedback", "vol", "geo", "xyz", "vel", "rgba", "pipeline"]);
+var CONTROL_FLOW_KEYWORDS = { Branch: "if", Break: "break", Continue: "continue", Return: "return" };
 function isTextureArg(arg) {
   return arg !== null && typeof arg === "object" && TEXTURE_ARG_KINDS.has(arg.kind);
 }
@@ -5676,6 +5817,11 @@ function expand(compilationResult, options = {}) {
     return node && node.value !== void 0 ? node.value : null;
   };
   for (const plan of compilationResult.plans) {
+    if (!Array.isArray(plan.chain)) {
+      const keyword = CONTROL_FLOW_KEYWORDS[plan.type] ?? plan.type;
+      errors.push({ message: `The runtime does not yet execute control flow ('${keyword}')` });
+      continue;
+    }
     let currentInput = null;
     let currentInput3d = null;
     let currentInputGeo = null;
@@ -8555,8 +8701,8 @@ var WebGL2Backend = class _WebGL2Backend extends Backend {
   bindTextures(pass, program, state) {
     const gl = this.gl;
     let unit = 0;
-    if (!pass.inputs) return;
-    for (const [samplerName, texId] of Object.entries(pass.inputs)) {
+    const inputs = pass.inputs || {};
+    for (const [samplerName, texId] of Object.entries(inputs)) {
       if (unit >= this.maxTextureUnits) {
         throw {
           code: "ERR_TOO_MANY_TEXTURES",
@@ -8594,6 +8740,16 @@ var WebGL2Backend = class _WebGL2Backend extends Backend {
       if (uniform) {
         gl.uniform1i(uniform.location, unit);
       }
+      unit++;
+    }
+    for (const name in program.uniforms) {
+      if (name in inputs || name.endsWith("]")) continue;
+      const uniform = program.uniforms[name];
+      if (uniform.type !== gl.SAMPLER_2D || uniform.size !== 1) continue;
+      if (unit >= this.maxTextureUnits) break;
+      gl.activeTexture(gl.TEXTURE0 + unit);
+      gl.bindTexture(gl.TEXTURE_2D, this.defaultTexture);
+      gl.uniform1i(uniform.location, unit);
       unit++;
     }
   }
@@ -17505,8 +17661,26 @@ var CanvasRenderer = class {
   get isContextLost() {
     return this._isContextLost;
   }
-  /** @returns {string} Current backend ('glsl' or 'wgsl') */
+  /**
+   * The backend the active pipeline runs ('glsl' for WebGL2, 'wgsl' for
+   * WebGPU). A WebGPU request runs WebGL2 when WebGPU is unavailable. Before
+   * the first compile, and after switchBackend() or a context restore
+   * disposes the pipeline, it is preferredBackend.
+   * @returns {string}
+   */
   get backend() {
+    const name = this._pipeline?.backend?.getName?.();
+    if (name === "WebGPU") return "wgsl";
+    if (name === "WebGL2") return "glsl";
+    return this.preferredBackend;
+  }
+  /**
+   * The backend that preferWebGPU or the last switchBackend() asked for
+   * ('glsl' or 'wgsl'). The pipeline runs WebGL2 when WebGPU is unavailable,
+   * so this can differ from the backend that renders.
+   * @returns {string}
+   */
+  get preferredBackend() {
     return this._preferWebGPU ? "wgsl" : "glsl";
   }
   /** @returns {object|null} Current pipeline object */
@@ -18110,17 +18284,25 @@ var CanvasRenderer = class {
   // =========================================================================
   /**
    * Load the shader manifest
-   * @returns {Promise<object>} The loaded manifest
+   * @returns {Promise<object>} The loaded manifest. Rejects when the
+   *   manifest cannot be fetched (the message names its URL and the HTTP
+   *   status) or read as JSON.
    */
   async loadManifest() {
+    const manifestUrl = `${this._basePath}/effects/manifest.json`;
+    let manifestRes;
     try {
-      const manifestRes = await fetch(`${this._basePath}/effects/manifest.json`);
-      if (manifestRes.ok) {
-        this._manifest = await manifestRes.json();
-      }
-    } catch (e) {
-      console.warn("Failed to load shader manifest");
-      throw new Error("Could not load shader manifest - lazy loading requires manifest.json");
+      manifestRes = await fetch(manifestUrl);
+    } catch (err) {
+      throw new Error(`Could not load shader manifest ${manifestUrl}: ${err.message}`, { cause: err });
+    }
+    if (!manifestRes.ok) {
+      throw new Error(`Could not load shader manifest ${manifestUrl}: HTTP ${manifestRes.status}`);
+    }
+    try {
+      this._manifest = await manifestRes.json();
+    } catch (err) {
+      throw new Error(`Could not read shader manifest ${manifestUrl}: ${err.message}`, { cause: err });
     }
     const starterNames = [];
     for (const [effectId, entry] of Object.entries(this._manifest)) {
@@ -18536,29 +18718,31 @@ var CanvasRenderer = class {
    * @param {string[]} effectIds - Array of effect IDs
    * @param {object} [options] - Loading options
    * @param {function} [options.onProgress] - Progress callback
-   * @returns {Promise<object[]>} Loaded effects
+   * @returns {Promise<object[]>} Loaded effects. A failed effect does not
+   *   reject the promise: the array's `failed` property lists
+   *   `{ effectId, error }` for each effect that could not load.
    */
   async loadEffects(effectIds, options = {}) {
-    if (effectIds.length === 0) return [];
+    if (effectIds.length === 0) return Object.assign([], { failed: [] });
     const needsLoading = effectIds.filter((id) => !this._loadedEffects.has(id));
     if (needsLoading.length === 0) {
-      return effectIds.map((id) => this._loadedEffects.get(id));
+      return Object.assign(effectIds.map((id) => this._loadedEffects.get(id)), { failed: [] });
     }
     if (this._onLoadingStart) {
       this._onLoadingStart(needsLoading);
     }
     try {
       const loadPromises = needsLoading.map(
-        (effectId) => this.loadEffect(effectId, options).catch((err) => {
-          console.error(`Failed to load ${effectId}:`, err);
-          return null;
+        (effectId) => this.loadEffect(effectId, options).then(() => null, (error) => {
+          console.error(`Failed to load ${effectId}:`, error);
+          return { effectId, error };
         })
       );
-      await Promise.all(loadPromises);
+      const failed = (await Promise.all(loadPromises)).filter(Boolean);
       if (this._onLoadingEnd) {
         this._onLoadingEnd();
       }
-      return effectIds.map((id) => this._loadedEffects.get(id)).filter(Boolean);
+      return Object.assign(effectIds.map((id) => this._loadedEffects.get(id)).filter(Boolean), { failed });
     } catch (err) {
       if (this._onLoadingEnd) {
         this._onLoadingEnd();
@@ -20053,7 +20237,13 @@ var ProgramState = class extends Emitter {
     this._renderTargetOverride = data.overrides?.renderTarget || null;
     this._mediaInputs = new Map(Object.entries(data.mediaInputs || {}));
     this._textInputs = new Map(Object.entries(data.textInputs || {}));
+    let programChanged = false;
     if (data.dsl) {
+      if (this._renderer && this._renderer.currentDsl !== data.dsl) {
+        const compiled = extractEffectsFromDsl(this._renderer.currentDsl || "") || [];
+        programChanged = !this._structuresMatch(compiled, extractEffectsFromDsl(data.dsl) || []);
+        if (programChanged) this._renderer.currentDsl = data.dsl;
+      }
       this.fromDsl(data.dsl);
     }
     for (const [key, savedState] of Object.entries(data.stepStates || {})) {
@@ -20064,6 +20254,7 @@ var ProgramState = class extends Emitter {
     }
     this._applyToPipeline();
     this.emit("load", { structure: this._structure });
+    if (programChanged) this.emit("recompileNeeded");
   }
   // =========================================================================
   // Validation and Helper Methods
