@@ -3,8 +3,8 @@
  * Includes: CanvasRenderer + UIController + EffectSelect
  * Copyright (c) 2017-2026 Noise Factor LLC. https://noisefactor.io/
  * SPDX-License-Identifier: MIT
- * Build: 8e62508b
- * Date: 2026-10-20T20:07:16.318Z
+ * Build: 12751c78
+ * Date: 2026-10-21T19:15:25.594Z
  */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
@@ -264,6 +264,7 @@ var diagnostics = {
   S004: { stage: "semantic", severity: "error", message: "Cannot assign null or undefined" },
   S005: { stage: "semantic", severity: "error", message: "Illegal chain structure" },
   S006: { stage: "semantic", severity: "error", message: "Starter chain missing write() call" },
+  S007: { stage: "semantic", severity: "warning", message: "Deprecated parameter alias" },
   S008: { stage: "semantic", severity: "warning", message: "Deprecated effect" },
   R001: { stage: "runtime", severity: "error", message: "Runtime error" }
 };
@@ -2288,13 +2289,44 @@ function applyEnumPrefix(path, prefix) {
   return prefix.concat(path);
 }
 
-// shaders/src/lang/effectAliases.js
+// shaders/src/lang/paramAliases.js
+var ALIAS_EOL_DATE = "2027-06-01";
 var registry = /* @__PURE__ */ Object.create(null);
+function registerParamAliases(opName, aliases) {
+  if (!registry[opName]) {
+    registry[opName] = /* @__PURE__ */ Object.create(null);
+  }
+  Object.assign(registry[opName], aliases);
+}
+function getParamAliases(opName) {
+  const aliases = registry[opName];
+  return aliases ? { ...aliases } : {};
+}
+function resolveParamAliases(opName, kwargs) {
+  const warnings = [];
+  const aliases = registry[opName];
+  if (!aliases) return warnings;
+  for (const oldName in aliases) {
+    if (!(oldName in kwargs)) continue;
+    const newName = aliases[oldName];
+    if (!(newName in kwargs)) {
+      kwargs[newName] = kwargs[oldName];
+    }
+    delete kwargs[oldName];
+    warnings.push(
+      `param '${oldName}' is deprecated, use '${newName}' instead. Aliases will be removed on ${ALIAS_EOL_DATE}.`
+    );
+  }
+  return warnings;
+}
+
+// shaders/src/lang/effectAliases.js
+var registry2 = /* @__PURE__ */ Object.create(null);
 function registerEffectAlias(oldOpName, newName) {
-  registry[oldOpName] = newName;
+  registry2[oldOpName] = newName;
 }
 function checkEffectAlias(opName) {
-  const newName = registry[opName];
+  const newName = registry2[opName];
   if (!newName) return null;
   const oldName = opName.includes(".") ? opName.split(".").pop() : opName;
   return `effect '${oldName}' is deprecated, use '${newName}' instead.`;
@@ -3395,6 +3427,12 @@ function validate(ast) {
         const args = {};
         let argSources = null;
         const kw = call.kwargs;
+        if (kw) {
+          const aliasWarnings = resolveParamAliases(opName, kw);
+          for (const w of aliasWarnings) {
+            pushDiag("S007", call, w);
+          }
+        }
         const seen = /* @__PURE__ */ new Set();
         const specArgs = spec.args || [];
         for (let i = 0; i < specArgs.length; i++) {
@@ -5081,7 +5119,7 @@ function typeMatches(value, type) {
       return true;
   }
 }
-function collectAcceptedArgNames(spec, instance) {
+function collectAcceptedArgNames(spec, instance, aliases) {
   const accepted = /* @__PURE__ */ new Set();
   for (const def of spec?.args || []) {
     if (def?.name) accepted.add(def.name);
@@ -5089,7 +5127,12 @@ function collectAcceptedArgNames(spec, instance) {
   if (instance?.globals) {
     for (const key of Object.keys(instance.globals)) accepted.add(key);
   }
+  for (const name of Object.keys(aliases)) accepted.add(name);
+  for (const name of Object.values(aliases)) accepted.add(name);
   return accepted;
+}
+function aliasMapFor(resolvedName) {
+  return getParamAliases(resolvedName);
 }
 function predictBackendSupport(instance, resolvedName, manifest) {
   if (!manifest || !instance || !instance.passes) return void 0;
@@ -5164,11 +5207,12 @@ function predictReplacement(resolvedName, spec, newArgs, oldInstance, options = 
       message: `No registered effect definition for '${resolvedName}'`
     });
   }
-  const accepted = collectAcceptedArgNames(spec, instance);
+  const aliases = aliasMapFor(resolvedName);
+  const accepted = collectAcceptedArgNames(spec, instance, aliases);
   const provided = newArgs || {};
-  const providedCanonical = new Set(Object.keys(provided));
+  const providedCanonical = new Set(Object.keys(provided).map((key) => aliases[key] || key));
   for (const key of Object.keys(provided)) {
-    const canonical = key;
+    const canonical = aliases[key] || key;
     if (!accepted.has(canonical)) {
       prediction.arguments.unknown.push(key);
     }
@@ -5192,7 +5236,7 @@ function predictReplacement(resolvedName, spec, newArgs, oldInstance, options = 
     });
   }
   for (const [key, value] of Object.entries(provided)) {
-    const canonical = key;
+    const canonical = aliases[key] || key;
     const def = knownDefs.get(canonical);
     if (!def) continue;
     const declaredType = def.type === "color" ? "color" : def.type;
@@ -5540,6 +5584,7 @@ var Effect = class {
     if (config.outputGeo) this.outputGeo = config.outputGeo;
     if (config.uniformLayout) this.uniformLayout = config.uniformLayout;
     if (config.uniformLayouts) this.uniformLayouts = config.uniformLayouts;
+    if (config.paramAliases) this.paramAliases = config.paramAliases;
     if (config.openCategories) this.openCategories = config.openCategories;
     if (config.defaultProgram) this.defaultProgram = config.defaultProgram;
     if (config.hidden) this.hidden = true;
@@ -5973,7 +6018,7 @@ function expand(compilationResult, options = {}) {
       }
       const scopeParticleTex = (texName) => {
         if (!currentParticlePipelineId) return texName;
-        if (/^global_(xyz|vel|rgba|points_trail|life_data)$/.test(texName)) {
+        if (/^global_(xyz|vel|rgba|points_trail|life_data|[a-z]+_base_color)$/.test(texName)) {
           return `${texName}_${currentParticlePipelineId}`;
         }
         return texName;
@@ -6036,7 +6081,7 @@ function expand(compilationResult, options = {}) {
       if (effectDef.textures) {
         for (const [texName, spec] of Object.entries(effectDef.textures)) {
           let virtualTexId;
-          const isParticleTex = /^global_(xyz|vel|rgba|points_trail|life_data)$/.test(texName);
+          const isParticleTex = /^global_(xyz|vel|rgba|points_trail|life_data|[a-z]+_base_color)$/.test(texName);
           const shouldScopeAsParticle = isParticleTex && currentParticlePipelineId;
           const shouldScopeAsChain = texName.startsWith("global_") && !isParticleTex;
           if (texName.startsWith("global_")) {
@@ -6059,7 +6104,7 @@ function expand(compilationResult, options = {}) {
                 const originalParam = dimSpec.param;
                 const dimensionScope = originalParam === "stateSize" && currentParticlePipelineId && !texName.startsWith("global_") ? currentParticlePipelineId : scopeSuffix;
                 const scopedParam = originalParam === "volumeSize" ? volumeSizeParam : `${originalParam}_${dimensionScope}`;
-                scopedParamMap.set(originalParam, scopedParam);
+                if (!dimSpec.inherit) scopedParamMap.set(originalParam, scopedParam);
                 return {
                   ...dimSpec,
                   param: scopedParam
@@ -18600,6 +18645,9 @@ var CanvasRenderer = class {
         args
       };
       registerOp(`${namespace}.${instance.func}`, opSpec);
+      if (instance.paramAliases) {
+        registerParamAliases(`${namespace}.${instance.func}`, instance.paramAliases);
+      }
       if (instance.hidden && instance.deprecatedBy) {
         registerEffectAlias(`${namespace}.${instance.func}`, instance.deprecatedBy);
       }

@@ -1,5 +1,5 @@
 /* points/dla */
-var t=class{constructor(e={}){this.state={},this.uniforms={},e.name&&(this.name=e.name),e.namespace&&(this.namespace=e.namespace),e.func&&(this.func=e.func),e.description&&(this.description=e.description),e.tags&&(this.tags=e.tags),e.globals&&(this.globals=e.globals),e.passes&&(this.passes=e.passes),e.textures&&(this.textures=e.textures),e.textures3d&&(this.textures3d=e.textures3d),e.shaders&&(this.shaders=e.shaders),e.externalTexture&&(this.externalTexture=e.externalTexture),e.externalMesh&&(this.externalMesh=e.externalMesh),e.builtinMeshes&&(this.builtinMeshes=e.builtinMeshes),e.outputTex3d&&(this.outputTex3d=e.outputTex3d),e.outputGeo&&(this.outputGeo=e.outputGeo),e.uniformLayout&&(this.uniformLayout=e.uniformLayout),e.uniformLayouts&&(this.uniformLayouts=e.uniformLayouts),e.openCategories&&(this.openCategories=e.openCategories),e.defaultProgram&&(this.defaultProgram=e.defaultProgram),e.hidden&&(this.hidden=!0),e.deprecatedBy&&(this.deprecatedBy=e.deprecatedBy),e.onInit&&(this._configOnInit=e.onInit),e.onUpdate&&(this._configOnUpdate=e.onUpdate),e.onDestroy&&(this._configOnDestroy=e.onDestroy),e.asyncInit&&(this._configAsyncInit=e.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(e){return this._configOnUpdate?this._configOnUpdate.call(this,e):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(e){return this._configAsyncInit?this._configAsyncInit.call(this,e):Promise.resolve()}};var n=new t({name:"Dla",namespace:"points",func:"dla",tags:["sim"],description:"Diffusion-limited aggregation",textures:{global_dla_grid:{width:"100%",height:"100%",format:"rgba16f"}},outputXyz:"global_xyz",outputVel:"global_vel",outputRgba:"global_rgba",globals:{diffuseTex:{type:"surface",default:"none",colorModeUniform:"diffuseActive",ui:{label:"diffuse map",category:"chemistry"}},fieldTex:{type:"surface",default:"none",colorModeUniform:"fieldActive",ui:{label:"field map",category:"chemistry"}},stateSize:{type:"int",default:256,uniform:"stateSize",ui:{control:!1}},anchorDensity:{type:"float",default:.5,uniform:"anchorDensity",min:.01,max:5,step:.01,ui:{label:"anchors",control:"slider",category:"chemistry"}},stride:{type:"float",default:15,uniform:"stride",min:1,max:50,step:1,ui:{label:"stride",control:"slider",category:"agents"}},inputWeight:{type:"float",default:15,uniform:"inputWeight",min:0,max:100,step:1,ui:{label:"input weight",control:"slider",category:"agents"}},decay:{type:"float",default:.25,uniform:"decay",min:0,max:.5,step:.01,ui:{label:"decay",control:"slider",category:"chemistry"}},deposit:{type:"float",default:17.5,uniform:"deposit",min:.5,max:20,step:.5,ui:{label:"deposit",control:"slider",category:"chemistry"}},attrition:{type:"float",default:7.5,uniform:"attrition",min:0,max:10,step:.1,ui:{label:"attrition",control:"slider",category:"agents"}},matteOpacity:{type:"float",default:1,uniform:"matteOpacity",min:0,max:1,ui:{label:"bg opacity",control:"slider",category:"output"}}},passes:[{name:"initGrid",program:"initGrid",inputs:{gridTex:"global_dla_grid"},uniforms:{decay:"decay",anchorDensity:"anchorDensity"},outputs:{fragColor:"global_dla_grid"}},{name:"copyGrid",program:"copyGrid",inputs:{gridTex:"global_dla_grid"},outputs:{fragColor:"global_dla_grid"}},{name:"agent",program:"agent",drawBuffers:3,inputs:{xyzTex:"global_xyz",velTex:"global_vel",rgbaTex:"global_rgba",gridTex:"global_dla_grid",inputTex:"inputTex",fieldTex:"fieldTex",diffuseTex:"diffuseTex"},uniforms:{diffuseActive:"diffuseActive",fieldActive:"fieldActive",stride:"stride",inputWeight:"inputWeight",attrition:"attrition",stateSize:"stateSize"},outputs:{outXYZ:"global_xyz",outVel:"global_vel",outRGBA:"global_rgba"}},{name:"depositGrid",program:"depositGrid",drawMode:"points",count:"input",blend:["one","one"],inputs:{xyzTex:"global_xyz",velTex:"global_vel",rgbaTex:"global_rgba"},uniforms:{deposit:"deposit"},outputs:{fragColor:"global_dla_grid"}},{name:"passthrough",program:"passthrough",inputs:{inputTex:"inputTex",gridTex:"global_dla_grid"},uniforms:{matteOpacity:"matteOpacity"},outputs:{fragColor:"outputTex"}}]});var r={agent:{glsl:`#version 300 es
+var t=class{constructor(e={}){this.state={},this.uniforms={},e.name&&(this.name=e.name),e.namespace&&(this.namespace=e.namespace),e.func&&(this.func=e.func),e.description&&(this.description=e.description),e.tags&&(this.tags=e.tags),e.globals&&(this.globals=e.globals),e.passes&&(this.passes=e.passes),e.textures&&(this.textures=e.textures),e.textures3d&&(this.textures3d=e.textures3d),e.shaders&&(this.shaders=e.shaders),e.externalTexture&&(this.externalTexture=e.externalTexture),e.externalMesh&&(this.externalMesh=e.externalMesh),e.builtinMeshes&&(this.builtinMeshes=e.builtinMeshes),e.outputTex3d&&(this.outputTex3d=e.outputTex3d),e.outputGeo&&(this.outputGeo=e.outputGeo),e.uniformLayout&&(this.uniformLayout=e.uniformLayout),e.uniformLayouts&&(this.uniformLayouts=e.uniformLayouts),e.paramAliases&&(this.paramAliases=e.paramAliases),e.openCategories&&(this.openCategories=e.openCategories),e.defaultProgram&&(this.defaultProgram=e.defaultProgram),e.hidden&&(this.hidden=!0),e.deprecatedBy&&(this.deprecatedBy=e.deprecatedBy),e.onInit&&(this._configOnInit=e.onInit),e.onUpdate&&(this._configOnUpdate=e.onUpdate),e.onDestroy&&(this._configOnDestroy=e.onDestroy),e.asyncInit&&(this._configAsyncInit=e.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(e){return this._configOnUpdate?this._configOnUpdate.call(this,e):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(e){return this._configAsyncInit?this._configAsyncInit.call(this,e):Promise.resolve()}};var n=new t({name:"Dla",namespace:"points",func:"dla",tags:["sim"],description:"Diffusion-limited aggregation",textures:{global_dla_base_color:{width:{param:"stateSize",inherit:!0},height:{param:"stateSize",inherit:!0},format:"rgba8"},global_dla_grid:{width:"100%",height:"100%",format:"rgba16f"}},outputXyz:"global_xyz",outputVel:"global_vel",outputRgba:"global_rgba",globals:{heightTex:{type:"surface",default:"none",colorModeUniform:"fieldActive",ui:{label:"height map",category:"chemistry"}},diffuseTex:{type:"surface",default:"none",colorModeUniform:"diffuseActive",ui:{label:"diffuse map",category:"chemistry"}},stateSize:{type:"int",default:256,uniform:"stateSize",ui:{control:!1}},anchorDensity:{type:"float",default:.5,uniform:"anchorDensity",min:.01,max:5,step:.01,ui:{label:"anchors",control:"slider",category:"chemistry"}},stride:{type:"float",default:15,uniform:"stride",min:1,max:50,step:1,ui:{label:"stride",control:"slider",category:"agents"}},inputWeight:{type:"float",default:15,uniform:"inputWeight",min:0,max:100,step:1,ui:{label:"input weight",control:"slider",category:"agents"}},decay:{type:"float",default:.25,uniform:"decay",min:0,max:.5,step:.01,ui:{label:"decay",control:"slider",category:"chemistry"}},deposit:{type:"float",default:17.5,uniform:"deposit",min:.5,max:20,step:.5,ui:{label:"deposit",control:"slider",category:"chemistry"}},attrition:{type:"float",default:7.5,uniform:"attrition",min:0,max:10,step:.1,ui:{label:"attrition",control:"slider",category:"agents"}},matteOpacity:{type:"float",default:1,uniform:"matteOpacity",min:0,max:1,ui:{label:"bg opacity",control:"slider",category:"output"}}},paramAliases:{fieldTex:"heightTex"},passes:[{name:"initGrid",program:"initGrid",inputs:{gridTex:"global_dla_grid"},uniforms:{decay:"decay",anchorDensity:"anchorDensity"},outputs:{fragColor:"global_dla_grid"}},{name:"copyGrid",program:"copyGrid",inputs:{gridTex:"global_dla_grid"},outputs:{fragColor:"global_dla_grid"}},{name:"agent",program:"agent",drawBuffers:4,inputs:{xyzTex:"global_xyz",velTex:"global_vel",rgbaTex:"global_rgba",gridTex:"global_dla_grid",inputTex:"inputTex",heightTex:"heightTex",diffuseTex:"diffuseTex",baseColorTex:"global_dla_base_color"},uniforms:{diffuseActive:"diffuseActive",fieldActive:"fieldActive",stride:"stride",inputWeight:"inputWeight",attrition:"attrition",stateSize:"stateSize"},outputs:{outXYZ:"global_xyz",outVel:"global_vel",outRGBA:"global_rgba",outBaseColor:"global_dla_base_color"}},{name:"depositGrid",program:"depositGrid",drawMode:"points",count:"input",blend:["one","one"],inputs:{xyzTex:"global_xyz",velTex:"global_vel",rgbaTex:"global_rgba"},uniforms:{deposit:"deposit"},outputs:{fragColor:"global_dla_grid"}},{name:"passthrough",program:"passthrough",inputs:{inputTex:"inputTex",gridTex:"global_dla_grid"},uniforms:{matteOpacity:"matteOpacity"},outputs:{fragColor:"outputTex"}}]});var r={agent:{glsl:`#version 300 es
 precision highp float;
 precision highp int;
 
@@ -23,7 +23,7 @@ uniform sampler2D rgbaTex;   // [r, g, b, a]
 
 // DLA internal textures
 uniform sampler2D gridTex;   // Anchor grid (internal, not rendered)
-uniform sampler2D fieldTex;
+uniform sampler2D heightTex;
 uniform sampler2D inputTex;  // For input-weighted movement
 
 // Output state (MRT)
@@ -38,6 +38,30 @@ vec4 selectedDiffuse(vec2 uv) {
     ivec2 size = textureSize(diffuseTex, 0);
     ivec2 pixel = clamp(ivec2(clamp(uv, vec2(0.0), vec2(0.999999)) * vec2(size)), ivec2(0), size - 1);
     return texelFetch(diffuseTex, pixel, 0);
+}
+
+uniform sampler2D baseColorTex;  // Agent color kept while a diffuse map is active
+layout(location = 3) out vec4 outBaseColor;
+
+// Color render/pointsEmit gives an agent spawned at pos.
+vec4 spawnColor(vec2 pos) {
+    ivec2 dims = textureSize(inputTex, 0);
+    vec4 sampled = texelFetch(inputTex, ivec2(pos * vec2(dims)), 0);
+    return sampled.a > 0.0 ? sampled : vec4(1.0);
+}
+
+// The agent's color without a diffuse map. baseColorTex keeps it (alpha > 0)
+// while a diffuse map is active and is cleared otherwise, so this is rgba
+// unless the agent still carries a diffuse color and has not respawned.
+vec4 baseColor(ivec2 coord, vec4 rgba, vec2 pos) {
+    vec4 kept = texelFetch(baseColorTex, coord, 0);
+    if (kept.a == 0.0) return rgba;
+    vec4 spawnDelta = abs(round(rgba * 255.0) - round(clamp(spawnColor(pos), 0.0, 1.0) * 255.0));
+    return all(lessThanEqual(spawnDelta, vec4(1.0))) ? rgba : kept;
+}
+
+vec4 keptBaseColor(vec4 base) {
+    return diffuseActive > 0.5 ? vec4(base.rgb, max(base.a, 1.0 / 255.0)) : vec4(0.0);
 }
 
 // Integer-based hash for deterministic randomness
@@ -97,6 +121,7 @@ void main() {
     vec4 xyz = texelFetch(xyzTex, coord, 0);
     vec4 vel = texelFetch(velTex, coord, 0);
     vec4 rgba = texelFetch(rgbaTex, coord, 0);
+    vec4 base = baseColor(coord, rgba, xyz.xy);
     
     // Extract state
     vec2 pos = xyz.xy;
@@ -121,6 +146,7 @@ void main() {
         outXYZ = xyz;
         outVel = vec4(seed, 0.0, 0.0, agentRand);
         outRGBA = rgba;
+        outBaseColor = keptBaseColor(base);
         return;
     }
     
@@ -139,9 +165,9 @@ void main() {
     float inputW = inputWeight / 100.0;
     vec2 stepDir = randomDir;
     if (inputW > 0.0) {
-        ivec2 inputDims = fieldActive > 0.5 ? textureSize(fieldTex, 0) : textureSize(inputTex, 0);
+        ivec2 inputDims = fieldActive > 0.5 ? textureSize(heightTex, 0) : textureSize(inputTex, 0);
         ivec2 inputCoord = ivec2(wrap01(pos) * vec2(inputDims));
-        vec4 inputVal = fieldActive > 0.5 ? texelFetch(fieldTex, inputCoord, 0) : texelFetch(inputTex, inputCoord, 0);
+        vec4 inputVal = fieldActive > 0.5 ? texelFetch(heightTex, inputCoord, 0) : texelFetch(inputTex, inputCoord, 0);
         vec2 inputDir = inputVal.xy * 2.0 - 1.0;
         if (length(inputDir) > 0.01) {
             inputDir = normalize(inputDir);
@@ -179,17 +205,20 @@ void main() {
         // Agent stuck: mark as dead for respawn, flag justStuck for deposit
         outXYZ = vec4(candidate, 0.0, 0.0);  // w=0 signals death to pointsEmit
         outVel = vec4(seed, 1.0, 0.0, agentRand);  // y=1 signals "just stuck" for depositGrid
-        outRGBA = diffuseActive > 0.5 ? selectedDiffuse(candidate) : rgba;
+        outRGBA = diffuseActive > 0.5 ? selectedDiffuse(candidate) : base;
+        outBaseColor = keptBaseColor(base);
     } else if (needsRespawn) {
         // Attrition death: mark for respawn
         outXYZ = vec4(candidate, 0.0, 0.0);  // w=0 signals death
         outVel = vec4(seed, 0.0, 0.0, agentRand);  // y=0, not stuck
-        outRGBA = diffuseActive > 0.5 ? selectedDiffuse(candidate) : rgba;
+        outRGBA = diffuseActive > 0.5 ? selectedDiffuse(candidate) : base;
+        outBaseColor = keptBaseColor(base);
     } else {
         // Continue walking
         outXYZ = vec4(candidate, 0.0, 1.0);  // w=1 alive
         outVel = vec4(seed, 0.0, 0.0, agentRand);
-        outRGBA = diffuseActive > 0.5 ? selectedDiffuse(candidate) : rgba;
+        outRGBA = diffuseActive > 0.5 ? selectedDiffuse(candidate) : base;
+        outBaseColor = keptBaseColor(base);
     }
 }
 `,wgsl:`// DLA - Agent Walk Pass (Common Agent Architecture)
@@ -213,6 +242,7 @@ struct FragmentOutputs {
     @location(0) outXYZ: vec4<f32>,
     @location(1) outVel: vec4<f32>,
     @location(2) outRGBA: vec4<f32>,
+    @location(3) baseColor: vec4<f32>,
 }
 
 @group(0) @binding(0) var<uniform> u: Uniforms;
@@ -220,6 +250,7 @@ struct FragmentOutputs {
 @group(0) @binding(2) var velTex: texture_2d<f32>;
 @group(0) @binding(3) var rgbaTex: texture_2d<f32>;
 @group(0) @binding(6) var diffuseTex: texture_2d<f32>;
+@group(0) @binding(8) var baseColorTex: texture_2d<f32>;
 
 fn selectedDiffuse(uv: vec2f) -> vec4f {
     let size = textureDimensions(diffuseTex, 0);
@@ -227,9 +258,30 @@ fn selectedDiffuse(uv: vec2f) -> vec4f {
     return textureLoad(diffuseTex, pixel, 0);
 }
 
+// Color render/pointsEmit gives an agent spawned at pos.
+fn spawnColor(pos: vec2f) -> vec4f {
+    let dims = textureDimensions(inputTex);
+    let sampled = textureLoad(inputTex, vec2<i32>(pos * vec2<f32>(dims)), 0);
+    return select(vec4f(1.0), sampled, sampled.a > 0.0);
+}
+
+// The agent's color without a diffuse map. baseColorTex keeps it (alpha > 0)
+// while a diffuse map is active and is cleared otherwise, so this is rgba
+// unless the agent still carries a diffuse color and has not respawned.
+fn baseColor(coord: vec2i, rgba: vec4f, pos: vec2f) -> vec4f {
+    let kept = textureLoad(baseColorTex, coord, 0);
+    if (kept.a == 0.0) { return rgba; }
+    let spawnDelta = abs(round(rgba * 255.0) - round(clamp(spawnColor(pos), vec4f(0.0), vec4f(1.0)) * 255.0));
+    return select(kept, rgba, all(spawnDelta <= vec4f(1.0)));
+}
+
+fn keptBaseColor(base: vec4f) -> vec4f {
+    return select(vec4f(0.0), vec4f(base.rgb, max(base.a, 1.0 / 255.0)), u.diffuseActive > 0.5);
+}
+
 @group(0) @binding(4) var gridTex: texture_2d<f32>;
 @group(0) @binding(5) var inputTex: texture_2d<f32>;
-@group(0) @binding(7) var fieldTex: texture_2d<f32>;
+@group(0) @binding(7) var heightTex: texture_2d<f32>;
 
 // Integer-based hash for deterministic randomness
 fn hash_uint(seed: u32) -> u32 {
@@ -288,6 +340,7 @@ fn main(in: VertexOutput) -> FragmentOutputs {
     let xyz = textureLoad(xyzTex, coord, 0);
     let vel = textureLoad(velTex, coord, 0);
     let rgba = textureLoad(rgbaTex, coord, 0);
+    let base = baseColor(coord, rgba, xyz.xy);
     
     // Extract state
     var pos = xyz.xy;
@@ -310,7 +363,8 @@ fn main(in: VertexOutput) -> FragmentOutputs {
         return FragmentOutputs(
             xyz,
             vec4<f32>(seed, 0.0, 0.0, agentRand),
-            rgba
+            rgba,
+            keptBaseColor(base)
         );
     }
     
@@ -329,9 +383,9 @@ fn main(in: VertexOutput) -> FragmentOutputs {
     let inputW = u.inputWeight / 100.0;
     var stepDir = randomDir;
     if (inputW > 0.0) {
-        let inputDims = select(textureDimensions(inputTex), textureDimensions(fieldTex), u.fieldActive > 0.5);
+        let inputDims = select(textureDimensions(inputTex), textureDimensions(heightTex), u.fieldActive > 0.5);
         let inputCoord = vec2<i32>(wrap01(pos) * vec2<f32>(inputDims));
-        let inputVal = select(textureLoad(inputTex, inputCoord, 0), textureLoad(fieldTex, inputCoord, 0), u.fieldActive > 0.5);
+        let inputVal = select(textureLoad(inputTex, inputCoord, 0), textureLoad(heightTex, inputCoord, 0), u.fieldActive > 0.5);
         var inputDir = inputVal.xy * 2.0 - 1.0;
         if (length(inputDir) > 0.01) {
             inputDir = normalize(inputDir);
@@ -370,21 +424,24 @@ fn main(in: VertexOutput) -> FragmentOutputs {
         return FragmentOutputs(
             vec4<f32>(candidate, 0.0, 0.0),  // w=0 signals death to pointsEmit
             vec4<f32>(seed, 1.0, 0.0, agentRand),  // y=1 signals "just stuck" for depositGrid
-            select(rgba, selectedDiffuse(candidate), u.diffuseActive > 0.5)
+            select(base, selectedDiffuse(candidate), u.diffuseActive > 0.5),
+            keptBaseColor(base)
         );
     } else if (needsRespawn) {
         // Attrition death: mark for respawn
         return FragmentOutputs(
             vec4<f32>(candidate, 0.0, 0.0),  // w=0 signals death
             vec4<f32>(seed, 0.0, 0.0, agentRand),  // y=0, not stuck
-            select(rgba, selectedDiffuse(candidate), u.diffuseActive > 0.5)
+            select(base, selectedDiffuse(candidate), u.diffuseActive > 0.5),
+            keptBaseColor(base)
         );
     } else {
         // Continue walking
         return FragmentOutputs(
             vec4<f32>(candidate, 0.0, 1.0),  // w=1 alive
             vec4<f32>(seed, 0.0, 0.0, agentRand),
-            select(rgba, selectedDiffuse(candidate), u.diffuseActive > 0.5)
+            select(base, selectedDiffuse(candidate), u.diffuseActive > 0.5),
+            keptBaseColor(base)
         );
     }
 }
@@ -755,7 +812,7 @@ fn main(@builtin(position) fragCoord: vec4f) -> @location(0) vec4f {
     
     return vec4f(color, alpha);
 }
-`}},o=`# dla
+`}},a=`# dla
 
 Diffusion-limited aggregation
 
@@ -767,8 +824,8 @@ Agents perform random walks until they contact existing structure, then stick an
 
 | Parameter | Type | Default | Range | Description |
 |-----------|------|---------|-------|-------------|
+| heightTex | surface | none | - | Height field; defaults to the chained input |
 | diffuseTex | surface | none | - | Particle color map; none preserves the existing particle color |
-| fieldTex | surface | none | - | Movement field; defaults to the chained input |
 | stateSize | int | 256 | - | - |
 | anchorDensity | float | 0.5 | 0.01-5 | Anchor density |
 | stride | float | 15 | 1-50 | Stride |
@@ -791,4 +848,4 @@ noise()
 
 render(o0)
 \`\`\`
-`;if(n&&Object.keys(r).length>0){n.shaders||(n.shaders={});for(let[i,e]of Object.entries(r))n.shaders[i]={...e}}n&&o&&(n.help=o);var l="points/dla",c="points",p="dla",f=n;export{f as default,l as effectId,p as effectName,o as help,c as namespace};
+`;if(n&&Object.keys(r).length>0){n.shaders||(n.shaders={});for(let[i,e]of Object.entries(r))n.shaders[i]={...e}}n&&a&&(n.help=a);var d="points/dla",c="points",p="dla",f=n;export{f as default,d as effectId,p as effectName,a as help,c as namespace};

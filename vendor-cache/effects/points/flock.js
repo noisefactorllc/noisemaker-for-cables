@@ -1,5 +1,5 @@
 /* points/flock */
-var t=class{constructor(e={}){this.state={},this.uniforms={},e.name&&(this.name=e.name),e.namespace&&(this.namespace=e.namespace),e.func&&(this.func=e.func),e.description&&(this.description=e.description),e.tags&&(this.tags=e.tags),e.globals&&(this.globals=e.globals),e.passes&&(this.passes=e.passes),e.textures&&(this.textures=e.textures),e.textures3d&&(this.textures3d=e.textures3d),e.shaders&&(this.shaders=e.shaders),e.externalTexture&&(this.externalTexture=e.externalTexture),e.externalMesh&&(this.externalMesh=e.externalMesh),e.builtinMeshes&&(this.builtinMeshes=e.builtinMeshes),e.outputTex3d&&(this.outputTex3d=e.outputTex3d),e.outputGeo&&(this.outputGeo=e.outputGeo),e.uniformLayout&&(this.uniformLayout=e.uniformLayout),e.uniformLayouts&&(this.uniformLayouts=e.uniformLayouts),e.openCategories&&(this.openCategories=e.openCategories),e.defaultProgram&&(this.defaultProgram=e.defaultProgram),e.hidden&&(this.hidden=!0),e.deprecatedBy&&(this.deprecatedBy=e.deprecatedBy),e.onInit&&(this._configOnInit=e.onInit),e.onUpdate&&(this._configOnUpdate=e.onUpdate),e.onDestroy&&(this._configOnDestroy=e.onDestroy),e.asyncInit&&(this._configAsyncInit=e.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(e){return this._configOnUpdate?this._configOnUpdate.call(this,e):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(e){return this._configAsyncInit?this._configAsyncInit.call(this,e):Promise.resolve()}};var n=new t({name:"Flock",namespace:"points",func:"flock",tags:["sim"],description:'2D "Boids" flocking agent simulation',textures:{},outputXyz:"global_xyz",outputVel:"global_vel",outputRgba:"global_rgba",globals:{diffuseTex:{type:"surface",default:"none",colorModeUniform:"diffuseActive",ui:{label:"diffuse map",category:"boids"}},separation:{type:"float",default:2,uniform:"separation",min:0,max:5,step:.1,ui:{label:"separation",control:"slider",category:"boids"}},alignment:{type:"float",default:1,uniform:"alignment",min:0,max:5,step:.1,ui:{label:"alignment",control:"slider",category:"boids"}},cohesion:{type:"float",default:1,uniform:"cohesion",min:0,max:5,step:.1,ui:{label:"cohesion",control:"slider",category:"boids"}},perceptionRadius:{type:"float",default:50,uniform:"perceptionRadius",min:10,max:200,step:1,ui:{label:"perception",control:"slider",category:"boids"}},separationRadius:{type:"float",default:25,uniform:"separationRadius",min:5,max:100,step:1,ui:{label:"sep radius",control:"slider",category:"boids"}},maxSpeed:{type:"float",default:4,uniform:"maxSpeed",min:.5,max:10,step:.1,ui:{label:"max speed",control:"slider",category:"motion"}},maxForce:{type:"float",default:.3,uniform:"maxForce",min:.01,max:1,step:.01,ui:{label:"max force",control:"slider",category:"motion"}},boundaryMode:{type:"int",default:0,uniform:"boundaryMode",choices:{wrap:0,softWall:1},ui:{label:"boundary",control:"dropdown",category:"motion"}},wallMargin:{type:"float",default:50,uniform:"wallMargin",min:10,max:200,step:1,ui:{label:"wall margin",control:"slider",category:"motion"}},noiseWeight:{type:"float",default:.1,uniform:"noiseWeight",min:0,max:1,step:.01,ui:{label:"noise",control:"slider",category:"motion"}}},passes:[{name:"agent",program:"agent",drawBuffers:3,inputs:{xyzTex:"global_xyz",velTex:"global_vel",rgbaTex:"global_rgba",diffuseTex:"diffuseTex"},uniforms:{diffuseActive:"diffuseActive",separation:"separation",alignment:"alignment",cohesion:"cohesion",perceptionRadius:"perceptionRadius",separationRadius:"separationRadius",maxSpeed:"maxSpeed",maxForce:"maxForce",boundaryMode:"boundaryMode",wallMargin:"wallMargin",noiseWeight:"noiseWeight"},outputs:{outXYZ:"global_xyz",outVel:"global_vel",outRGBA:"global_rgba"}},{name:"passthrough",program:"passthrough",inputs:{inputTex:"inputTex"},outputs:{fragColor:"outputTex"}}]});var i={agent:{glsl:`#version 300 es
+var t=class{constructor(e={}){this.state={},this.uniforms={},e.name&&(this.name=e.name),e.namespace&&(this.namespace=e.namespace),e.func&&(this.func=e.func),e.description&&(this.description=e.description),e.tags&&(this.tags=e.tags),e.globals&&(this.globals=e.globals),e.passes&&(this.passes=e.passes),e.textures&&(this.textures=e.textures),e.textures3d&&(this.textures3d=e.textures3d),e.shaders&&(this.shaders=e.shaders),e.externalTexture&&(this.externalTexture=e.externalTexture),e.externalMesh&&(this.externalMesh=e.externalMesh),e.builtinMeshes&&(this.builtinMeshes=e.builtinMeshes),e.outputTex3d&&(this.outputTex3d=e.outputTex3d),e.outputGeo&&(this.outputGeo=e.outputGeo),e.uniformLayout&&(this.uniformLayout=e.uniformLayout),e.uniformLayouts&&(this.uniformLayouts=e.uniformLayouts),e.paramAliases&&(this.paramAliases=e.paramAliases),e.openCategories&&(this.openCategories=e.openCategories),e.defaultProgram&&(this.defaultProgram=e.defaultProgram),e.hidden&&(this.hidden=!0),e.deprecatedBy&&(this.deprecatedBy=e.deprecatedBy),e.onInit&&(this._configOnInit=e.onInit),e.onUpdate&&(this._configOnUpdate=e.onUpdate),e.onDestroy&&(this._configOnDestroy=e.onDestroy),e.asyncInit&&(this._configAsyncInit=e.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(e){return this._configOnUpdate?this._configOnUpdate.call(this,e):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(e){return this._configAsyncInit?this._configAsyncInit.call(this,e):Promise.resolve()}};var n=new t({name:"Flock",namespace:"points",func:"flock",tags:["sim"],description:'2D "Boids" flocking agent simulation',textures:{global_flock_base_color:{width:{param:"stateSize",inherit:!0},height:{param:"stateSize",inherit:!0},format:"rgba8"}},outputXyz:"global_xyz",outputVel:"global_vel",outputRgba:"global_rgba",globals:{diffuseTex:{type:"surface",default:"none",colorModeUniform:"diffuseActive",ui:{label:"diffuse map",category:"boids"}},separation:{type:"float",default:2,uniform:"separation",min:0,max:5,step:.1,ui:{label:"separation",control:"slider",category:"boids"}},alignment:{type:"float",default:1,uniform:"alignment",min:0,max:5,step:.1,ui:{label:"alignment",control:"slider",category:"boids"}},cohesion:{type:"float",default:1,uniform:"cohesion",min:0,max:5,step:.1,ui:{label:"cohesion",control:"slider",category:"boids"}},perceptionRadius:{type:"float",default:50,uniform:"perceptionRadius",min:10,max:200,step:1,ui:{label:"perception",control:"slider",category:"boids"}},separationRadius:{type:"float",default:25,uniform:"separationRadius",min:5,max:100,step:1,ui:{label:"sep radius",control:"slider",category:"boids"}},maxSpeed:{type:"float",default:4,uniform:"maxSpeed",min:.5,max:10,step:.1,ui:{label:"max speed",control:"slider",category:"motion"}},maxForce:{type:"float",default:.3,uniform:"maxForce",min:.01,max:1,step:.01,ui:{label:"max force",control:"slider",category:"motion"}},boundaryMode:{type:"int",default:0,uniform:"boundaryMode",choices:{wrap:0,softWall:1},ui:{label:"boundary",control:"dropdown",category:"motion"}},wallMargin:{type:"float",default:50,uniform:"wallMargin",min:10,max:200,step:1,ui:{label:"wall margin",control:"slider",category:"motion"}},noiseWeight:{type:"float",default:.1,uniform:"noiseWeight",min:0,max:1,step:.01,ui:{label:"noise",control:"slider",category:"motion"}}},passes:[{name:"agent",program:"agent",drawBuffers:4,inputs:{xyzTex:"global_xyz",velTex:"global_vel",rgbaTex:"global_rgba",diffuseTex:"diffuseTex",baseColorTex:"global_flock_base_color",inputTex:"inputTex"},uniforms:{diffuseActive:"diffuseActive",separation:"separation",alignment:"alignment",cohesion:"cohesion",perceptionRadius:"perceptionRadius",separationRadius:"separationRadius",maxSpeed:"maxSpeed",maxForce:"maxForce",boundaryMode:"boundaryMode",wallMargin:"wallMargin",noiseWeight:"noiseWeight"},outputs:{outXYZ:"global_xyz",outVel:"global_vel",outRGBA:"global_rgba",outBaseColor:"global_flock_base_color"}},{name:"passthrough",program:"passthrough",inputs:{inputTex:"inputTex"},outputs:{fragColor:"outputTex"}}]});var i={agent:{glsl:`#version 300 es
 precision highp float;
 precision highp int;
 
@@ -23,6 +23,7 @@ uniform float noiseWeight;
 uniform sampler2D xyzTex;    // [x, y, z, alive]
 uniform sampler2D velTex;    // [vx, vy, age, seed]
 uniform sampler2D rgbaTex;   // [r, g, b, a]
+uniform sampler2D inputTex;   // Chained input, for agent spawn colors
 
 // Output state (MRT)
 layout(location = 0) out vec4 outXYZ;
@@ -36,6 +37,30 @@ vec4 selectedDiffuse(vec2 uv) {
     ivec2 size = textureSize(diffuseTex, 0);
     ivec2 pixel = clamp(ivec2(clamp(uv, vec2(0.0), vec2(0.999999)) * vec2(size)), ivec2(0), size - 1);
     return texelFetch(diffuseTex, pixel, 0);
+}
+
+uniform sampler2D baseColorTex;  // Agent color kept while a diffuse map is active
+layout(location = 3) out vec4 outBaseColor;
+
+// Color render/pointsEmit gives an agent spawned at pos.
+vec4 spawnColor(vec2 pos) {
+    ivec2 dims = textureSize(inputTex, 0);
+    vec4 sampled = texelFetch(inputTex, ivec2(pos * vec2(dims)), 0);
+    return sampled.a > 0.0 ? sampled : vec4(1.0);
+}
+
+// The agent's color without a diffuse map. baseColorTex keeps it (alpha > 0)
+// while a diffuse map is active and is cleared otherwise, so this is rgba
+// unless the agent still carries a diffuse color and has not respawned.
+vec4 baseColor(ivec2 coord, vec4 rgba, vec2 pos) {
+    vec4 kept = texelFetch(baseColorTex, coord, 0);
+    if (kept.a == 0.0) return rgba;
+    vec4 spawnDelta = abs(round(rgba * 255.0) - round(clamp(spawnColor(pos), 0.0, 1.0) * 255.0));
+    return all(lessThanEqual(spawnDelta, vec4(1.0))) ? rgba : kept;
+}
+
+vec4 keptBaseColor(vec4 base) {
+    return diffuseActive > 0.5 ? vec4(base.rgb, max(base.a, 1.0 / 255.0)) : vec4(0.0);
 }
 
 // === ORIGINAL BOIDS HELPER FUNCTIONS (PRESERVED EXACTLY) ===
@@ -108,6 +133,7 @@ void main() {
     vec4 xyz = texelFetch(xyzTex, coord, 0);
     vec4 vel = texelFetch(velTex, coord, 0);
     vec4 rgba = texelFetch(rgbaTex, coord, 0);
+    vec4 base = baseColor(coord, rgba, xyz.xy);
     
     // Extract components
     // xyz stores normalized coords [0,1], convert to pixel coords for algorithm
@@ -132,6 +158,7 @@ void main() {
         outXYZ = xyz;
         outVel = vel;
         outRGBA = rgba;
+        outBaseColor = keptBaseColor(base);
         return;
     }
     
@@ -314,7 +341,8 @@ void main() {
     
     outXYZ = vec4(newPx, newPy, xyz.z, 1.0);
     outVel = vec4(velocity, age, seed);
-    outRGBA = diffuseActive > 0.5 ? selectedDiffuse(outXYZ.xy) : rgba;
+    outRGBA = diffuseActive > 0.5 ? selectedDiffuse(outXYZ.xy) : base;
+    outBaseColor = keptBaseColor(base);
 }
 `,wgsl:`// Flock agent pass - Common Agent Architecture middleware
 // Reads from global_xyz/vel/rgba, applies boids flocking, writes back
@@ -341,6 +369,7 @@ struct Outputs {
     @location(0) xyz: vec4f,
     @location(1) vel: vec4f,
     @location(2) rgba: vec4f,
+    @location(3) baseColor: vec4f,
 }
 
 @group(0) @binding(0) var<uniform> u: Uniforms;
@@ -348,11 +377,34 @@ struct Outputs {
 @group(0) @binding(4) var velTex: texture_2d<f32>;
 @group(0) @binding(5) var rgbaTex: texture_2d<f32>;
 @group(0) @binding(6) var diffuseTex: texture_2d<f32>;
+@group(0) @binding(7) var baseColorTex: texture_2d<f32>;
+@group(0) @binding(8) var inputTex: texture_2d<f32>;
 
 fn selectedDiffuse(uv: vec2f) -> vec4f {
     let size = textureDimensions(diffuseTex, 0);
     let pixel = clamp(vec2i(clamp(uv, vec2f(0.0), vec2f(0.999999)) * vec2f(size)), vec2i(0), vec2i(size) - vec2i(1));
     return textureLoad(diffuseTex, pixel, 0);
+}
+
+// Color render/pointsEmit gives an agent spawned at pos.
+fn spawnColor(pos: vec2f) -> vec4f {
+    let dims = textureDimensions(inputTex);
+    let sampled = textureLoad(inputTex, vec2<i32>(pos * vec2<f32>(dims)), 0);
+    return select(vec4f(1.0), sampled, sampled.a > 0.0);
+}
+
+// The agent's color without a diffuse map. baseColorTex keeps it (alpha > 0)
+// while a diffuse map is active and is cleared otherwise, so this is rgba
+// unless the agent still carries a diffuse color and has not respawned.
+fn baseColor(coord: vec2i, rgba: vec4f, pos: vec2f) -> vec4f {
+    let kept = textureLoad(baseColorTex, coord, 0);
+    if (kept.a == 0.0) { return rgba; }
+    let spawnDelta = abs(round(rgba * 255.0) - round(clamp(spawnColor(pos), vec4f(0.0), vec4f(1.0)) * 255.0));
+    return select(kept, rgba, all(spawnDelta <= vec4f(1.0)));
+}
+
+fn keptBaseColor(base: vec4f) -> vec4f {
+    return select(vec4f(0.0), vec4f(base.rgb, max(base.a, 1.0 / 255.0)), u.diffuseActive > 0.5);
 }
 
 
@@ -426,6 +478,7 @@ fn main(@builtin(position) fragCoord: vec4f) -> Outputs {
     let xyz = textureLoad(xyzTex, coord, 0);
     let vel = textureLoad(velTex, coord, 0);
     let rgba = textureLoad(rgbaTex, coord, 0);
+    let base = baseColor(coord, rgba, xyz.xy);
     
     // Extract components
     let px = xyz.x;  // normalized x
@@ -446,7 +499,7 @@ fn main(@builtin(position) fragCoord: vec4f) -> Outputs {
     
     // If not alive, pass through unchanged
     if (alive < 0.5) {
-        return Outputs(xyz, vel, rgba);
+        return Outputs(xyz, vel, rgba, keptBaseColor(base));
     }
     
     // Initialize velocity on first use (if zero from pointsEmit)
@@ -632,7 +685,8 @@ fn main(@builtin(position) fragCoord: vec4f) -> Outputs {
     return Outputs(
         vec4f(newPx, newPy, xyz.z, 1.0),
         vec4f(velocity, age, seed),
-        select(rgba, selectedDiffuse(vec2f(newPx, newPy)), u.diffuseActive > 0.5)
+        select(base, selectedDiffuse(vec2f(newPx, newPy)), u.diffuseActive > 0.5),
+        keptBaseColor(base)
     );
 }
 `},passthrough:{glsl:`#version 300 es

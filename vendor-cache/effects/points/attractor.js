@@ -1,5 +1,5 @@
 /* points/attractor */
-var t=class{constructor(e={}){this.state={},this.uniforms={},e.name&&(this.name=e.name),e.namespace&&(this.namespace=e.namespace),e.func&&(this.func=e.func),e.description&&(this.description=e.description),e.tags&&(this.tags=e.tags),e.globals&&(this.globals=e.globals),e.passes&&(this.passes=e.passes),e.textures&&(this.textures=e.textures),e.textures3d&&(this.textures3d=e.textures3d),e.shaders&&(this.shaders=e.shaders),e.externalTexture&&(this.externalTexture=e.externalTexture),e.externalMesh&&(this.externalMesh=e.externalMesh),e.builtinMeshes&&(this.builtinMeshes=e.builtinMeshes),e.outputTex3d&&(this.outputTex3d=e.outputTex3d),e.outputGeo&&(this.outputGeo=e.outputGeo),e.uniformLayout&&(this.uniformLayout=e.uniformLayout),e.uniformLayouts&&(this.uniformLayouts=e.uniformLayouts),e.openCategories&&(this.openCategories=e.openCategories),e.defaultProgram&&(this.defaultProgram=e.defaultProgram),e.hidden&&(this.hidden=!0),e.deprecatedBy&&(this.deprecatedBy=e.deprecatedBy),e.onInit&&(this._configOnInit=e.onInit),e.onUpdate&&(this._configOnUpdate=e.onUpdate),e.onDestroy&&(this._configOnDestroy=e.onDestroy),e.asyncInit&&(this._configAsyncInit=e.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(e){return this._configOnUpdate?this._configOnUpdate.call(this,e):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(e){return this._configAsyncInit?this._configAsyncInit.call(this,e):Promise.resolve()}};var n=new t({name:"Attractor",namespace:"points",func:"attractor",tags:["sim"],description:"Strange attractors: chaotic dynamic systems visualization",textures:{},outputXyz:"global_xyz",outputVel:"global_vel",outputRgba:"global_rgba",globals:{diffuseTex:{type:"surface",default:"none",colorModeUniform:"diffuseActive",ui:{label:"diffuse map",category:"general"}},stateSize:{type:"int",default:256,uniform:"stateSize",ui:{control:!1}},attractor:{type:"int",default:0,uniform:"attractor",choices:{lorenz:0,rossler:1,aizawa:2,thomas:3,halvorsen:4,chen:5,dadras:6},ui:{label:"attractor",control:"dropdown"}},speed:{type:"float",default:1,uniform:"speed",min:.01,max:2,step:.01,ui:{label:"speed",control:"slider"}},viewMode:{type:"int",default:1,uniform:"viewMode",ui:{control:!1}}},passes:[{name:"agent",program:"agent",drawBuffers:3,inputs:{xyzTex:"global_xyz",velTex:"global_vel",rgbaTex:"global_rgba",diffuseTex:"diffuseTex"},uniforms:{diffuseActive:"diffuseActive",attractor:"attractor",speed:"speed"},outputs:{outXYZ:"global_xyz",outVel:"global_vel",outRGBA:"global_rgba"}},{name:"passthrough",program:"passthrough",inputs:{inputTex:"inputTex"},outputs:{fragColor:"outputTex"}}]});var a={agent:{glsl:`#version 300 es
+var n=class{constructor(e={}){this.state={},this.uniforms={},e.name&&(this.name=e.name),e.namespace&&(this.namespace=e.namespace),e.func&&(this.func=e.func),e.description&&(this.description=e.description),e.tags&&(this.tags=e.tags),e.globals&&(this.globals=e.globals),e.passes&&(this.passes=e.passes),e.textures&&(this.textures=e.textures),e.textures3d&&(this.textures3d=e.textures3d),e.shaders&&(this.shaders=e.shaders),e.externalTexture&&(this.externalTexture=e.externalTexture),e.externalMesh&&(this.externalMesh=e.externalMesh),e.builtinMeshes&&(this.builtinMeshes=e.builtinMeshes),e.outputTex3d&&(this.outputTex3d=e.outputTex3d),e.outputGeo&&(this.outputGeo=e.outputGeo),e.uniformLayout&&(this.uniformLayout=e.uniformLayout),e.uniformLayouts&&(this.uniformLayouts=e.uniformLayouts),e.paramAliases&&(this.paramAliases=e.paramAliases),e.openCategories&&(this.openCategories=e.openCategories),e.defaultProgram&&(this.defaultProgram=e.defaultProgram),e.hidden&&(this.hidden=!0),e.deprecatedBy&&(this.deprecatedBy=e.deprecatedBy),e.onInit&&(this._configOnInit=e.onInit),e.onUpdate&&(this._configOnUpdate=e.onUpdate),e.onDestroy&&(this._configOnDestroy=e.onDestroy),e.asyncInit&&(this._configAsyncInit=e.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(e){return this._configOnUpdate?this._configOnUpdate.call(this,e):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(e){return this._configAsyncInit?this._configAsyncInit.call(this,e):Promise.resolve()}};var t=new n({name:"Attractor",namespace:"points",func:"attractor",tags:["sim"],description:"Strange attractors: chaotic dynamic systems visualization",textures:{global_attractor_base_color:{width:{param:"stateSize",inherit:!0},height:{param:"stateSize",inherit:!0},format:"rgba8"}},outputXyz:"global_xyz",outputVel:"global_vel",outputRgba:"global_rgba",globals:{diffuseTex:{type:"surface",default:"none",colorModeUniform:"diffuseActive",ui:{label:"diffuse map",category:"general"}},stateSize:{type:"int",default:256,uniform:"stateSize",ui:{control:!1}},attractor:{type:"int",default:0,uniform:"attractor",choices:{lorenz:0,rossler:1,aizawa:2,thomas:3,halvorsen:4,chen:5,dadras:6},ui:{label:"attractor",control:"dropdown"}},speed:{type:"float",default:1,uniform:"speed",min:.01,max:2,step:.01,ui:{label:"speed",control:"slider"}},viewMode:{type:"int",default:1,uniform:"viewMode",ui:{control:!1}}},passes:[{name:"agent",program:"agent",drawBuffers:4,inputs:{xyzTex:"global_xyz",velTex:"global_vel",rgbaTex:"global_rgba",diffuseTex:"diffuseTex",baseColorTex:"global_attractor_base_color"},uniforms:{diffuseActive:"diffuseActive",attractor:"attractor",speed:"speed"},outputs:{outXYZ:"global_xyz",outVel:"global_vel",outRGBA:"global_rgba",outBaseColor:"global_attractor_base_color"}},{name:"passthrough",program:"passthrough",inputs:{inputTex:"inputTex"},outputs:{fragColor:"outputTex"}}]});var o={agent:{glsl:`#version 300 es
 precision highp float;
 precision highp int;
 
@@ -29,6 +29,20 @@ vec4 selectedDiffuse(vec2 uv) {
     ivec2 size = textureSize(diffuseTex, 0);
     ivec2 pixel = clamp(ivec2(clamp(uv, vec2(0.0), vec2(0.999999)) * vec2(size)), ivec2(0), size - 1);
     return texelFetch(diffuseTex, pixel, 0);
+}
+
+uniform sampler2D baseColorTex;  // Agent color kept while a diffuse map is active
+layout(location = 3) out vec4 outBaseColor;
+
+// The agent's color without a diffuse map. baseColorTex keeps it (alpha > 0)
+// while a diffuse map is active and is cleared otherwise.
+vec4 baseColor(ivec2 coord, vec4 col) {
+    vec4 kept = texelFetch(baseColorTex, coord, 0);
+    return kept.a == 0.0 ? col : kept;
+}
+
+vec4 keptBaseColor(vec4 base) {
+    return diffuseActive > 0.5 ? vec4(base.rgb, max(base.a, 1.0 / 255.0)) : vec4(0.0);
 }
 
 // Integer-based hash for cross-platform determinism
@@ -169,6 +183,7 @@ void main() {
         outXYZ = vec4(pos.xyz, 1.0);
         outVel = vel;
         outRGBA = diffuseActive > 0.5 ? selectedDiffuse(fract(outXYZ.xy)) : col;
+        outBaseColor = keptBaseColor(col);
         return;
     }
     
@@ -177,6 +192,7 @@ void main() {
         outXYZ = pos;
         outVel = vel;
         outRGBA = col;
+        outBaseColor = keptBaseColor(baseColor(coord, col));
         return;
     }
     
@@ -193,9 +209,11 @@ void main() {
         newPos.z = hash(respawnSeed + 2u) * 30.0 + 10.0;
     }
     
+    vec4 base = baseColor(coord, col);
     outXYZ = vec4(newPos, 1.0);
     outVel = vel;
-    outRGBA = diffuseActive > 0.5 ? selectedDiffuse(fract(outXYZ.xy)) : col;
+    outRGBA = diffuseActive > 0.5 ? selectedDiffuse(fract(outXYZ.xy)) : base;
+    outBaseColor = keptBaseColor(base);
 }
 `,wgsl:`// Strange Attractors Agent Shader
 // Updates particle positions based on attractor dynamics
@@ -214,6 +232,7 @@ struct Uniforms {
 @group(0) @binding(3) var velTex: texture_2d<f32>;
 @group(0) @binding(5) var rgbaTex: texture_2d<f32>;
 @group(0) @binding(6) var diffuseTex: texture_2d<f32>;
+@group(0) @binding(7) var baseColorTex: texture_2d<f32>;
 
 fn selectedDiffuse(uv: vec2f) -> vec4f {
     let size = textureDimensions(diffuseTex, 0);
@@ -221,11 +240,23 @@ fn selectedDiffuse(uv: vec2f) -> vec4f {
     return textureLoad(diffuseTex, pixel, 0);
 }
 
+// The agent's color without a diffuse map. baseColorTex keeps it (alpha > 0)
+// while a diffuse map is active and is cleared otherwise.
+fn baseColor(coord: vec2i, col: vec4f) -> vec4f {
+    let kept = textureLoad(baseColorTex, coord, 0);
+    return select(kept, col, kept.a == 0.0);
+}
+
+fn keptBaseColor(base: vec4f) -> vec4f {
+    return select(vec4f(0.0), vec4f(base.rgb, max(base.a, 1.0 / 255.0)), u.diffuseActive > 0.5);
+}
+
 
 struct Outputs {
     @location(0) outXYZ: vec4<f32>,
     @location(1) outVel: vec4<f32>,
     @location(2) outRGBA: vec4<f32>,
+    @location(3) baseColor: vec4<f32>,
 };
 
 // Integer-based hash for cross-platform determinism
@@ -365,13 +396,14 @@ fn main(@builtin(position) fragCoord: vec4<f32>) -> Outputs {
         return Outputs(
             vec4<f32>(newX, newY, newZ, 1.0),
             vel,
-            select(col, selectedDiffuse(fract(vec2f(newX, newY))), u.diffuseActive > 0.5)
+            select(col, selectedDiffuse(fract(vec2f(newX, newY))), u.diffuseActive > 0.5),
+            keptBaseColor(col)
         );
     }
     
     // Skip dead agents
     if (pos.w < 0.5) {
-        return Outputs(pos, vel, col);
+        return Outputs(pos, vel, col, keptBaseColor(baseColor(coord, col)));
     }
     
     // Step the attractor
@@ -390,10 +422,12 @@ fn main(@builtin(position) fragCoord: vec4<f32>) -> Outputs {
         );
     }
     
+    let base = baseColor(coord, col);
     return Outputs(
         vec4<f32>(newPos, 1.0),
         vel,
-        select(col, selectedDiffuse(fract(newPos.xy)), u.diffuseActive > 0.5)
+        select(base, selectedDiffuse(fract(newPos.xy)), u.diffuseActive > 0.5),
+        keptBaseColor(base)
     );
 }
 `},passthrough:{glsl:`#version 300 es
@@ -423,7 +457,7 @@ fn main(in: VertexOutput) -> @location(0) vec4f {
     // uv has a bottom-left origin, so it is flipped vertically.
     return textureSample(inputTex, texSampler, vec2f(in.uv.x, 1.0 - in.uv.y));
 }
-`}},o=`# attractor
+`}},r=`# attractor
 
 Strange attractors: chaotic dynamic systems visualization
 
@@ -454,4 +488,4 @@ noise()
 
 render(o0)
 \`\`\`
-`;if(n&&Object.keys(a).length>0){n.shaders||(n.shaders={});for(let[r,e]of Object.entries(a))n.shaders[r]={...e}}n&&o&&(n.help=o);var l="points/attractor",u="points",f="attractor",d=n;export{d as default,l as effectId,f as effectName,o as help,u as namespace};
+`;if(t&&Object.keys(o).length>0){t.shaders||(t.shaders={});for(let[a,e]of Object.entries(o))t.shaders[a]={...e}}t&&r&&(t.help=r);var c="points/attractor",u="points",f="attractor",d=t;export{d as default,c as effectId,f as effectName,r as help,u as namespace};

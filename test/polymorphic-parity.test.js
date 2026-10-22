@@ -226,11 +226,48 @@ test('legacy aliases do not leak into a same-named effect in another namespace',
   assert.deepEqual(actual.warnings, [])
 })
 
-test('no vendored effect definition retains a legacy parameter alias', async () => {
+test('every vendored parameter alias compiles identically in the port and the pinned reference', async () => {
   installTestDomShim()
   const { parameterAliases } = await loadCompatibilityCases()
+  const { compileProgram } = await import('../src/runtime/engine.js')
+  const reference = await createReferenceCompiler()
 
-  assert.deepEqual(parameterAliases, [])
+  assert.deepEqual(
+    parameterAliases.map(({ effectId, oldName, newName }) => [effectId, oldName, newName]),
+    [
+      ['points/dla', 'fieldTex', 'heightTex'],
+      ['points/flow', 'fieldTex', 'heightTex'],
+      ['points/physarum', 'fieldTex', 'heightTex'],
+    ],
+  )
+
+  for (const { effectId, oldName, newName } of parameterAliases) {
+    const effect = effectId.split('/').at(-1)
+    for (const name of [oldName, newName]) {
+      const dsl = `search synth, points, render\n\nperlin()\n  .${effect}(${name}: 3)\n  .pointsRender()\n  .write(o0)\n\nrender(o0)`
+      const expected = await captureOutcome(() => reference.compileGraph(dsl))
+      const actual = await captureOutcome(() => compileProgram(dsl))
+      assert.equal(expected.threw, actual.threw, `${effectId} ${name}`)
+      if (!actual.threw) {
+        assert.deepEqual(
+          normalizeCompilerValue(actual.value),
+          normalizeCompilerValue(expected.value),
+          `${effectId} ${name} diverged from the pinned compiler`,
+        )
+      }
+      assert.deepEqual(actual.warnings, expected.warnings, `${effectId} ${name} warnings`)
+    }
+    const retiredDsl = `search synth, points, render\n\nperlin()\n  .${effect}(${oldName}: 3)\n  .pointsRender()\n  .write(o0)\n\nrender(o0)`
+    const retiredExpected = await captureOutcome(() => reference.compileGraph(retiredDsl))
+    const retiredActual = await captureOutcome(() => compileProgram(retiredDsl))
+    assert.ok(
+      retiredActual.warnings.includes(
+        `[noisemaker] S007: param '${oldName}' is deprecated, use '${newName}' instead. Aliases will be removed on 2027-06-01.`,
+      ),
+      `${effectId} did not emit its alias deprecation warning`,
+    )
+    assert.deepEqual(retiredActual.warnings, retiredExpected.warnings)
+  }
 })
 
 test('every pinned deprecated effect emits the reference deprecation diagnostic', async () => {

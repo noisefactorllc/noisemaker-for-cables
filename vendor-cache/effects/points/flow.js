@@ -1,5 +1,5 @@
 /* points/flow */
-var t=class{constructor(e={}){this.state={},this.uniforms={},e.name&&(this.name=e.name),e.namespace&&(this.namespace=e.namespace),e.func&&(this.func=e.func),e.description&&(this.description=e.description),e.tags&&(this.tags=e.tags),e.globals&&(this.globals=e.globals),e.passes&&(this.passes=e.passes),e.textures&&(this.textures=e.textures),e.textures3d&&(this.textures3d=e.textures3d),e.shaders&&(this.shaders=e.shaders),e.externalTexture&&(this.externalTexture=e.externalTexture),e.externalMesh&&(this.externalMesh=e.externalMesh),e.builtinMeshes&&(this.builtinMeshes=e.builtinMeshes),e.outputTex3d&&(this.outputTex3d=e.outputTex3d),e.outputGeo&&(this.outputGeo=e.outputGeo),e.uniformLayout&&(this.uniformLayout=e.uniformLayout),e.uniformLayouts&&(this.uniformLayouts=e.uniformLayouts),e.openCategories&&(this.openCategories=e.openCategories),e.defaultProgram&&(this.defaultProgram=e.defaultProgram),e.hidden&&(this.hidden=!0),e.deprecatedBy&&(this.deprecatedBy=e.deprecatedBy),e.onInit&&(this._configOnInit=e.onInit),e.onUpdate&&(this._configOnUpdate=e.onUpdate),e.onDestroy&&(this._configOnDestroy=e.onDestroy),e.asyncInit&&(this._configAsyncInit=e.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(e){return this._configOnUpdate?this._configOnUpdate.call(this,e):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(e){return this._configAsyncInit?this._configAsyncInit.call(this,e):Promise.resolve()}};var n=new t({name:"Flow",namespace:"points",func:"flow",tags:["sim"],description:"Agent-based luminosity flow field with behaviors",textures:{},outputXyz:"global_xyz",outputVel:"global_vel",outputRgba:"global_rgba",globals:{diffuseTex:{type:"surface",default:"none",colorModeUniform:"diffuseActive",ui:{label:"diffuse map",category:"agents"}},fieldTex:{type:"surface",default:"none",colorModeUniform:"fieldActive",ui:{label:"field map",category:"agents"}},stateSize:{type:"int",default:256,uniform:"stateSize",ui:{control:!1}},behavior:{type:"int",default:1,uniform:"behavior",choices:{none:0,obedient:1,crosshatch:2,unruly:3,chaotic:4,randomMix:5,meandering:10},ui:{label:"behavior",control:"dropdown",category:"agents"}},stride:{type:"float",default:10,uniform:"stride",min:1,max:1e3,step:1,ui:{label:"stride",control:"slider",category:"agents"}},strideDeviation:{type:"float",default:.05,uniform:"strideDeviation",min:0,max:.5,step:.01,ui:{label:"deviation",control:"slider",category:"agents"}},kink:{type:"float",default:1,uniform:"kink",min:0,max:10,step:.1,ui:{label:"kink",control:"slider",category:"agents"}},quantize:{type:"boolean",default:!1,uniform:"quantize",ui:{label:"quantize",control:"checkbox",category:"agents"}},inputWeight:{type:"float",default:100,uniform:"inputWeight",min:0,max:100,step:1,ui:{label:"input weight",control:"slider",category:"agents"}}},passes:[{name:"agent",program:"agent",drawBuffers:3,inputs:{xyzTex:"global_xyz",velTex:"global_vel",rgbaTex:"global_rgba",inputTex:"inputTex",fieldTex:"fieldTex",diffuseTex:"diffuseTex"},uniforms:{diffuseActive:"diffuseActive",fieldActive:"fieldActive",behavior:"behavior",stride:"stride",strideDeviation:"strideDeviation",kink:"kink",quantize:"quantize",inputWeight:"inputWeight"},outputs:{outXYZ:"global_xyz",outVel:"global_vel",outRGBA:"global_rgba"}},{name:"passthrough",program:"passthrough",inputs:{inputTex:"inputTex"},outputs:{fragColor:"outputTex"}}]});var o={agent:{glsl:`#version 300 es
+var t=class{constructor(e={}){this.state={},this.uniforms={},e.name&&(this.name=e.name),e.namespace&&(this.namespace=e.namespace),e.func&&(this.func=e.func),e.description&&(this.description=e.description),e.tags&&(this.tags=e.tags),e.globals&&(this.globals=e.globals),e.passes&&(this.passes=e.passes),e.textures&&(this.textures=e.textures),e.textures3d&&(this.textures3d=e.textures3d),e.shaders&&(this.shaders=e.shaders),e.externalTexture&&(this.externalTexture=e.externalTexture),e.externalMesh&&(this.externalMesh=e.externalMesh),e.builtinMeshes&&(this.builtinMeshes=e.builtinMeshes),e.outputTex3d&&(this.outputTex3d=e.outputTex3d),e.outputGeo&&(this.outputGeo=e.outputGeo),e.uniformLayout&&(this.uniformLayout=e.uniformLayout),e.uniformLayouts&&(this.uniformLayouts=e.uniformLayouts),e.paramAliases&&(this.paramAliases=e.paramAliases),e.openCategories&&(this.openCategories=e.openCategories),e.defaultProgram&&(this.defaultProgram=e.defaultProgram),e.hidden&&(this.hidden=!0),e.deprecatedBy&&(this.deprecatedBy=e.deprecatedBy),e.onInit&&(this._configOnInit=e.onInit),e.onUpdate&&(this._configOnUpdate=e.onUpdate),e.onDestroy&&(this._configOnDestroy=e.onDestroy),e.asyncInit&&(this._configAsyncInit=e.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(e){return this._configOnUpdate?this._configOnUpdate.call(this,e):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(e){return this._configAsyncInit?this._configAsyncInit.call(this,e):Promise.resolve()}};var n=new t({name:"Flow",namespace:"points",func:"flow",tags:["sim"],description:"Agent-based luminosity flow field with behaviors",textures:{global_flow_base_color:{width:{param:"stateSize",inherit:!0},height:{param:"stateSize",inherit:!0},format:"rgba8"}},outputXyz:"global_xyz",outputVel:"global_vel",outputRgba:"global_rgba",globals:{heightTex:{type:"surface",default:"none",colorModeUniform:"fieldActive",ui:{label:"height map",category:"agents"}},diffuseTex:{type:"surface",default:"none",colorModeUniform:"diffuseActive",ui:{label:"diffuse map",category:"agents"}},stateSize:{type:"int",default:256,uniform:"stateSize",ui:{control:!1}},behavior:{type:"int",default:1,uniform:"behavior",choices:{none:0,obedient:1,crosshatch:2,unruly:3,chaotic:4,randomMix:5,meandering:10},ui:{label:"behavior",control:"dropdown",category:"agents"}},stride:{type:"float",default:10,uniform:"stride",min:1,max:1e3,step:1,ui:{label:"stride",control:"slider",category:"agents"}},strideDeviation:{type:"float",default:.05,uniform:"strideDeviation",min:0,max:.5,step:.01,ui:{label:"deviation",control:"slider",category:"agents"}},kink:{type:"float",default:1,uniform:"kink",min:0,max:10,step:.1,ui:{label:"kink",control:"slider",category:"agents"}},quantize:{type:"boolean",default:!1,uniform:"quantize",ui:{label:"quantize",control:"checkbox",category:"agents"}},inputWeight:{type:"float",default:100,uniform:"inputWeight",min:0,max:100,step:1,ui:{label:"input weight",control:"slider",category:"agents"}}},paramAliases:{fieldTex:"heightTex"},passes:[{name:"agent",program:"agent",drawBuffers:4,inputs:{xyzTex:"global_xyz",velTex:"global_vel",rgbaTex:"global_rgba",inputTex:"inputTex",heightTex:"heightTex",diffuseTex:"diffuseTex",baseColorTex:"global_flow_base_color"},uniforms:{diffuseActive:"diffuseActive",fieldActive:"fieldActive",behavior:"behavior",stride:"stride",strideDeviation:"strideDeviation",kink:"kink",quantize:"quantize",inputWeight:"inputWeight"},outputs:{outXYZ:"global_xyz",outVel:"global_vel",outRGBA:"global_rgba",outBaseColor:"global_flow_base_color"}},{name:"passthrough",program:"passthrough",inputs:{inputTex:"inputTex"},outputs:{fragColor:"outputTex"}}]});var a={agent:{glsl:`#version 300 es
 precision highp float;
 precision highp int;
 
@@ -17,7 +17,7 @@ uniform float fieldActive;
 uniform float behavior;
 
 // Input state from pipeline (from pointsEmit)
-uniform sampler2D fieldTex;
+uniform sampler2D heightTex;
 uniform sampler2D inputTex;  // Source texture for luminance-based flow
 uniform sampler2D xyzTex;    // [x, y, z, alive]
 uniform sampler2D velTex;    // [vx, vy, rotRand, strideRand]
@@ -35,6 +35,30 @@ vec4 selectedDiffuse(vec2 uv) {
     ivec2 size = textureSize(diffuseTex, 0);
     ivec2 pixel = clamp(ivec2(clamp(uv, vec2(0.0), vec2(0.999999)) * vec2(size)), ivec2(0), size - 1);
     return texelFetch(diffuseTex, pixel, 0);
+}
+
+uniform sampler2D baseColorTex;  // Agent color kept while a diffuse map is active
+layout(location = 3) out vec4 outBaseColor;
+
+// Color render/pointsEmit gives an agent spawned at pos.
+vec4 spawnColor(vec2 pos) {
+    ivec2 dims = textureSize(inputTex, 0);
+    vec4 sampled = texelFetch(inputTex, ivec2(pos * vec2(dims)), 0);
+    return sampled.a > 0.0 ? sampled : vec4(1.0);
+}
+
+// The agent's color without a diffuse map. baseColorTex keeps it (alpha > 0)
+// while a diffuse map is active and is cleared otherwise, so this is rgba
+// unless the agent still carries a diffuse color and has not respawned.
+vec4 baseColor(ivec2 coord, vec4 rgba, vec2 pos) {
+    vec4 kept = texelFetch(baseColorTex, coord, 0);
+    if (kept.a == 0.0) return rgba;
+    vec4 spawnDelta = abs(round(rgba * 255.0) - round(clamp(spawnColor(pos), 0.0, 1.0) * 255.0));
+    return all(lessThanEqual(spawnDelta, vec4(1.0))) ? rgba : kept;
+}
+
+vec4 keptBaseColor(vec4 base) {
+    return diffuseActive > 0.5 ? vec4(base.rgb, max(base.a, 1.0 / 255.0)) : vec4(0.0);
 }
 
 const float TAU = 6.283185307179586;
@@ -114,6 +138,7 @@ void main() {
     vec4 xyz = texelFetch(xyzTex, coord, 0);
     vec4 vel = texelFetch(velTex, coord, 0);
     vec4 rgba = texelFetch(rgbaTex, coord, 0);
+    vec4 base = baseColor(coord, rgba, xyz.xy);
     
     // Extract components (positions in normalized coords [0,1])
     float px = xyz.x;
@@ -131,14 +156,15 @@ void main() {
         outXYZ = xyz;
         outVel = vel;
         outRGBA = rgba;
+        outBaseColor = keptBaseColor(base);
         return;
     }
     
     // Sample input texture at current position for flow direction
-    ivec2 texSize = fieldActive > 0.5 ? textureSize(fieldTex, 0) : textureSize(inputTex, 0);
+    ivec2 texSize = fieldActive > 0.5 ? textureSize(heightTex, 0) : textureSize(inputTex, 0);
     ivec2 texCoord = ivec2(px * float(texSize.x), py * float(texSize.y));
     texCoord = clamp(texCoord, ivec2(0), texSize - 1);
-    vec4 texel = fieldActive > 0.5 ? texelFetch(fieldTex, texCoord, 0) : texelFetch(inputTex, texCoord, 0);
+    vec4 texel = fieldActive > 0.5 ? texelFetch(heightTex, texCoord, 0) : texelFetch(inputTex, texCoord, 0);
     float inputLuma = oklab_l(texel.rgb);
     
     // inputWeight controls how much the input texture influences flow direction
@@ -176,7 +202,8 @@ void main() {
     // Output updated state - attrition is handled by pointsEmit
     outXYZ = vec4(newX, newY, pz, 1.0);
     outVel = vec4(0.0, 0.0, rotRand, strideRand);
-    outRGBA = diffuseActive > 0.5 ? selectedDiffuse(outXYZ.xy) : rgba;
+    outRGBA = diffuseActive > 0.5 ? selectedDiffuse(outXYZ.xy) : base;
+    outBaseColor = keptBaseColor(base);
 }
 `,wgsl:`// Flow agent pass - Common Agent Architecture middleware
 // Reads from global_xyz/vel/rgba, applies flow-field movement, writes back
@@ -200,20 +227,43 @@ struct Outputs {
     @location(0) xyz: vec4f,
     @location(1) vel: vec4f,
     @location(2) rgba: vec4f,
+    @location(3) baseColor: vec4f,
 }
 
 @group(0) @binding(0) var<uniform> u: Uniforms;
 @group(0) @binding(1) var inputTex: texture_2d<f32>;
-@group(0) @binding(7) var fieldTex: texture_2d<f32>;
+@group(0) @binding(7) var heightTex: texture_2d<f32>;
 @group(0) @binding(3) var xyzTex: texture_2d<f32>;
 @group(0) @binding(4) var velTex: texture_2d<f32>;
 @group(0) @binding(5) var rgbaTex: texture_2d<f32>;
 @group(0) @binding(6) var diffuseTex: texture_2d<f32>;
+@group(0) @binding(8) var baseColorTex: texture_2d<f32>;
 
 fn selectedDiffuse(uv: vec2f) -> vec4f {
     let size = textureDimensions(diffuseTex, 0);
     let pixel = clamp(vec2i(clamp(uv, vec2f(0.0), vec2f(0.999999)) * vec2f(size)), vec2i(0), vec2i(size) - vec2i(1));
     return textureLoad(diffuseTex, pixel, 0);
+}
+
+// Color render/pointsEmit gives an agent spawned at pos.
+fn spawnColor(pos: vec2f) -> vec4f {
+    let dims = textureDimensions(inputTex);
+    let sampled = textureLoad(inputTex, vec2<i32>(pos * vec2<f32>(dims)), 0);
+    return select(vec4f(1.0), sampled, sampled.a > 0.0);
+}
+
+// The agent's color without a diffuse map. baseColorTex keeps it (alpha > 0)
+// while a diffuse map is active and is cleared otherwise, so this is rgba
+// unless the agent still carries a diffuse color and has not respawned.
+fn baseColor(coord: vec2i, rgba: vec4f, pos: vec2f) -> vec4f {
+    let kept = textureLoad(baseColorTex, coord, 0);
+    if (kept.a == 0.0) { return rgba; }
+    let spawnDelta = abs(round(rgba * 255.0) - round(clamp(spawnColor(pos), vec4f(0.0), vec4f(1.0)) * 255.0));
+    return select(kept, rgba, all(spawnDelta <= vec4f(1.0)));
+}
+
+fn keptBaseColor(base: vec4f) -> vec4f {
+    return select(vec4f(0.0), vec4f(base.rgb, max(base.a, 1.0 / 255.0)), u.diffuseActive > 0.5);
 }
 
 
@@ -294,6 +344,7 @@ fn main(@builtin(position) fragCoord: vec4f) -> Outputs {
     let xyz = textureLoad(xyzTex, coord, 0);
     let vel = textureLoad(velTex, coord, 0);
     let rgba = textureLoad(rgbaTex, coord, 0);
+    let base = baseColor(coord, rgba, xyz.xy);
     
     // Extract components (positions in normalized coords [0,1])
     var px = xyz.x;
@@ -307,14 +358,14 @@ fn main(@builtin(position) fragCoord: vec4f) -> Outputs {
     
     // If not alive, pass through unchanged
     if (alive < 0.5) {
-        return Outputs(xyz, vel, rgba);
+        return Outputs(xyz, vel, rgba, keptBaseColor(base));
     }
     
     // Sample input texture at current position for flow direction
-    let texSize = select(textureDimensions(inputTex, 0), textureDimensions(fieldTex, 0), u.fieldActive > 0.5);
+    let texSize = select(textureDimensions(inputTex, 0), textureDimensions(heightTex, 0), u.fieldActive > 0.5);
     var texCoord = vec2i(i32(px * f32(texSize.x)), i32(py * f32(texSize.y)));
     texCoord = clamp(texCoord, vec2i(0), vec2i(texSize) - vec2i(1));
-    let texel = select(textureLoad(inputTex, texCoord, 0), textureLoad(fieldTex, texCoord, 0), u.fieldActive > 0.5);
+    let texel = select(textureLoad(inputTex, texCoord, 0), textureLoad(heightTex, texCoord, 0), u.fieldActive > 0.5);
     let inputLuma = oklab_l(texel.rgb);
     
     // inputWeight controls how much the input texture influences flow direction
@@ -352,7 +403,8 @@ fn main(@builtin(position) fragCoord: vec4f) -> Outputs {
     return Outputs(
         vec4f(newX, newY, pz, 1.0),
         vec4f(0.0, 0.0, rotRand, strideRand),
-        select(rgba, selectedDiffuse(vec2f(newX, newY)), u.diffuseActive > 0.5)
+        select(base, selectedDiffuse(vec2f(newX, newY)), u.diffuseActive > 0.5),
+        keptBaseColor(base)
     );
 }
 `},passthrough:{glsl:`#version 300 es
@@ -380,7 +432,7 @@ fn main(@builtin(position) fragCoord: vec4f) -> @location(0) vec4f {
     let uv = fragCoord.xy / u.resolution;
     return textureSample(inputTex, inputTexSampler, uv);
 }
-`}},a=`# flow
+`}},o=`# flow
 
 Agent-based luminosity flow field with behaviors
 
@@ -392,8 +444,8 @@ Agents move according to the brightness of the input texture, creating painterly
 
 | Parameter | Type | Default | Range | Description |
 |-----------|------|---------|-------|-------------|
+| heightTex | surface | none | - | Height field; defaults to the chained input |
 | diffuseTex | surface | none | - | Particle color map; none preserves the existing particle color |
-| fieldTex | surface | none | - | Flow field; defaults to the chained input |
 | stateSize | int | 256 | - | - |
 | behavior | int | obedient | none/obedient/crosshatch/unruly/chaotic/randomMix/meandering | Behavior |
 | stride | float | 10 | 1-1000 | Stride |
@@ -415,4 +467,4 @@ noise()
 
 render(o0)
 \`\`\`
-`;if(n&&Object.keys(o).length>0){n.shaders||(n.shaders={});for(let[i,e]of Object.entries(o))n.shaders[i]={...e}}n&&a&&(n.help=a);var d="points/flow",f="points",c="flow",p=n;export{p as default,d as effectId,c as effectName,a as help,f as namespace};
+`;if(n&&Object.keys(a).length>0){n.shaders||(n.shaders={});for(let[i,e]of Object.entries(a))n.shaders[i]={...e}}n&&o&&(n.help=o);var d="points/flow",f="points",c="flow",p=n;export{p as default,d as effectId,c as effectName,o as help,f as namespace};

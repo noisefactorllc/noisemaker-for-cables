@@ -1,5 +1,5 @@
 /* points/physical */
-var t=class{constructor(e={}){this.state={},this.uniforms={},e.name&&(this.name=e.name),e.namespace&&(this.namespace=e.namespace),e.func&&(this.func=e.func),e.description&&(this.description=e.description),e.tags&&(this.tags=e.tags),e.globals&&(this.globals=e.globals),e.passes&&(this.passes=e.passes),e.textures&&(this.textures=e.textures),e.textures3d&&(this.textures3d=e.textures3d),e.shaders&&(this.shaders=e.shaders),e.externalTexture&&(this.externalTexture=e.externalTexture),e.externalMesh&&(this.externalMesh=e.externalMesh),e.builtinMeshes&&(this.builtinMeshes=e.builtinMeshes),e.outputTex3d&&(this.outputTex3d=e.outputTex3d),e.outputGeo&&(this.outputGeo=e.outputGeo),e.uniformLayout&&(this.uniformLayout=e.uniformLayout),e.uniformLayouts&&(this.uniformLayouts=e.uniformLayouts),e.openCategories&&(this.openCategories=e.openCategories),e.defaultProgram&&(this.defaultProgram=e.defaultProgram),e.hidden&&(this.hidden=!0),e.deprecatedBy&&(this.deprecatedBy=e.deprecatedBy),e.onInit&&(this._configOnInit=e.onInit),e.onUpdate&&(this._configOnUpdate=e.onUpdate),e.onDestroy&&(this._configOnDestroy=e.onDestroy),e.asyncInit&&(this._configAsyncInit=e.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(e){return this._configOnUpdate?this._configOnUpdate.call(this,e):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(e){return this._configAsyncInit?this._configAsyncInit.call(this,e):Promise.resolve()}};var n=new t({name:"Physical",namespace:"points",func:"physical",tags:["sim"],description:"Physics-based particle simulation with wind and gravity forces",textures:{},outputXyz:"global_xyz",outputVel:"global_vel",outputRgba:"global_rgba",globals:{diffuseTex:{type:"surface",default:"none",colorModeUniform:"diffuseActive",ui:{label:"diffuse map",category:"physics"}},stateSize:{type:"int",default:256,uniform:"stateSize",ui:{control:!1}},gravity:{type:"float",default:.05,uniform:"gravity",min:-2,max:2,step:.01,ui:{label:"gravity",control:"slider",category:"physics"}},wind:{type:"float",default:0,uniform:"wind",min:-2,max:2,step:.01,ui:{label:"wind",control:"slider",category:"physics"}},energy:{type:"float",default:.5,uniform:"energy",min:0,max:2,step:.01,ui:{label:"energy",control:"slider",category:"physics"}},drag:{type:"float",default:.15,uniform:"drag",min:0,max:.2,step:.005,ui:{label:"drag",control:"slider",category:"physics"}},deviation:{type:"float",default:.75,uniform:"deviation",min:0,max:1,step:.01,ui:{label:"deviation",control:"slider",category:"physics"}},wander:{type:"float",default:.25,uniform:"wander",min:0,max:1,step:.01,ui:{label:"wander",control:"slider",category:"physics"}}},passes:[{name:"agent",program:"agent",drawBuffers:3,inputs:{xyzTex:"global_xyz",velTex:"global_vel",rgbaTex:"global_rgba",diffuseTex:"diffuseTex"},uniforms:{diffuseActive:"diffuseActive",gravity:"gravity",wind:"wind",energy:"energy",drag:"drag",deviation:"deviation",wander:"wander"},outputs:{outXYZ:"global_xyz",outVel:"global_vel",outRGBA:"global_rgba"}},{name:"passthrough",program:"passthrough",inputs:{inputTex:"inputTex"},outputs:{fragColor:"outputTex"}}]});var a={agent:{glsl:`#version 300 es
+var t=class{constructor(e={}){this.state={},this.uniforms={},e.name&&(this.name=e.name),e.namespace&&(this.namespace=e.namespace),e.func&&(this.func=e.func),e.description&&(this.description=e.description),e.tags&&(this.tags=e.tags),e.globals&&(this.globals=e.globals),e.passes&&(this.passes=e.passes),e.textures&&(this.textures=e.textures),e.textures3d&&(this.textures3d=e.textures3d),e.shaders&&(this.shaders=e.shaders),e.externalTexture&&(this.externalTexture=e.externalTexture),e.externalMesh&&(this.externalMesh=e.externalMesh),e.builtinMeshes&&(this.builtinMeshes=e.builtinMeshes),e.outputTex3d&&(this.outputTex3d=e.outputTex3d),e.outputGeo&&(this.outputGeo=e.outputGeo),e.uniformLayout&&(this.uniformLayout=e.uniformLayout),e.uniformLayouts&&(this.uniformLayouts=e.uniformLayouts),e.paramAliases&&(this.paramAliases=e.paramAliases),e.openCategories&&(this.openCategories=e.openCategories),e.defaultProgram&&(this.defaultProgram=e.defaultProgram),e.hidden&&(this.hidden=!0),e.deprecatedBy&&(this.deprecatedBy=e.deprecatedBy),e.onInit&&(this._configOnInit=e.onInit),e.onUpdate&&(this._configOnUpdate=e.onUpdate),e.onDestroy&&(this._configOnDestroy=e.onDestroy),e.asyncInit&&(this._configAsyncInit=e.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(e){return this._configOnUpdate?this._configOnUpdate.call(this,e):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(e){return this._configAsyncInit?this._configAsyncInit.call(this,e):Promise.resolve()}};var n=new t({name:"Physical",namespace:"points",func:"physical",tags:["sim"],description:"Physics-based particle simulation with wind and gravity forces",textures:{global_physical_base_color:{width:{param:"stateSize",inherit:!0},height:{param:"stateSize",inherit:!0},format:"rgba8"}},outputXyz:"global_xyz",outputVel:"global_vel",outputRgba:"global_rgba",globals:{diffuseTex:{type:"surface",default:"none",colorModeUniform:"diffuseActive",ui:{label:"diffuse map",category:"physics"}},stateSize:{type:"int",default:256,uniform:"stateSize",ui:{control:!1}},gravity:{type:"float",default:.05,uniform:"gravity",min:-2,max:2,step:.01,ui:{label:"gravity",control:"slider",category:"physics"}},wind:{type:"float",default:0,uniform:"wind",min:-2,max:2,step:.01,ui:{label:"wind",control:"slider",category:"physics"}},energy:{type:"float",default:.5,uniform:"energy",min:0,max:2,step:.01,ui:{label:"energy",control:"slider",category:"physics"}},drag:{type:"float",default:.15,uniform:"drag",min:0,max:.2,step:.005,ui:{label:"drag",control:"slider",category:"physics"}},deviation:{type:"float",default:.75,uniform:"deviation",min:0,max:1,step:.01,ui:{label:"deviation",control:"slider",category:"physics"}},wander:{type:"float",default:.25,uniform:"wander",min:0,max:1,step:.01,ui:{label:"wander",control:"slider",category:"physics"}}},passes:[{name:"agent",program:"agent",drawBuffers:4,inputs:{xyzTex:"global_xyz",velTex:"global_vel",rgbaTex:"global_rgba",diffuseTex:"diffuseTex",baseColorTex:"global_physical_base_color",inputTex:"inputTex"},uniforms:{diffuseActive:"diffuseActive",gravity:"gravity",wind:"wind",energy:"energy",drag:"drag",deviation:"deviation",wander:"wander"},outputs:{outXYZ:"global_xyz",outVel:"global_vel",outRGBA:"global_rgba",outBaseColor:"global_physical_base_color"}},{name:"passthrough",program:"passthrough",inputs:{inputTex:"inputTex"},outputs:{fragColor:"outputTex"}}]});var i={agent:{glsl:`#version 300 es
 precision highp float;
 precision highp int;
 
@@ -33,6 +33,30 @@ vec4 selectedDiffuse(vec2 uv) {
     ivec2 size = textureSize(diffuseTex, 0);
     ivec2 pixel = clamp(ivec2(clamp(uv, vec2(0.0), vec2(0.999999)) * vec2(size)), ivec2(0), size - 1);
     return texelFetch(diffuseTex, pixel, 0);
+}
+
+uniform sampler2D baseColorTex;  // Agent color kept while a diffuse map is active
+layout(location = 3) out vec4 outBaseColor;
+
+// Color render/pointsEmit gives an agent spawned at pos.
+vec4 spawnColor(vec2 pos) {
+    ivec2 dims = textureSize(inputTex, 0);
+    vec4 sampled = texelFetch(inputTex, ivec2(pos * vec2(dims)), 0);
+    return sampled.a > 0.0 ? sampled : vec4(1.0);
+}
+
+// The agent's color without a diffuse map. baseColorTex keeps it (alpha > 0)
+// while a diffuse map is active and is cleared otherwise, so this is rgba
+// unless the agent still carries a diffuse color and has not respawned.
+vec4 baseColor(ivec2 coord, vec4 rgba, vec2 pos) {
+    vec4 kept = texelFetch(baseColorTex, coord, 0);
+    if (kept.a == 0.0) return rgba;
+    vec4 spawnDelta = abs(round(rgba * 255.0) - round(clamp(spawnColor(pos), 0.0, 1.0) * 255.0));
+    return all(lessThanEqual(spawnDelta, vec4(1.0))) ? rgba : kept;
+}
+
+vec4 keptBaseColor(vec4 base) {
+    return diffuseActive > 0.5 ? vec4(base.rgb, max(base.a, 1.0 / 255.0)) : vec4(0.0);
 }
 
 // Integer-based hash for cross-platform determinism
@@ -81,6 +105,7 @@ void main() {
     vec4 xyz = texelFetch(xyzTex, coord, 0);
     vec4 vel = texelFetch(velTex, coord, 0);
     vec4 rgba = texelFetch(rgbaTex, coord, 0);
+    vec4 base = baseColor(coord, rgba, xyz.xy);
     
     // Extract components
     float px = xyz.x;  // Position in normalized coords [0,1]
@@ -98,6 +123,7 @@ void main() {
         outXYZ = xyz;
         outVel = vel;
         outRGBA = rgba;
+        outBaseColor = keptBaseColor(base);
         return;
     }
     
@@ -145,10 +171,12 @@ void main() {
         outXYZ = vec4(px, py, pz, 0.0);
         outVel = vec4(vx, vy, vz, seed_f);
         outRGBA = rgba;
+        outBaseColor = keptBaseColor(base);
     } else {
         outXYZ = vec4(px, py, pz, 1.0);
         outVel = vec4(vx, vy, vz, seed_f);
-        outRGBA = diffuseActive > 0.5 ? selectedDiffuse(outXYZ.xy) : rgba;
+        outRGBA = diffuseActive > 0.5 ? selectedDiffuse(outXYZ.xy) : base;
+        outBaseColor = keptBaseColor(base);
     }
 }
 `,wgsl:`struct Uniforms {
@@ -167,6 +195,7 @@ struct Outputs {
     @location(0) xyz: vec4f,
     @location(1) vel: vec4f,
     @location(2) rgba: vec4f,
+    @location(3) baseColor: vec4f,
 }
 
 // Bindings: uniforms at 0, then state textures consecutively (textureLoad, no samplers)
@@ -175,11 +204,34 @@ struct Outputs {
 @group(0) @binding(2) var velTex: texture_2d<f32>;
 @group(0) @binding(3) var rgbaTex: texture_2d<f32>;
 @group(0) @binding(4) var diffuseTex: texture_2d<f32>;
+@group(0) @binding(5) var baseColorTex: texture_2d<f32>;
+@group(0) @binding(6) var inputTex: texture_2d<f32>;
 
 fn selectedDiffuse(uv: vec2f) -> vec4f {
     let size = textureDimensions(diffuseTex, 0);
     let pixel = clamp(vec2i(clamp(uv, vec2f(0.0), vec2f(0.999999)) * vec2f(size)), vec2i(0), vec2i(size) - vec2i(1));
     return textureLoad(diffuseTex, pixel, 0);
+}
+
+// Color render/pointsEmit gives an agent spawned at pos.
+fn spawnColor(pos: vec2f) -> vec4f {
+    let dims = textureDimensions(inputTex);
+    let sampled = textureLoad(inputTex, vec2<i32>(pos * vec2<f32>(dims)), 0);
+    return select(vec4f(1.0), sampled, sampled.a > 0.0);
+}
+
+// The agent's color without a diffuse map. baseColorTex keeps it (alpha > 0)
+// while a diffuse map is active and is cleared otherwise, so this is rgba
+// unless the agent still carries a diffuse color and has not respawned.
+fn baseColor(coord: vec2i, rgba: vec4f, pos: vec2f) -> vec4f {
+    let kept = textureLoad(baseColorTex, coord, 0);
+    if (kept.a == 0.0) { return rgba; }
+    let spawnDelta = abs(round(rgba * 255.0) - round(clamp(spawnColor(pos), vec4f(0.0), vec4f(1.0)) * 255.0));
+    return select(kept, rgba, all(spawnDelta <= vec4f(1.0)));
+}
+
+fn keptBaseColor(base: vec4f) -> vec4f {
+    return select(vec4f(0.0), vec4f(base.rgb, max(base.a, 1.0 / 255.0)), u.diffuseActive > 0.5);
 }
 
 
@@ -230,6 +282,7 @@ fn main(@builtin(position) fragCoord: vec4f) -> Outputs {
     let xyz = textureLoad(xyzTex, coord, 0);
     let vel = textureLoad(velTex, coord, 0);
     let rgba = textureLoad(rgbaTex, coord, 0);
+    let base = baseColor(coord, rgba, xyz.xy);
     
     // Extract components
     var px = xyz.x;  // Position in normalized coords [0,1]
@@ -244,7 +297,7 @@ fn main(@builtin(position) fragCoord: vec4f) -> Outputs {
     
     // If not alive, pass through unchanged
     if (alive < 0.5) {
-        return Outputs(xyz, vel, rgba);
+        return Outputs(xyz, vel, rgba, keptBaseColor(base));
     }
     
     // Per-particle deviation (0 = all same speed, 1 = highly varied)
@@ -291,13 +344,15 @@ fn main(@builtin(position) fragCoord: vec4f) -> Outputs {
         return Outputs(
             vec4f(px, py, pz, 0.0),
             vec4f(vx, vy, vz, seed_f),
-            rgba
+            rgba,
+            keptBaseColor(base)
         );
     } else {
         return Outputs(
             vec4f(px, py, pz, 1.0),
             vec4f(vx, vy, vz, seed_f),
-            select(rgba, selectedDiffuse(vec2f(px, py)), u.diffuseActive > 0.5)
+            select(base, selectedDiffuse(vec2f(px, py)), u.diffuseActive > 0.5),
+            keptBaseColor(base)
         );
     }
 }
@@ -328,7 +383,7 @@ fn main(in: VertexOutput) -> @location(0) vec4f {
     // uv has a bottom-left origin, so it is flipped vertically.
     return textureSample(inputTex, texSampler, vec2f(in.uv.x, 1.0 - in.uv.y));
 }
-`}},r=`# physical
+`}},o=`# physical
 
 Physics-based particle simulation with wind and gravity forces
 
@@ -362,4 +417,4 @@ noise()
 
 render(o0)
 \`\`\`
-`;if(n&&Object.keys(a).length>0){n.shaders||(n.shaders={});for(let[i,e]of Object.entries(a))n.shaders[i]={...e}}n&&r&&(n.help=r);var d="points/physical",f="points",p="physical",c=n;export{c as default,d as effectId,p as effectName,r as help,f as namespace};
+`;if(n&&Object.keys(i).length>0){n.shaders||(n.shaders={});for(let[a,e]of Object.entries(i))n.shaders[a]={...e}}n&&o&&(n.help=o);var d="points/physical",f="points",p="physical",c=n;export{c as default,d as effectId,p as effectName,o as help,f as namespace};

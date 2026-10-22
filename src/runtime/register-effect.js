@@ -179,9 +179,6 @@ export async function registerEffectInstance(
       if (!instance.shaders && exported.shaders) instance.shaders = exported.shaders
     }
 
-    if (instance.paramAliases !== undefined) {
-      throw new Error('paramAliases is no longer supported')
-    }
     if (!instance.namespace) instance.namespace = namespace
     const func = instance.func || effectName
     const aliases = [
@@ -216,6 +213,17 @@ export async function registerEffectInstance(
     const compatArgs = registerValidatorCompatibility(core, namespace, func, instance)
     if (core.registerOp) {
       core.registerOp(`${namespace}.${func}`, { name: func, args: [...args, ...compatArgs] })
+    }
+    if (
+      instance.paramAliases &&
+      typeof core.registerParamAliases === 'function'
+    ) {
+      core.registerParamAliases(
+        `${namespace}.${func}`,
+        { ...instance.paramAliases },
+        { name: func, args: [...args, ...compatArgs] },
+        [func, `${namespace}.${func}`, effectId, `${namespace}.${effectName}`],
+      )
     }
     if (isStarter(instance) && core.registerStarterOps) {
       core.registerStarterOps([func, `${namespace}.${func}`])

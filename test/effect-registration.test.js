@@ -139,7 +139,7 @@ test('registerEffectInstance registers aliases, op metadata, starters, enums, an
   })
 })
 
-test('registerEffectInstance rejects retired parameter-alias metadata', async () => {
+test('registerEffectInstance forwards built-in parameter-alias metadata to the core', async () => {
   const core = createFakeCore()
   const instance = {
     func: 'spark',
@@ -148,12 +148,14 @@ test('registerEffectInstance rejects retired parameter-alias metadata', async ()
     passes: [{ inputs: {}, name: 'render' }],
   }
 
-  await assert.rejects(
-    () => registerEffectInstance(core, 'synth', 'sparkle', instance, {}),
-    /paramAliases is no longer supported/,
-  )
-  assert.deepEqual(core.calls.effects, [])
-  assert.deepEqual(core.calls.ops, [])
+  await registerEffectInstance(core, 'synth', 'sparkle', instance, {})
+  assert.deepEqual(core.calls.effects.map(([name]) => name), [
+    'spark',
+    'synth.spark',
+    'synth/sparkle',
+    'synth.sparkle',
+  ])
+  assert.ok(core.calls.ops.some(([name]) => name === 'synth.spark'))
 })
 
 test('registerEffectInstance instantiates class exports and attaches static shaders', async () => {

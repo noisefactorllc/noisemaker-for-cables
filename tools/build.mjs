@@ -32,6 +32,15 @@ async function main() {
     outfile: outputPath,
     platform: 'browser',
     sourcemap: false,
+    supported: {
+      // The vendored core keeps optional lazy effect loaders (loadEffect /
+      // loadEffectFromBundle) whose dynamic import targets are only resolvable
+      // against the upstream checkout. The port registers the whole catalog
+      // statically, so those paths are unreachable; lowering dynamic import
+      // keeps the browser bundle free of bare import() expressions, as the
+      // bundle contract requires.
+      'dynamic-import': false,
+    },
     target: ['es2022'],
     treeShaking: true,
   })

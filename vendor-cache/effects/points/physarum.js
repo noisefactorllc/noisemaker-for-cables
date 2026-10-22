@@ -1,5 +1,5 @@
 /* points/physarum */
-var t=class{constructor(e={}){this.state={},this.uniforms={},e.name&&(this.name=e.name),e.namespace&&(this.namespace=e.namespace),e.func&&(this.func=e.func),e.description&&(this.description=e.description),e.tags&&(this.tags=e.tags),e.globals&&(this.globals=e.globals),e.passes&&(this.passes=e.passes),e.textures&&(this.textures=e.textures),e.textures3d&&(this.textures3d=e.textures3d),e.shaders&&(this.shaders=e.shaders),e.externalTexture&&(this.externalTexture=e.externalTexture),e.externalMesh&&(this.externalMesh=e.externalMesh),e.builtinMeshes&&(this.builtinMeshes=e.builtinMeshes),e.outputTex3d&&(this.outputTex3d=e.outputTex3d),e.outputGeo&&(this.outputGeo=e.outputGeo),e.uniformLayout&&(this.uniformLayout=e.uniformLayout),e.uniformLayouts&&(this.uniformLayouts=e.uniformLayouts),e.openCategories&&(this.openCategories=e.openCategories),e.defaultProgram&&(this.defaultProgram=e.defaultProgram),e.hidden&&(this.hidden=!0),e.deprecatedBy&&(this.deprecatedBy=e.deprecatedBy),e.onInit&&(this._configOnInit=e.onInit),e.onUpdate&&(this._configOnUpdate=e.onUpdate),e.onDestroy&&(this._configOnDestroy=e.onDestroy),e.asyncInit&&(this._configAsyncInit=e.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(e){return this._configOnUpdate?this._configOnUpdate.call(this,e):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(e){return this._configAsyncInit?this._configAsyncInit.call(this,e):Promise.resolve()}};var n=new t({name:"Physarum",namespace:"points",func:"physarum",tags:["sim"],description:"Physarum slime mold simulation",textures:{global_physarum_pheromone:{width:"100%",height:"100%",format:"rgba16f"}},outputXyz:"global_xyz",outputVel:"global_vel",outputRgba:"global_rgba",globals:{diffuseTex:{type:"surface",default:"none",colorModeUniform:"diffuseActive",ui:{label:"diffuse map",category:"general"}},fieldTex:{type:"surface",default:"none",colorModeUniform:"fieldActive",ui:{label:"field map",category:"general"}},moveSpeed:{type:"float",default:1.78,uniform:"moveSpeed",min:.05,max:3,step:.01,ui:{label:"move speed",control:"slider",category:"agents"}},turnSpeed:{type:"float",default:1,uniform:"turnSpeed",min:0,max:3.14159,step:.01,ui:{label:"turn speed",control:"slider",category:"agents"}},sensorAngle:{type:"float",default:1.26,uniform:"sensorAngle",min:.1,max:1.5,step:.01,ui:{label:"sensor angle",control:"slider",category:"agents"}},sensorDistance:{type:"float",default:.03,uniform:"sensorDistance",min:.002,max:.1,step:.001,ui:{label:"sensor dist",control:"slider",category:"agents"}},inputWeight:{type:"float",default:0,uniform:"inputWeight",min:0,max:100,step:1,ui:{label:"input weight",control:"slider",category:"agents"}},deposit:{type:"float",default:.5,uniform:"deposit",min:0,max:1,step:.01,ui:{label:"deposit",control:"slider",category:"chemistry"}},decay:{type:"float",default:.1,uniform:"decay",min:0,max:1,step:.01,ui:{label:"decay",control:"slider",category:"chemistry"}},resetState:{type:"boolean",default:!1,uniform:"resetState",ui:{control:"button",buttonLabel:"reset",label:"reset"}}},passes:[{name:"decayTrail",program:"diffuse",inputs:{trailTex:"global_physarum_pheromone"},uniforms:{decay:"decay",resetState:"resetState"},outputs:{fragColor:"global_physarum_pheromone"}},{name:"agent",program:"agent",drawBuffers:3,inputs:{xyzTex:"global_xyz",velTex:"global_vel",rgbaTex:"global_rgba",trailTex:"global_physarum_pheromone",inputTex:"inputTex",fieldTex:"fieldTex",diffuseTex:"diffuseTex"},uniforms:{diffuseActive:"diffuseActive",fieldActive:"fieldActive",moveSpeed:"moveSpeed",turnSpeed:"turnSpeed",sensorAngle:"sensorAngle",sensorDistance:"sensorDistance",inputWeight:"inputWeight"},outputs:{outXYZ:"global_xyz",outVel:"global_vel",outRGBA:"global_rgba"}},{name:"copy",program:"passthrough",inputs:{inputTex:"global_physarum_pheromone"},outputs:{fragColor:"global_physarum_pheromone"}},{name:"deposit",program:"deposit",drawMode:"points",count:"input",blend:!0,inputs:{xyzTex:"global_xyz",rgbaTex:"global_rgba"},uniforms:{deposit:"deposit"},outputs:{fragColor:"global_physarum_pheromone"}},{name:"passthrough",program:"passthrough",inputs:{inputTex:"inputTex"},outputs:{fragColor:"outputTex"}}]});var o={agent:{glsl:`#version 300 es
+var t=class{constructor(e={}){this.state={},this.uniforms={},e.name&&(this.name=e.name),e.namespace&&(this.namespace=e.namespace),e.func&&(this.func=e.func),e.description&&(this.description=e.description),e.tags&&(this.tags=e.tags),e.globals&&(this.globals=e.globals),e.passes&&(this.passes=e.passes),e.textures&&(this.textures=e.textures),e.textures3d&&(this.textures3d=e.textures3d),e.shaders&&(this.shaders=e.shaders),e.externalTexture&&(this.externalTexture=e.externalTexture),e.externalMesh&&(this.externalMesh=e.externalMesh),e.builtinMeshes&&(this.builtinMeshes=e.builtinMeshes),e.outputTex3d&&(this.outputTex3d=e.outputTex3d),e.outputGeo&&(this.outputGeo=e.outputGeo),e.uniformLayout&&(this.uniformLayout=e.uniformLayout),e.uniformLayouts&&(this.uniformLayouts=e.uniformLayouts),e.paramAliases&&(this.paramAliases=e.paramAliases),e.openCategories&&(this.openCategories=e.openCategories),e.defaultProgram&&(this.defaultProgram=e.defaultProgram),e.hidden&&(this.hidden=!0),e.deprecatedBy&&(this.deprecatedBy=e.deprecatedBy),e.onInit&&(this._configOnInit=e.onInit),e.onUpdate&&(this._configOnUpdate=e.onUpdate),e.onDestroy&&(this._configOnDestroy=e.onDestroy),e.asyncInit&&(this._configAsyncInit=e.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(e){return this._configOnUpdate?this._configOnUpdate.call(this,e):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(e){return this._configAsyncInit?this._configAsyncInit.call(this,e):Promise.resolve()}};var n=new t({name:"Physarum",namespace:"points",func:"physarum",tags:["sim"],description:"Physarum slime mold simulation",textures:{global_physarum_base_color:{width:{param:"stateSize",inherit:!0},height:{param:"stateSize",inherit:!0},format:"rgba8"},global_physarum_pheromone:{width:"100%",height:"100%",format:"rgba16f"}},outputXyz:"global_xyz",outputVel:"global_vel",outputRgba:"global_rgba",globals:{heightTex:{type:"surface",default:"none",colorModeUniform:"fieldActive",ui:{label:"height map",category:"general"}},diffuseTex:{type:"surface",default:"none",colorModeUniform:"diffuseActive",ui:{label:"diffuse map",category:"general"}},moveSpeed:{type:"float",default:1.78,uniform:"moveSpeed",min:.05,max:3,step:.01,ui:{label:"move speed",control:"slider",category:"agents"}},turnSpeed:{type:"float",default:1,uniform:"turnSpeed",min:0,max:3.14159,step:.01,ui:{label:"turn speed",control:"slider",category:"agents"}},sensorAngle:{type:"float",default:1.26,uniform:"sensorAngle",min:.1,max:1.5,step:.01,ui:{label:"sensor angle",control:"slider",category:"agents"}},sensorDistance:{type:"float",default:.03,uniform:"sensorDistance",min:.002,max:.1,step:.001,ui:{label:"sensor dist",control:"slider",category:"agents"}},inputWeight:{type:"float",default:0,uniform:"inputWeight",min:0,max:100,step:1,ui:{label:"input weight",control:"slider",category:"agents"}},deposit:{type:"float",default:.5,uniform:"deposit",min:0,max:1,step:.01,ui:{label:"deposit",control:"slider",category:"chemistry"}},decay:{type:"float",default:.1,uniform:"decay",min:0,max:1,step:.01,ui:{label:"decay",control:"slider",category:"chemistry"}},resetState:{type:"boolean",default:!1,uniform:"resetState",ui:{control:"button",buttonLabel:"reset",label:"reset"}}},paramAliases:{fieldTex:"heightTex"},passes:[{name:"decayTrail",program:"diffuse",inputs:{trailTex:"global_physarum_pheromone"},uniforms:{decay:"decay",resetState:"resetState"},outputs:{fragColor:"global_physarum_pheromone"}},{name:"agent",program:"agent",drawBuffers:4,inputs:{xyzTex:"global_xyz",velTex:"global_vel",rgbaTex:"global_rgba",trailTex:"global_physarum_pheromone",inputTex:"inputTex",heightTex:"heightTex",diffuseTex:"diffuseTex",baseColorTex:"global_physarum_base_color"},uniforms:{diffuseActive:"diffuseActive",fieldActive:"fieldActive",moveSpeed:"moveSpeed",turnSpeed:"turnSpeed",sensorAngle:"sensorAngle",sensorDistance:"sensorDistance",inputWeight:"inputWeight"},outputs:{outXYZ:"global_xyz",outVel:"global_vel",outRGBA:"global_rgba",outBaseColor:"global_physarum_base_color"}},{name:"copy",program:"passthrough",inputs:{inputTex:"global_physarum_pheromone"},outputs:{fragColor:"global_physarum_pheromone"}},{name:"deposit",program:"deposit",drawMode:"points",count:"input",blend:!0,inputs:{xyzTex:"global_xyz",rgbaTex:"global_rgba"},uniforms:{deposit:"deposit"},outputs:{fragColor:"global_physarum_pheromone"}},{name:"passthrough",program:"passthrough",inputs:{inputTex:"inputTex"},outputs:{fragColor:"outputTex"}}]});var i={agent:{glsl:`#version 300 es
 precision highp float;
 precision highp int;
 
@@ -8,7 +8,7 @@ uniform sampler2D xyzTex;      // [x, y, heading, alive] in normalized [0,1]
 uniform sampler2D velTex;      // [0, 0, age, seed]
 uniform sampler2D rgbaTex;     // [r, g, b, a]
 uniform sampler2D trailTex;    // Trail texture for sensor feedback
-uniform sampler2D fieldTex;
+uniform sampler2D heightTex;
 uniform sampler2D inputTex;    // Input texture for field attraction
 
 uniform vec2 resolution;
@@ -32,6 +32,30 @@ vec4 selectedDiffuse(vec2 uv) {
     ivec2 size = textureSize(diffuseTex, 0);
     ivec2 pixel = clamp(ivec2(clamp(uv, vec2(0.0), vec2(0.999999)) * vec2(size)), ivec2(0), size - 1);
     return texelFetch(diffuseTex, pixel, 0);
+}
+
+uniform sampler2D baseColorTex;  // Agent color kept while a diffuse map is active
+layout(location = 3) out vec4 outBaseColor;
+
+// Color render/pointsEmit gives an agent spawned at pos.
+vec4 spawnColor(vec2 pos) {
+    ivec2 dims = textureSize(inputTex, 0);
+    vec4 sampled = texelFetch(inputTex, ivec2(pos * vec2(dims)), 0);
+    return sampled.a > 0.0 ? sampled : vec4(1.0);
+}
+
+// The agent's color without a diffuse map. baseColorTex keeps it (alpha > 0)
+// while a diffuse map is active and is cleared otherwise, so this is rgba
+// unless the agent still carries a diffuse color and has not respawned.
+vec4 baseColor(ivec2 coord, vec4 rgba, vec2 pos) {
+    vec4 kept = texelFetch(baseColorTex, coord, 0);
+    if (kept.a == 0.0) return rgba;
+    vec4 spawnDelta = abs(round(rgba * 255.0) - round(clamp(spawnColor(pos), 0.0, 1.0) * 255.0));
+    return all(lessThanEqual(spawnDelta, vec4(1.0))) ? rgba : kept;
+}
+
+vec4 keptBaseColor(vec4 base) {
+    return diffuseActive > 0.5 ? vec4(base.rgb, max(base.a, 1.0 / 255.0)) : vec4(0.0);
 }
 
 const float TAU = 6.28318530718;
@@ -69,7 +93,7 @@ float sampleTrail(vec2 uv) {
 float sampleExternalField(vec2 uv, float weight) {
     if (weight <= 0.0) return 0.0;
     float blend = clamp(weight * 0.01, 0.0, 1.0);
-    vec3 field = fieldActive > 0.5 ? texture(fieldTex, uv).rgb : texture(inputTex, uv).rgb;
+    vec3 field = fieldActive > 0.5 ? texture(heightTex, uv).rgb : texture(inputTex, uv).rgb;
     return luminance(field) * blend * 0.05;
 }
 
@@ -81,6 +105,7 @@ void main() {
     vec4 xyz = texelFetch(xyzTex, coord, 0);
     vec4 vel = texelFetch(velTex, coord, 0);
     vec4 rgba = texelFetch(rgbaTex, coord, 0);
+    vec4 base = baseColor(coord, rgba, xyz.xy);
     
     vec2 pos = xyz.xy;           // Normalized [0,1]
     float heading = xyz.z;       // Radians
@@ -95,6 +120,7 @@ void main() {
         outXYZ = vec4(pos, hash(uint(seed * 1000.0)) * TAU, 0.0);
         outVel = vel;
         outRGBA = rgba;
+        outBaseColor = keptBaseColor(base);
         return;
     }
     
@@ -136,7 +162,7 @@ void main() {
     float speedScale = 1.0;
     float blend = clamp(inputWeight * 0.01, 0.0, 1.0);
     if (blend > 0.0) {
-        vec3 field = fieldActive > 0.5 ? texture(fieldTex, pos).rgb : texture(inputTex, pos).rgb;
+        vec3 field = fieldActive > 0.5 ? texture(heightTex, pos).rgb : texture(inputTex, pos).rgb;
         float localInput = luminance(field);
         // Invert: slow in bright, fast in dark
         speedScale = mix(1.0, mix(1.8, 0.35, localInput), blend);
@@ -153,7 +179,8 @@ void main() {
     // Output
     outXYZ = vec4(newPos, newHeading, 1.0);  // alive = 1
     outVel = vec4(0.0, 0.0, newAge, seed);
-    outRGBA = diffuseActive > 0.5 ? selectedDiffuse(outXYZ.xy) : rgba;
+    outRGBA = diffuseActive > 0.5 ? selectedDiffuse(outXYZ.xy) : base;
+    outBaseColor = keptBaseColor(base);
 }
 `,wgsl:`// Physarum agent update shader - Common Agent Architecture
 // Reads xyz/vel/rgba from pipeline, applies sensor-based steering
@@ -175,6 +202,7 @@ struct Uniforms {
 @group(0) @binding(3) var velTex: texture_2d<f32>;
 @group(0) @binding(5) var rgbaTex: texture_2d<f32>;
 @group(0) @binding(11) var diffuseTex: texture_2d<f32>;
+@group(0) @binding(14) var baseColorTex: texture_2d<f32>;
 
 fn selectedDiffuse(uv: vec2f) -> vec4f {
     let size = textureDimensions(diffuseTex, 0);
@@ -182,17 +210,39 @@ fn selectedDiffuse(uv: vec2f) -> vec4f {
     return textureLoad(diffuseTex, pixel, 0);
 }
 
+// Color render/pointsEmit gives an agent spawned at pos.
+fn spawnColor(pos: vec2f) -> vec4f {
+    let dims = textureDimensions(inputTex);
+    let sampled = textureLoad(inputTex, vec2<i32>(pos * vec2<f32>(dims)), 0);
+    return select(vec4f(1.0), sampled, sampled.a > 0.0);
+}
+
+// The agent's color without a diffuse map. baseColorTex keeps it (alpha > 0)
+// while a diffuse map is active and is cleared otherwise, so this is rgba
+// unless the agent still carries a diffuse color and has not respawned.
+fn baseColor(coord: vec2i, rgba: vec4f, pos: vec2f) -> vec4f {
+    let kept = textureLoad(baseColorTex, coord, 0);
+    if (kept.a == 0.0) { return rgba; }
+    let spawnDelta = abs(round(rgba * 255.0) - round(clamp(spawnColor(pos), vec4f(0.0), vec4f(1.0)) * 255.0));
+    return select(kept, rgba, all(spawnDelta <= vec4f(1.0)));
+}
+
+fn keptBaseColor(base: vec4f) -> vec4f {
+    return select(vec4f(0.0), vec4f(base.rgb, max(base.a, 1.0 / 255.0)), u.diffuseActive > 0.5);
+}
+
 @group(0) @binding(7) var trailTex: texture_2d<f32>;
 @group(0) @binding(8) var trailSampler: sampler;
 @group(0) @binding(9) var inputTex: texture_2d<f32>;
-@group(0) @binding(12) var fieldTex: texture_2d<f32>;
+@group(0) @binding(12) var heightTex: texture_2d<f32>;
 @group(0) @binding(10) var inputSampler: sampler;
-@group(0) @binding(13) var fieldSampler: sampler;
+@group(0) @binding(13) var heightSampler: sampler;
 
 struct Outputs {
     @location(0) outXYZ: vec4f,
     @location(1) outVel: vec4f,
     @location(2) outRGBA: vec4f,
+    @location(3) baseColor: vec4f,
 }
 
 const TAU: f32 = 6.28318530718;
@@ -230,7 +280,7 @@ fn sampleTrail(uv: vec2f) -> f32 {
 fn sampleExternalField(uv: vec2f, weight: f32) -> f32 {
     if (weight <= 0.0) { return 0.0; }
     let blend = clamp(weight * 0.01, 0.0, 1.0);
-    let field = select(textureSampleLevel(inputTex, inputSampler, uv, 0.0).rgb, textureSampleLevel(fieldTex, fieldSampler, uv, 0.0).rgb, u.fieldActive > 0.5);
+    let field = select(textureSampleLevel(inputTex, inputSampler, uv, 0.0).rgb, textureSampleLevel(heightTex, heightSampler, uv, 0.0).rgb, u.fieldActive > 0.5);
     return luminance(field) * blend * 0.05;
 }
 
@@ -243,6 +293,7 @@ fn main(@builtin(position) fragCoord: vec4f) -> Outputs {
     let xyz = textureLoad(xyzTex, coord, 0);
     let vel = textureLoad(velTex, coord, 0);
     let rgba = textureLoad(rgbaTex, coord, 0);
+    let base = baseColor(coord, rgba, xyz.xy);
     
     var pos = xyz.xy;           // Normalized [0,1]
     var heading = xyz.z;        // Radians
@@ -257,7 +308,8 @@ fn main(@builtin(position) fragCoord: vec4f) -> Outputs {
         return Outputs(
             vec4f(pos, hash(u32(seed * 1000.0)) * TAU, 0.0),
             vel,
-            rgba
+            rgba,
+            keptBaseColor(base)
         );
     }
     
@@ -299,7 +351,7 @@ fn main(@builtin(position) fragCoord: vec4f) -> Outputs {
     var speedScale = 1.0;
     let blend = clamp(u.inputWeight * 0.01, 0.0, 1.0);
     if (blend > 0.0) {
-        let field = select(textureSampleLevel(inputTex, inputSampler, pos, 0.0).rgb, textureSampleLevel(fieldTex, fieldSampler, pos, 0.0).rgb, u.fieldActive > 0.5);
+        let field = select(textureSampleLevel(inputTex, inputSampler, pos, 0.0).rgb, textureSampleLevel(heightTex, heightSampler, pos, 0.0).rgb, u.fieldActive > 0.5);
         let localInput = luminance(field);
         // Invert: slow in bright, fast in dark
         speedScale = mix(1.0, mix(1.8, 0.35, localInput), blend);
@@ -316,7 +368,8 @@ fn main(@builtin(position) fragCoord: vec4f) -> Outputs {
     return Outputs(
         vec4f(newPos, newHeading, 1.0),  // alive = 1
         vec4f(0.0, 0.0, newAge, seed),
-        select(rgba, selectedDiffuse(newPos), u.diffuseActive > 0.5)
+        select(base, selectedDiffuse(newPos), u.diffuseActive > 0.5),
+        keptBaseColor(base)
     );
 }
 `},deposit:{vertex:`#version 300 es
@@ -536,8 +589,8 @@ Agents sense pheromone trails using forward sensors and steer towards higher con
 
 | Parameter | Type | Default | Range | Description |
 |-----------|------|---------|-------|-------------|
+| heightTex | surface | none | - | Height field; defaults to the chained input |
 | diffuseTex | surface | none | - | Particle color map; none preserves the existing particle color |
-| fieldTex | surface | none | - | Movement field; defaults to the chained input |
 | moveSpeed | float | 1.78 | 0.05-3 | Move speed |
 | turnSpeed | float | 1 | 0-3.14159 | Turn speed |
 | sensorAngle | float | 1.26 | 0.1-1.5 | Sensor angle |
@@ -560,4 +613,4 @@ noise()
 
 render(o0)
 \`\`\`
-`;if(n&&Object.keys(o).length>0){n.shaders||(n.shaders={});for(let[i,e]of Object.entries(o))n.shaders[i]={...e}}n&&r&&(n.help=r);var p="points/physarum",d="points",f="physarum",c=n;export{c as default,p as effectId,f as effectName,r as help,d as namespace};
+`;if(n&&Object.keys(i).length>0){n.shaders||(n.shaders={});for(let[o,e]of Object.entries(i))n.shaders[o]={...e}}n&&r&&(n.help=r);var p="points/physarum",d="points",c="physarum",f=n;export{f as default,p as effectId,c as effectName,r as help,d as namespace};

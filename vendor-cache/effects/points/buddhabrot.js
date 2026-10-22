@@ -1,5 +1,5 @@
 /* points/buddhabrot */
-var t=class{constructor(e={}){this.state={},this.uniforms={},e.name&&(this.name=e.name),e.namespace&&(this.namespace=e.namespace),e.func&&(this.func=e.func),e.description&&(this.description=e.description),e.tags&&(this.tags=e.tags),e.globals&&(this.globals=e.globals),e.passes&&(this.passes=e.passes),e.textures&&(this.textures=e.textures),e.textures3d&&(this.textures3d=e.textures3d),e.shaders&&(this.shaders=e.shaders),e.externalTexture&&(this.externalTexture=e.externalTexture),e.externalMesh&&(this.externalMesh=e.externalMesh),e.builtinMeshes&&(this.builtinMeshes=e.builtinMeshes),e.outputTex3d&&(this.outputTex3d=e.outputTex3d),e.outputGeo&&(this.outputGeo=e.outputGeo),e.uniformLayout&&(this.uniformLayout=e.uniformLayout),e.uniformLayouts&&(this.uniformLayouts=e.uniformLayouts),e.openCategories&&(this.openCategories=e.openCategories),e.defaultProgram&&(this.defaultProgram=e.defaultProgram),e.hidden&&(this.hidden=!0),e.deprecatedBy&&(this.deprecatedBy=e.deprecatedBy),e.onInit&&(this._configOnInit=e.onInit),e.onUpdate&&(this._configOnUpdate=e.onUpdate),e.onDestroy&&(this._configOnDestroy=e.onDestroy),e.asyncInit&&(this._configAsyncInit=e.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(e){return this._configOnUpdate?this._configOnUpdate.call(this,e):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(e){return this._configAsyncInit?this._configAsyncInit.call(this,e):Promise.resolve()}};var n=new t({name:"Buddhabrot",namespace:"points",func:"buddhabrot",tags:["fractal","sim"],description:"Buddhabrot fractal via progressive orbit accumulation",textures:{global_zState:{width:{param:"stateSize",paramDefault:512},height:{param:"stateSize",paramDefault:512},format:"rgba32float"}},outputXyz:"global_xyz",outputVel:"global_vel",outputRgba:"global_rgba",globals:{diffuseTex:{type:"surface",default:"none",colorModeUniform:"diffuseActive",ui:{label:"diffuse map",category:"fractal"}},stateSize:{type:"int",default:512,uniform:"stateSize",ui:{control:!1}},mode:{type:"int",default:0,uniform:"mode",choices:{anti:1,standard:0},ui:{label:"mode",control:"dropdown",category:"fractal"}},maxIter:{type:"int",default:200,uniform:"maxIter",min:20,max:2e3,step:10,ui:{label:"max iterations",control:"slider",category:"fractal"}},minIter:{type:"int",default:1,uniform:"minIter",min:1,max:1e3,step:1,ui:{label:"min iterations",control:"slider",category:"fractal"}},centerX:{type:"float",default:-.5,uniform:"centerX",min:-3,max:3,randChance:0,step:.01,ui:{label:"center x",control:"slider",category:"navigation"}},centerY:{type:"float",default:0,uniform:"centerY",min:-3,max:3,randChance:0,step:.01,ui:{label:"center y",control:"slider",category:"navigation"}},zoom:{type:"float",default:1,uniform:"zoom",min:.1,max:5,step:.1,randMin:.5,randMax:2,ui:{label:"zoom",control:"slider",category:"navigation"}}},defaultProgram:`search points, synth, render
+var t=class{constructor(e={}){this.state={},this.uniforms={},e.name&&(this.name=e.name),e.namespace&&(this.namespace=e.namespace),e.func&&(this.func=e.func),e.description&&(this.description=e.description),e.tags&&(this.tags=e.tags),e.globals&&(this.globals=e.globals),e.passes&&(this.passes=e.passes),e.textures&&(this.textures=e.textures),e.textures3d&&(this.textures3d=e.textures3d),e.shaders&&(this.shaders=e.shaders),e.externalTexture&&(this.externalTexture=e.externalTexture),e.externalMesh&&(this.externalMesh=e.externalMesh),e.builtinMeshes&&(this.builtinMeshes=e.builtinMeshes),e.outputTex3d&&(this.outputTex3d=e.outputTex3d),e.outputGeo&&(this.outputGeo=e.outputGeo),e.uniformLayout&&(this.uniformLayout=e.uniformLayout),e.uniformLayouts&&(this.uniformLayouts=e.uniformLayouts),e.paramAliases&&(this.paramAliases=e.paramAliases),e.openCategories&&(this.openCategories=e.openCategories),e.defaultProgram&&(this.defaultProgram=e.defaultProgram),e.hidden&&(this.hidden=!0),e.deprecatedBy&&(this.deprecatedBy=e.deprecatedBy),e.onInit&&(this._configOnInit=e.onInit),e.onUpdate&&(this._configOnUpdate=e.onUpdate),e.onDestroy&&(this._configOnDestroy=e.onDestroy),e.asyncInit&&(this._configAsyncInit=e.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(e){return this._configOnUpdate?this._configOnUpdate.call(this,e):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(e){return this._configAsyncInit?this._configAsyncInit.call(this,e):Promise.resolve()}};var n=new t({name:"Buddhabrot",namespace:"points",func:"buddhabrot",tags:["fractal","sim"],description:"Buddhabrot fractal via progressive orbit accumulation",textures:{global_buddhabrot_base_color:{width:{param:"stateSize",inherit:!0},height:{param:"stateSize",inherit:!0},format:"rgba8"},global_zState:{width:{param:"stateSize",paramDefault:512},height:{param:"stateSize",paramDefault:512},format:"rgba32float"}},outputXyz:"global_xyz",outputVel:"global_vel",outputRgba:"global_rgba",globals:{diffuseTex:{type:"surface",default:"none",colorModeUniform:"diffuseActive",ui:{label:"diffuse map",category:"fractal"}},stateSize:{type:"int",default:512,uniform:"stateSize",ui:{control:!1}},mode:{type:"int",default:0,uniform:"mode",choices:{anti:1,standard:0},ui:{label:"mode",control:"dropdown",category:"fractal"}},maxIter:{type:"int",default:200,uniform:"maxIter",min:20,max:2e3,step:10,ui:{label:"max iterations",control:"slider",category:"fractal"}},minIter:{type:"int",default:1,uniform:"minIter",min:1,max:1e3,step:1,ui:{label:"min iterations",control:"slider",category:"fractal"}},centerX:{type:"float",default:-.5,uniform:"centerX",min:-3,max:3,randChance:0,step:.01,ui:{label:"center x",control:"slider",category:"navigation"}},centerY:{type:"float",default:0,uniform:"centerY",min:-3,max:3,randChance:0,step:.01,ui:{label:"center y",control:"slider",category:"navigation"}},zoom:{type:"float",default:1,uniform:"zoom",min:.1,max:5,step:.1,randMin:.5,randMax:2,ui:{label:"zoom",control:"slider",category:"navigation"}}},defaultProgram:`search points, synth, render
 
 perlin()
   .pointsEmit(stateSize: 512)
@@ -7,7 +7,7 @@ perlin()
   .pointsRender(intensity: 99)
   .write(o0)
 
-render(o0)`,openCategories:["fractal"],passes:[{name:"agent",program:"agent",drawBuffers:3,inputs:{xyzTex:"global_xyz",velTex:"global_vel",rgbaTex:"global_rgba",diffuseTex:"diffuseTex"},uniforms:{diffuseActive:"diffuseActive",maxIter:"maxIter",minIter:"minIter",mode:"mode",centerX:"centerX",centerY:"centerY",zoom:"zoom"},outputs:{outXYZ:"global_xyz",outVel:"global_vel",outRGBA:"global_rgba"}},{name:"zWrite",program:"zWrite",inputs:{xyzTex:"global_xyz",velTex:"global_vel"},outputs:{fragColor:"global_zState"}},{name:"passthrough",program:"passthrough",inputs:{inputTex:"inputTex"},outputs:{fragColor:"outputTex"}}]});var o={agent:{glsl:`#version 300 es
+render(o0)`,openCategories:["fractal"],passes:[{name:"agent",program:"agent",drawBuffers:4,inputs:{xyzTex:"global_xyz",velTex:"global_vel",rgbaTex:"global_rgba",diffuseTex:"diffuseTex",baseColorTex:"global_buddhabrot_base_color"},uniforms:{diffuseActive:"diffuseActive",maxIter:"maxIter",minIter:"minIter",mode:"mode",centerX:"centerX",centerY:"centerY",zoom:"zoom"},outputs:{outXYZ:"global_xyz",outVel:"global_vel",outRGBA:"global_rgba",outBaseColor:"global_buddhabrot_base_color"}},{name:"zWrite",program:"zWrite",inputs:{xyzTex:"global_xyz",velTex:"global_vel"},outputs:{fragColor:"global_zState"}},{name:"passthrough",program:"passthrough",inputs:{inputTex:"inputTex"},outputs:{fragColor:"outputTex"}}]});var o={agent:{glsl:`#version 300 es
 precision highp float;
 precision highp int;
 
@@ -40,6 +40,20 @@ vec4 selectedDiffuse(vec2 uv) {
     ivec2 size = textureSize(diffuseTex, 0);
     ivec2 pixel = clamp(ivec2(clamp(uv, vec2(0.0), vec2(0.999999)) * vec2(size)), ivec2(0), size - 1);
     return texelFetch(diffuseTex, pixel, 0);
+}
+
+uniform sampler2D baseColorTex;  // Agent color kept while a diffuse map is active
+layout(location = 3) out vec4 outBaseColor;
+
+// The agent's color without a diffuse map. baseColorTex keeps it (alpha > 0)
+// while a diffuse map is active and is cleared otherwise.
+vec4 baseColor(ivec2 coord, vec4 col) {
+    vec4 kept = texelFetch(baseColorTex, coord, 0);
+    return kept.a == 0.0 ? col : kept;
+}
+
+vec4 keptBaseColor(vec4 base) {
+    return diffuseActive > 0.5 ? vec4(base.rgb, max(base.a, 1.0 / 255.0)) : vec4(0.0);
 }
 
 uint hash_uint(uint s) {
@@ -82,6 +96,7 @@ void main() {
         outXYZ = pos;
         outVel = vel;
         outRGBA = col;
+        outBaseColor = keptBaseColor(baseColor(coord, col));
         return;
     }
 
@@ -101,6 +116,7 @@ void main() {
             outXYZ = vec4(pos.xy, 0.0, 0.0);
             outVel = vel;
             outRGBA = vec4(0.0, 0.0, 0.0, 0.0);
+            outBaseColor = vec4(0.0);
             return;
         }
 
@@ -141,6 +157,7 @@ void main() {
             outXYZ = vec4(pos.xy, 0.0, 0.0);
             outVel = vel;
             outRGBA = vec4(0.0, 0.0, 0.0, 0.0);
+            outBaseColor = vec4(0.0);
             return;
         }
 
@@ -150,6 +167,7 @@ void main() {
         outXYZ = vec4(screen, 0.5, 1.0);
         outVel = vec4(cRe, cIm, 1.0, escapeStep);
         outRGBA = diffuseActive > 0.5 ? vec4(selectedDiffuse(screen).rgb * brightness, 1.0) : vec4(brightness, brightness, brightness, 1.0);
+        outBaseColor = keptBaseColor(vec4(brightness, brightness, brightness, 1.0));
         return;
     }
 
@@ -179,6 +197,7 @@ void main() {
             outXYZ = vec4(pos.xy, 0.0, 0.0);
             outVel = vec4(0.0, 0.0, step, 0.0);
             outRGBA = vec4(0.0, 0.0, 0.0, 0.0);
+            outBaseColor = vec4(0.0);
             return;
         }
 
@@ -191,7 +210,9 @@ void main() {
 
     outXYZ = vec4(screen, 0.5, 1.0);
     outVel = vec4(cRe, cIm, step, escapeStep);
-    outRGBA = diffuseActive > 0.5 ? vec4(selectedDiffuse(screen).rgb * 0.03, 1.0) : col;
+    vec4 base = baseColor(coord, col);
+    outRGBA = diffuseActive > 0.5 ? vec4(selectedDiffuse(screen).rgb * 0.03, 1.0) : base;
+    outBaseColor = keptBaseColor(base);
 }
 `,wgsl:`// Buddhabrot Agent Shader
 // 3 MRT outputs \u2014 matches pointsEmit layout
@@ -214,6 +235,7 @@ struct Uniforms {
 @group(0) @binding(3) var velTex: texture_2d<f32>;
 @group(0) @binding(5) var rgbaTex: texture_2d<f32>;
 @group(0) @binding(6) var diffuseTex: texture_2d<f32>;
+@group(0) @binding(7) var baseColorTex: texture_2d<f32>;
 
 fn selectedDiffuse(uv: vec2f) -> vec4f {
     let size = textureDimensions(diffuseTex, 0);
@@ -221,11 +243,23 @@ fn selectedDiffuse(uv: vec2f) -> vec4f {
     return textureLoad(diffuseTex, pixel, 0);
 }
 
+// The agent's color without a diffuse map. baseColorTex keeps it (alpha > 0)
+// while a diffuse map is active and is cleared otherwise.
+fn baseColor(coord: vec2i, col: vec4f) -> vec4f {
+    let kept = textureLoad(baseColorTex, coord, 0);
+    return select(kept, col, kept.a == 0.0);
+}
+
+fn keptBaseColor(base: vec4f) -> vec4f {
+    return select(vec4f(0.0), vec4f(base.rgb, max(base.a, 1.0 / 255.0)), u.diffuseActive > 0.5);
+}
+
 
 struct Outputs {
     @location(0) outXYZ: vec4<f32>,
     @location(1) outVel: vec4<f32>,
     @location(2) outRGBA: vec4<f32>,
+    @location(3) baseColor: vec4<f32>,
 };
 
 fn hash_uint(seed: u32) -> u32 {
@@ -264,7 +298,7 @@ fn main(@builtin(position) fragCoord: vec4<f32>) -> Outputs {
     let col = textureLoad(rgbaTex, coord, 0);
 
     if (pos.w < 0.5) {
-        return Outputs(pos, vel, col);
+        return Outputs(pos, vel, col, keptBaseColor(baseColor(coord, col)));
     }
 
     let agentSeed = hash_uint(u32(coord.x + coord.y * stateSize))
@@ -282,6 +316,7 @@ fn main(@builtin(position) fragCoord: vec4<f32>) -> Outputs {
                 vec4<f32>(pos.xy, 0.0, 0.0),
                 vel,
                 vec4<f32>(0.0, 0.0, 0.0, 0.0),
+                vec4f(0.0),
             );
         }
 
@@ -321,6 +356,7 @@ fn main(@builtin(position) fragCoord: vec4<f32>) -> Outputs {
                 vec4<f32>(pos.xy, 0.0, 0.0),
                 vel,
                 vec4<f32>(0.0, 0.0, 0.0, 0.0),
+                vec4f(0.0),
             );
         }
 
@@ -331,6 +367,7 @@ fn main(@builtin(position) fragCoord: vec4<f32>) -> Outputs {
             vec4<f32>(screen, 0.5, 1.0),
             vec4<f32>(cRe, cIm, 1.0, escapeStep),
             select(vec4<f32>(brightness, brightness, brightness, 1.0), vec4<f32>(selectedDiffuse(screen).rgb * brightness, 1.0), u.diffuseActive > 0.5),
+            keptBaseColor(vec4<f32>(brightness, brightness, brightness, 1.0)),
         );
     }
 
@@ -361,6 +398,7 @@ fn main(@builtin(position) fragCoord: vec4<f32>) -> Outputs {
                 vec4<f32>(pos.xy, 0.0, 0.0),
                 vec4<f32>(0.0, 0.0, step, 0.0),
                 vec4<f32>(0.0, 0.0, 0.0, 0.0),
+                vec4f(0.0),
             );
         }
 
@@ -371,10 +409,12 @@ fn main(@builtin(position) fragCoord: vec4<f32>) -> Outputs {
 
     let screen = complexToScreen(z);
 
+    let base = baseColor(coord, col);
     return Outputs(
         vec4<f32>(screen, 0.5, 1.0),
         vec4<f32>(cRe, cIm, step, escapeStep),
-        select(col, vec4f(selectedDiffuse(screen).rgb * 0.03, 1.0), u.diffuseActive > 0.5),
+        select(base, vec4f(selectedDiffuse(screen).rgb * 0.03, 1.0), u.diffuseActive > 0.5),
+        keptBaseColor(base),
     );
 }
 `},passthrough:{glsl:`#version 300 es
