@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "sourceBaseUrl": "https://shaders.noisedeck.app/1/",
-  "generatedAt": "2026-10-22T12:48:12.041Z",
+  "generatedAt": "2026-10-23T06:05:15.004Z",
   "effectCount": 210,
   "artifacts": [
     {
@@ -911,33 +911,33 @@
       "url": "https://shaders.noisedeck.app/1/effects/mixer/uvRemap.js"
     },
     {
-      "bytes": 17354,
+      "bytes": 17378,
       "path": "effects/points/attractor.js",
-      "sha256": "569d871661adf7c87609780a29ca8b8ac00a01002ea26f0799bc190f79eb66d8",
+      "sha256": "af7af69c9ad24422a7e60a173a3e85223d12361728139de82ff76c85bd299aa5",
       "url": "https://shaders.noisedeck.app/1/effects/points/attractor.js"
     },
     {
-      "bytes": 19947,
+      "bytes": 19971,
       "path": "effects/points/buddhabrot.js",
-      "sha256": "773137858983598aa71cf53fa947857b7cd073643c44795001808185d7be1dee",
+      "sha256": "f0268b2ca7ea111802cfe536932b4723ee7f79ede3c75c23c82035e059fb7450",
       "url": "https://shaders.noisedeck.app/1/effects/points/buddhabrot.js"
     },
     {
-      "bytes": 32129,
+      "bytes": 32153,
       "path": "effects/points/dla.js",
-      "sha256": "6e864492413f45cfdd487ccbd7153fbcea6f3b9418011332178399bc193a990a",
+      "sha256": "eab30556be1a93f23f366f45b22ea03915d288be1e2de7d623ca464548ed6cca",
       "url": "https://shaders.noisedeck.app/1/effects/points/dla.js"
     },
     {
-      "bytes": 28827,
+      "bytes": 28851,
       "path": "effects/points/flock.js",
-      "sha256": "f452f37f6cb2c07dc60bf777d05bc08706d93779efd41c7b2a6551b8fc4e3b57",
+      "sha256": "a08fcf30ef88261febffb5ed39b13632e2282b99e20acc5f2589ab66023038bf",
       "url": "https://shaders.noisedeck.app/1/effects/points/flock.js"
     },
     {
-      "bytes": 20721,
+      "bytes": 20745,
       "path": "effects/points/flow.js",
-      "sha256": "693fa0e1a127f224ff40939a862243051a10b661fc214d7e0f69c38e4958fd42",
+      "sha256": "12710be127cbd697408e610339373dd2de8c70e14861b579079b0edc78bdce22",
       "url": "https://shaders.noisedeck.app/1/effects/points/flow.js"
     },
     {
@@ -947,15 +947,15 @@
       "url": "https://shaders.noisedeck.app/1/effects/points/heightGrid.js"
     },
     {
-      "bytes": 21247,
+      "bytes": 21271,
       "path": "effects/points/hydraulic.js",
-      "sha256": "2c2045e740732f7e08d1d2e87cdf4781ca38e693f52a894d3f73e5a0a7bdbe06",
+      "sha256": "e616ce40dbca5a3b28efe95c62ab0db62ece0f9683f191d97641aec482e75c5e",
       "url": "https://shaders.noisedeck.app/1/effects/points/hydraulic.js"
     },
     {
-      "bytes": 24708,
+      "bytes": 24732,
       "path": "effects/points/lenia.js",
-      "sha256": "eaedce4e21e8562fa8143fae1109d481728bc458cc553ac879f4e288c8734bc9",
+      "sha256": "546b44f927db9aff83659341f63b54a1b343a36bc7958c4a044c09eaab7d98c8",
       "url": "https://shaders.noisedeck.app/1/effects/points/lenia.js"
     },
     {
@@ -965,15 +965,15 @@
       "url": "https://shaders.noisedeck.app/1/effects/points/life.js"
     },
     {
-      "bytes": 24876,
+      "bytes": 24900,
       "path": "effects/points/physarum.js",
-      "sha256": "057adb8d2cfe5070ba79aa99f4c28cd2d72684573e7731b0c2b7c7e4e0cb72ef",
+      "sha256": "57ee95f18c099773ec00b5ce3be968ee409d3c4e1fa157dfc53d69343837ccb6",
       "url": "https://shaders.noisedeck.app/1/effects/points/physarum.js"
     },
     {
-      "bytes": 16736,
+      "bytes": 16760,
       "path": "effects/points/physical.js",
-      "sha256": "285f0fcc5cd7d4116fe374600c803a519b543639817a3b3b377744f0be609163",
+      "sha256": "5a8febdb8fdc9a2ada3f2ebe174b1554a8091739cb45e7c6238bb210594ca5c1",
       "url": "https://shaders.noisedeck.app/1/effects/points/physical.js"
     },
     {
@@ -1273,7 +1273,7 @@
     {
       "bytes": 942633,
       "path": "noisemaker-shaders-core.esm.js",
-      "sha256": "eb22f8923c48e0fd4b3c014311c314ef0929d46336d0d2e0a25cc5ab67d8350a",
+      "sha256": "91032d1e3e9542f68c59f0e10282d4b62ce6bd5697b17c376c4b69ad7977fcab",
       "url": "https://shaders.noisedeck.app/1/noisemaker-shaders-core.esm.js"
     }
   ]
