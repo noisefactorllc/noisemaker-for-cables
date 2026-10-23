@@ -3,8 +3,8 @@
  * Includes: CanvasRenderer + UIController + EffectSelect
  * Copyright (c) 2017-2026 Noise Factor LLC. https://noisefactor.io/
  * SPDX-License-Identifier: MIT
- * Build: 32d8d3e6
- * Date: 2026-10-23T04:04:33.900Z
+ * Build: 321c5f85
+ * Date: 2026-10-23T23:52:40.849Z
  */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
@@ -17354,6 +17354,85 @@ function recompile(pipeline, newSource, options = {}) {
   }
 }
 
+// shaders/src/renderer/software-rendering.js
+var SOFTWARE_RASTERIZERS = [
+  ["SwiftShader", /swiftshader/i],
+  ["llvmpipe", /llvmpipe/i],
+  ["softpipe", /softpipe/i],
+  ["Microsoft Basic Render Driver", /microsoft basic render driver/i],
+  ["Apple Software Renderer", /apple software renderer/i]
+];
+var MASKED_RENDERERS = /^(webkit webgl|mozilla)$/i;
+function classifySoftwareRendering({ webgl2, caveatPassed, renderer }) {
+  const name = typeof renderer === "string" ? renderer.trim() : "";
+  const caveatProbe = webgl2 ? caveatPassed ? "passed" : "failed" : null;
+  const report = { software: false, webgl2: Boolean(webgl2), renderer: renderer ?? null, caveatProbe, reasons: [] };
+  if (!webgl2) {
+    report.reasons.push("WebGL2 is unavailable");
+    return report;
+  }
+  const rasterizer = SOFTWARE_RASTERIZERS.find(([, pattern]) => pattern.test(name));
+  if (rasterizer) {
+    report.software = true;
+    report.reasons.push(`renderer is the ${rasterizer[0]} software rasterizer: ${name}`);
+  } else if (name && !MASKED_RENDERERS.test(name)) {
+    report.reasons.push(`renderer names a GPU: ${name}`);
+    if (!caveatPassed) report.reasons.push("the performance-caveat probe failed, but the named GPU decides");
+  } else if (!caveatPassed) {
+    report.software = true;
+    report.reasons.push("the renderer is masked and the browser reports a major performance caveat");
+  } else {
+    report.reasons.push("the renderer is masked and the browser reports no major performance caveat");
+  }
+  return report;
+}
+function defaultCreateCanvas() {
+  if (typeof OffscreenCanvas === "function") return new OffscreenCanvas(1, 1);
+  if (typeof document !== "undefined" && document.createElement) return document.createElement("canvas");
+  return null;
+}
+function rendererName(gl) {
+  const info = gl.getExtension("WEBGL_debug_renderer_info");
+  return gl.getParameter(info ? info.UNMASKED_RENDERER_WEBGL : gl.RENDERER) ?? null;
+}
+function release(gl) {
+  gl?.getExtension("WEBGL_lose_context")?.loseContext();
+}
+function resolveSoftwareRendering(mode = "off", detect = detectSoftwareRendering) {
+  if (mode === "on") {
+    return {
+      mode,
+      active: true,
+      report: { software: true, webgl2: null, renderer: null, caveatProbe: null, reasons: ["softwareRendering is 'on'"] }
+    };
+  }
+  if (mode === "auto") {
+    const report = detect();
+    return { mode, active: report.software, report };
+  }
+  if (mode !== "off") {
+    console.warn(`[CanvasRenderer] Unknown softwareRendering value ${JSON.stringify(mode)}; using 'off'. Use 'off', 'auto' or 'on'.`);
+  }
+  return { mode: "off", active: false, report: null };
+}
+function detectSoftwareRendering({ createCanvas = defaultCreateCanvas } = {}) {
+  let caveatContext = null;
+  let plainContext = null;
+  try {
+    caveatContext = createCanvas()?.getContext("webgl2", { failIfMajorPerformanceCaveat: true }) ?? null;
+    plainContext = createCanvas()?.getContext("webgl2") ?? null;
+    const context = plainContext || caveatContext;
+    return classifySoftwareRendering({
+      webgl2: Boolean(context),
+      caveatPassed: Boolean(caveatContext),
+      renderer: context ? rendererName(context) : null
+    });
+  } finally {
+    release(caveatContext);
+    release(plainContext);
+  }
+}
+
 // shaders/src/runtime/uniform-aliases.js
 function writeUniformAliases(pass, paramName, uniformName, value) {
   const aliases = pass?.uniformAliases;
@@ -17481,6 +17560,10 @@ var CanvasRenderer = class {
    * @param {number} [options.height=1024] - Render resolution height; sizes an unsized canvas element
    * @param {string} [options.basePath='../../shaders'] - Base path for shader assets
    * @param {boolean} [options.preferWebGPU=false] - Use WebGPU backend
+   * @param {string} [options.softwareRendering='off'] - Single-frame mode for a software rasterizer:
+   *   'off' runs no detection; 'auto' turns the mode on when no GPU renders WebGL2; 'on' forces it.
+   *   In the mode, WebGPU is unavailable, start() renders one frame without a loop, and
+   *   stepFrame() advances one frame. See the softwareRendering getter.
    * @param {boolean} [options.useBundles=false] - Load effects from pre-built bundles
    * @param {string} [options.bundlePath='../../dist/effects'] - Base path for effect bundles
    * @param {function} [options.onFrame] - Callback after each frame (receives frameCount)
@@ -17499,6 +17582,11 @@ var CanvasRenderer = class {
     this._height = options.height || 1024;
     this._basePath = options.basePath || "../../shaders";
     this._preferWebGPU = options.preferWebGPU || false;
+    this._softwareRendering = resolveSoftwareRendering(options.softwareRendering);
+    if (this._softwareRendering.active && this._preferWebGPU) {
+      console.warn("[CanvasRenderer] Software rendering is active, so WebGPU is unavailable; using WebGL2.");
+      this._preferWebGPU = false;
+    }
     this._useBundles = options.useBundles || false;
     this._bundlePath = options.bundlePath || "../../dist/effects";
     this._onFrame = options.onFrame || null;
@@ -17727,6 +17815,20 @@ var CanvasRenderer = class {
    */
   get preferredBackend() {
     return this._preferWebGPU ? "wgsl" : "glsl";
+  }
+  /**
+   * Software rendering mode, resolved once at construction.
+   * `report` is the detection verdict (`software`, `webgl2`, `renderer`,
+   * `caveatProbe`, `reasons`); it is null when the mode is 'off'.
+   * @returns {{mode: string, active: boolean, report: object|null}}
+   */
+  get softwareRendering() {
+    const { mode = "off", active = false, report = null } = this._softwareRendering || {};
+    return { mode, active, report };
+  }
+  /** @private True in software rendering mode; an instance built without the constructor is 'off'. */
+  get _isSoftwareRendering() {
+    return Boolean(this._softwareRendering?.active);
   }
   /** @returns {object|null} Current pipeline object */
   get pipeline() {
@@ -17992,9 +18094,14 @@ var CanvasRenderer = class {
   // Render Loop
   // =========================================================================
   /**
-   * Start the animation loop
+   * Start the animation loop. In software rendering mode, render the
+   * current frame once instead; stepFrame() advances from there.
    */
   start() {
+    if (this._isSoftwareRendering) {
+      this._renderSingleFrame(this.lastTime);
+      return;
+    }
     if (this._isRunning) return;
     this._isRunning = true;
     this._lastFrameTime = performance.now();
@@ -18036,6 +18143,31 @@ var CanvasRenderer = class {
           this._onError(err);
         }
       }
+    }
+  }
+  /**
+   * Render the next frame while the animation loop is stopped: advance one
+   * 60 fps frame of the loop (1 / (60 * loopDuration), wrapping at 1) and
+   * render once, so simulations take exactly one step.
+   * @param {number} [fromTime=this.lastTime] - Normalized time to step from
+   * @returns {number|null} The rendered normalized time, or null when nothing rendered
+   */
+  stepFrame(fromTime = this.lastTime) {
+    if (this._isRunning) {
+      console.warn("[CanvasRenderer] stepFrame() renders only while the animation loop is stopped.");
+      return null;
+    }
+    if (!this._pipeline || this._isContextLost) return null;
+    const time = (fromTime + 1 / (60 * this._loopDuration)) % 1;
+    this._renderSingleFrame(time);
+    return time;
+  }
+  /** @private Render one frame outside the animation loop and report it like the loop does. */
+  _renderSingleFrame(time) {
+    const before = this._frameCount;
+    this.render(time);
+    if (this._frameCount !== before && this._onFrame) {
+      this._onFrame(this._frameCount);
     }
   }
   /** @private Main render loop */
@@ -18311,6 +18443,10 @@ var CanvasRenderer = class {
    */
   async switchBackend(backend) {
     const preferWebGPU = backend === "wgsl";
+    if (preferWebGPU && this._isSoftwareRendering) {
+      console.warn("[CanvasRenderer] Software rendering is active, so WebGPU is unavailable; staying on WebGL2.");
+      return;
+    }
     if (preferWebGPU === this._preferWebGPU) {
       return;
     }
@@ -25270,6 +25406,7 @@ export {
   analyzeLiveness,
   applyParameterUpdates,
   camelToSpaceCase,
+  classifySoftwareRendering,
   cloneParamValue,
   compile,
   compileGraph,
@@ -25278,6 +25415,7 @@ export {
   createPipeline,
   createRuntime,
   defaultControlFactory,
+  detectSoftwareRendering,
   expand,
   extractEffectNamesFromDsl,
   extractEffectsFromDsl,
