@@ -3,4 +3,54 @@
 # vendor.lock.json, run the unit suite, rebuild the op bundle from the vendored
 # sources, and confirm the package still packs. Mirrors `npm run check` so a
 # gate that runs this entrypoint also regenerates the marked generated bundle.
-exec npm run check
+#
+# NM_CHANGED_FILES (one path per line) narrows the run to the checks that
+# exercise those paths: vendor:verify and the op-bundle rebuild still run for
+# any changed path, and a unit test file runs when it names one of the changed
+# paths. An empty selection falls back to the whole unit suite, so no test
+# that exercises a changed path is dropped. With NM_CHANGED_FILES unset the
+# whole check runs exactly as before.
+# NM_SHARD_INDEX and NM_SHARD_COUNT split the selected unit tests across
+# bounded invocations; together the shards run every selected test.
+set -eu
+
+if [ -z "${NM_CHANGED_FILES:-}" ]; then
+    exec npm run check
+fi
+
+changed=$(mktemp)
+selected=$(mktemp)
+trap 'rm -f "$changed" "$selected"' EXIT
+printf '%s\n' "$NM_CHANGED_FILES" | sed 's|.*/||' > "$changed"
+
+for t in test/*.test.js; do
+    while IFS= read -r name; do
+        if [ -n "$name" ] && grep -q -F -e "$name" "$t"; then
+            printf '%s\n' "$t" >> "$selected"
+            break
+        fi
+    done < "$changed"
+done
+
+# Shard the selected list when the supervisor sets the shard variables.
+if [ -n "${NM_SHARD_COUNT:-}" ] && [ -n "${NM_SHARD_INDEX:-}" ]; then
+    line=0
+    filtered=$(mktemp)
+    trap 'rm -f "$changed" "$selected" "$filtered"' EXIT
+    while IFS= read -r t; do
+        if [ $(( line % NM_SHARD_COUNT )) -eq "$NM_SHARD_INDEX" ]; then
+            printf '%s\n' "$t" >> "$filtered"
+        fi
+        line=$(( line + 1 ))
+    done < "$selected"
+    mv "$filtered" "$selected"
+fi
+
+npm run vendor:verify
+if [ -s "$selected" ]; then
+    node --test $(cat "$selected")
+else
+    node --test test/*.test.js
+fi
+npm run build
+npm pack --dry-run

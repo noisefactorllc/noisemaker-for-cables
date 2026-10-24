@@ -43,9 +43,9 @@ uvec3 pcg(uvec3 v) {
 }
 
 vec3 prng(vec3 p) {
-    p.x = p.x >= 0.0 ? p.x * 2.0 : -p.x * 2.0 + 1.0;
-    p.y = p.y >= 0.0 ? p.y * 2.0 : -p.y * 2.0 + 1.0;
-    p.z = p.z >= 0.0 ? p.z * 2.0 : -p.z * 2.0 + 1.0;
+    // Select per component, like the WGSL select(): a software rasterizer
+    // builds each float ternary as a branch, and loops of them build for minutes.
+    p = mix(-p * 2.0 + 1.0, p * 2.0, greaterThanEqual(p, vec3(0.0)));
     return vec3(pcg(uvec3(p))) / float(uint(0xffffffff));
 }
 
@@ -310,4 +310,4 @@ noise(seed: 2, ridges: true)
 
 render(o1)
 \`\`\`
-`;if(n&&Object.keys(o).length>0){n.shaders||(n.shaders={});for(let[s,e]of Object.entries(o))n.shaders[s]={...e}}n&&i&&(n.help=i);var c="mixer/cellSplit",p="mixer",u="cellSplit",f=n;export{f as default,c as effectId,u as effectName,i as help,p as namespace};
+`;if(n&&Object.keys(o).length>0){n.shaders||(n.shaders={});for(let[s,e]of Object.entries(o))n.shaders[s]={...e}}n&&i&&(n.help=i);var c="mixer/cellSplit",u="mixer",p="cellSplit",f=n;export{f as default,c as effectId,p as effectName,i as help,u as namespace};

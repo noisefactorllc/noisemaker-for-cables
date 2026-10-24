@@ -41,9 +41,9 @@ uvec3 pcg(uvec3 v) {
 }
 
 vec3 prng(vec3 p) {
-    p.x = p.x >= 0.0 ? p.x * 2.0 : -p.x * 2.0 + 1.0;
-    p.y = p.y >= 0.0 ? p.y * 2.0 : -p.y * 2.0 + 1.0;
-    p.z = p.z >= 0.0 ? p.z * 2.0 : -p.z * 2.0 + 1.0;
+    // Select per component, like the WGSL select(): a software rasterizer
+    // builds each float ternary as a branch, and loops of them build for minutes.
+    p = mix(-p * 2.0 + 1.0, p * 2.0, greaterThanEqual(p, vec3(0.0)));
     return vec3(pcg(uvec3(p))) / float(0xffffffffu);
 }
 
@@ -254,7 +254,7 @@ fn main(@builtin(position) pos: vec4<f32>) -> @location(0) vec4<f32> {
     let n = 1.0 / (1.0 + exp(-value * 3.0));
     return vec4<f32>(vec3<f32>(n), 1.0);
 }
-`}},s=`# gabor
+`}},a=`# gabor
 
 Anisotropic bandlimited noise via sparse Gabor convolution
 
@@ -292,4 +292,4 @@ gabor()
 
 render(o0)
 \`\`\`
-`;if(n&&Object.keys(i).length>0){n.shaders||(n.shaders={});for(let[o,e]of Object.entries(i))n.shaders[o]={...e}}n&&s&&(n.help=s);var u="synth/gabor",p="synth",d="gabor",c=n;export{c as default,u as effectId,d as effectName,s as help,p as namespace};
+`;if(n&&Object.keys(i).length>0){n.shaders||(n.shaders={});for(let[o,e]of Object.entries(i))n.shaders[o]={...e}}n&&a&&(n.help=a);var u="synth/gabor",d="synth",p="gabor",c=n;export{c as default,u as effectId,p as effectName,a as help,d as namespace};
