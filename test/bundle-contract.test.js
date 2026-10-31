@@ -699,3 +699,56 @@ test('pinned core Pipeline delegates shouldDeferRender to its sinkManager', asyn
   unregister()
   assert.equal(p.shouldDeferRender(), false)
 })
+
+test('effect replacement clones programs without breaking cycles, sharing or descriptors', async () => {
+  installTestDomShim()
+  const { replaceEffect, registerOp, registerStarterOps } = await import(
+    '../vendor-cache/noisemaker-shaders-core.esm.js'
+  )
+  registerOp('test.shared', { name: 'shared', args: [] })
+  registerStarterOps(['test.shared'])
+
+  const shared = { key: 'value' }
+  const cycle = { tag: 'loop' }
+  cycle.self = cycle
+  shared.loop = cycle
+  const compiled = {
+    searchNamespaces: ['test'],
+    plans: [
+      {
+        chain: [
+          { op: 'test.solid', temp: 0, from: null, args: {} },
+          { op: 'test.shared', temp: 1, from: 0, args: shared },
+        ],
+        getterOnly: undefined,
+        shared,
+      },
+    ],
+  }
+  Object.defineProperty(compiled.plans[0], 'getterOnly', {
+    get: () => 7,
+    enumerable: true,
+  })
+
+  const result = replaceEffect(compiled, 0, 'shared', {})
+  assert.equal(result.success, true, result.error)
+  const clone = result.program
+  assert.notEqual(clone, compiled)
+  // The replacement lands on the clone; the original program is untouched.
+  assert.equal(compiled.plans[0].chain[0].op, 'test.solid')
+  assert.equal(clone.plans[0].chain[0].op, 'test.shared')
+  // Shared references stay shared in the clone.
+  assert.equal(clone.plans[0].chain[1].args, clone.plans[0].shared)
+  // Cycles survive.
+  assert.equal(
+    clone.plans[0].shared.loop.self,
+    clone.plans[0].shared.loop,
+  )
+  // Property descriptors survive.
+  const descriptor = Object.getOwnPropertyDescriptor(
+    clone.plans[0],
+    'getterOnly',
+  )
+  assert.equal(typeof descriptor.get, 'function')
+  assert.equal(clone.plans[0].getterOnly, 7)
+})
