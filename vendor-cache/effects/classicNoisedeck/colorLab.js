@@ -474,6 +474,13 @@ fn hsv2rgb(hsv: vec3f) -> vec3f {
     return rgb + vec3f(m, m, m);
 }
 
+// GLSL mod(x, y) = x - y * floor(x / y); WGSL \`%\` truncates toward zero, so a
+// red-dominant hue with g < b came out negative. rgb2hsv takes that hue with
+// the GLSL definition, as the GLSL's mod((g - b) / delta, 6.0) does.
+fn glslMod(x: f32, y: f32) -> f32 {
+    return x - y * floor(x / y);
+}
+
 fn rgb2hsv(rgb: vec3f) -> vec3f {
     let r = rgb.r;
     let g = rgb.g;
@@ -486,14 +493,13 @@ fn rgb2hsv(rgb: vec3f) -> vec3f {
     var h: f32 = 0.0;
     if (delta != 0.0) {
         if (maxC == r) {
-            h = ((g - b) / delta) % 6.0 / 6.0;
+            h = glslMod((g - b) / delta, 6.0) / 6.0;
         } else if (maxC == g) {
             h = ((b - r) / delta + 2.0) / 6.0;
         } else {
             h = ((r - g) / delta + 4.0) / 6.0;
         }
     }
-    if (h < 0.0) { h = h + 1.0; }
 
     var s: f32 = 0.0;
     if (maxC != 0.0) {
@@ -673,4 +679,4 @@ noise(seed: 1, ridges: true)
 
 render(o0)
 \`\`\`
-`;if(o&&Object.keys(u).length>0){o.shaders||(o.shaders={});for(let[n,e]of Object.entries(u))o.shaders[n]={...e}}o&&p&&(o.help=p);var A="classicNoisedeck/colorLab",S="classicNoisedeck",j="colorLab",L=o;export{L as default,A as effectId,j as effectName,p as help,S as namespace};
+`;if(o&&Object.keys(u).length>0){o.shaders||(o.shaders={});for(let[n,e]of Object.entries(u))o.shaders[n]={...e}}o&&p&&(o.help=p);var S="classicNoisedeck/colorLab",L="classicNoisedeck",A="colorLab",G=o;export{G as default,S as effectId,A as effectName,p as help,L as namespace};

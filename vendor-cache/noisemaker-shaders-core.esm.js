@@ -3,8 +3,8 @@
  * Includes: CanvasRenderer + UIController + EffectSelect
  * Copyright (c) 2017-2026 Noise Factor LLC. https://noisefactor.io/
  * SPDX-License-Identifier: MIT
- * Build: 12b490e0
- * Date: 2026-10-24T15:51:51.461Z
+ * Build: 06070900
+ * Date: 2026-10-31T19:18:51.526Z
  */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
@@ -5048,16 +5048,17 @@ function getAllEffects() {
 }
 
 // shaders/src/lang/transform.js
-function deepClone2(obj) {
+function deepClone2(obj, clones = /* @__PURE__ */ new WeakMap()) {
   if (obj === null || typeof obj !== "object") {
     return obj;
   }
-  if (Array.isArray(obj)) {
-    return obj.map(deepClone2);
-  }
-  const cloned = {};
-  for (const key of Object.keys(obj)) {
-    cloned[key] = deepClone2(obj[key]);
+  if (clones.has(obj)) return clones.get(obj);
+  const cloned = Array.isArray(obj) ? [] : {};
+  clones.set(obj, cloned);
+  for (const key of Reflect.ownKeys(obj)) {
+    const descriptor = Object.getOwnPropertyDescriptor(obj, key);
+    if ("value" in descriptor) descriptor.value = deepClone2(descriptor.value, clones);
+    Object.defineProperty(cloned, key, descriptor);
   }
   return cloned;
 }
@@ -17455,6 +17456,9 @@ function isAutomationControlled(value) {
 }
 var KNOWN_3D_GENERATORS = ["noise3d", "cell3d", "shape3d", "fractal3d", "flythrough3d", "cellularAutomata3d", "reactionDiffusion3d", "heightmap3d"];
 var KNOWN_3D_PROCESSORS = ["flow3d", "palette3d", "render3d", "renderLit3d", "renderCubemap3d", "renderCubemapSurface", "renderLandscape3d"];
+var CONTEXT_RESTORE_WAIT_MS = 3e3;
+var CONTEXT_RETRY_MS = 1e3;
+var CONTEXT_RECOVERY_LIMIT_MS = 12e4;
 function cloneParamValue(value) {
   if (Array.isArray(value)) {
     return value.slice();
@@ -17573,7 +17577,10 @@ var CanvasRenderer = class {
    * @param {function} [options.onLoadingProgress] - Callback for loading progress
    * @param {function} [options.onLoadingEnd] - Callback when loading ends
    * @param {function} [options.onContextLost] - Callback when WebGL context is lost
-   * @param {function} [options.onContextRestored] - Callback when WebGL context is restored and pipeline rebuilt
+   * @param {function} [options.onContextRestored] - Callback when rendering is back after a lost WebGL context,
+   *   restored by the browser or not: the renderer presents on a fresh canvas in the old canvas's place (read
+   *   `canvas` afterwards). The pipeline is rebuilt unless the context was lost while the program drew its first
+   *   frame.
    */
   constructor(options = {}) {
     this._canvas = options.canvas;
@@ -17629,6 +17636,8 @@ var CanvasRenderer = class {
     this._boundRenderLoop = this._renderLoop.bind(this);
     this._isContextLost = false;
     this._wasRunningBeforeContextLoss = false;
+    this._contextLostBeforeSecondFrame = false;
+    this._contextRecoveryTimer = null;
     this._lifecycleGeneration = 0;
     this._lastBackendInvalidationGeneration = -1;
     this._setupCanvasObserver();
@@ -17714,7 +17723,8 @@ var CanvasRenderer = class {
   /**
    * Set up WebGL context loss and restore event handlers.
    * On context loss: stops the render loop and notifies the host.
-   * On context restore: recompiles the current DSL and resumes rendering.
+   * On context restore, or no restore within CONTEXT_RESTORE_WAIT_MS:
+   * recompiles the current DSL on a fresh canvas and resumes rendering.
    * @private
    */
   _setupContextLossHandlers() {
@@ -17723,16 +17733,19 @@ var CanvasRenderer = class {
       e.preventDefault();
       this._isContextLost = true;
       this._wasRunningBeforeContextLoss = this._isRunning;
+      this._contextLostBeforeSecondFrame = this._isRunning && this._frameCount < 2;
       if (this._pipeline?.backend) {
         this._pipeline.backend.isContextLost = true;
       }
       this.stop();
+      this._scheduleContextRecovery();
       console.warn("[Canvas] WebGL context lost");
       if (this._onContextLost) {
         this._onContextLost();
       }
     };
     this._boundContextRestored = async () => {
+      this._clearContextRecovery();
       console.log("[Canvas] WebGL context restored, rebuilding pipeline...");
       const restorationGeneration = this._advanceLifecycle({ backendLost: true });
       const deadPipeline = this._pipeline;
@@ -17743,8 +17756,8 @@ var CanvasRenderer = class {
       } catch (err) {
         console.warn("Failed to dispose context-lost pipeline", err);
       }
-      this._isContextLost = false;
-      if (this._currentDsl) {
+      this._replaceCanvas(this._canvasContainer || this._canvas.parentNode);
+      if (this._rebuildsAfterContextLoss()) {
         try {
           const restoredPipeline = await this.compile(this._currentDsl);
           if (!this._isLifecycleCurrent(restorationGeneration) || !restoredPipeline || this._pipeline !== restoredPipeline) {
@@ -17773,6 +17786,49 @@ var CanvasRenderer = class {
     };
     this._canvas.addEventListener("webglcontextlost", this._boundContextLost);
     this._canvas.addEventListener("webglcontextrestored", this._boundContextRestored);
+  }
+  /**
+   * @private Whether to rebuild the current program after a context loss.
+   * Not when the context was lost while the running program drew its first
+   * frame: it may be what stalled the GPU. The next compile() builds again.
+   */
+  _rebuildsAfterContextLoss() {
+    if (!this._currentDsl) return false;
+    if (this._contextLostBeforeSecondFrame) {
+      console.warn("[Canvas] Not rebuilding the program: the WebGL context was lost while it drew its first frame, so it may have stalled the GPU");
+      return false;
+    }
+    return true;
+  }
+  /**
+   * @private When the browser does not restore the lost context in time,
+   * rebuild the current program on a fresh canvas (see _compileSource).
+   */
+  _scheduleContextRecovery() {
+    this._clearContextRecovery();
+    const canvas = this._canvas;
+    this._contextRecoveryTimer = setTimeout(() => {
+      this._contextRecoveryTimer = null;
+      this._queueCompile(async () => {
+        if (!this._isContextLost || canvas !== this._canvas || !this._rebuildsAfterContextLoss()) return null;
+        try {
+          return await this._compile(this._currentDsl);
+        } catch (err) {
+          console.error(`[Canvas] Failed to rebuild pipeline after context loss: ${err.detail || err.message || JSON.stringify(err)}`);
+          if (this._onError) {
+            this._onError(err);
+          }
+          return null;
+        }
+      });
+    }, CONTEXT_RESTORE_WAIT_MS);
+  }
+  /** @private */
+  _clearContextRecovery() {
+    if (this._contextRecoveryTimer !== null) {
+      clearTimeout(this._contextRecoveryTimer);
+      this._contextRecoveryTimer = null;
+    }
   }
   /**
    * Remove WebGL context loss/restore event handlers.
@@ -18243,16 +18299,20 @@ var CanvasRenderer = class {
    * Reset the canvas element (for backend switching)
    */
   resetCanvas() {
-    this._replaceCanvas(this._canvasContainer);
+    if (this._canvasContainer) {
+      this._replaceCanvas(this._canvasContainer);
+    }
   }
   /**
-   * @private Put a fresh copy of the canvas in its place inside `parent`.
-   * A canvas keeps the context type that it got first, so a new backend
-   * needs a new canvas element.
+   * @private Put a fresh copy of the canvas in its place inside `parent`,
+   * or, for a canvas outside the document (`parent` null), in its place as
+   * the renderer's canvas. A canvas keeps the context type that it got
+   * first, and a context the browser does not restore stays lost, so both
+   * need a new canvas element.
    * @param {Node|null} parent - The canvas's parent node
    */
   _replaceCanvas(parent) {
-    if (!parent || !this._canvas) {
+    if (!this._canvas) {
       return;
     }
     this._removeContextLossHandlers();
@@ -18260,8 +18320,11 @@ var CanvasRenderer = class {
     newCanvas.id = this._canvas.id;
     newCanvas.width = this._canvas.width;
     newCanvas.height = this._canvas.height;
-    parent.replaceChild(newCanvas, this._canvas);
+    if (parent) {
+      parent.replaceChild(newCanvas, this._canvas);
+    }
     this._canvas = newCanvas;
+    this._setupCanvasObserver();
     this._isContextLost = false;
     this._setupContextLossHandlers();
   }
@@ -18273,6 +18336,7 @@ var CanvasRenderer = class {
    */
   async dispose(options = {}) {
     const { loseContext = false, resetCanvas = false } = options;
+    this._clearContextRecovery();
     this._advanceLifecycle({ backendLost: loseContext || resetCanvas });
     if (!this._pipeline) {
       if (resetCanvas) {
@@ -18305,7 +18369,13 @@ var CanvasRenderer = class {
    */
   async compile(dsl, options = {}) {
     const generation = this._lifecycleGeneration ?? 0;
-    const run = () => this._isLifecycleCurrent(generation) ? this._compile(dsl, options) : null;
+    return this._queueCompile(() => this._isLifecycleCurrent(generation) ? this._compile(dsl, options) : null);
+  }
+  /**
+   * @private Run `run` once earlier compile requests for this canvas settle.
+   * @param {function(): Promise<object|null>} run
+   */
+  _queueCompile(run) {
     const pending = this._compileQueue ? this._compileQueue.then(run, run) : run();
     this._compileQueue = pending;
     const clear = () => {
@@ -18334,6 +18404,10 @@ var CanvasRenderer = class {
   async _compileSource(dsl, options = {}) {
     const shaderOverrides = options.shaderOverrides;
     const lifecycleGeneration = this._lifecycleGeneration ?? 0;
+    const recovering = this._isContextLost;
+    if (recovering && !await this._replaceLostContext(lifecycleGeneration)) {
+      return null;
+    }
     if (!this._pipeline) {
       let initialPipeline;
       try {
@@ -18408,7 +18482,45 @@ var CanvasRenderer = class {
       this._wasRunningBeforeContextLoss = false;
       this.start();
     }
+    if (recovering) {
+      console.log("[Canvas] Pipeline rebuilt on a fresh canvas after an unrestored context loss");
+      if (this._onContextRestored) {
+        this._onContextRestored();
+      }
+    }
     return compiledPipeline;
+  }
+  /**
+   * @private Move to a fresh canvas in place of one whose lost WebGL context
+   * the browser has not restored, as switchBackend() does, and wait while the
+   * browser refuses the page new WebGL contexts.
+   * @param {number} generation - Lifecycle generation of the compile
+   * @returns {Promise<boolean>} false when the lifecycle moved on meanwhile
+   */
+  async _replaceLostContext(generation) {
+    this._clearContextRecovery();
+    const deadPipeline = this._pipeline;
+    this._pipeline = null;
+    this._uniformBindings = /* @__PURE__ */ new Map();
+    try {
+      deadPipeline?.dispose?.({ backendLost: true });
+    } catch (err) {
+      console.warn("Failed to dispose context-lost pipeline", err);
+    }
+    this._replaceCanvas(this._canvasContainer || this._canvas.parentNode);
+    if (this._preferWebGPU && await WebGPUBackend.isAvailable()) {
+      return this._isLifecycleCurrent(generation);
+    }
+    const deadline = performance.now() + CONTEXT_RECOVERY_LIMIT_MS;
+    while (!this._canvas.getContext("webgl2", { preserveDrawingBuffer: true })) {
+      if (performance.now() >= deadline) {
+        this._isContextLost = true;
+        throw new Error("The browser did not allow a new WebGL2 context after the context was lost");
+      }
+      await new Promise((resolve) => setTimeout(resolve, CONTEXT_RETRY_MS));
+      if (!this._isLifecycleCurrent(generation)) return false;
+    }
+    return this._isLifecycleCurrent(generation);
   }
   /**
    * Re-upload cached mesh data to the current backend.
@@ -18456,8 +18568,8 @@ var CanvasRenderer = class {
       loseContext: previousBackend === "glsl",
       resetCanvas: true
     });
-    if (!this._canvasContainer) {
-      this._replaceCanvas(this._canvas?.parentNode);
+    if (!this._canvasContainer && this._canvas?.parentNode) {
+      this._replaceCanvas(this._canvas.parentNode);
     }
   }
   // =========================================================================
