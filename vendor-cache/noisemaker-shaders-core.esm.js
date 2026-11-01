@@ -3,8 +3,8 @@
  * Includes: CanvasRenderer + UIController + EffectSelect
  * Copyright (c) 2017-2026 Noise Factor LLC. https://noisefactor.io/
  * SPDX-License-Identifier: MIT
- * Build: 06070900
- * Date: 2026-10-31T19:18:51.526Z
+ * Build: 67d6e44c
+ * Date: 2026-11-01T13:10:49.389Z
  */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
@@ -17638,6 +17638,7 @@ var CanvasRenderer = class {
     this._wasRunningBeforeContextLoss = false;
     this._contextLostBeforeSecondFrame = false;
     this._contextRecoveryTimer = null;
+    this._isDisposed = false;
     this._lifecycleGeneration = 0;
     this._lastBackendInvalidationGeneration = -1;
     this._setupCanvasObserver();
@@ -17732,6 +17733,7 @@ var CanvasRenderer = class {
     this._boundContextLost = (e) => {
       e.preventDefault();
       this._isContextLost = true;
+      if (this._isDisposed) return;
       this._wasRunningBeforeContextLoss = this._isRunning;
       this._contextLostBeforeSecondFrame = this._isRunning && this._frameCount < 2;
       if (this._pipeline?.backend) {
@@ -17745,6 +17747,7 @@ var CanvasRenderer = class {
       }
     };
     this._boundContextRestored = async () => {
+      if (this._isDisposed) return;
       this._clearContextRecovery();
       console.log("[Canvas] WebGL context restored, rebuilding pipeline...");
       const restorationGeneration = this._advanceLifecycle({ backendLost: true });
@@ -17807,10 +17810,11 @@ var CanvasRenderer = class {
   _scheduleContextRecovery() {
     this._clearContextRecovery();
     const canvas = this._canvas;
+    const generation = this._lifecycleGeneration ?? 0;
     this._contextRecoveryTimer = setTimeout(() => {
       this._contextRecoveryTimer = null;
       this._queueCompile(async () => {
-        if (!this._isContextLost || canvas !== this._canvas || !this._rebuildsAfterContextLoss()) return null;
+        if (this._isDisposed || !this._isLifecycleCurrent(generation) || !this._isContextLost || canvas !== this._canvas || !this._rebuildsAfterContextLoss()) return null;
         try {
           return await this._compile(this._currentDsl);
         } catch (err) {
@@ -18336,6 +18340,7 @@ var CanvasRenderer = class {
    */
   async dispose(options = {}) {
     const { loseContext = false, resetCanvas = false } = options;
+    this._isDisposed = true;
     this._clearContextRecovery();
     this._advanceLifecycle({ backendLost: loseContext || resetCanvas });
     if (!this._pipeline) {
@@ -18369,7 +18374,20 @@ var CanvasRenderer = class {
    */
   async compile(dsl, options = {}) {
     const generation = this._lifecycleGeneration ?? 0;
-    return this._queueCompile(() => this._isLifecycleCurrent(generation) ? this._compile(dsl, options) : null);
+    return this._queueCompile(async () => {
+      if (!this._isLifecycleCurrent(generation)) return null;
+      const wasDisposed = this._isDisposed;
+      this._isDisposed = false;
+      try {
+        return await this._compile(dsl, options);
+      } catch (error) {
+        if (wasDisposed && this._isLifecycleCurrent(generation) && !this._pipeline) {
+          this._isDisposed = true;
+          this._clearContextRecovery();
+        }
+        throw error;
+      }
+    });
   }
   /**
    * @private Run `run` once earlier compile requests for this canvas settle.

@@ -117,3 +117,118 @@ test('a context lost while the program drew its first frame does not rebuild', a
   assert.equal(compileCalls, 0)
   assert.equal(renderer._contextRecoveryTimer, null)
 })
+
+test('a loss event after disposal does not schedule another build', async () => {
+  installRendererDomShim()
+  const { CanvasRenderer } = await import(
+    '../vendor-cache/noisemaker-shaders-core.esm.js'
+  )
+  const canvas = createRecoveryCanvas()
+  const renderer = new CanvasRenderer({ canvas })
+  renderer._currentDsl = 'solid()'
+  renderer._isRunning = true
+  renderer._frameCount = 2
+
+  const compiled = []
+  renderer._compile = async (dsl) => {
+    compiled.push(dsl)
+    return { fakePipeline: true }
+  }
+
+  await renderer.dispose()
+  const generationAfterDispose = renderer._lifecycleGeneration
+
+  canvas.dispatch('webglcontextlost', { preventDefault() {} })
+  assert.equal(renderer._isContextLost, true)
+  assert.equal(renderer._contextRecoveryTimer, null, 'disposal must not schedule another build')
+  assert.equal(renderer._lifecycleGeneration, generationAfterDispose)
+
+  await settlePastRecoveryWindow()
+
+  assert.deepEqual(compiled, [])
+})
+
+test('a restore event after disposal does not advance the lifecycle', async () => {
+  installRendererDomShim()
+  const { CanvasRenderer } = await import(
+    '../vendor-cache/noisemaker-shaders-core.esm.js'
+  )
+  const canvas = createRecoveryCanvas()
+  const renderer = new CanvasRenderer({ canvas })
+  renderer._currentDsl = 'solid()'
+  renderer._isRunning = true
+  renderer._frameCount = 2
+
+  const compiled = []
+  renderer._compile = async (dsl) => {
+    compiled.push(dsl)
+    return { fakePipeline: true }
+  }
+
+  await renderer.dispose()
+  const generationAfterDispose = renderer._lifecycleGeneration
+
+  canvas.dispatch('webglcontextrestored')
+  assert.equal(renderer._lifecycleGeneration, generationAfterDispose, 'disposal must block the restore rebuild')
+  assert.equal(renderer._pipeline, null)
+
+  await settlePastRecoveryWindow()
+
+  assert.deepEqual(compiled, [])
+})
+
+test('an explicit compile after disposal re-enables context-loss recovery', async () => {
+  installRendererDomShim()
+  const { CanvasRenderer } = await import(
+    '../vendor-cache/noisemaker-shaders-core.esm.js'
+  )
+  const canvas = createRecoveryCanvas()
+  const renderer = new CanvasRenderer({ canvas })
+  renderer._currentDsl = 'solid()'
+  renderer._isRunning = true
+  renderer._frameCount = 2
+
+  const compiled = []
+  renderer._compile = async (dsl) => {
+    compiled.push(dsl)
+    return { fakePipeline: true }
+  }
+
+  await renderer.dispose()
+  assert.equal(renderer._isDisposed, true)
+
+  await renderer.compile('solid()')
+
+  assert.equal(renderer._isDisposed, false)
+  assert.deepEqual(compiled, ['solid()'])
+})
+
+test('a rejected compile after disposal stays disposed without scheduled recovery', async () => {
+  installRendererDomShim()
+  const { CanvasRenderer } = await import(
+    '../vendor-cache/noisemaker-shaders-core.esm.js'
+  )
+  const canvas = createRecoveryCanvas()
+  const renderer = new CanvasRenderer({ canvas })
+  renderer._currentDsl = 'solid()'
+  renderer._isRunning = true
+  renderer._frameCount = 2
+
+  let compileCalls = 0
+  renderer._compile = async () => {
+    compileCalls += 1
+    const error = new Error('compile failed')
+    error.code = 'ERR_COMPILATION_FAILED'
+    throw error
+  }
+
+  await renderer.dispose()
+  await assert.rejects(
+    renderer.compile('broken()'),
+    (err) => err.code === 'ERR_COMPILATION_FAILED',
+  )
+
+  assert.equal(compileCalls, 1)
+  assert.equal(renderer._isDisposed, true, 'a rejected compile must not leave the renderer revived')
+  assert.equal(renderer._contextRecoveryTimer, null, 'a rejected compile must not leave automatic recovery scheduled')
+})
