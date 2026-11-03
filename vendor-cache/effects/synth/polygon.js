@@ -42,9 +42,7 @@ void main(){
   }
   // Normalize by inradius so all shapes have consistent size
   float d = polygon(st, sidesF) / cos(PI / sidesF);
-  // Zero smoothing is a hard edge. smoothstep() with equal edges is
-  // undefined, and WebGPU drew that case inverted.
-  float m = smoothing > 0.0 ? smoothstep(radius, radius - smoothing, d) : float(d < radius);
+  float m = smoothstep(radius, radius - smoothing, d);
   
   // fgAlpha scales foreground visibility, bgAlpha scales background visibility
   float fgMask = m * fgAlpha;
@@ -99,9 +97,7 @@ fn main(@builtin(position) position: vec4<f32>) -> @location(0) vec4<f32> {
   }
   // Normalize by inradius so all shapes have consistent size
   let d = polygon(st, sidesF) / cos(PI / sidesF);
-  // Zero smoothing is a hard edge. smoothstep() with equal edges is
-  // undefined, and WebGPU drew that case inverted.
-  let m = select(f32(d < radius), smoothstep(radius, radius - smoothing, d), smoothing > 0.0);
+  let m = smoothstep(radius, radius - smoothing, d);
   
   // fgAlpha scales foreground visibility, bgAlpha scales background visibility
   let fgMask = m * fgAlpha;
@@ -150,4 +146,4 @@ polygon()
 
 render(o0)
 \`\`\`
-`;if(o&&Object.keys(s).length>0){o.shaders||(o.shaders={});for(let[n,t]of Object.entries(s))o.shaders[n]={...t}}o&&a&&(o.help=a);var f="synth/polygon",p="synth",d="polygon",h=o;export{h as default,f as effectId,d as effectName,a as help,p as namespace};
+`;if(o&&Object.keys(s).length>0){o.shaders||(o.shaders={});for(let[n,t]of Object.entries(s))o.shaders[n]={...t}}o&&a&&(o.help=a);var f="synth/polygon",p="synth",d="polygon",c=o;export{c as default,f as effectId,d as effectName,a as help,p as namespace};
