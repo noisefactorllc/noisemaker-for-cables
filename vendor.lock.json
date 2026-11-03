@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "sourceBaseUrl": "https://shaders.noisedeck.app/1/",
-  "generatedAt": "2026-11-01T13:11:45.861Z",
+  "generatedAt": "2026-11-03T19:30:49.632Z",
   "effectCount": 210,
   "artifacts": [
     {
@@ -1157,9 +1157,9 @@
       "url": "https://shaders.noisedeck.app/1/effects/synth/perlin.js"
     },
     {
-      "bytes": 7586,
+      "bytes": 7908,
       "path": "effects/synth/polygon.js",
-      "sha256": "ebdd0470d16686f33900ec0a0da5ffa8764e5877a141bcf6daec70cfc3a1f9ff",
+      "sha256": "82eb4487885bc6b68cfc8ef570ac248584981d25a418c49a86783f415b915615",
       "url": "https://shaders.noisedeck.app/1/effects/synth/polygon.js"
     },
     {
@@ -1271,9 +1271,9 @@
       "url": "https://shaders.noisedeck.app/1/effects/synth3d/shape3d.js"
     },
     {
-      "bytes": 954173,
+      "bytes": 955247,
       "path": "noisemaker-shaders-core.esm.js",
-      "sha256": "03417d14d2208e7eeb8d4b79facafea6b0d4e731cea00dff25db78dd9526e16d",
+      "sha256": "eeecd6f4b234eca4e2e2faecf80647728bdd73471584502b3954629e2cfffc1d",
       "url": "https://shaders.noisedeck.app/1/noisemaker-shaders-core.esm.js"
     }
   ]

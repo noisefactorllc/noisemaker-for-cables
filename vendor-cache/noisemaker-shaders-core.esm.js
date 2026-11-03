@@ -3,8 +3,8 @@
  * Includes: CanvasRenderer + UIController + EffectSelect
  * Copyright (c) 2017-2026 Noise Factor LLC. https://noisefactor.io/
  * SPDX-License-Identifier: MIT
- * Build: 67d6e44c
- * Date: 2026-11-01T13:10:49.389Z
+ * Build: babf6b2d
+ * Date: 2026-11-03T19:19:10.351Z
  */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
@@ -17732,19 +17732,7 @@ var CanvasRenderer = class {
     if (!this._canvas) return;
     this._boundContextLost = (e) => {
       e.preventDefault();
-      this._isContextLost = true;
-      if (this._isDisposed) return;
-      this._wasRunningBeforeContextLoss = this._isRunning;
-      this._contextLostBeforeSecondFrame = this._isRunning && this._frameCount < 2;
-      if (this._pipeline?.backend) {
-        this._pipeline.backend.isContextLost = true;
-      }
-      this.stop();
-      this._scheduleContextRecovery();
-      console.warn("[Canvas] WebGL context lost");
-      if (this._onContextLost) {
-        this._onContextLost();
-      }
+      this._onBackendLost("[Canvas] WebGL context lost");
     };
     this._boundContextRestored = async () => {
       if (this._isDisposed) return;
@@ -17791,6 +17779,40 @@ var CanvasRenderer = class {
     this._canvas.addEventListener("webglcontextrestored", this._boundContextRestored);
   }
   /**
+   * @private Stop on a lost WebGL context or WebGPU device, notify the host
+   * and schedule the rebuild on a fresh canvas.
+   * @param {string} message - Warning to log
+   */
+  _onBackendLost(message) {
+    this._isContextLost = true;
+    if (this._isDisposed) return;
+    this._wasRunningBeforeContextLoss = this._isRunning;
+    this._contextLostBeforeSecondFrame = this._isRunning && this._frameCount < 2;
+    if (this._pipeline?.backend) {
+      this._pipeline.backend.isContextLost = true;
+    }
+    this.stop();
+    this._scheduleContextRecovery();
+    console.warn(message);
+    if (this._onContextLost) {
+      this._onContextLost();
+    }
+  }
+  /**
+   * @private Watch the WebGPU device of a new pipeline. A lost device (a GPU
+   * process exit, a driver reset, device.destroy()) is never restored, and
+   * the canvas gets no event for it. The loop kept running on the dead
+   * device, the canvas froze on its last frame and every read of it came
+   * back empty until a reload.
+   * @param {object} pipeline - The pipeline just made current
+   */
+  _watchDeviceLoss(pipeline) {
+    pipeline?.backend?.device?.lost?.then((info) => {
+      if (this._isDisposed || this._pipeline !== pipeline) return;
+      this._onBackendLost(`[Canvas] WebGPU device lost: ${info?.message || info?.reason || "unknown reason"}`);
+    });
+  }
+  /**
    * @private Whether to rebuild the current program after a context loss.
    * Not when the context was lost while the running program drew its first
    * frame: it may be what stalled the GPU. The next compile() builds again.
@@ -17804,8 +17826,9 @@ var CanvasRenderer = class {
     return true;
   }
   /**
-   * @private When the browser does not restore the lost context in time,
-   * rebuild the current program on a fresh canvas (see _compileSource).
+   * @private When the browser does not restore the lost WebGL context in
+   * time, or the WebGPU device is lost (no event restores one), rebuild the
+   * current program on a fresh canvas (see _compileSource).
    */
   _scheduleContextRecovery() {
     this._clearContextRecovery();
@@ -18445,6 +18468,7 @@ var CanvasRenderer = class {
         return null;
       }
       this._pipeline = initialPipeline;
+      this._watchDeviceLoss(initialPipeline);
       if (this._midiState) {
         this._pipeline.setMidiState(this._midiState);
       }
@@ -18471,6 +18495,7 @@ var CanvasRenderer = class {
             return null;
           }
           this._pipeline = replacementPipeline;
+          this._watchDeviceLoss(replacementPipeline);
           try {
             previousPipeline?.dispose?.();
           } catch (err) {
