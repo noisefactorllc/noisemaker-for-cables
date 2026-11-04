@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "sourceBaseUrl": "https://shaders.noisedeck.app/1.0.336/",
-  "generatedAt": "2026-11-04T07:58:44.310Z",
+  "sourceBaseUrl": "https://shaders.noisedeck.app/1.0.340/",
+  "generatedAt": "2026-11-04T21:23:48.439Z",
   "effectCount": 210,
   "artifacts": [
     {
@@ -203,10 +203,10 @@
       "url": "https://shaders.noisedeck.app/1.0.336/effects/filter/corrupt.js"
     },
     {
-      "bytes": 20543,
+      "bytes": 21767,
       "path": "effects/filter/craquelure.js",
-      "sha256": "3260e1d250a3dc533aee4346bc8a4b58ef264054bef32cb739578b2921c7c709",
-      "url": "https://shaders.noisedeck.app/1.0.336/effects/filter/craquelure.js"
+      "sha256": "10674896a5c9dca3f1d697c5d894c8e8a7dc86082f9e490f62b338d61037d375",
+      "url": "https://shaders.noisedeck.app/1.0.340/effects/filter/craquelure.js"
     },
     {
       "bytes": 44725,
@@ -257,10 +257,10 @@
       "url": "https://shaders.noisedeck.app/1.0.336/effects/filter/extrude.js"
     },
     {
-      "bytes": 28955,
+      "bytes": 31818,
       "path": "effects/filter/feedback.js",
-      "sha256": "17e264a3d5a0c298e35d033ef184b5dbd32f4fe2f3608e58f89cb1d05b376160",
-      "url": "https://shaders.noisedeck.app/1.0.336/effects/filter/feedback.js"
+      "sha256": "c4af8aee03f13a38712cffedc1d0baa9727c854c3ab19167a986ca119a2c17cd",
+      "url": "https://shaders.noisedeck.app/1.0.340/effects/filter/feedback.js"
     },
     {
       "bytes": 6618,
@@ -557,10 +557,10 @@
       "url": "https://shaders.noisedeck.app/1.0.336/effects/filter/scanlineError.js"
     },
     {
-      "bytes": 17390,
+      "bytes": 17432,
       "path": "effects/filter/scatter.js",
-      "sha256": "2e85c1a27de1f963143475310729260067968156e00e2cb9e0332c572a6b491c",
-      "url": "https://shaders.noisedeck.app/1.0.336/effects/filter/scatter.js"
+      "sha256": "e6570550d8bfdcc52055b62fb602ab7befe3da549e243e16f6522a968a2a8947",
+      "url": "https://shaders.noisedeck.app/1.0.340/effects/filter/scatter.js"
     },
     {
       "bytes": 6683,
@@ -665,10 +665,10 @@
       "url": "https://shaders.noisedeck.app/1.0.336/effects/filter/step.js"
     },
     {
-      "bytes": 19730,
+      "bytes": 24499,
       "path": "effects/filter/stipple.js",
-      "sha256": "17ff97bf895673772c590a228df17619a5bc786aef1808aa5153adc952456253",
-      "url": "https://shaders.noisedeck.app/1.0.336/effects/filter/stipple.js"
+      "sha256": "f4b8e89de915e6931bd774c56464ce02c7d55429d8c17c95462b0a5818849dda",
+      "url": "https://shaders.noisedeck.app/1.0.340/effects/filter/stipple.js"
     },
     {
       "bytes": 6847,
@@ -1273,8 +1273,8 @@
     {
       "bytes": 956303,
       "path": "noisemaker-shaders-core.esm.js",
-      "sha256": "9475a39d50aba47da167c8a35e9533220b3c985c667846f58c563bc690eb038f",
-      "url": "https://shaders.noisedeck.app/1.0.336/noisemaker-shaders-core.esm.js"
+      "sha256": "9360faf27dabe0668fdb4d793fd01f6f662a978533b41fe43c9255328f33573e",
+      "url": "https://shaders.noisedeck.app/1.0.340/noisemaker-shaders-core.esm.js"
     }
   ]
 }

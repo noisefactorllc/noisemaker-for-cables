@@ -20,6 +20,11 @@ var t=class{constructor(e={}){this.state={},this.uniforms={},e.name&&(this.name=
  * cell's corner) for maximally irregular, organic plate shapes, matching
  * real crazed plaster/glaze.
  *
+ * Hashes: the Voronoi seed jitter and the value-noise lattice values come
+ * from an integer hash (PCG3D) of the integer cell or lattice coordinate
+ * (and \`seed\` for the jitter), so WebGL2 and WebGPU draw identical crack
+ * networks.
+ *
  * Border wobble: before the Voronoi search, the sample position is
  * perturbed by two INDEPENDENT noise taps, one per axis -
  * \`vec2(vnoise(gc/6), vnoise(gc/6 + vec2(37.7, 91.3))) * 2\` px (same 2px
@@ -74,6 +79,7 @@ var t=class{constructor(e={}){this.state={},this.uniforms={},e.name&&(this.name=
 
 #ifdef GL_ES
 precision highp float;
+precision highp int;
 #endif
 
 uniform sampler2D inputTex;
@@ -86,26 +92,40 @@ uniform int seed;
 
 out vec4 fragColor;
 
-// hash - hash / jitter.
-float hash12(vec2 p) {
-    vec3 p3 = fract(vec3(p.xyx) * 0.1031);
-    p3 += dot(p3, p3.yzx + 33.33);
-    return fract((p3.x + p3.y) * p3.z);
+// PCG3D integer hash (Jarzynski & Olano 2020). Unsigned arithmetic wraps the
+// same way on every compiler, so WebGL2 and WebGPU draw identical values; a
+// float hash rounds and fuses differently per compiler and drifts apart.
+uvec3 pcg3d(uvec3 v_in) {
+    uvec3 v = v_in * 1664525u + 1013904223u;
+    v.x = v.x + v.y * v.z;
+    v.y = v.y + v.z * v.x;
+    v.z = v.z + v.x * v.y;
+    v = v ^ (v >> uvec3(16u));
+    v.x = v.x + v.y * v.z;
+    v.y = v.y + v.z * v.x;
+    v.z = v.z + v.x * v.y;
+    return v;
 }
 
-vec2 hash22(vec2 p) {
-    vec3 p3 = fract(vec3(p.xyx) * vec3(0.1031, 0.1030, 0.0973));
-    p3 += dot(p3, p3.yzx + 33.33);
-    return fract((p3.xx + p3.yz) * p3.zy);
+// Value-noise lattice value in [0, 1) at integer lattice point p. The top
+// 24 hash bits convert to float exactly.
+float hash12(ivec2 p) {
+    return float(pcg3d(uvec3(uvec2(p), 0u)).x >> 8u) / 16777216.0;
+}
+
+// Voronoi seed jitter in [0, 1)^2 for integer cell p and seed.
+vec2 hash22(ivec2 p, int seedVal) {
+    uvec2 h = pcg3d(uvec3(uvec2(p), uint(seedVal))).xy >> uvec2(8u);
+    return vec2(h) / 16777216.0;
 }
 
 // value noise - value noise (fBm not needed here).
 float vnoise(vec2 p) {
-    vec2 i = floor(p);
+    ivec2 i = ivec2(floor(p));
     vec2 f = fract(p);
     vec2 u = f * f * (3.0 - 2.0 * f);
-    return mix(mix(hash12(i), hash12(i + vec2(1.0, 0.0)), u.x),
-               mix(hash12(i + vec2(0.0, 1.0)), hash12(i + vec2(1.0, 1.0)), u.x), u.y);
+    return mix(mix(hash12(i), hash12(i + ivec2(1, 0)), u.x),
+               mix(hash12(i + ivec2(0, 1)), hash12(i + ivec2(1, 1)), u.x), u.y);
 }
 
 // Voronoi extended - jittered-grid Voronoi F1/F2: returns x = nearest seed
@@ -121,15 +141,16 @@ float vnoise(vec2 p) {
 // under-counted near a cell's corner at jitter's [0, 1] maximum, where
 // the true second-nearest seed can sit just outside the 1-ring window -
 // a minor, infrequent error in the crack metric, not a hard guarantee.
-vec2 voronoiF1F2(vec2 p, float jitter, float seedVal) {
+vec2 voronoiF1F2(vec2 p, float jitter, int seedVal) {
     vec2 g = floor(p);
     vec2 f = p - g;
+    ivec2 gi = ivec2(g);
     float best = 1e9;
     float second = 1e9;
     for (int y = -1; y <= 1; y++) {
         for (int x = -1; x <= 1; x++) {
             vec2 cell = vec2(float(x), float(y));
-            vec2 pt = cell + 0.5 + (hash22(g + cell + seedVal * 101.7) - 0.5) * jitter;
+            vec2 pt = cell + 0.5 + (hash22(gi + ivec2(x, y), seedVal) - 0.5) * jitter;
             float d = dot(pt - f, pt - f);
             if (d < best) {
                 second = best;
@@ -153,7 +174,7 @@ float reliefShade(float hC, float hR, float hT, float strength, float lightAngle
 
 // Crack mask k at global pixel position gc: 1 on a cell border, falling
 // to 0 within \`edge\` px (see file header for the F2-F1 derivation).
-float crackMask(vec2 gc, float spacingPx, float depthPct, float seedVal) {
+float crackMask(vec2 gc, float spacingPx, float depthPct, int seedVal) {
     vec2 wob = vec2(vnoise(gc / 6.0), vnoise(gc / 6.0 + vec2(37.7, 91.3))) * 2.0;
     vec2 p = (gc + wob) / spacingPx;
     vec2 f1f2 = voronoiF1F2(p, 1.0, seedVal);
@@ -166,13 +187,12 @@ void main() {
     vec2 globalCoord = gl_FragCoord.xy + tileOffset;
     vec2 uv = gl_FragCoord.xy / resolution;
     vec4 src = texture(inputTex, uv);
-    float seedF = float(seed);
 
-    float kC = crackMask(globalCoord, spacing, depth, seedF);
-    float kR = crackMask(globalCoord + vec2(1.0, 0.0), spacing, depth, seedF);
-    float kL = crackMask(globalCoord - vec2(1.0, 0.0), spacing, depth, seedF);
-    float kT = crackMask(globalCoord + vec2(0.0, 1.0), spacing, depth, seedF);
-    float kB = crackMask(globalCoord - vec2(0.0, 1.0), spacing, depth, seedF);
+    float kC = crackMask(globalCoord, spacing, depth, seed);
+    float kR = crackMask(globalCoord + vec2(1.0, 0.0), spacing, depth, seed);
+    float kL = crackMask(globalCoord - vec2(1.0, 0.0), spacing, depth, seed);
+    float kT = crackMask(globalCoord + vec2(0.0, 1.0), spacing, depth, seed);
+    float kB = crackMask(globalCoord - vec2(0.0, 1.0), spacing, depth, seed);
 
     // Central-difference gradient of k; feeds both reliefShade's synthetic
     // height samples below and wallMask's locality gate.
@@ -240,26 +260,37 @@ struct Uniforms {
 @group(0) @binding(1) var inputTex: texture_2d<f32>;
 @group(0) @binding(2) var<uniform> uniforms: Uniforms;
 
-// hash - hash / jitter.
-fn hash12(p: vec2<f32>) -> f32 {
-    var p3 = fract(vec3<f32>(p.xyx) * 0.1031);
-    p3 = p3 + dot(p3, p3.yzx + vec3<f32>(33.33));
-    return fract((p3.x + p3.y) * p3.z);
+// PCG3D integer hash (Jarzynski & Olano 2020); see craquelure.glsl.
+fn pcg3d(v_in: vec3<u32>) -> vec3<u32> {
+    var v = v_in * 1664525u + 1013904223u;
+    v.x = v.x + v.y * v.z;
+    v.y = v.y + v.z * v.x;
+    v.z = v.z + v.x * v.y;
+    v = v ^ (v >> vec3<u32>(16u));
+    v.x = v.x + v.y * v.z;
+    v.y = v.y + v.z * v.x;
+    v.z = v.z + v.x * v.y;
+    return v;
 }
 
-fn hash22(p: vec2<f32>) -> vec2<f32> {
-    var p3 = fract(vec3<f32>(p.xyx) * vec3<f32>(0.1031, 0.1030, 0.0973));
-    p3 = p3 + dot(p3, p3.yzx + vec3<f32>(33.33));
-    return fract((p3.xx + p3.yz) * p3.zy);
+// Value-noise lattice value in [0, 1) at integer lattice point p.
+fn hash12(p: vec2<i32>) -> f32 {
+    return f32(pcg3d(vec3<u32>(vec2<u32>(p), 0u)).x >> 8u) / 16777216.0;
+}
+
+// Voronoi seed jitter in [0, 1)^2 for integer cell p and seed.
+fn hash22(p: vec2<i32>, seedVal: i32) -> vec2<f32> {
+    let h = pcg3d(vec3<u32>(vec2<u32>(p), u32(seedVal))).xy >> vec2<u32>(8u);
+    return vec2<f32>(h) / 16777216.0;
 }
 
 // value noise - value noise (fBm not needed here).
 fn vnoise(p: vec2<f32>) -> f32 {
-    let i = floor(p);
+    let i = vec2<i32>(floor(p));
     let f = fract(p);
     let u = f * f * (3.0 - 2.0 * f);
-    return mix(mix(hash12(i), hash12(i + vec2<f32>(1.0, 0.0)), u.x),
-               mix(hash12(i + vec2<f32>(0.0, 1.0)), hash12(i + vec2<f32>(1.0, 1.0)), u.x), u.y);
+    return mix(mix(hash12(i), hash12(i + vec2<i32>(1, 0)), u.x),
+               mix(hash12(i + vec2<i32>(0, 1)), hash12(i + vec2<i32>(1, 1)), u.x), u.y);
 }
 
 // Voronoi extended - jittered-grid Voronoi F1/F2: returns x = nearest seed
@@ -267,15 +298,16 @@ fn vnoise(p: vec2<f32>) -> f32 {
 // search is exact for F1; F2 can rarely be under-counted near a cell's
 // corner at jitter's [0, 1] maximum. See craquelure.glsl's voronoiF1F2
 // for the full derivation.
-fn voronoiF1F2(p: vec2<f32>, jitter: f32, seedVal: f32) -> vec2<f32> {
+fn voronoiF1F2(p: vec2<f32>, jitter: f32, seedVal: i32) -> vec2<f32> {
     let g = floor(p);
     let f = p - g;
+    let gi = vec2<i32>(g);
     var best = 1e9;
     var second = 1e9;
     for (var y = -1; y <= 1; y++) {
         for (var x = -1; x <= 1; x++) {
             let cell = vec2<f32>(f32(x), f32(y));
-            let pt = cell + 0.5 + (hash22(g + cell + seedVal * 101.7) - 0.5) * jitter;
+            let pt = cell + 0.5 + (hash22(gi + vec2<i32>(x, y), seedVal) - 0.5) * jitter;
             let d = dot(pt - f, pt - f);
             if (d < best) {
                 second = best;
@@ -299,7 +331,7 @@ fn reliefShade(hC: f32, hR: f32, hT: f32, strength: f32, lightAngleDeg: f32) -> 
 
 // Crack mask k at global pixel position gc: 1 on a cell border, falling
 // to 0 within \`edge\` px (see craquelure.glsl's file header).
-fn crackMask(gc: vec2<f32>, spacingPx: f32, depthPct: f32, seedVal: f32) -> f32 {
+fn crackMask(gc: vec2<f32>, spacingPx: f32, depthPct: f32, seedVal: i32) -> f32 {
     let wob = vec2<f32>(vnoise(gc / 6.0), vnoise(gc / 6.0 + vec2<f32>(37.7, 91.3))) * 2.0;
     let p = (gc + wob) / spacingPx;
     let f1f2 = voronoiF1F2(p, 1.0, seedVal);
@@ -314,13 +346,13 @@ fn main(@builtin(position) pos: vec4<f32>) -> @location(0) vec4<f32> {
     let globalCoord = pos.xy + uniforms.tileOffset;
     let uv = pos.xy / texSize;
     let src = textureSample(inputTex, inputSampler, uv);
-    let seedF = f32(uniforms.seed);
+    let seed = uniforms.seed;
 
-    let kC = crackMask(globalCoord, uniforms.spacing, uniforms.depth, seedF);
-    let kR = crackMask(globalCoord + vec2<f32>(1.0, 0.0), uniforms.spacing, uniforms.depth, seedF);
-    let kL = crackMask(globalCoord - vec2<f32>(1.0, 0.0), uniforms.spacing, uniforms.depth, seedF);
-    let kT = crackMask(globalCoord + vec2<f32>(0.0, 1.0), uniforms.spacing, uniforms.depth, seedF);
-    let kB = crackMask(globalCoord - vec2<f32>(0.0, 1.0), uniforms.spacing, uniforms.depth, seedF);
+    let kC = crackMask(globalCoord, uniforms.spacing, uniforms.depth, seed);
+    let kR = crackMask(globalCoord + vec2<f32>(1.0, 0.0), uniforms.spacing, uniforms.depth, seed);
+    let kL = crackMask(globalCoord - vec2<f32>(1.0, 0.0), uniforms.spacing, uniforms.depth, seed);
+    let kT = crackMask(globalCoord + vec2<f32>(0.0, 1.0), uniforms.spacing, uniforms.depth, seed);
+    let kB = crackMask(globalCoord - vec2<f32>(0.0, 1.0), uniforms.spacing, uniforms.depth, seed);
 
     // Central-difference gradient of k; feeds both reliefShade's synthetic
     // height samples below and wallMask's locality gate.
@@ -388,4 +420,4 @@ noise(seed: 1, ridges: true)
 
 render(o0)
 \`\`\`
-`;if(n&&Object.keys(r).length>0){n.shaders||(n.shaders={});for(let[a,e]of Object.entries(r))n.shaders[a]={...e}}n&&s&&(n.help=s);var c="filter/craquelure",h="filter",f="craquelure",p=n;export{p as default,c as effectId,f as effectName,s as help,h as namespace};
+`;if(n&&Object.keys(r).length>0){n.shaders||(n.shaders={});for(let[a,e]of Object.entries(r))n.shaders[a]={...e}}n&&s&&(n.help=s);var c="filter/craquelure",h="filter",f="craquelure",u=n;export{u as default,c as effectId,f as effectName,s as help,h as namespace};

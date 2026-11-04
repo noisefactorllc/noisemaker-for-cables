@@ -73,6 +73,35 @@ uniform bool resetState;
 
 out vec4 fragColor;
 
+// The min/max clamp keeps the value it wraps from being rearranged or fused
+// into the next operation. Its bound comes from the resolution uniform (at
+// least one pixel), so it is value-exact for every value this shader computes,
+// and the compiler cannot prove it away.
+float pin(float x) {
+    float bound = 1e30 * resolution.x;
+    return min(max(x, -bound), bound);
+}
+
+// Error of the product a * b against its rounded value p (Dekker). The clamps
+// keep the splitting exact.
+float productError(float a, float b, float p) {
+    float sa = pin(4097.0 * a);
+    float ah = pin(sa - pin(sa - a));
+    float al = a - ah;
+    float sb = pin(4097.0 * b);
+    float bh = pin(sb - pin(sb - b));
+    float bl = b - bh;
+    return pin(pin(pin(pin(ah * bh) - p) + pin(ah * bl)) + pin(al * bh)) + pin(al * bl);
+}
+
+// a / b with correct rounding, computed in the same steps as the WGSL shader.
+float divRound(float a, float b) {
+    float q = pin(a / b);
+    float p = pin(q * b);
+    float r = pin(pin(a - p) - productError(q, b, p));
+    return q + pin(r / b);
+}
+
 #define PI 3.14159265359
 #define TAU 6.28318530718
 #define aspectRatio (resolution.x / resolution.y)
@@ -380,7 +409,10 @@ void main() {
 
     // hue rotation
     vec3 hsv = rgb2hsv(color.rgb);
-    hsv[0] = mod(hsv[0] + map(hueRotation, -180.0, 180.0, -0.05, 0.05), 1.0);
+    // Compute the shift on its own, in the same steps as the WGSL shader, so
+    // both backends add the same correctly rounded value to the hue.
+    float hueShift = pin(-0.05 + divRound(pin(0.1 * (hueRotation + 180.0)), 360.0));
+    hsv[0] = fract(hsv[0] + hueShift);
     color.rgb = hsv2rgb(hsv);
 
     // brightness/contrast
@@ -418,6 +450,37 @@ struct Uniforms {
 @group(0) @binding(3) var selfTex: texture_2d<f32>;
 
 const PI: f32 = 3.14159265359;
+
+// The min/max clamp keeps the value it wraps from being rearranged or fused
+// into the next add under Dawn's relaxed math. Its bound comes from the
+// resolution uniform (at least one pixel), so it is value-exact for every
+// value this shader computes, and the compiler cannot prove it away.
+fn pin(x: f32) -> f32 {
+    let bound = 1e30 * uniforms.resolution.x;
+    return min(max(x, -bound), bound);
+}
+
+// Error of the product a * b against its rounded value p (Dekker). The clamps
+// keep the splitting exact under relaxed math.
+fn productError(a: f32, b: f32, p: f32) -> f32 {
+    let sa = pin(4097.0 * a);
+    let ah = pin(sa - pin(sa - a));
+    let al = a - ah;
+    let sb = pin(4097.0 * b);
+    let bh = pin(sb - pin(sb - b));
+    let bl = b - bh;
+    return pin(pin(pin(pin(ah * bh) - p) + pin(ah * bl)) + pin(al * bh)) + pin(al * bl);
+}
+
+// a / b with correct rounding. Dawn lowers a division to an approximate
+// reciprocal multiply; the remainder of that quotient corrects it to the
+// correctly rounded division that ANGLE performs.
+fn divRound(a: f32, b: f32) -> f32 {
+    let q = pin(a / b);
+    let p = pin(q * b);
+    let r = pin(pin(a - p) - productError(q, b, p));
+    return q + pin(r / b);
+}
 
 // Floored modulo (matches GLSL mod behavior for negative values)
 fn floorMod(x: f32, y: f32) -> f32 {
@@ -754,7 +817,13 @@ fn main(@builtin(position) pos: vec4<f32>) -> @location(0) vec4<f32> {
 
     // hue rotation
     var hsv = rgb2hsv(color.rgb);
-    hsv.x = fract(hsv.x + map(uniforms.hueRotation, -180.0, 180.0, -0.05, 0.05));
+    // WebGL2 adds the correctly rounded map(hueRotation, -180, 180, -0.05,
+    // 0.05) to the hue in one add. Dawn splits that add into
+    // (hsv.x - 0.05) + 0.1 * (hueRotation + 180) / 360, which moves the hue
+    // by an ulp; refraction turns that into a different texel. Compute the
+    // shift on its own and keep it from being split.
+    let hueShift = pin(-0.05 + divRound(pin(0.1 * (uniforms.hueRotation + 180.0)), 360.0));
+    hsv.x = fract(hsv.x + hueShift);
     color = vec4<f32>(hsv2rgb(hsv), color.a);
 
     // brightness/contrast
