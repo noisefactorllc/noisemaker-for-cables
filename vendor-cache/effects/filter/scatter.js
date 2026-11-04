@@ -1,9 +1,10 @@
 /* filter/scatter */
-var n=class{constructor(e={}){this.state={},this.uniforms={},e.name&&(this.name=e.name),e.namespace&&(this.namespace=e.namespace),e.func&&(this.func=e.func),e.description&&(this.description=e.description),e.tags&&(this.tags=e.tags),e.globals&&(this.globals=e.globals),e.passes&&(this.passes=e.passes),e.textures&&(this.textures=e.textures),e.textures3d&&(this.textures3d=e.textures3d),e.shaders&&(this.shaders=e.shaders),e.externalTexture&&(this.externalTexture=e.externalTexture),e.externalMesh&&(this.externalMesh=e.externalMesh),e.builtinMeshes&&(this.builtinMeshes=e.builtinMeshes),e.outputTex3d&&(this.outputTex3d=e.outputTex3d),e.outputGeo&&(this.outputGeo=e.outputGeo),e.uniformLayout&&(this.uniformLayout=e.uniformLayout),e.uniformLayouts&&(this.uniformLayouts=e.uniformLayouts),e.paramAliases&&(this.paramAliases=e.paramAliases),e.openCategories&&(this.openCategories=e.openCategories),e.defaultProgram&&(this.defaultProgram=e.defaultProgram),e.hidden&&(this.hidden=!0),e.deprecatedBy&&(this.deprecatedBy=e.deprecatedBy),e.onInit&&(this._configOnInit=e.onInit),e.onUpdate&&(this._configOnUpdate=e.onUpdate),e.onDestroy&&(this._configOnDestroy=e.onDestroy),e.asyncInit&&(this._configAsyncInit=e.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(e){return this._configOnUpdate?this._configOnUpdate.call(this,e):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(e){return this._configAsyncInit?this._configAsyncInit.call(this,e):Promise.resolve()}};var t=new n({name:"Scatter",namespace:"filter",func:"scatter",tags:["noise","artist"],description:"Random per-pixel scatter with darken/lighten/anisotropic/clumped modes (Diffuse, Spatter)",globals:{radius:{type:"float",default:12,uniform:"radius",min:1,max:25,ui:{label:"radius",control:"slider"}},mode:{type:"int",default:0,define:"MODE",choices:{normal:0,darkenOnly:1,lightenOnly:2,anisotropic:3,clumped:4},ui:{label:"mode",control:"dropdown"}},smoothness:{type:"float",default:0,uniform:"smoothness",min:0,max:100,ui:{label:"smoothness",control:"slider"}},seed:{type:"int",default:1,uniform:"seed",min:1,max:100,ui:{label:"seed",control:"slider"}}},textures:{_scatterTmp:{width:"input",height:"input",format:"rgba8unorm"}},passes:[{name:"scatterJitter",program:"scatterJitter",inputs:{inputTex:"inputTex"},outputs:{fragColor:"_scatterTmp"}},{name:"scatterSmooth",program:"scatterSmooth",inputs:{inputTex:"_scatterTmp"},outputs:{fragColor:"outputTex"}}]});var s={scatterJitter:{glsl:`/*
+var n=class{constructor(e={}){this.state={},this.uniforms={},e.name&&(this.name=e.name),e.namespace&&(this.namespace=e.namespace),e.func&&(this.func=e.func),e.description&&(this.description=e.description),e.tags&&(this.tags=e.tags),e.globals&&(this.globals=e.globals),e.passes&&(this.passes=e.passes),e.textures&&(this.textures=e.textures),e.textures3d&&(this.textures3d=e.textures3d),e.shaders&&(this.shaders=e.shaders),e.externalTexture&&(this.externalTexture=e.externalTexture),e.externalMesh&&(this.externalMesh=e.externalMesh),e.builtinMeshes&&(this.builtinMeshes=e.builtinMeshes),e.outputTex3d&&(this.outputTex3d=e.outputTex3d),e.outputGeo&&(this.outputGeo=e.outputGeo),e.uniformLayout&&(this.uniformLayout=e.uniformLayout),e.uniformLayouts&&(this.uniformLayouts=e.uniformLayouts),e.paramAliases&&(this.paramAliases=e.paramAliases),e.openCategories&&(this.openCategories=e.openCategories),e.defaultProgram&&(this.defaultProgram=e.defaultProgram),e.hidden&&(this.hidden=!0),e.deprecatedBy&&(this.deprecatedBy=e.deprecatedBy),e.onInit&&(this._configOnInit=e.onInit),e.onUpdate&&(this._configOnUpdate=e.onUpdate),e.onDestroy&&(this._configOnDestroy=e.onDestroy),e.asyncInit&&(this._configAsyncInit=e.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(e){return this._configOnUpdate?this._configOnUpdate.call(this,e):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(e){return this._configAsyncInit?this._configAsyncInit.call(this,e):Promise.resolve()}};var t=new n({name:"Scatter",namespace:"filter",func:"scatter",tags:["noise","artist"],description:"Random per-pixel scatter with darken/lighten/anisotropic/clumped modes (Diffuse, Spatter)",globals:{radius:{type:"float",default:12,uniform:"radius",min:1,max:25,ui:{label:"radius",control:"slider"}},mode:{type:"int",default:0,define:"MODE",choices:{normal:0,darkenOnly:1,lightenOnly:2,anisotropic:3,clumped:4},ui:{label:"mode",control:"dropdown"}},smoothness:{type:"float",default:0,uniform:"smoothness",min:0,max:100,ui:{label:"smoothness",control:"slider"}},seed:{type:"int",default:1,uniform:"seed",min:1,max:100,ui:{label:"seed",control:"slider"}}},textures:{_scatterTmp:{width:"input",height:"input",format:"rgba8unorm"}},passes:[{name:"scatterJitter",program:"scatterJitter",inputs:{inputTex:"inputTex"},outputs:{fragColor:"_scatterTmp"}},{name:"scatterSmooth",program:"scatterSmooth",inputs:{inputTex:"_scatterTmp"},outputs:{fragColor:"outputTex"}}]});var r={scatterJitter:{glsl:`/*
  * Scatter - jitter pass (Diffuse / Spatter / frosted glass).
  * Each pixel samples the input at a random offset within [-radius, radius]
- * px on each axis, drawn from a 2D hash seeded by the pixel's global
- * (tile-aware) coordinate. \`mode\` selects how the offset is derived and how
+ * px on each axis, drawn from an integer hash (PCG3D) of the pixel's global
+ * (tile-aware) coordinate and \`seed\`, and reads the input texel nearest that
+ * offset position. \`mode\` selects how the offset is derived and how
  * the sampled pixel combines with the source pixel:
  *   normal (0)      - raw random offset; sampled value used directly.
  *   darkenOnly (1)  - raw random offset; min(src, sampled) per channel
@@ -27,6 +28,7 @@ var n=class{constructor(e={}){this.state={},this.uniforms={},e.name&&(this.name=
 
 #ifdef GL_ES
 precision highp float;
+precision highp int;
 #endif
 
 // MODE is a compile-time define injected by the runtime (see definition.js
@@ -43,10 +45,19 @@ uniform int seed;
 
 out vec4 fragColor;
 
-vec2 hash22(vec2 p) {
-    vec3 p3 = fract(vec3(p.xyx) * vec3(0.1031, 0.1030, 0.0973));
-    p3 += dot(p3, p3.yzx + 33.33);
-    return fract((p3.xx + p3.yz) * p3.zy);
+// PCG3D integer hash (Jarzynski & Olano 2020). Unsigned arithmetic wraps the
+// same way on every compiler, so WebGL2 and WebGPU draw identical offsets; a
+// float hash rounds and fuses differently per compiler and drifts apart.
+uvec3 pcg3d(uvec3 v_in) {
+    uvec3 v = v_in * 1664525u + 1013904223u;
+    v.x = v.x + v.y * v.z;
+    v.y = v.y + v.z * v.x;
+    v.z = v.z + v.x * v.y;
+    v = v ^ (v >> uvec3(16u));
+    v.x = v.x + v.y * v.z;
+    v.y = v.y + v.z * v.x;
+    v.z = v.z + v.x * v.y;
+    return v;
 }
 
 float lum(vec3 c) { return dot(c, vec3(0.2126, 0.7152, 0.0722)); }
@@ -69,6 +80,8 @@ vec2 lumGradient(vec2 uv) {
 
 void main() {
     vec2 uv = gl_FragCoord.xy / resolution;
+    ivec2 texel = ivec2(gl_FragCoord.xy);
+    ivec2 texSize = textureSize(inputTex, 0);
 
     // Seed with the global (tile-aware) coordinate, not gl_FragCoord.xy
     // alone, so the scatter field is continuous across CLI render tiles
@@ -82,8 +95,15 @@ void main() {
         hashCoord = floor(globalCoord / 3.0) * 3.0;
     #endif
 
-    vec2 rnd = hash22(hashCoord + float(seed) * 101.7) - 0.5;
-    vec2 offset = rnd * 2.0 * radius;
+    uvec3 h = pcg3d(uvec3(uvec2(ivec2(floor(hashCoord))), uint(seed)));
+
+    // Offset in 1/256 px steps, in [-radius, radius) on each axis: the top 16
+    // hash bits scale the span 2 * radius * 256 in integers. radius * 256 is
+    // exact; the 128 px cap (far above the 25 px slider maximum) keeps the
+    // product within 32 bits.
+    uint r256 = uint(min(abs(radius), 128.0) * 256.0);
+    uvec2 steps = ((h.xy >> uvec2(16u)) * (2u * r256)) >> uvec2(16u);
+    vec2 offset = vec2(ivec2(steps) - int(r256)) / 256.0;
 
     #if MODE == 3
         // Anisotropic: project the offset onto the direction perpendicular
@@ -97,10 +117,13 @@ void main() {
         // else: gradient ~zero (flat region) -- fall back to raw offset.
     #endif
 
-    vec2 sampleUV = clamp((gl_FragCoord.xy + offset) / resolution, 0.0, 1.0);
+    // Read the texel nearest the offset sample position, clamped to the edge.
+    // Outside anisotropic mode the offset is a multiple of 1/256, so
+    // offset + 0.5 and its floor are exact on both backends.
+    ivec2 sampleTexel = clamp(texel + ivec2(floor(offset + 0.5)), ivec2(0), texSize - 1);
 
-    vec4 src = texture(inputTex, uv);
-    vec4 samp = texture(inputTex, sampleUV);
+    vec4 src = texelFetch(inputTex, texel, 0);
+    vec4 samp = texelFetch(inputTex, sampleTexel, 0);
 
     vec4 result = samp;
     #if MODE == 1
@@ -114,9 +137,10 @@ void main() {
 `,wgsl:`/*
  * Scatter - jitter pass (Diffuse / Spatter / frosted glass).
  * See scatterJitter.glsl for the full mode-dispatch description. The jitter
- * hash is seeded by the global (tile-aware) coordinate pos.xy + tileOffset so
- * the scatter field stays continuous across CLI render tiles instead of
- * restarting at each tile's local origin. tileOffset is runtime-provided.
+ * hash (PCG3D, integer, so it matches WebGL2 exactly) is seeded by the
+ * global (tile-aware) coordinate pos.xy + tileOffset so the scatter field
+ * stays continuous across CLI render tiles instead of restarting at each
+ * tile's local origin. tileOffset is runtime-provided.
  */
 
 // MODE is a runtime-injected module-scope const (injectDefines); Dawn/naga
@@ -131,10 +155,17 @@ struct Uniforms {
 @group(0) @binding(1) var inputTex: texture_2d<f32>;
 @group(0) @binding(2) var<uniform> uniforms: Uniforms;
 
-fn hash22(p: vec2<f32>) -> vec2<f32> {
-    var p3 = fract(vec3<f32>(p.xyx) * vec3<f32>(0.1031, 0.1030, 0.0973));
-    p3 = p3 + dot(p3, p3.yzx + vec3<f32>(33.33));
-    return fract((p3.xx + p3.yz) * p3.zy);
+// PCG3D integer hash (Jarzynski & Olano 2020); see scatterJitter.glsl.
+fn pcg3d(v_in: vec3<u32>) -> vec3<u32> {
+    var v = v_in * 1664525u + 1013904223u;
+    v.x = v.x + v.y * v.z;
+    v.y = v.y + v.z * v.x;
+    v.z = v.z + v.x * v.y;
+    v = v ^ (v >> vec3<u32>(16u));
+    v.x = v.x + v.y * v.z;
+    v.y = v.y + v.z * v.x;
+    v.z = v.z + v.x * v.y;
+    return v;
 }
 
 fn lum(c: vec3<f32>) -> f32 {
@@ -162,6 +193,8 @@ fn lumGradient(uv: vec2<f32>) -> vec2<f32> {
 fn main(@builtin(position) pos: vec4<f32>) -> @location(0) vec4<f32> {
     let texSize = vec2<f32>(textureDimensions(inputTex));
     let uv = pos.xy / texSize;
+    let texel = vec2<i32>(pos.xy);
+    let texSizeI = vec2<i32>(textureDimensions(inputTex));
 
     // Seed with the global (tile-aware) coordinate, not pos.xy alone, so the
     // scatter field is continuous across CLI render tiles.
@@ -174,8 +207,13 @@ fn main(@builtin(position) pos: vec4<f32>) -> @location(0) vec4<f32> {
         hashCoord = floor(globalCoord / 3.0) * 3.0;
     }
 
-    let rnd = hash22(hashCoord + f32(uniforms.seed) * 101.7) - 0.5;
-    var offset = rnd * 2.0 * uniforms.radius;
+    let h = pcg3d(vec3<u32>(vec2<u32>(vec2<i32>(floor(hashCoord))), u32(uniforms.seed)));
+
+    // Offset in 1/256 px steps, in [-radius, radius) on each axis; see
+    // scatterJitter.glsl.
+    let r256 = u32(min(abs(uniforms.radius), 128.0) * 256.0);
+    let steps = ((h.xy >> vec2<u32>(16u)) * (2u * r256)) >> vec2<u32>(16u);
+    var offset = vec2<f32>(vec2<i32>(steps) - i32(r256)) / 256.0;
 
     if (MODE == 3) {
         // Anisotropic: project the offset onto the direction perpendicular
@@ -189,10 +227,11 @@ fn main(@builtin(position) pos: vec4<f32>) -> @location(0) vec4<f32> {
         // else: gradient ~zero (flat region) -- fall back to raw offset.
     }
 
-    let sampleUV = clamp((pos.xy + offset) / texSize, vec2<f32>(0.0), vec2<f32>(1.0));
+    // Read the texel nearest the offset sample position, clamped to the edge.
+    let sampleTexel = clamp(texel + vec2<i32>(floor(offset + 0.5)), vec2<i32>(0), texSizeI - 1);
 
-    let src = textureSample(inputTex, inputSampler, uv);
-    let samp = textureSample(inputTex, inputSampler, sampleUV);
+    let src = textureLoad(inputTex, texel, 0);
+    let samp = textureLoad(inputTex, sampleTexel, 0);
 
     var result = samp;
     if (MODE == 1) {
@@ -281,7 +320,7 @@ fn main(@builtin(position) pos: vec4<f32>) -> @location(0) vec4<f32> {
 
     return mix(src, blurred, clamp(uniforms.smoothness / 100.0, 0.0, 1.0));
 }
-`}},o=`# scatter
+`}},i=`# scatter
 
 Random per-pixel scatter with darken/lighten/anisotropic/clumped modes (Diffuse, Spatter)
 
@@ -311,4 +350,4 @@ noise(seed: 1, ridges: true)
 
 render(o0)
 \`\`\`
-`;if(t&&Object.keys(s).length>0){t.shaders||(t.shaders={});for(let[r,e]of Object.entries(s))t.shaders[r]={...e}}t&&o&&(t.help=o);var p="filter/scatter",f="filter",d="scatter",c=t;export{c as default,p as effectId,d as effectName,o as help,f as namespace};
+`;if(t&&Object.keys(r).length>0){t.shaders||(t.shaders={});for(let[s,e]of Object.entries(r))t.shaders[s]={...e}}t&&i&&(t.help=i);var p="filter/scatter",f="filter",d="scatter",c=t;export{c as default,p as effectId,d as effectName,i as help,f as namespace};

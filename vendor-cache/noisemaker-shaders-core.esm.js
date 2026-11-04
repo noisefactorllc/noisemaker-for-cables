@@ -3,8 +3,8 @@
  * Includes: CanvasRenderer + UIController + EffectSelect
  * Copyright (c) 2017-2026 Noise Factor LLC. https://noisefactor.io/
  * SPDX-License-Identifier: MIT
- * Build: 71771987
- * Date: 2026-11-03T21:35:19.479Z
+ * Build: 7aa54b54
+ * Date: 2026-11-04T07:31:16.571Z
  */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
@@ -21386,9 +21386,11 @@ var UIController = class {
    * @param {function} [options.onControlChange] - Callback when a control value changes
    * @param {function} [options.onEffectControlsReset] - Callback(stepIndex, effectElement, effectDef) after a effect's controls are rebuilt via reset button
    * @param {ControlFactory} [options.controlFactory] - Custom control factory for web components
+   * @param {string} [options.meshBasePath] - Base that built-in mesh paths ("share/meshes/x.obj") resolve against; defaults to the renderer's basePath
    */
   constructor(renderer, options = {}) {
     this._renderer = renderer;
+    this._meshBasePath = options.meshBasePath;
     this._controlFactory = options.controlFactory || defaultControlFactory;
     this._effectSelect = options.effectSelect;
     this._dslEditor = options.dslEditor;
@@ -21781,7 +21783,7 @@ var UIController = class {
     if (!meshState) return;
     meshState.statusEl.textContent = "loading...";
     try {
-      const basePath = this._renderer._basePath || "../../shaders";
+      const basePath = this._meshBasePath || this._renderer._basePath || "../../shaders";
       const url = `${basePath}/${relativePath}`;
       const result = await this._renderer.loadOBJFromURL(url, meshState.meshId);
       if (result.success) {
