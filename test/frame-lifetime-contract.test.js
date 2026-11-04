@@ -20,6 +20,9 @@ import { readFileSync } from 'node:fs'
 //   4. WebGPU resolves a sampler per binding from the sampled 3D texture's
 //      authored filter, defaulting to linear instead of the historical
 //      nearest.
+//   5. The pipeline's overlay upload hands the overlay canvas's own 2D
+//      context to updateTextureFromSource instead of asking the canvas for
+//      one (2cf5bad0), so a canvas with no context keeps its context choice.
 
 const core = readFileSync(
   new URL('../vendor-cache/noisemaker-shaders-core.esm.js', import.meta.url),
@@ -84,5 +87,16 @@ test('unauthored 3D sampling uses the linear default on WebGPU', () => {
     core,
     /texRec\?\.is3D \? texRec\.filter === "linear" \? "default" : "nearest"/,
     'vendored core compute-path sampler resolution no longer follows the 3D texture filter',
+  )
+})
+
+test('the pipeline overlay upload passes the overlay canvas 2D context through', () => {
+  // 2cf5bad0: the pipeline hands the overlay canvas's own 2D context to the
+  // backend so the upload never calls canvas.getContext('2d') itself; a
+  // canvas with no context yet keeps its context choice for its renderer.
+  assert.match(
+    core,
+    /this\.backend\.updateTextureFromSource\(texId, canvas, \{ flipY: true, context2d: canvas\.getContext\?\.\("2d"\) \}\)/,
+    'the vendored core pipeline no longer passes the overlay canvas 2D context to updateTextureFromSource',
   )
 })

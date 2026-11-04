@@ -3,8 +3,8 @@
  * Includes: CanvasRenderer + UIController + EffectSelect
  * Copyright (c) 2017-2026 Noise Factor LLC. https://noisefactor.io/
  * SPDX-License-Identifier: MIT
- * Build: babf6b2d
- * Date: 2026-11-03T19:19:10.351Z
+ * Build: d912d12d
+ * Date: 2026-11-04T00:19:43.269Z
  */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
@@ -10014,6 +10014,8 @@ var WebGPUBackend = class _WebGPUBackend extends Backend {
    * @param {HTMLVideoElement|HTMLImageElement|HTMLCanvasElement|ImageBitmap|VideoFrame} source - Borrowed media source
    * @param {object} [options] - Update options
    * @param {boolean} [options.flipY=true] - Whether to flip the Y axis
+   * @param {CanvasRenderingContext2D} [options.context2d] - The source
+   *   canvas's 2D context, when the caller holds one
    * @returns {{ width: number, height: number }} Source dimensions
    *
    * Must stay synchronous to match WebGL2Backend and the documented
@@ -10070,7 +10072,7 @@ var WebGPUBackend = class _WebGPUBackend extends Backend {
       };
       this.textures.set(id, tex);
     }
-    const context2d = source instanceof HTMLCanvasElement ? source.getContext("2d") : null;
+    const context2d = options.context2d?.canvas === source ? options.context2d : null;
     if (context2d?.getContextAttributes?.().willReadFrequently) {
       const pixels = context2d.getImageData(0, 0, width, height).data;
       const rowBytes = width * 4;
@@ -10090,11 +10092,21 @@ var WebGPUBackend = class _WebGPUBackend extends Backend {
       );
       return { width, height };
     }
-    this.device.queue.copyExternalImageToTexture(
-      { source, flipY },
-      { texture: tex.handle },
-      { width, height }
-    );
+    try {
+      this.device.queue.copyExternalImageToTexture(
+        { source, flipY },
+        { texture: tex.handle },
+        { width, height }
+      );
+    } catch (err) {
+      if (!(source instanceof HTMLCanvasElement) || err?.name !== "OperationError") throw err;
+      this.device.queue.writeTexture(
+        { texture: tex.handle },
+        new Uint8Array(width * height * 4),
+        { bytesPerRow: width * 4, rowsPerImage: height },
+        { width, height }
+      );
+    }
     return { width, height };
   }
   /**
@@ -14134,7 +14146,7 @@ var Pipeline = class {
       updateTexture: (texName, canvas) => {
         if (cancelled) return;
         const texId = `${nodeId}_${texName}`;
-        this.backend.updateTextureFromSource(texId, canvas, { flipY: true });
+        this.backend.updateTextureFromSource(texId, canvas, { flipY: true, context2d: canvas.getContext?.("2d") });
       },
       width: this.width,
       height: this.height,
@@ -19195,6 +19207,11 @@ var CanvasRenderer = class {
    * @param {HTMLVideoElement|HTMLImageElement|HTMLCanvasElement|ImageBitmap} source - Media source
    * @param {object} [options] - Update options
    * @param {boolean} [options.flipY=true] - Whether to flip the Y axis
+   * @param {CanvasRenderingContext2D} [options.context2d] - The source
+   *   canvas's 2D context. A willReadFrequently context uploads its
+   *   getImageData() bytes on WebGPU, as WebGL2 uploads them. Uploading
+   *   never asks the source for a context: that would give a canvas with
+   *   none yet a 2D context for good.
    * @returns {{ width: number, height: number }} Source dimensions
    */
   updateTextureFromSource(texId, source, options = {}) {
