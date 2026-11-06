@@ -3,8 +3,8 @@
  * Includes: CanvasRenderer + UIController + EffectSelect
  * Copyright (c) 2017-2026 Noise Factor LLC. https://noisefactor.io/
  * SPDX-License-Identifier: MIT
- * Build: 1faed961
- * Date: 2026-11-04T19:21:40.390Z
+ * Build: 15d7719b
+ * Date: 2026-11-06T04:27:58.238Z
  */
 var NoisemakerCablesGL=(()=>{var ly=Object.create;var Ia=Object.defineProperty;var cy=Object.getOwnPropertyDescriptor;var fy=Object.getOwnPropertyNames;var uy=Object.getPrototypeOf,dy=Object.prototype.hasOwnProperty;var Za=(e=>typeof require<"u"?require:typeof Proxy<"u"?new Proxy(e,{get:(t,o)=>(typeof require<"u"?require:t)[o]}):e)(function(e){if(typeof require<"u")return require.apply(this,arguments);throw Error('Dynamic require of "'+e+'" is not supported')});var w=(e,t,o)=>()=>{if(o)throw o[0];try{return e&&(t=e(e=0)),t}catch(r){throw o=[r],r}};var Ja=(e,t)=>{for(var o in t)Ia(e,o,{get:t[o],enumerable:!0})},Us=(e,t,o,r)=>{if(t&&typeof t=="object"||typeof t=="function")for(let i of fy(t))!dy.call(e,i)&&i!==o&&Ia(e,i,{get:()=>t[i],enumerable:!(r=cy(t,i))||r.enumerable});return e};var Qa=(e,t,o)=>(o=e!=null?ly(uy(e)):{},Us(t||!e||!e.__esModule?Ia(o,"default",{value:e,enumerable:!0}):o,e)),py=e=>Us(Ia({},"__esModule",{value:!0}),e);function vn(e){let t=[],o=[],r=[],i=[],a=[],s=[],n=e.split(`
 `);for(let f of n){let u=f.trim();if(u.length===0||u.startsWith("#"))continue;let d=u.split(/\s+/);switch(d[0]){case"v":{let v=parseFloat(d[1])||0,y=parseFloat(d[2])||0,m=parseFloat(d[3])||0;t.push([v,y,m]);break}case"vn":{let v=parseFloat(d[1])||0,y=parseFloat(d[2])||0,m=parseFloat(d[3])||0;o.push([v,y,m]);break}case"vt":{let v=parseFloat(d[1])||0,y=parseFloat(d[2])||0;r.push([v,y]);break}case"f":{let v=[];for(let y=1;y<d.length;y++){let m=d[y].split("/"),T=parseInt(m[0],10)-1,z=m[1]?parseInt(m[1],10)-1:-1,g=m[2]?parseInt(m[2],10)-1:-1;v.push({vIdx:T,vtIdx:z,vnIdx:g})}for(let y=1;y<v.length-1;y++){let m=v[0],T=v[y],z=v[y+1];l(m),l(z),l(T)}break}}}function l(f){f.vIdx>=0&&f.vIdx<t.length?i.push(...t[f.vIdx]):i.push(0,0,0),f.vnIdx>=0&&f.vnIdx<o.length?a.push(...o[f.vnIdx]):a.push(0,0,1),f.vtIdx>=0&&f.vtIdx<r.length?s.push(...r[f.vtIdx]):s.push(0,0)}let c=i.length/3;return o.length===0&&c>0&&$y(i,a),{positions:new Float32Array(i),normals:new Float32Array(a),uvs:new Float32Array(s),vertexCount:c}}function $y(e,t){let o=e.length/3,r=o/3,i=new Float32Array(r*3);for(let n=0;n<r;n++){let l=n*9,c=l+3,f=l+6,u=e[l],d=e[l+1],p=e[l+2],v=e[c],y=e[c+1],m=e[c+2],T=e[f],z=e[f+1],g=e[f+2],C=v-u,I=y-d,V=m-p,F=T-u,Q=z-d,Z=g-p,de=I*Z-V*Q,ie=V*F-C*Z,ae=C*Q-I*F,le=Math.sqrt(de*de+ie*ie+ae*ae);le>1e-4?(de/=le,ie/=le,ae/=le):(de=0,ie=0,ae=1),i[n*3]=de,i[n*3+1]=ie,i[n*3+2]=ae}let a=new Map,s=n=>Math.round(n*1e4)/1e4;for(let n=0;n<o;n++){let l=e[n*3],c=e[n*3+1],f=e[n*3+2],u=`${s(l)},${s(c)},${s(f)}`,d=Math.floor(n/3),p=i[d*3],v=i[d*3+1],y=i[d*3+2];a.has(u)||a.set(u,{nx:0,ny:0,nz:0,count:0});let m=a.get(u);m.nx+=p,m.ny+=v,m.nz+=y,m.count++}for(let n of a.values()){let l=Math.sqrt(n.nx*n.nx+n.ny*n.ny+n.nz*n.nz);l>1e-4?(n.nx/=l,n.ny/=l,n.nz/=l):(n.nx=0,n.ny=0,n.nz=1)}for(let n=0;n<o;n++){let l=e[n*3],c=e[n*3+1],f=e[n*3+2],u=`${s(l)},${s(c)},${s(f)}`,d=a.get(u);t[n*3]=d.nx,t[n*3+1]=d.ny,t[n*3+2]=d.nz}}async function Ky(e){let t=await fetch(e);if(!t.ok)throw new Error(`Failed to load OBJ: ${t.status} ${t.statusText}`);let o=await t.text();return vn(o)}function Zy(e,t,o,r,i){let a=r*i,s=e.length/3;s>a&&console.warn(`[OBJ] Mesh has ${s} vertices, but texture can only hold ${a}. Truncating.`);let n=Math.min(s,a),l=r*i,c=new Float32Array(l*4),f=new Float32Array(l*4),u=new Float32Array(l*4);for(let d=0;d<n;d++){let p=d*4,v=d*3,y=d*2;c[p]=e[v],c[p+1]=e[v+1],c[p+2]=e[v+2],c[p+3]=1,f[p]=t[v],f[p+1]=t[v+1],f[p+2]=t[v+2],f[p+3]=0,u[p]=o[y],u[p+1]=o[y+1],u[p+2]=0,u[p+3]=0}for(let d=n;d<l;d++){let p=d*4;c[p+3]=0}return{positionData:c,normalData:f,uvData:u,vertexCount:n}}function gn(e){let t=[],o=0,r=1,i=1,a=1,s=1,n=0;function l(p,v,y,m,T){for(let I=n;I<o;I++)e[I]===`
@@ -28459,7 +28459,7 @@ float divRound(float a, float b) {
     float q = pin(a / b);
     float p = pin(q * b);
     float r = pin(pin(a - p) - productError(q, b, p));
-    return q + pin(r / b);
+    return pin(q + pin(r / b));
 }
 
 #define PI 3.14159265359
@@ -28839,7 +28839,7 @@ fn divRound(a: f32, b: f32) -> f32 {
     let q = pin(a / b);
     let p = pin(q * b);
     let r = pin(pin(a - p) - productError(q, b, p));
-    return q + pin(r / b);
+    return pin(q + pin(r / b));
 }
 
 // Floored modulo (matches GLSL mod behavior for negative values)
@@ -48376,7 +48376,7 @@ Random per-pixel scatter with darken/lighten/anisotropic/clumped modes (Diffuse,
 
 | Parameter | Type | Default | Range | Description |
 |-----------|------|---------|-------|-------------|
-| radius | float | 5 | 1-25 | The radius sets the maximum scatter distance in pixels. Each pixel samples the nearest input texel at a random offset within [-radius, radius] on each axis |
+| radius | float | 12 | 1-25 | The radius sets the maximum scatter distance in pixels. Each pixel samples the nearest input texel at a random offset within [-radius, radius] on each axis |
 | mode | int | 0 | normal:0, darkenOnly:1, lightenOnly:2, anisotropic:3, clumped:4 | normal samples at the raw random offset; darkenOnly/lightenOnly take the per-channel min/max of the source and sampled pixel (Diffuse Darken Only / Lighten Only); anisotropic projects the offset onto the direction perpendicular to the local luminance gradient so the scatter smears along edges instead of scattering isotropically (Diffuse Anisotropic), falling back to the raw offset in flat areas; clumped shares one random offset across each 3x3 pixel block, producing blocky clumps of displacement instead of per-pixel grain (Spatter) |
 | smoothness | float | 0 | 0-100 | Re-blends the jittered result with a 3x3 tent blur by this fraction; 0 leaves the raw scatter untouched, higher values soften it into smoother frosted streaks (Spatter's Smoothness) |
 | seed | int | 1 | 1-100 | Selects a different random scatter pattern; same statistics for any seed value, different per-pixel offsets |
@@ -88722,9 +88722,9 @@ Generates regular polygons with configurable sides, radius, rotation, and colors
 | radius | float | 0.5 | 0-1 | Size |
 | smooth | float | 0.01 | 0-1 | Edge smoothness. Zero gives a hard edge. |
 | rotation | float | 0 | -180-180 | Rotation |
-| fgColor | vec3 | 1,1,1 | - | Foreground Color |
+| fgColor | color | 1,1,1 | - | Foreground Color |
 | fgAlpha | float | 1 | 0-1 | Foreground Opacity |
-| bgColor | vec3 | 0,0,0 | - | Background Color |
+| bgColor | color | 0,0,0 | - | Background Color |
 | bgAlpha | float | 1 | 0-1 | Background Opacity |
 
 ## Usage

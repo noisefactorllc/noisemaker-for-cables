@@ -9,7 +9,7 @@ const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const options = {
   cacheRoot: resolve(projectRoot, 'vendor-cache'),
   lockPath: resolve(projectRoot, 'vendor.lock.json'),
-  sourceBaseUrl: 'https://shaders.noisedeck.app/1.0.340/',
+  sourceBaseUrl: 'https://shaders.noisedeck.app/1.0.342/',
 }
 
 async function main() {

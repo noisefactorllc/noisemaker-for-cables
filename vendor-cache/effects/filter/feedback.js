@@ -99,7 +99,7 @@ float divRound(float a, float b) {
     float q = pin(a / b);
     float p = pin(q * b);
     float r = pin(pin(a - p) - productError(q, b, p));
-    return q + pin(r / b);
+    return pin(q + pin(r / b));
 }
 
 #define PI 3.14159265359
@@ -479,7 +479,7 @@ fn divRound(a: f32, b: f32) -> f32 {
     let q = pin(a / b);
     let p = pin(q * b);
     let r = pin(pin(a - p) - productError(q, b, p));
-    return q + pin(r / b);
+    return pin(q + pin(r / b));
 }
 
 // Floored modulo (matches GLSL mod behavior for negative values)
