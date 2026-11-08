@@ -3,8 +3,8 @@
  * Includes: CanvasRenderer + UIController + EffectSelect
  * Copyright (c) 2017-2026 Noise Factor LLC. https://noisefactor.io/
  * SPDX-License-Identifier: MIT
- * Build: 6f98d26a
- * Date: 2026-11-06T06:15:54.833Z
+ * Build: cf95f49c
+ * Date: 2026-11-07T19:26:19.753Z
  */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
@@ -5837,6 +5837,32 @@ function resolveGlobalSurfaceRef(name) {
   if (SURFACE_REF_PATTERN.test(name)) return `global_${name}`;
   return name;
 }
+function collectGlobalTextureUsers(chain) {
+  const users = /* @__PURE__ */ new Map();
+  const effects2 = new Set(chain.filter((step) => !step.builtin && step.args?._skip !== true).map((step) => getEffect(step.op)).filter(Boolean));
+  for (const effect of effects2) {
+    const refs = [
+      ...Object.keys(effect.textures || {}),
+      ...Object.keys(effect.textures3d || {}),
+      ...Object.values(effect.globals || {}).map((spec) => spec.default),
+      effect.outputTex,
+      effect.outputTex3d,
+      effect.outputGeo,
+      effect.outputXyz,
+      effect.outputVel,
+      effect.outputRgba
+    ];
+    for (const pass of effect.passes || []) {
+      refs.push(...Object.values(pass.inputs || {}), ...Object.values(pass.outputs || {}));
+    }
+    for (const ref of refs) {
+      if (typeof ref !== "string" || !ref.startsWith("global_")) continue;
+      if (!users.has(ref)) users.set(ref, /* @__PURE__ */ new Set());
+      users.get(ref).add(effect);
+    }
+  }
+  return users;
+}
 function expand(compilationResult, options = {}) {
   const shaderOverrides = options.shaderOverrides || {};
   const passes = [];
@@ -5879,6 +5905,9 @@ function expand(compilationResult, options = {}) {
     const pipelineUniforms = {};
     const chainScopeId = `chain_${compilationResult.plans.indexOf(plan)}`;
     const volumeSizeParam = `volumeSize_${chainScopeId}`;
+    const globalTextureUsers = collectGlobalTextureUsers(plan.chain);
+    const seenEffects = /* @__PURE__ */ new Set();
+    const sizeParamOwners = /* @__PURE__ */ new Map();
     for (const step of plan.chain) {
       if (step.builtin && step.op === "_read") {
         const tex = step.args?.tex;
@@ -6017,6 +6046,21 @@ function expand(compilationResult, options = {}) {
         errors.push({ message: `Effect '${effectName}' not found`, step });
         continue;
       }
+      const nodeId = `node_${step.temp}`;
+      const instanceScopeId = seenEffects.has(effectDef) ? `${chainScopeId}_${nodeId}` : chainScopeId;
+      seenEffects.add(effectDef);
+      const ownedTextures = /* @__PURE__ */ new Set([
+        ...Object.keys(effectDef.textures || {}),
+        ...Object.keys(effectDef.textures3d || {}),
+        ...(effectDef.passes || []).flatMap((pass) => Object.values(pass.outputs || {}))
+      ]);
+      const isPrivateGlobal = (texName) => ownedTextures.has(texName) && globalTextureUsers.get(texName)?.size === 1;
+      const globalScope = (texName) => isPrivateGlobal(texName) ? instanceScopeId : chainScopeId;
+      const claimSizeParam = (scopedParam, isPrivate) => {
+        const owner = sizeParamOwners.get(scopedParam);
+        if (owner === void 0) sizeParamOwners.set(scopedParam, nodeId);
+        return isPrivate && owner !== void 0 && owner !== nodeId ? `${scopedParam}_${nodeId}` : scopedParam;
+      };
       const scopeParticleTex = (texName) => {
         if (!currentParticlePipelineId) return texName;
         if (/^global_(xyz|vel|rgba|points_trail|life_data|[a-z]+_base_color)$/.test(texName)) {
@@ -6028,11 +6072,10 @@ function expand(compilationResult, options = {}) {
         const particleResult = scopeParticleTex(texName);
         if (particleResult !== texName) return particleResult;
         if (texName.startsWith("global_")) {
-          return `${texName}_${chainScopeId}`;
+          return `${texName}_${globalScope(texName)}`;
         }
         return texName;
       };
-      const nodeId = `node_${step.temp}`;
       const scopedParamMap = /* @__PURE__ */ new Map();
       const createsParticleTextures = effectDef.textures && effectDef.textures.global_xyz;
       if (createsParticleTextures) {
@@ -6086,11 +6129,7 @@ function expand(compilationResult, options = {}) {
           const shouldScopeAsParticle = isParticleTex && currentParticlePipelineId;
           const shouldScopeAsChain = texName.startsWith("global_") && !isParticleTex;
           if (texName.startsWith("global_")) {
-            if (shouldScopeAsParticle) {
-              virtualTexId = `${texName}_${currentParticlePipelineId}`;
-            } else {
-              virtualTexId = `${texName}_${chainScopeId}`;
-            }
+            virtualTexId = scopeChainTex(texName);
           } else {
             virtualTexId = `${nodeId}_${texName}`;
           }
@@ -6100,11 +6139,12 @@ function expand(compilationResult, options = {}) {
           const shouldScopeParams = shouldScopeAsParticle || shouldScopeAsChain || currentParticlePipelineId && !texName.startsWith("global_") || hasParamRef;
           if (shouldScopeParams) {
             const scopeSuffix = shouldScopeAsParticle ? currentParticlePipelineId : chainScopeId;
+            const isPrivateTex = !texName.startsWith("global_") || isPrivateGlobal(texName);
+            const chainSizeParam = (scopedParam, inherit) => shouldScopeAsParticle || inherit ? scopedParam : claimSizeParam(scopedParam, isPrivateTex);
             const scopeDimSpec = (dimSpec) => {
               if (typeof dimSpec === "object" && dimSpec.param !== void 0) {
                 const originalParam = dimSpec.param;
-                const dimensionScope = originalParam === "stateSize" && currentParticlePipelineId && !texName.startsWith("global_") ? currentParticlePipelineId : scopeSuffix;
-                const scopedParam = originalParam === "volumeSize" ? volumeSizeParam : `${originalParam}_${dimensionScope}`;
+                const scopedParam = originalParam === "volumeSize" ? volumeSizeParam : originalParam === "stateSize" && currentParticlePipelineId && !texName.startsWith("global_") ? `${originalParam}_${currentParticlePipelineId}` : chainSizeParam(`${originalParam}_${scopeSuffix}`, dimSpec.inherit);
                 if (!dimSpec.inherit) scopedParamMap.set(originalParam, scopedParam);
                 return {
                   ...dimSpec,
@@ -6113,7 +6153,7 @@ function expand(compilationResult, options = {}) {
               }
               if (typeof dimSpec === "object" && dimSpec.screenDivide !== void 0) {
                 const originalParam = dimSpec.screenDivide;
-                const scopedParam = `${originalParam}_${scopeSuffix}`;
+                const scopedParam = chainSizeParam(`${originalParam}_${scopeSuffix}`, false);
                 scopedParamMap.set(originalParam, scopedParam);
                 return {
                   ...dimSpec,
