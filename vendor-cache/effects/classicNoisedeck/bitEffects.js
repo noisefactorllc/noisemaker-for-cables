@@ -324,10 +324,8 @@ vec3 hsv2rgb(vec3 hsv) {
         rgb = vec3(0.0, x, c);
     } else if (4.0/6.0 <= h && h < 5.0/6.0) {
         rgb = vec3(x, 0.0, c);
-    } else if (5.0/6.0 <= h && h < 1.0) {
-        rgb = vec3(c, 0.0, x);
     } else {
-        rgb = vec3(0.0, 0.0, 0.0);
+        rgb = vec3(c, 0.0, x);
     }
 
     return rgb + vec3(m, m, m);
@@ -787,10 +785,8 @@ fn hsv2rgb(hsv: vec3<f32>) -> vec3<f32> {
         rgb = vec3<f32>(0.0, x, c);
     } else if (4.0/6.0 <= h && h < 5.0/6.0) {
         rgb = vec3<f32>(x, 0.0, c);
-    } else if (5.0/6.0 <= h && h < 1.0) {
-        rgb = vec3<f32>(c, 0.0, x);
     } else {
-        rgb = vec3<f32>(0.0);
+        rgb = vec3<f32>(c, 0.0, x);
     }
 
     return rgb + vec3<f32>(m, m, m);
