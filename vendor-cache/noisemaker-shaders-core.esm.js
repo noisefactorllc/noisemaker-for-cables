@@ -3,8 +3,8 @@
  * Includes: CanvasRenderer + UIController + EffectSelect
  * Copyright (c) 2017-2026 Noise Factor LLC. https://noisefactor.io/
  * SPDX-License-Identifier: MIT
- * Build: cf95f49c
- * Date: 2026-11-07T19:26:19.753Z
+ * Build: db2173e3
+ * Date: 2026-11-12T00:24:33.375Z
  */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
@@ -13830,13 +13830,16 @@ function evaluateAudio(config, audioState, min = config.min, max = config.max) {
   rawValue = Math.max(0, Math.min(1, rawValue));
   return min + rawValue * (max - min);
 }
+function reportSinkError(error, sink) {
+  if (typeof sink?.onError === "function") sink.onError(error);
+}
 var Pipeline = class {
   constructor(graph, backend, options = {}) {
     this.graph = graph;
     this.backend = backend;
     this.texturePooling = options.texturePooling === true;
     this._textureAliases = /* @__PURE__ */ new Map();
-    this.sinkManager = new SinkManager();
+    this.sinkManager = new SinkManager({ onError: reportSinkError });
     this._sinkDescriptor = {
       width: 0,
       height: 0,
