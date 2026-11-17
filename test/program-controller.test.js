@@ -42,6 +42,7 @@ function graphFor(dsl, options = {}) {
     passes: [{ id: `pass:${dsl}`, program, ...options.pass }],
     programs: new Map([[program, { source: dsl, ...options.programSpec }]]),
     renderSurface: 'o0',
+    ...(options.textures ? { textures: options.textures } : {}),
   }
 }
 
@@ -91,7 +92,10 @@ function createHarness(options = {}) {
     canvas,
     createVertexArray: options.webgl2 === false ? undefined : () => ({}),
     getExtension(name) {
-      return REQUIRED_EXTENSIONS.has(name) && name !== options.missingExtension ? {} : null
+      return REQUIRED_EXTENSIONS.has(name) &&
+        ![].concat(options.missingExtension ?? []).includes(name)
+        ? {}
+        : null
     },
     getParameter(parameter) {
       if (parameter === this.MAX_TEXTURE_SIZE) return options.deviceMaxSize ?? 4096
@@ -899,8 +903,6 @@ test('every shared complete-catalog failure stops before backend creation, init,
   const cases = [
     ['webgl2', { webgl2: false }],
     ['colorBufferFloat', { missingExtension: 'EXT_color_buffer_float' }],
-    ['floatLinear', { missingExtension: 'OES_texture_float_linear' }],
-    ['floatBlend', { missingExtension: 'EXT_float_blend' }],
     ['maxTextureSize', { deviceMaxSize: 4095 }],
     ['maxColorAttachments', { deviceMaxColorAttachments: 3 }],
     ['maxDrawBuffers', { deviceMaxDrawBuffers: 3 }],
@@ -940,7 +942,7 @@ test('every shared complete-catalog failure stops before backend creation, init,
 
 test('shared capability preflight reruns after context restoration before touching a new backend', async () => {
   let inspections = 0
-  let floatLinearAvailable = true
+  let colorBufferFloatAvailable = true
   const capabilityInspector = (cgl, inspectorOptions) => {
     inspections += 1
     return inspectCapabilities(cgl, inspectorOptions)
@@ -948,7 +950,7 @@ test('shared capability preflight reruns after context restoration before touchi
   const harness = createHarness({ capabilityInspector, deviceMaxSize: 4096 })
   const getExtension = harness.gl.getExtension.bind(harness.gl)
   harness.gl.getExtension = (name) => (
-    name === 'OES_texture_float_linear' && !floatLinearAvailable
+    name === 'EXT_color_buffer_float' && !colorBufferFloatAvailable
       ? null
       : getExtension(name)
   )
@@ -958,7 +960,7 @@ test('shared capability preflight reruns after context restoration before touchi
   assert.equal(harness.events.filter((event) => event === 'cpu:backend-create').length, 1)
 
   harness.controller.handleContextLost()
-  floatLinearAvailable = false
+  colorBufferFloatAvailable = false
   const expected = inspectCapabilities(harness.cgl, { CGL: harness.CGL }).failures[0]
   const restored = await harness.controller.handleContextRestored()
 
@@ -1043,8 +1045,12 @@ test('all graph-specific defenses retain shared public capability identities', a
         backendCapabilities: { floatBlend: false },
         missingExtension: 'EXT_float_blend',
       },
-      pass: { blend: true },
+      // The shared report no longer fails on EXT_float_blend, so the identity
+      // comes from the shared capability code table.
+      identity: { capability: 'floatBlend', capabilityCode: 'ERR_CAPABILITY_FLOAT_BLEND' },
+      pass: { blend: true, outputs: { fragColor: 'trail' } },
       required: true,
+      textures: new Map([['trail', { format: 'rgba32f' }]]),
     },
     {
       actual: 0,
@@ -1066,9 +1072,10 @@ test('all graph-specific defenses retain shared public capability identities', a
         graphOptionsByDsl: new Map([[dsl, {
           pass: graphCase.pass,
           programSpec: graphCase.programSpec,
+          textures: graphCase.textures,
         }]]),
       })
-      const publicFailure = inspectCapabilities(harness.cgl, { CGL: harness.CGL })
+      const publicFailure = graphCase.identity ?? inspectCapabilities(harness.cgl, { CGL: harness.CGL })
         .failures.find((failure) => failure.capability === graphCase.capability)
       assert.ok(publicFailure)
 
@@ -1384,4 +1391,50 @@ test('an output resize failure retains the complete last-good transaction', asyn
     false,
   )
   assert.ok(harness.events.includes('gpu:pipeline-dispose:replacement output dsl'))
+})
+
+test('without OES_texture_float_linear and EXT_float_blend, as on iOS Safari, a program that blends only into 16-bit float targets becomes ready', async () => {
+  const dsl = 'blend into half float'
+  const harness = createHarness({
+    backendCapabilities: { floatBlend: false },
+    graphOptionsByDsl: new Map([[dsl, {
+      pass: { blend: true, outputs: { fragColor: 'trail' } },
+      textures: new Map([['trail', { format: 'rgba16f' }]]),
+    }]]),
+    missingExtension: ['OES_texture_float_linear', 'EXT_float_blend'],
+  })
+
+  const state = await harness.controller.setProgram(dsl)
+
+  assert.equal(state.error, null)
+  assert.equal(state.ready, true)
+  assert.equal(harness.events.includes('cpu:backend-create'), true)
+})
+
+test('a blended pass whose output format the graph does not record still requires EXT_float_blend', async (t) => {
+  for (const [name, pass, textures] of [
+    ['unrecorded output', { blend: true, outputs: { fragColor: 'unknown' } }, new Map()],
+    ['no outputs', { blend: true }, undefined],
+    ['32-bit float output', { blend: true, outputs: { fragColor: 'trail' } }, new Map([['trail', { format: 'rgba32float' }]])],
+  ]) {
+    await t.test(name, async () => {
+      const dsl = `blend ${name}`
+      const harness = createHarness({
+        backendCapabilities: { floatBlend: false },
+        graphOptionsByDsl: new Map([[dsl, { pass, textures }]]),
+        missingExtension: 'EXT_float_blend',
+      })
+
+      const state = await harness.controller.setProgram(dsl)
+
+      assert.equal(state.ready, false)
+      assert.equal(state.error.code, 'ERR_CAPABILITY')
+      assert.equal(state.error.capability, 'floatBlend')
+      assert.equal(state.error.capabilityCode, 'ERR_CAPABILITY_FLOAT_BLEND')
+      assert.equal(
+        harness.events.some((event) => event.startsWith('gpu:shader-compile:')),
+        false,
+      )
+    })
+  }
 })

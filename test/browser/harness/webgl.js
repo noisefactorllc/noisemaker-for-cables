@@ -267,9 +267,9 @@ export function preflightWebGL2(context) {
   }
 
   if (!(gl instanceof WebGL2RenderingContext)) failures.push('context is not WebGL2')
-  for (const [name, supported] of Object.entries(extensions)) {
-    if (!supported) failures.push(`required extension unavailable: ${name}`)
-  }
+  // floatBlend and floatLinear are recorded, not required: the op runs without
+  // them (src/runtime/capabilities.js), as iOS Safari does.
+  if (!extensions.colorBufferFloat) failures.push('required extension unavailable: colorBufferFloat')
   if (capabilities.maxTextureSize < 4096) failures.push('MAX_TEXTURE_SIZE < 4096')
   if (capabilities.maxDrawBuffers < 4) failures.push('MAX_DRAW_BUFFERS < 4')
   if (capabilities.maxColorAttachments < 4) failures.push('MAX_COLOR_ATTACHMENTS < 4')

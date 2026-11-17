@@ -35,8 +35,9 @@ function createCapabilityFixture({
     gl.createVertexArray = () => ({})
     gl.texImage3D = () => {}
   }
+  const missing = [].concat(missingExtension ?? [])
   gl.getExtension = (name) => (
-    EXTENSIONS.includes(name) && name !== missingExtension ? {} : null
+    EXTENSIONS.includes(name) && !missing.includes(name) ? {} : null
   )
   gl.getParameter = (parameter) => valueByToken.get(parameter)
 
@@ -62,22 +63,6 @@ const FAILURE_CASES = Object.freeze([
     expectedRequired: true,
     issue: 'EXT_color_buffer_float is required',
     options: { missingExtension: 'EXT_color_buffer_float' },
-  }),
-  Object.freeze({
-    capability: 'floatLinear',
-    capabilityCode: 'ERR_CAPABILITY_FLOAT_LINEAR',
-    expectedActual: false,
-    expectedRequired: true,
-    issue: 'OES_texture_float_linear is required',
-    options: { missingExtension: 'OES_texture_float_linear' },
-  }),
-  Object.freeze({
-    capability: 'floatBlend',
-    capabilityCode: 'ERR_CAPABILITY_FLOAT_BLEND',
-    expectedActual: false,
-    expectedRequired: true,
-    issue: 'EXT_float_blend is required for the complete catalog',
-    options: { missingExtension: 'EXT_float_blend' },
   }),
   ...[
     ['MAX_TEXTURE_SIZE', 'maxTextureSize', 'ERR_CAPABILITY_MAX_TEXTURE_SIZE', 4096],
@@ -177,4 +162,25 @@ test('the exact documented complete-catalog boundary is supported with the publi
   assert.equal(Object.isFrozen(report.limits), true)
   assert.equal(Object.isFrozen(report.issues), true)
   assert.equal(Object.isFrozen(report.failures), true)
+})
+
+test('without OES_texture_float_linear and EXT_float_blend, as on iOS Safari, the report is supported and records both as absent', () => {
+  for (const missingExtension of [
+    'OES_texture_float_linear',
+    'EXT_float_blend',
+    ['OES_texture_float_linear', 'EXT_float_blend'],
+  ]) {
+    const { CGL, cgl } = createCapabilityFixture({ missingExtension })
+    const report = inspectCapabilities(cgl, { CGL })
+    const absent = [].concat(missingExtension)
+
+    assert.equal(report.supported, true, String(absent))
+    assert.deepEqual(report.issues, [])
+    assert.deepEqual(report.failures, [])
+    assert.deepEqual(report.extensions, {
+      colorBufferFloat: true,
+      floatBlend: !absent.includes('EXT_float_blend'),
+      floatTextureLinear: !absent.includes('OES_texture_float_linear'),
+    })
+  }
 })

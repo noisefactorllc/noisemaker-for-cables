@@ -97,22 +97,12 @@ export function inspectCapabilities(cgl, options = {}) {
       'EXT_color_buffer_float is required',
     )
   }
-  if (!extensions.floatTextureLinear) {
-    fail(
-      'floatLinear',
-      extensions.floatTextureLinear,
-      true,
-      'OES_texture_float_linear is required',
-    )
-  }
-  if (!extensions.floatBlend) {
-    fail(
-      'floatBlend',
-      extensions.floatBlend,
-      true,
-      'EXT_float_blend is required for the complete catalog',
-    )
-  }
+  // OES_texture_float_linear and EXT_float_blend are reported, not required. The
+  // engine samples its float textures with NEAREST filtering, so no float texture
+  // needs linear filtering, and only blending into a 32-bit float target needs
+  // EXT_float_blend: the program controller refuses a program that does that when
+  // the extension is missing (graphCapabilityRequirements). iOS Safari offers
+  // neither extension.
   for (const [name, required] of Object.entries(MINIMUMS)) {
     const actual = limits[name]
     if (!Number.isFinite(actual) || actual < required) {

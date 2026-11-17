@@ -98,9 +98,12 @@ render(o1)
 
 ## Requirements and v1 boundaries
 
-The op requires CGL with WebGL2, `EXT_color_buffer_float`,
-`OES_texture_float_linear`, `EXT_float_blend` for the complete catalog, and the
-pinned CGL program and mesh cache shape. Minimum limits are 4096 for maximum
+The op requires CGL with WebGL2, `EXT_color_buffer_float`, and the pinned CGL
+program and mesh cache shape. It does not require `OES_texture_float_linear` or
+`EXT_float_blend`: the engine samples its float textures with nearest filtering,
+and the catalog blends only into 16-bit float targets. A program that blends
+into a 32-bit float target needs `EXT_float_blend` and fails before **Ready**
+without it. Minimum limits are 4096 for maximum
 texture size, 4 draw buffers, 9 fragment texture units, a 16,384-byte uniform
 block, and 8 uniform-buffer bindings. Unsupported capabilities fail before
 **Ready**.

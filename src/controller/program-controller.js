@@ -90,6 +90,28 @@ function packedUniformLayoutSize(layout) {
   return maximumSlot < 0 ? 0 : (maximumSlot + 1) * 16
 }
 
+// WebGL2 blends into 8-bit and 16-bit float color attachments without an
+// extension; only a 32-bit float attachment needs EXT_float_blend.
+const FLOAT32_FORMAT = /^(?:r|rg|rgb|rgba)32f(?:loat)?$/i
+
+function textureFormat(graph, textureId) {
+  const textures = graph?.textures
+  const spec = textures instanceof Map ? textures.get(textureId) : textures?.[textureId]
+  return typeof spec?.format === 'string' ? spec.format : undefined
+}
+
+// A blended pass needs float blending when one of its outputs is a 32-bit float
+// texture, or when the graph does not record an output's format.
+function passNeedsFloatBlend(graph, pass) {
+  if (!pass?.blend) return false
+  const outputs = Object.values(pass.outputs ?? {})
+  if (outputs.length === 0) return true
+  return outputs.some((textureId) => {
+    const format = textureFormat(graph, textureId)
+    return format === undefined || FLOAT32_FORMAT.test(format)
+  })
+}
+
 function graphCapabilityRequirements(graph) {
   let maxDrawBuffers = 1
   let maxTextureUnits = 1
@@ -104,7 +126,7 @@ function graphCapabilityRequirements(graph) {
       Number.isFinite(declaredDrawBuffers) ? declaredDrawBuffers : 0,
     )
     maxTextureUnits = Math.max(maxTextureUnits, Object.keys(pass?.inputs ?? {}).length)
-    needsFloatBlend ||= Boolean(pass?.blend)
+    needsFloatBlend ||= passNeedsFloatBlend(graph, pass)
   }
 
   const programs = graph?.programs instanceof Map
