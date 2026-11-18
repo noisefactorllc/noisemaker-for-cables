@@ -6,10 +6,11 @@
 #
 # NM_CHANGED_FILES (one path per line) narrows the run to the checks that
 # exercise those paths: vendor:verify and the op-bundle rebuild still run for
-# any changed path, and a unit test file runs when it names one of the changed
-# paths. An empty selection falls back to the whole unit suite, so no test
-# that exercises a changed path is dropped. With NM_CHANGED_FILES unset the
-# whole check runs exactly as before.
+# any changed path, a unit test file runs when it names one of the changed
+# paths, and a changed browser spec runs through Playwright's runner (which
+# starts the fixture server itself). An empty selection falls back to the
+# whole unit suite, so no test that exercises a changed path is dropped. With
+# NM_CHANGED_FILES unset the whole check runs exactly as before.
 # NM_SHARD_INDEX and NM_SHARD_COUNT split the selected unit tests across
 # bounded invocations; together the shards run every selected test.
 set -eu
@@ -21,9 +22,16 @@ fi
 changed=$(mktemp)
 selected=$(mktemp)
 trap 'rm -f "$changed" "$selected"' EXIT
-printf '%s\n' "$NM_CHANGED_FILES" | sed 's|.*/||' > "$changed"
+# Matching is by basename inside test-file text. The entrypoint's own basename
+# ("test") would match every test file by accident, so a change to the
+# entrypoint itself selects nothing and falls back to the whole unit suite.
+printf '%s\n' "$NM_CHANGED_FILES" | sed 's|.*/||' | grep -vx -e test > "$changed" || true
 
-for t in test/*.test.js; do
+# A changed browser spec exercises itself: select it by its changed path.
+printf '%s\n' "$NM_CHANGED_FILES" |
+    grep -E '^test/browser/[^/]+\.spec\.js$' >> "$selected" || true
+
+for t in test/*.test.js test/browser/*.spec.js; do
     while IFS= read -r name; do
         if [ -n "$name" ] && grep -q -F -e "$name" "$t"; then
             printf '%s\n' "$t" >> "$selected"
@@ -48,7 +56,40 @@ fi
 
 npm run vendor:verify
 if [ -s "$selected" ]; then
-    node --test $(cat "$selected")
+    # Browser specs need Playwright's runner; unit test files run under the
+    # Node test runner.
+    specs=$(grep -E '^test/browser/[^/]+\.spec\.js$' "$selected" || true)
+    units=$(grep -v -E '^test/browser/[^/]+\.spec\.js$' "$selected" || true)
+    if [ -n "$units" ]; then
+        node --test $units
+    fi
+    if [ -n "$specs" ]; then
+        # HOME can be a noexec tmpfs, where an installed browser fails to
+        # launch with EACCES. Probe candidate directories by executing a copy
+        # of /bin/true there and point Playwright at the first exec-mounted
+        # one; the default resolution stays in force when none qualifies.
+        probe_exec_root() {
+            d=$1
+            [ -d "$d" ] || return 1
+            cp /bin/true "$d/.nm-exec-probe" 2>/dev/null || return 1
+            "$d/.nm-exec-probe" 2>/dev/null || {
+                rm -f "$d/.nm-exec-probe"
+                return 1
+            }
+            rm -f "$d/.nm-exec-probe"
+        }
+        for candidate in "${TMPDIR:-/tmp}" /var/tmp; do
+            if probe_exec_root "$candidate"; then
+                PLAYWRIGHT_BROWSERS_PATH="$candidate/ms-playwright"
+                export PLAYWRIGHT_BROWSERS_PATH
+                break
+            fi
+        done
+        # A gate may run on a fresh container: install the browser before the
+        # first spec run; the install skips existing browsers.
+        npx playwright install chromium
+        npx playwright test $specs --project=chromium
+    fi
 else
     node --test test/*.test.js
 fi

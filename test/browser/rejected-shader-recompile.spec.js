@@ -2,18 +2,17 @@ import { expect, test } from '@playwright/test'
 
 // Ported from upstream noisemaker's shaders/tests/test_rejected_shader_recompile.mjs
 // ("FIX: keep the running program when a recompiled shader is rejected",
-// vendored at Build b631fc2c), WebGL2 backend: a hot recompile whose shader
-// the backend rejects keeps the accepted program running. The renderer
-// compiles a candidate graph's programs before the graph becomes current, so
-// a rejected compile leaves the accepted graph, its programs and its surfaces
-// in place: the graph and currentDsl still describe the accepted program,
-// later frames keep rendering it with no error, and a later valid compile
-// succeeds.
+// vendored at Build b631fc2c): a hot recompile whose shader the backend
+// rejects keeps the accepted program running. The renderer compiles a
+// candidate graph's programs before the graph becomes current, so a rejected
+// compile leaves the accepted graph, its programs and its surfaces in place:
+// the graph and currentDsl still describe the accepted program, later frames
+// keep rendering it with no error, and a later valid compile succeeds.
 //
-// The upstream test also runs the WebGPU backend; this port's browser harness
-// covers WebGL2 rendering, matching its other specs.
+// The WebGL2 leg runs in the default chromium project; the WebGPU leg runs in
+// the chromium-orientation project, whose launch arguments enable WebGPU the
+// same way as the effect-orientation spec.
 
-const SIZE = 64
 const ACCEPTED = 'search synth\nsolid(color: #ff0000).write(o0)\nrender(o0)'
 const REJECTED = 'search synth, filter\nsolid(color: #0000ff).tint().write(o0)\nrender(o0)'
 const LATER = 'search synth\nsolid(color: #0000ff).write(o0)\nrender(o0)'
@@ -23,9 +22,9 @@ const INVALID_TINT = { 1: { colorize: { glsl: '#version 300 es\nthis is invalid'
 const isRed = ([r, g, b]) => r > 200 && g < 40 && b < 40
 const isBlue = ([r, g, b]) => r < 40 && g < 40 && b > 200
 
-async function installRenderer(page) {
+async function installRenderer(page, preferWebGPU) {
   await page.goto('/test/browser/fixture.html')
-  await page.evaluate(async () => {
+  await page.evaluate(async (prefer) => {
     const { CanvasRenderer } = await import('/vendor-cache/noisemaker-shaders-core.esm.js')
     const canvas = document.createElement('canvas')
     canvas.id = 'canvas'
@@ -42,7 +41,7 @@ async function installRenderer(page) {
       basePath: '/vendor-cache',
       bundlePath: '/vendor-cache/effects',
       useBundles: true,
-      preferWebGPU: false,
+      preferWebGPU: prefer,
       onError: (error) => window.renderErrors.push(error?.code ?? String(error)),
     })
     await renderer.loadManifest()
@@ -65,15 +64,15 @@ async function installRenderer(page) {
         return { ok: false, code: error?.code ?? String(error) }
       }
     }
-    // The drawing buffer survives until the next composite, so reading the
-    // centre pixel through a 2D canvas right after a synchronous render()
-    // captures the frame the renderer just presented.
     window.renderFrames = async (count) => {
       for (let i = 0; i < count; i++) {
         renderer.render(i / 60)
         await frame()
       }
     }
+    // The drawing buffer survives until the next composite, so reading the
+    // centre pixel through a 2D canvas right after a synchronous render()
+    // captures the frame the renderer just presented.
     window.renderAndReadCentre = () => {
       renderer.render(0)
       const scratch = document.createElement('canvas')
@@ -84,7 +83,7 @@ async function installRenderer(page) {
       const pixel = ctx.getImageData(31, 31, 1, 1).data
       return [pixel[0], pixel[1], pixel[2]]
     }
-  })
+  }, preferWebGPU)
   await page.waitForFunction(() => typeof window.compileDsl === 'function')
 }
 
@@ -93,12 +92,11 @@ async function centreAfterFrames(page, count) {
   return page.evaluate(() => window.renderAndReadCentre())
 }
 
-test('a rejected shader keeps the accepted program rendering (WebGL2)', async ({ page }) => {
-  test.setTimeout(120_000)
-  await installRenderer(page)
+async function runRejectionFlow(page, preferWebGPU, expectedBackend) {
+  await installRenderer(page, preferWebGPU)
 
   const accepted = await page.evaluate((dsl) => window.compileDsl(dsl), ACCEPTED)
-  expect(accepted, 'program A compiles on WebGL2').toEqual({ ok: true, backend: 'WebGL2' })
+  expect(accepted, `program A compiles on ${expectedBackend}`).toEqual({ ok: true, backend: expectedBackend })
   await page.evaluate(() => window.renderFrames(3))
   const before = await page.evaluate(() => window.state())
   expect(isRed(await centreAfterFrames(page, 0)), 'program A renders red').toBe(true)
@@ -121,10 +119,22 @@ test('a rejected shader keeps the accepted program rendering (WebGL2)', async ({
   expect(isRed(stillRed), 'the canvas still shows program A').toBe(true)
 
   const later = await page.evaluate((dsl) => window.compileDsl(dsl), LATER)
-  expect(later, 'a later valid compile succeeds').toEqual({ ok: true, backend: 'WebGL2' })
+  expect(later, 'a later valid compile succeeds').toEqual({ ok: true, backend: expectedBackend })
   await page.evaluate(() => window.renderFrames(3))
   const final = await page.evaluate(() => window.state())
   expect(final.currentDsl).toBe(LATER)
   expect(final.errors, 'the later program renders with no error').toEqual([])
   expect(isBlue(await centreAfterFrames(page, 0)), 'the later program renders blue').toBe(true)
+}
+
+test('a rejected shader keeps the accepted program rendering (WebGL2)', async ({ page }, testInfo) => {
+  test.setTimeout(120_000)
+  test.skip(testInfo.project.name !== 'chromium', 'the WebGL2 leg runs in the chromium project')
+  await runRejectionFlow(page, false, 'WebGL2')
+})
+
+test('a rejected shader keeps the accepted program rendering (WebGPU)', async ({ page }, testInfo) => {
+  test.setTimeout(120_000)
+  test.skip(testInfo.project.name !== 'chromium-orientation', 'the WebGPU leg runs in the chromium-orientation project')
+  await runRejectionFlow(page, true, 'WebGPU')
 })

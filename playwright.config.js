@@ -61,7 +61,7 @@ export default defineConfig({
     },
     {
       name: 'chromium-orientation',
-      testMatch: /effect-orientation\.spec\.js/,
+      testMatch: /effect-orientation\.spec\.js|rejected-shader-recompile\.spec\.js/,
       use: {
         ...devices['Desktop Chrome'],
         browserName: 'chromium',
