@@ -86,9 +86,11 @@ if [ -s "$selected" ]; then
             fi
         done
         # A gate may run on a fresh container: install the browser before the
-        # first spec run; the install skips existing browsers.
+        # first spec run; the install skips existing browsers. Run every
+        # project, so a spec's backend-specific legs each execute in the
+        # project whose launch options they need.
         npx playwright install chromium
-        npx playwright test $specs --project=chromium
+        npx playwright test $specs
     fi
 else
     node --test test/*.test.js
