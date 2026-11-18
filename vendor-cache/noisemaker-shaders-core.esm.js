@@ -3,8 +3,8 @@
  * Includes: CanvasRenderer + UIController + EffectSelect
  * Copyright (c) 2017-2026 Noise Factor LLC. https://noisefactor.io/
  * SPDX-License-Identifier: MIT
- * Build: db2173e3
- * Date: 2026-11-12T00:24:33.375Z
+ * Build: b631fc2c
+ * Date: 2026-11-17T17:54:30.981Z
  */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
@@ -8326,6 +8326,13 @@ var WebGL2Backend = class _WebGL2Backend extends Backend {
       gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, null);
     }
   }
+  /**
+   * Delete a compiled program that no graph renders with.
+   * @param {object} program - An entry of this.programs
+   */
+  releaseProgram(program) {
+    if (program?.handle) this.gl.deleteProgram(program.handle);
+  }
   async compileProgram(id, spec) {
     const gl = this.gl;
     const rawSource = spec.source || spec.glsl || spec.fragment;
@@ -13965,17 +13972,23 @@ var Pipeline = class {
     this.resize(width, height);
   }
   /**
-   * Compile all shader programs referenced by the graph.
+   * Compile all shader programs referenced by a graph.
    * Sets isCompiling flag to prevent render loop from executing during compilation.
+   * When a program fails, the backend gets back the programs it held before
+   * this call, so a rejected candidate never replaces a program that the
+   * current graph renders with.
+   * @param {object} [graph] - The graph to compile; the current graph by default
    */
-  async compilePrograms() {
-    if (!this.graph || !this.graph.passes) return;
+  async compilePrograms(graph = this.graph) {
+    if (!graph || !graph.passes) return;
     this.isCompiling = true;
+    const programs = this.backend?.programs;
+    const accepted = programs instanceof Map ? new Map(programs) : null;
     try {
       const compiled = /* @__PURE__ */ new Set();
-      for (const pass of this.graph.passes) {
+      for (const pass of graph.passes) {
         if (compiled.has(pass.program)) continue;
-        const spec = this.resolveProgramSpec(pass);
+        const spec = this.resolveProgramSpec(pass, graph);
         if (!spec) {
           throw {
             code: "ERR_PROGRAM_SPEC_MISSING",
@@ -13986,15 +13999,33 @@ var Pipeline = class {
         await this.backend.compileProgram(pass.program, spec);
         compiled.add(pass.program);
       }
+    } catch (error) {
+      if (accepted) this.restorePrograms(accepted);
+      throw error;
     } finally {
       this.isCompiling = false;
     }
   }
   /**
-   * Resolve the program specification for a pass
+   * Give the backend back the programs in `accepted`, and release every
+   * program compiled since.
+   * @param {Map} accepted - The backend's programs before a compile began
    */
-  resolveProgramSpec(pass) {
-    const programs = this.graph?.programs;
+  restorePrograms(accepted) {
+    const programs = this.backend.programs;
+    for (const [id, program] of programs) {
+      if (accepted.get(id) !== program) this.backend.releaseProgram?.(program);
+    }
+    programs.clear();
+    for (const [id, program] of accepted) programs.set(id, program);
+  }
+  /**
+   * Resolve the program specification for a pass
+   * @param {object} pass - A pass of `graph`
+   * @param {object} [graph] - The graph that holds the pass; the current graph by default
+   */
+  resolveProgramSpec(pass, graph = this.graph) {
+    const programs = graph?.programs;
     if (programs instanceof Map && programs.has(pass.program)) {
       return programs.get(pass.program);
     }
@@ -17391,22 +17422,33 @@ function formatError(err) {
   return err.message || err.detail || (typeof err === "object" ? JSON.stringify(err) : String(err));
 }
 function recompile(pipeline, newSource, options = {}) {
+  const newGraph = compileGraphFor(pipeline, newSource, options);
+  return newGraph && swapGraph(pipeline, newGraph) ? newGraph : null;
+}
+function compileGraphFor(pipeline, newSource, options = {}) {
   try {
-    const newGraph = compileGraph(newSource, {
+    return compileGraph(newSource, {
       width: pipeline.width,
       height: pipeline.height,
       shaderOverrides: options.shaderOverrides
     });
+  } catch (error) {
+    console.error("Recompilation failed:", formatError(error));
+    return null;
+  }
+}
+function swapGraph(pipeline, newGraph) {
+  try {
     pipeline.graph = newGraph;
     pipeline.createSurfaces();
     const defaultUniforms = pipeline.collectDefaultUniforms();
     pipeline.recreateTextures(defaultUniforms);
     pipeline.initAsyncEffects();
     pipeline.initLifecycleEffects?.();
-    return newGraph;
+    return true;
   } catch (error) {
     console.error("Recompilation failed:", formatError(error));
-    return null;
+    return false;
   }
 }
 
@@ -18534,8 +18576,14 @@ var CanvasRenderer = class {
       const compilationPipeline = this._pipeline;
       compilationPipeline.isCompiling = true;
       try {
-        const newGraph = recompile(compilationPipeline, dsl, { shaderOverrides });
-        if (!newGraph) {
+        const newGraph = compileGraphFor(compilationPipeline, dsl, { shaderOverrides });
+        if (newGraph) {
+          await compilationPipeline.compilePrograms(newGraph);
+          if (!this._isLifecycleCurrent(lifecycleGeneration) || this._pipeline !== compilationPipeline) {
+            return null;
+          }
+        }
+        if (!newGraph || !swapGraph(compilationPipeline, newGraph)) {
           compilationPipeline.isCompiling = false;
           const previousPipeline = compilationPipeline;
           const replacementPipeline = await this._createRuntime(dsl, {
@@ -18555,11 +18603,6 @@ var CanvasRenderer = class {
             previousPipeline?.dispose?.();
           } catch (err) {
             console.warn("Failed to dispose previous pipeline", err);
-          }
-        } else {
-          await compilationPipeline.compilePrograms();
-          if (!this._isLifecycleCurrent(lifecycleGeneration) || this._pipeline !== compilationPipeline) {
-            return null;
           }
         }
       } catch (err) {
