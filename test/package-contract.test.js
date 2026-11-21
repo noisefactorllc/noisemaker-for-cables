@@ -84,13 +84,14 @@ test('README identifies Noisemaker for Cables, its package, and its single-op sc
   assert.match(readme, /Ops\.Extension\.Noisemaker\.Program/)
 })
 
-test('README points to the live compatibility report as the current measured support', async () => {
+test('README points to the live compatibility report for measured support', async () => {
   const readme = await readProjectFile('README.md')
 
   assert.match(
     readme,
-    /Current measured support[^\n]*\]\(https:\/\/github\.com\/noisefactorllc\/noisemaker-for-cables\/issues\/5\)/,
+    /^- Measured support: the \[compatibility report\]\(https:\/\/github\.com\/noisefactorllc\/noisemaker-for-cables\/issues\/5\)/m,
   )
+  assert.doesNotMatch(readme, /current measured support/i)
   assert.doesNotMatch(readme, /docs\/COMPATIBILITY\.md|docs\/COMPLETION_GAPS\.md/)
 })
 
