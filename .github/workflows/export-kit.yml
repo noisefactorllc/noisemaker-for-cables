@@ -6,14 +6,14 @@ name: Export kit
 #
 # Push gate (fast, no rendering): `npm run check` (vendor lock, unit suite,
 # reproducible op bundle, package contents), the compatibility gate, and a
-# no-diff check on the committed op. A green gate dispatches the kit release.
+# no-diff check on the committed op. A push releases nothing.
 #
 # Weekly and manual runs add everything that renders through software GL or
 # downloads Cables Standalone: the browser suites (full-catalog parity sweep,
 # pixel parity, state hygiene) and the native editor smoke on Windows x64,
 # Intel macOS, macOS arm64, and Linux x64 for each declared Standalone
-# version. A manual run dispatches the kit release only when every job passes;
-# the weekly run never does.
+# version. A weekly or manual run on main dispatches the kit release only when
+# every job passes.
 
 on:
   workflow_dispatch:
