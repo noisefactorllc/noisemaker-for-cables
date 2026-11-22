@@ -3,8 +3,8 @@
  * Includes: CanvasRenderer + UIController + EffectSelect
  * Copyright (c) 2017-2026 Noise Factor LLC. https://noisefactor.io/
  * SPDX-License-Identifier: MIT
- * Build: dacd2b8c
- * Date: 2026-11-22T05:44:59.384Z
+ * Build: 7f3721e9
+ * Date: 2026-11-22T21:42:13.400Z
  */
 var NoisemakerCablesGL=(()=>{var cy=Object.create;var Ia=Object.defineProperty;var fy=Object.getOwnPropertyDescriptor;var uy=Object.getOwnPropertyNames;var dy=Object.getPrototypeOf,py=Object.prototype.hasOwnProperty;var Za=(e=>typeof require<"u"?require:typeof Proxy<"u"?new Proxy(e,{get:(t,o)=>(typeof require<"u"?require:t)[o]}):e)(function(e){if(typeof require<"u")return require.apply(this,arguments);throw Error('Dynamic require of "'+e+'" is not supported')});var w=(e,t,o)=>()=>{if(o)throw o[0];try{return e&&(t=e(e=0)),t}catch(r){throw o=[r],r}};var Ja=(e,t)=>{for(var o in t)Ia(e,o,{get:t[o],enumerable:!0})},Us=(e,t,o,r)=>{if(t&&typeof t=="object"||typeof t=="function")for(let i of uy(t))!py.call(e,i)&&i!==o&&Ia(e,i,{get:()=>t[i],enumerable:!(r=fy(t,i))||r.enumerable});return e};var Qa=(e,t,o)=>(o=e!=null?cy(dy(e)):{},Us(t||!e||!e.__esModule?Ia(o,"default",{value:e,enumerable:!0}):o,e)),my=e=>Us(Ia({},"__esModule",{value:!0}),e);function vn(e){let t=[],o=[],r=[],i=[],a=[],s=[],n=e.split(`
 `);for(let f of n){let u=f.trim();if(u.length===0||u.startsWith("#"))continue;let d=u.split(/\s+/);switch(d[0]){case"v":{let v=parseFloat(d[1])||0,_=parseFloat(d[2])||0,m=parseFloat(d[3])||0;t.push([v,_,m]);break}case"vn":{let v=parseFloat(d[1])||0,_=parseFloat(d[2])||0,m=parseFloat(d[3])||0;o.push([v,_,m]);break}case"vt":{let v=parseFloat(d[1])||0,_=parseFloat(d[2])||0;r.push([v,_]);break}case"f":{let v=[];for(let _=1;_<d.length;_++){let m=d[_].split("/"),T=parseInt(m[0],10)-1,R=m[1]?parseInt(m[1],10)-1:-1,g=m[2]?parseInt(m[2],10)-1:-1;v.push({vIdx:T,vtIdx:R,vnIdx:g})}for(let _=1;_<v.length-1;_++){let m=v[0],T=v[_],R=v[_+1];l(m),l(R),l(T)}break}}}function l(f){f.vIdx>=0&&f.vIdx<t.length?i.push(...t[f.vIdx]):i.push(0,0,0),f.vnIdx>=0&&f.vnIdx<o.length?a.push(...o[f.vnIdx]):a.push(0,0,1),f.vtIdx>=0&&f.vtIdx<r.length?s.push(...r[f.vtIdx]):s.push(0,0)}let c=i.length/3;return o.length===0&&c>0&&Ky(i,a),{positions:new Float32Array(i),normals:new Float32Array(a),uvs:new Float32Array(s),vertexCount:c}}function Ky(e,t){let o=e.length/3,r=o/3,i=new Float32Array(r*3);for(let n=0;n<r;n++){let l=n*9,c=l+3,f=l+6,u=e[l],d=e[l+1],p=e[l+2],v=e[c],_=e[c+1],m=e[c+2],T=e[f],R=e[f+1],g=e[f+2],C=v-u,P=_-d,N=m-p,L=T-u,Q=R-d,$=g-p,de=P*$-N*Q,ie=N*L-C*$,ae=C*Q-P*L,ne=Math.sqrt(de*de+ie*ie+ae*ae);ne>1e-4?(de/=ne,ie/=ne,ae/=ne):(de=0,ie=0,ae=1),i[n*3]=de,i[n*3+1]=ie,i[n*3+2]=ae}let a=new Map,s=n=>Math.round(n*1e4)/1e4;for(let n=0;n<o;n++){let l=e[n*3],c=e[n*3+1],f=e[n*3+2],u=`${s(l)},${s(c)},${s(f)}`,d=Math.floor(n/3),p=i[d*3],v=i[d*3+1],_=i[d*3+2];a.has(u)||a.set(u,{nx:0,ny:0,nz:0,count:0});let m=a.get(u);m.nx+=p,m.ny+=v,m.nz+=_,m.count++}for(let n of a.values()){let l=Math.sqrt(n.nx*n.nx+n.ny*n.ny+n.nz*n.nz);l>1e-4?(n.nx/=l,n.ny/=l,n.nz/=l):(n.nx=0,n.ny=0,n.nz=1)}for(let n=0;n<o;n++){let l=e[n*3],c=e[n*3+1],f=e[n*3+2],u=`${s(l)},${s(c)},${s(f)}`,d=a.get(u);t[n*3]=d.nx,t[n*3+1]=d.ny,t[n*3+2]=d.nz}}async function Zy(e){let t=await fetch(e);if(!t.ok)throw new Error(`Failed to load OBJ: ${t.status} ${t.statusText}`);let o=await t.text();return vn(o)}function Jy(e,t,o,r,i){let a=r*i,s=e.length/3;s>a&&console.warn(`[OBJ] Mesh has ${s} vertices, but texture can only hold ${a}. Truncating.`);let n=Math.min(s,a),l=r*i,c=new Float32Array(l*4),f=new Float32Array(l*4),u=new Float32Array(l*4);for(let d=0;d<n;d++){let p=d*4,v=d*3,_=d*2;c[p]=e[v],c[p+1]=e[v+1],c[p+2]=e[v+2],c[p+3]=1,f[p]=t[v],f[p+1]=t[v+1],f[p+2]=t[v+2],f[p+3]=0,u[p]=o[_],u[p+1]=o[_+1],u[p+2]=0,u[p+3]=0}for(let d=n;d<l;d++){let p=d*4;c[p+3]=0}return{positionData:c,normalData:f,uvData:u,vertexCount:n}}function gn(e){let t=[],o=0,r=1,i=1,a=1,s=1,n=0;function l(p,v,_,m,T){for(let P=n;P<o;P++)e[P]===`
@@ -75890,6 +75890,28 @@ vec3 isosurfaceNormal(vec3 p, vec3 fallback) {
     return fallback;
 }
 
+// A voxel that stops the voxel ray. Cells outside the volume are empty.
+bool voxelOccupied(ivec3 cell) {
+    if (any(lessThan(cell, ivec3(0))) || any(greaterThanEqual(cell, ivec3(volumeSize)))) return false;
+    float density = texelFetch(analyticalGeo, ivec2(cell.x, cell.y + cell.z * volumeSize), 0).a;
+    return density > 0.0 && density >= threshold;
+}
+
+// A ray through a voxel edge crosses two boundaries at one distance and enters
+// the cell beyond the edge, where two of its faces meet. Rounding decides
+// whether the crossings compare equal. Where a neighboring voxel covers one of
+// those faces, the rays on either side of the edge show the other one, so the
+// cell shows the first face that its neighbors leave exposed. \`toward\` is the
+// ray's step along each axis, and \`normal\` the face of the first crossed axis
+// in y, x, z order.
+vec3 exposedFace(ivec3 cell, bvec3 crossed, ivec3 toward, vec3 normal) {
+    if (int(crossed.x) + int(crossed.y) + int(crossed.z) < 2) return normal;
+    if (crossed.y && !voxelOccupied(cell - ivec3(0, toward.y, 0))) return vec3(0.0, -float(toward.y), 0.0);
+    if (crossed.x && !voxelOccupied(cell - ivec3(toward.x, 0, 0))) return vec3(-float(toward.x), 0.0, 0.0);
+    if (crossed.z && !voxelOccupied(cell - ivec3(0, 0, toward.z))) return vec3(0.0, 0.0, -float(toward.z));
+    return normal;
+}
+
 #if VIEW_MODE == 2
 // Inverse of the billboard renderer's X -> Y -> Z rotation.
 vec3 inverseRotation(vec3 p) {
@@ -75965,18 +75987,19 @@ void renderPerspective(vec2 uv) {
         geoOut = vec4(worldNormal * 0.5 + 0.5, clamp(hit.distance / 320.0, 0.0, 1.0));
         return;
     }
+    bvec3 crossed = bvec3(false);
     for (int step = 0; step < volumeSize * 3; step++) {
         if (any(lessThan(cell, ivec3(0))) || any(greaterThanEqual(cell, ivec3(volumeSize))) || distance >= leave) break;
         ivec2 atlas = ivec2(cell.x, cell.y + cell.z * volumeSize);
         float density = texelFetch(analyticalGeo, atlas, 0).a;
         if (density > 0.0 && density >= threshold) {
-            vec3 worldNormal = forwardRotation(normal);
+            vec3 worldNormal = forwardRotation(exposedFace(cell, crossed, stepDir, normal));
             fragColor = vec4(lighting(texelFetch(volumeCache, atlas, 0).rgb, worldNormal, viewDirection), 1.0);
             geoOut = vec4(worldNormal * 0.5 + 0.5, clamp(distance / 320.0, 0.0, 1.0));
             return;
         }
         distance = min(min(nextT.x, nextT.y), nextT.z);
-        bvec3 crossed = lessThanEqual(nextT, vec3(distance));
+        crossed = lessThanEqual(nextT, vec3(distance));
         normal = vec3(0.0);
         if (crossed.y) normal.y = -float(stepDir.y);
         else if (crossed.x) normal.x = -float(stepDir.x);
@@ -76026,11 +76049,13 @@ void main() {
         return;
     }
     // A ray crosses at most 3*N cells, including tied boundaries.
+    bvec3 crossed = bvec3(false);
     for (int step = 0; step < volumeSize * 3; step++) {
         if (any(lessThan(cell, ivec3(0))) || distance >= leave) break;
         ivec2 atlas = ivec2(cell.x, cell.y + cell.z * volumeSize);
         float density = texelFetch(analyticalGeo, atlas, 0).a;
         if (density > 0.0 && density >= threshold) {
+            normal = exposedFace(cell, crossed, ivec3(-1), normal);
             vec3 color = texelFetch(volumeCache, atlas, 0).rgb;
             fragColor = vec4(lighting(color, normal, vec3(0.5773502692)), 1.0);
             geoOut = vec4(normal * 0.5 + 0.5, clamp(distance / (size * 4.0), 0.0, 1.0));
@@ -76038,7 +76063,7 @@ void main() {
         }
         distance = min(min(nextT.x, nextT.y), nextT.z);
         // Advance every tied axis so edge-only contacts cannot create stray voxels.
-        bvec3 crossed = lessThanEqual(nextT, vec3(distance));
+        crossed = lessThanEqual(nextT, vec3(distance));
         if (crossed.y) normal = vec3(0.0, 1.0, 0.0);
         else if (crossed.x) normal = vec3(1.0, 0.0, 0.0);
         else normal = vec3(0.0, 0.0, 1.0);
@@ -76210,6 +76235,28 @@ fn forwardRotation(input: vec3f) -> vec3f {
     return vec3f(p.x * c.z - p.y * s.z, p.x * s.z + p.y * c.z, p.z);
 }
 
+// A voxel that stops the voxel ray. Cells outside the volume are empty.
+fn voxelOccupied(cell: vec3i) -> bool {
+    if (any(cell < vec3i(0)) || any(cell >= vec3i(u.volumeSize))) { return false; }
+    let density = textureLoad(analyticalGeo, vec2i(cell.x, cell.y + cell.z * u.volumeSize), 0).a;
+    return density > 0.0 && density >= u.threshold;
+}
+
+// A ray through a voxel edge crosses two boundaries at one distance and enters
+// the cell beyond the edge, where two of its faces meet. Rounding decides
+// whether the crossings compare equal. Where a neighboring voxel covers one of
+// those faces, the rays on either side of the edge show the other one, so the
+// cell shows the first face that its neighbors leave exposed. \`toward\` is the
+// ray's step along each axis, and \`normal\` the face of the first crossed axis
+// in y, x, z order.
+fn exposedFace(cell: vec3i, crossed: vec3<bool>, toward: vec3i, normal: vec3f) -> vec3f {
+    if (i32(crossed.x) + i32(crossed.y) + i32(crossed.z) < 2) { return normal; }
+    if (crossed.y && !voxelOccupied(cell - vec3i(0, toward.y, 0))) { return vec3f(0.0, -f32(toward.y), 0.0); }
+    if (crossed.x && !voxelOccupied(cell - vec3i(toward.x, 0, 0))) { return vec3f(-f32(toward.x), 0.0, 0.0); }
+    if (crossed.z && !voxelOccupied(cell - vec3i(0, 0, toward.z))) { return vec3f(0.0, 0.0, -f32(toward.z)); }
+    return normal;
+}
+
 fn renderPerspective(uv: vec2f) -> FragmentOutput {
     var out: FragmentOutput;
     out.fragColor = vec4f(u.bgColor * u.bgAlpha, u.bgAlpha);
@@ -76268,18 +76315,19 @@ fn renderPerspective(uv: vec2f) -> FragmentOutput {
         out.geoOut = vec4f(worldNormal * 0.5 + 0.5, clamp(hit.distance / 320.0, 0.0, 1.0));
         return out;
     }
+    var crossed = vec3<bool>(false);
     for (var step = 0; step < u.volumeSize * 3; step++) {
         if (any(cell < vec3i(0)) || any(cell >= vec3i(u.volumeSize)) || distance >= leave) { break; }
         let atlas = vec2i(cell.x, cell.y + cell.z * u.volumeSize);
         let density = textureLoad(analyticalGeo, atlas, 0).a;
         if (density > 0.0 && density >= u.threshold) {
-            let worldNormal = forwardRotation(normal);
+            let worldNormal = forwardRotation(exposedFace(cell, crossed, stepDir, normal));
             out.fragColor = vec4f(lighting(textureLoad(volumeCache, atlas, 0).rgb, worldNormal, viewDirection), 1.0);
             out.geoOut = vec4f(worldNormal * 0.5 + 0.5, clamp(distance / 320.0, 0.0, 1.0));
             return out;
         }
         distance = min(min(nextT.x, nextT.y), nextT.z);
-        let crossed = nextT <= vec3f(distance);
+        crossed = nextT <= vec3f(distance);
         normal = vec3f(0.0);
         if (crossed.y) { normal.y = -f32(stepDir.y); }
         else if (crossed.x) { normal.x = -f32(stepDir.x); }
@@ -76326,18 +76374,20 @@ fn main(@builtin(position) position: vec4f) -> FragmentOutput {
         out.geoOut = vec4f(normal * 0.5 + 0.5, clamp(hit.distance / (size * 4.0), 0.0, 1.0));
         return out;
     }
+    var crossed = vec3<bool>(false);
     for (var step = 0; step < u.volumeSize * 3; step++) {
         if (any(cell < vec3i(0)) || distance >= leave) { break; }
         let atlas = vec2i(cell.x, cell.y + cell.z * u.volumeSize);
         let density = textureLoad(analyticalGeo, atlas, 0).a;
         if (density > 0.0 && density >= u.threshold) {
+            normal = exposedFace(cell, crossed, vec3i(-1), normal);
             let color = textureLoad(volumeCache, atlas, 0).rgb;
             out.fragColor = vec4f(lighting(color, normal, vec3f(0.5773502692)), 1.0);
             out.geoOut = vec4f(normal * 0.5 + 0.5, clamp(distance / (size * 4.0), 0.0, 1.0));
             return out;
         }
         distance = min(min(nextT.x, nextT.y), nextT.z);
-        let crossed = nextT <= vec3f(distance);
+        crossed = nextT <= vec3f(distance);
         if (crossed.y) { normal = vec3f(0.0, 1.0, 0.0); }
         else if (crossed.x) { normal = vec3f(1.0, 0.0, 0.0); }
         else { normal = vec3f(0.0, 0.0, 1.0); }
