@@ -71,6 +71,66 @@ render(o0)`,
   name: 'render/render3d shows the volume as authored from the front',
 }
 
+// Ported from upstream noisemaker's shaders/tests/test_height_grid_orientation.mjs
+// at the vendored checkpoint (75027859): seen from directly above, heightGrid
+// shows its diffuse image as authored — image right is screen right, image top
+// is screen top — and in the proportions of the frame, on a square, a wide and
+// a tall frame, on either backend. A uvMap diffuse image carries u in red and
+// v in green, so each axis reads directly from the presented canvas.
+const HEIGHT_GRID_FRAMES = [
+  { width: 128, height: 128, gridScale: 80, stateSize: 'x128' },
+  { width: 256, height: 128, gridScale: 80, stateSize: 'x64' },
+  { width: 128, height: 256, gridScale: 50, stateSize: 'x128' },
+]
+const HEIGHT_GRID_RENDERER =
+  'pointsRender(viewMode: perspective, rotateX: 1.5708, density: 100, intensity: 0, inputIntensity: 0)'
+const HEIGHT_GRID_EFFECTS = ['synth/testPattern', 'synth/solid', 'points/heightGrid', 'render/pointsEmit', 'render/pointsRender']
+
+// The box of the lit pixels of a frame.
+function litBox(view, width, height) {
+  const box = { x0: width, x1: -1, y0: height, y1: -1 }
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const i = (y * width + x) * 4
+      if (view[i] + view[i + 1] + view[i + 2] < 24) continue
+      box.x0 = Math.min(box.x0, x)
+      box.x1 = Math.max(box.x1, x)
+      box.y0 = Math.min(box.y0, y)
+      box.y1 = Math.max(box.y1, y)
+    }
+  }
+  expect(box.x1, 'the frame must contain lit pixels').toBeGreaterThanOrEqual(box.x0)
+  return { ...box, width: box.x1 - box.x0 + 1, height: box.y1 - box.y0 + 1 }
+}
+
+// Points inside the box, toward its corners. Each sample averages the lit
+// pixels of a 7 by 7 window, so the gaps between particles do not count.
+function sampleCorners(view, width, height, box) {
+  const dx = Math.round(box.width * 0.27)
+  const dy = Math.round(box.height * 0.27)
+  const corners = {
+    topLeft: [box.x0 + dx, box.y0 + dy],
+    topRight: [box.x1 - dx, box.y0 + dy],
+    bottomLeft: [box.x0 + dx, box.y1 - dy],
+  }
+  return Object.fromEntries(Object.entries(corners).map(([name, [cx, cy]]) => {
+    const sum = [0, 0, 0]
+    let lit = 0
+    for (let y = cy - 3; y <= cy + 3; y++) {
+      for (let x = cx - 3; x <= cx + 3; x++) {
+        const i = (y * width + x) * 4
+        if (view[i] + view[i + 1] + view[i + 2] === 0) continue
+        for (let c = 0; c < 3; c++) sum[c] += view[i + c]
+        lit++
+      }
+    }
+    expect(lit, `${name}: the sample window must contain lit pixels`).toBeGreaterThan(0)
+    return [name, sum.map((value) => value / lit)]
+  }))
+}
+const across = (rgb) => rgb.topRight[0] - rgb.topLeft[0]
+const down = (rgb) => rgb.bottomLeft[1] - rgb.topLeft[1]
+
 function at(view, x, y) {
   const offset = (y * SIZE + x) * 4
   return [view[offset], view[offset + 1], view[offset + 2]]
@@ -214,5 +274,82 @@ test.describe.serial('effect orientation regression', () => {
 
     await testInfo.attach('orientation-failures.txt', { body: failures.join('\n') || 'none' })
     expect(failures, 'orientation case failures').toEqual([])
+  })
+})
+
+test.describe.serial('heightGrid orientation regression', () => {
+  test('heightGrid shows its image as authored, in the frame proportions, on both backends', async ({ browser }, testInfo) => {
+    test.setTimeout(900_000)
+    const failures = []
+
+    for (const backend of ['webgl2', 'webgpu']) {
+      const page = await browser.newPage({ viewport: { width: 256, height: 256 } })
+      const errors = []
+      page.on('pageerror', (error) => errors.push(error.message))
+      page.on('console', (message) => {
+        if (READBACK_PERF_WARNING.test(message.text())) return
+        if (['error', 'warning'].includes(message.type())) errors.push(message.text())
+      })
+      try {
+        await page.goto('/test/browser/fixture.html')
+
+        // Each frame shape gets its own harness session: the harness holds
+        // one canvas-backed renderer with that frame's dimensions.
+        const startFrame = async (width, height) => {
+          await page.evaluate(() => window.orientationHarness.stop()).catch(() => {})
+          await page.evaluate(([backendName, size]) => window.orientationHarness.start(backendName, size), [backend, [width, height]])
+        }
+        const capture = async ({ dsl, effects = [], frames = 4 }, label) => {
+          const executed = await page.evaluate((definition) => window.orientationHarness.frame(definition), { dsl, effects, frames, media: 'uv' })
+          expect(executed, `${label}: requested backend must execute`).toBe(backend)
+          const png = await page.locator('#orientation-canvas').screenshot()
+          return page.evaluate((bytes) => window.orientationHarness.decodePng(bytes), new Uint8Array(png))
+        }
+
+        for (const { width, height, gridScale, stateSize } of HEIGHT_GRID_FRAMES) {
+          const label = `${backend} ${width} x ${height} heightGrid`
+          try {
+            await startFrame(width, height)
+
+            const reference = await capture({
+              dsl: `search synth\ntestPattern(pattern: uvMap).write(o0)\nrender(o0)`,
+            }, `${label} uvMap reference`)
+            const referenceBox = litBox(reference, width, height)
+            const referenceRgb = sampleCorners(reference, width, height, referenceBox)
+            expect(Math.abs(across(referenceRgb)), `${label}: the uvMap reference must vary along both axes`).toBeGreaterThan(48)
+            expect(Math.abs(down(referenceRgb)), `${label}: the uvMap reference must vary along both axes`).toBeGreaterThan(48)
+
+            const view = await capture({
+              dsl: `search synth, points, render
+testPattern(pattern: uvMap).write(o1)
+solid(color: #ffffff).pointsEmit(stateSize: ${stateSize}).heightGrid(gridScale: ${gridScale}, heightScale: 0, diffuseTex: read(o1)).${HEIGHT_GRID_RENDERER}.write(o0)
+render(o0)`,
+              effects: HEIGHT_GRID_EFFECTS,
+            }, label)
+            const box = litBox(view, width, height)
+            expect(box.x0 > 0 && box.y0 > 0 && box.x1 < width - 1 && box.y1 < height - 1,
+              `${label}: the grid must fit inside the frame (x ${box.x0} to ${box.x1}, y ${box.y0} to ${box.y1})`).toBe(true)
+            const rgb = sampleCorners(view, width, height, box)
+            expect(Math.sign(across(rgb)) === Math.sign(across(referenceRgb)) && Math.abs(across(rgb)) > 32,
+              `${label}: seen from above, image right must be screen right (red ${rgb.topLeft[0]} -> ${rgb.topRight[0]})`).toBe(true)
+            expect(Math.sign(down(rgb)) === Math.sign(down(referenceRgb)) && Math.abs(down(rgb)) > 32,
+              `${label}: seen from above, image top must be screen top (green ${rgb.topLeft[1]} -> ${rgb.bottomLeft[1]})`).toBe(true)
+            const shape = width / height
+            expect(Math.abs(box.width / box.height - shape),
+              `${label}: seen from above, the grid is ${box.width} by ${box.height} pixels, and its frame is ${width} by ${height}`).toBeLessThanOrEqual(shape * 0.1)
+          } catch (error) {
+            failures.push(`${label}: ${error.message}`)
+          }
+        }
+
+        expect(errors, `${backend} console must be clean`).toEqual([])
+      } finally {
+        await page.evaluate(() => window.orientationHarness.stop()).catch(() => {})
+        await page.close()
+      }
+    }
+
+    await testInfo.attach('heightgrid-orientation-failures.txt', { body: failures.join('\n') || 'none' })
+    expect(failures, 'heightGrid orientation case failures').toEqual([])
   })
 })

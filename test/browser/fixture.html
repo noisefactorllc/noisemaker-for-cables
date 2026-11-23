@@ -4,6 +4,10 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Noisemaker for Cables browser harness</title>
+    <!-- Hosted runs present the fixture in a headed browser, where Chrome
+         requests /favicon.ico and a missing one logs a 404 console error.
+         The data: icon suppresses that request without a file. -->
+    <link rel="icon" href="data:,">
   </head>
   <body>
     <main id="harness-root"></main>

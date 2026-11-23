@@ -15,11 +15,11 @@ const BASE_PATH = '/vendor-cache'
 const BUNDLE_PATH = '/vendor-cache/effects'
 const FIXTURE_URL = '/test/browser/fixture.html'
 
-async function createCanvasBackedRenderer(backend, size) {
+async function createCanvasBackedRenderer(backend, width, height = width) {
   const { CanvasRenderer } = await import('/vendor-cache/noisemaker-shaders-core.esm.js')
   const canvas = document.createElement('canvas')
-  canvas.width = size
-  canvas.height = size
+  canvas.width = width
+  canvas.height = height
   canvas.id = 'orientation-canvas'
   const style = document.createElement('style')
   style.textContent = 'body{margin:0}canvas{display:block}'
@@ -27,8 +27,8 @@ async function createCanvasBackedRenderer(backend, size) {
   document.body.appendChild(canvas)
   const renderer = new CanvasRenderer({
     canvas,
-    width: size,
-    height: size,
+    width,
+    height,
     basePath: BASE_PATH,
     bundlePath: BUNDLE_PATH,
     useBundles: true,
@@ -41,22 +41,22 @@ async function createCanvasBackedRenderer(backend, size) {
   // everywhere, green on its right half and blue on its top half.
   const canvasOf = (pixel) => {
     const mediaCanvas = document.createElement('canvas')
-    mediaCanvas.width = size
-    mediaCanvas.height = size
-    const image = new ImageData(size, size)
-    for (let y = 0; y < size; y++) {
-      for (let x = 0; x < size; x++) {
-        image.data.set(pixel(x, y), (y * size + x) * 4)
+    mediaCanvas.width = width
+    mediaCanvas.height = height
+    const image = new ImageData(width, height)
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        image.data.set(pixel(x, y), (y * width + x) * 4)
       }
     }
     mediaCanvas.getContext('2d').putImageData(image, 0, 0)
     return mediaCanvas
   }
   const mediaCanvases = {
-    cube: canvasOf((x, y) => [255, x < size / 2 ? 0 : 255, y < size / 2 ? 255 : 0, 255]),
+    cube: canvasOf((x, y) => [255, x < width / 2 ? 0 : 255, y < height / 2 ? 255 : 0, 255]),
     uv: canvasOf((x, y) => [
-      Math.round(255 * (x + 0.5) / size),
-      Math.round(255 * (1 - (y + 0.5) / size)),
+      Math.round(255 * (x + 0.5) / width),
+      Math.round(255 * (1 - (y + 0.5) / height)),
       0,
       255,
     ]),
@@ -68,9 +68,13 @@ export function createOrientationHarness() {
   let session = null
 
   return Object.freeze({
+    // size is a square edge length, or a [width, height] pair for a
+    // non-square frame: the heightGrid frame-shape cases render on a wide
+    // and a tall frame as well as a square one.
     async start(backend, size = 128) {
       if (session) throw new Error('orientation harness already started')
-      session = await createCanvasBackedRenderer(backend, size)
+      const [width, height] = Array.isArray(size) ? size : [size, size]
+      session = await createCanvasBackedRenderer(backend, width, height)
     },
 
     // Compile the case's DSL, render it, upload media as hosts upload media,
