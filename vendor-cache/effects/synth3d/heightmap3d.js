@@ -4,7 +4,7 @@ var n=class{constructor(e={}){this.state={},this.uniforms={},e.name&&(this.name=
 noise(scaleX: 90, scaleY: 90, colorMode: mono, speed: 0).write(o1)
 gradient(type: fourCorners, color1: #006e94, color2: #24e4ff, color3: #bcff46, color4: #efffff).write(o2)
 heightmap3d(heightTex: read(o1), tex: read(o2)).renderLandscape3d(panY: -0.18).write(o0)
-render(o0)`});var o={precompute:{glsl:`#version 300 es
+render(o0)`});var i={precompute:{glsl:`#version 300 es
 precision highp float;
 precision highp int;
 
@@ -13,19 +13,46 @@ uniform sampler2D tex;
 uniform int volumeSize;
 uniform float heightScale;
 uniform float baseHeight;
+uniform float aspect;
+uniform float aspectInv;
 
 layout(location = 0) out vec4 fragColor;
 layout(location = 1) out vec4 geoOut;
 
+// The terrain keeps the frame's proportions inside the square footprint of the
+// volume. On a wide frame it spans the volume's width and a part of its depth,
+// on a tall frame the depth and a part of the width, and on a square frame all
+// of both. Each span is a whole, even count of columns, so the terrain is
+// centered. aspect and aspectInv are the frame's width over its height and the
+// inverse. They are computed outside the shader and the volume size is a power
+// of two, so both backends get the same counts.
+ivec2 terrainSpan() {
+    float halfSize = float(volumeSize) * 0.5;
+    return ivec2(
+        aspect < 1.0 ? max(2, 2 * int(floor(halfSize * aspect + 0.5))) : volumeSize,
+        aspectInv < 1.0 ? max(2, 2 * int(floor(halfSize * aspectInv + 0.5))) : volumeSize);
+}
+
+// The place of an XZ voxel column in the terrain, counted in columns from the
+// terrain's own corner. Volume z = 0 is toward the image's top row, so a view
+// from above along -Y, screen right on +X, shows the image as authored rather
+// than mirrored.
+ivec2 terrainColumn(ivec2 column) {
+    return ivec2(column.x, volumeSize - 1 - column.y) - (volumeSize - terrainSpan()) / 2;
+}
+
+bool inTerrain(ivec2 column) {
+    ivec2 image = terrainColumn(column);
+    return all(greaterThanEqual(image, ivec2(0))) && all(lessThan(image, terrainSpan()));
+}
+
 // Sample each image independently at the center of the XZ voxel column.
-// Volume z = 0 holds the image's top row, so a view from above along -Y,
-// screen right on +X, shows the image as authored rather than mirrored.
 ivec2 imageTexel(ivec2 column, ivec2 size) {
-    ivec2 image = ivec2(column.x, volumeSize - 1 - column.y);
-    return clamp(((image * 2 + 1) * size) / (volumeSize * 2), ivec2(0), size - 1);
+    return clamp(((terrainColumn(column) * 2 + 1) * size) / (terrainSpan() * 2), ivec2(0), size - 1);
 }
 
 float columnHeight(ivec2 column) {
+    if (!inTerrain(column)) return 0.0;
     vec3 rgb = texelFetch(heightTex, imageTexel(column, textureSize(heightTex, 0)), 0).rgb;
     float luminance = dot(rgb, vec3(0.2126, 0.7152, 0.0722));
     return floor(clamp(luminance * heightScale + baseHeight, 0.0, 1.0) * float(volumeSize) + 0.5);
@@ -59,6 +86,8 @@ void main() {
     volumeSize: i32,
     heightScale: f32,
     baseHeight: f32,
+    aspect: f32,
+    aspectInv: f32,
 }
 @group(0) @binding(0) var<uniform> u: Uniforms;
 @group(0) @binding(1) var heightTex: texture_2d<f32>;
@@ -69,15 +98,41 @@ struct FragmentOutput {
     @location(1) geoOut: vec4f,
 }
 
+// The terrain keeps the frame's proportions inside the square footprint of the
+// volume. On a wide frame it spans the volume's width and a part of its depth,
+// on a tall frame the depth and a part of the width, and on a square frame all
+// of both. Each span is a whole, even count of columns, so the terrain is
+// centered. aspect and aspectInv are the frame's width over its height and the
+// inverse. They are computed outside the shader and the volume size is a power
+// of two, so both backends get the same counts.
+fn terrainSpan() -> vec2i {
+    let halfSize = f32(u.volumeSize) * 0.5;
+    return vec2i(
+        select(u.volumeSize, max(2, 2 * i32(floor(halfSize * u.aspect + 0.5))), u.aspect < 1.0),
+        select(u.volumeSize, max(2, 2 * i32(floor(halfSize * u.aspectInv + 0.5))), u.aspectInv < 1.0));
+}
+
+// The place of an XZ voxel column in the terrain, counted in columns from the
+// terrain's own corner. Volume z = 0 is toward the image's top row, so a view
+// from above along -Y, screen right on +X, shows the image as authored rather
+// than mirrored.
+fn terrainColumn(column: vec2i) -> vec2i {
+    return vec2i(column.x, u.volumeSize - 1 - column.y) - (vec2i(u.volumeSize) - terrainSpan()) / 2;
+}
+
+fn inTerrain(column: vec2i) -> bool {
+    let image = terrainColumn(column);
+    return all(image >= vec2i(0)) && all(image < terrainSpan());
+}
+
 // Native atlases and 2D surfaces use the same logical texel coordinates on both backends.
-// Volume z = 0 holds the image's top row, so a view from above along -Y,
-// screen right on +X, shows the image as authored rather than mirrored.
+// Sample each image independently at the center of the XZ voxel column.
 fn imageTexel(column: vec2i, size: vec2i) -> vec2i {
-    let image = vec2i(column.x, u.volumeSize - 1 - column.y);
-    return clamp(((image * 2 + 1) * size) / (u.volumeSize * 2), vec2i(0), size - 1);
+    return clamp(((terrainColumn(column) * 2 + 1) * size) / (terrainSpan() * 2), vec2i(0), size - 1);
 }
 
 fn columnHeight(column: vec2i) -> f32 {
+    if (!inTerrain(column)) { return 0.0; }
     let rgb = textureLoad(heightTex, imageTexel(column, vec2i(textureDimensions(heightTex))), 0).rgb;
     let luminance = dot(rgb, vec3f(0.2126, 0.7152, 0.0722));
     return floor(clamp(luminance * u.heightScale + u.baseHeight, 0.0, 1.0) * f32(u.volumeSize) + 0.5);
@@ -110,4 +165,4 @@ fn main(@builtin(position) position: vec4f) -> FragmentOutput {
     out.geoOut = vec4f(normal * 0.5 + 0.5, occupied);
     return out;
 }
-`}},a="# heightmap3d\n\nBake a height map and a diffuse color image into a voxel volume: for each `(x, z)` column, luminance from `heightTex` sets how tall the column is filled, and `tex` supplies the RGB stored at every occupied voxel in that column. Companion generator for `renderLandscape3d`, which raymarches the resulting volume.\n\n| Parameter | Type | Default | Range | Description |\n|-----------|------|---------|-------|-------------|\n| heightTex | surface | none | - | Height source; luminance sets column height |\n| tex | surface | none | - | Color source; sampled per column and stored at every occupied voxel |\n| volumeSize | int | x64 | x16/x32/x64/x128 | Voxel grid resolution along each axis |\n| heightScale | float | 0.35 | 0-1 | Height-map luminance multiplier before it is quantized into voxel columns |\n| baseHeight | float | 0 | 0-1 | Minimum column height added before scaling, so black pixels still fill some voxels |\n\nHeight uses Rec. 709 luminance weights (0.2126 red, 0.7152 green, 0.0722 blue) applied to `heightTex`'s sampled RGB. `heightScale` and `baseHeight` combine as `clamp(luminance * heightScale + baseHeight, 0, 1) * volumeSize` voxels tall. Image x runs along volume x and the image's top row lies at z = 0, so a view from directly above (`renderLandscape3d(viewMode: perspective, rotateX: 1.571)`) shows both images as authored. Chain into `renderLandscape3d()` to view the result; see that effect's help for camera controls.\n\n## Usage\n\n```\nsearch synth3d, filter3d, render\n\nheightmap3d()\n  .render3d()\n  .write(o0)\n\nrender(o0)\n```\n";if(t&&Object.keys(o).length>0){t.shaders||(t.shaders={});for(let[i,e]of Object.entries(o))t.shaders[i]={...e}}t&&a&&(t.help=a);var c="synth3d/heightmap3d",h="synth3d",m="heightmap3d",p=t;export{p as default,c as effectId,m as effectName,a as help,h as namespace};
+`}},o="# heightmap3d\n\nBake a height map and a diffuse color image into a voxel volume: for each `(x, z)` column, luminance from `heightTex` sets how tall the column is filled, and `tex` supplies the RGB stored at every occupied voxel in that column. Companion generator for `renderLandscape3d`, which raymarches the resulting volume.\n\n| Parameter | Type | Default | Range | Description |\n|-----------|------|---------|-------|-------------|\n| heightTex | surface | none | - | Height source; luminance sets column height |\n| tex | surface | none | - | Color source; sampled per column and stored at every occupied voxel |\n| volumeSize | int | x64 | x16/x32/x64/x128 | Voxel grid resolution along each axis |\n| heightScale | float | 0.35 | 0-1 | Height-map luminance multiplier before it is quantized into voxel columns |\n| baseHeight | float | 0 | 0-1 | Minimum column height added before scaling, so black pixels still fill some voxels |\n\nHeight uses Rec. 709 luminance weights (0.2126 red, 0.7152 green, 0.0722 blue) applied to `heightTex`'s sampled RGB. `heightScale` and `baseHeight` combine as `clamp(luminance * heightScale + baseHeight, 0, 1) * volumeSize` voxels tall. Image x runs along volume x and the image's top row lies toward z = 0, so a view from directly above (`renderLandscape3d(viewMode: perspective, rotateX: 1.571)`) shows both images as authored. The terrain keeps the frame's proportions inside the volume's square footprint: on a wide frame it spans the volume's width and a centered part of its depth, on a tall frame the depth and a centered part of the width, and on a square frame all of both. Columns outside the terrain are empty. Chain into `renderLandscape3d()` to view the result; see that effect's help for camera controls.\n\n## Usage\n\n```\nsearch synth3d, filter3d, render\n\nheightmap3d()\n  .render3d()\n  .write(o0)\n\nrender(o0)\n```\n";if(t&&Object.keys(i).length>0){t.shaders||(t.shaders={});for(let[a,e]of Object.entries(i))t.shaders[a]={...e}}t&&o&&(t.help=o);var h="synth3d/heightmap3d",c="synth3d",m="heightmap3d",p=t;export{p as default,h as effectId,m as effectName,o as help,c as namespace};

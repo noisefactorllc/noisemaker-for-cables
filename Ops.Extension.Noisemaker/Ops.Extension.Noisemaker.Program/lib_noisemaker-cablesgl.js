@@ -3,8 +3,8 @@
  * Includes: CanvasRenderer + UIController + EffectSelect
  * Copyright (c) 2017-2026 Noise Factor LLC. https://noisefactor.io/
  * SPDX-License-Identifier: MIT
- * Build: 75027859
- * Date: 2026-11-22T23:43:04.633Z
+ * Build: 478f94ea
+ * Date: 2026-11-23T02:11:00.447Z
  */
 var NoisemakerCablesGL=(()=>{var cy=Object.create;var Ia=Object.defineProperty;var fy=Object.getOwnPropertyDescriptor;var uy=Object.getOwnPropertyNames;var dy=Object.getPrototypeOf,py=Object.prototype.hasOwnProperty;var Za=(e=>typeof require<"u"?require:typeof Proxy<"u"?new Proxy(e,{get:(t,o)=>(typeof require<"u"?require:t)[o]}):e)(function(e){if(typeof require<"u")return require.apply(this,arguments);throw Error('Dynamic require of "'+e+'" is not supported')});var w=(e,t,o)=>()=>{if(o)throw o[0];try{return e&&(t=e(e=0)),t}catch(r){throw o=[r],r}};var Ja=(e,t)=>{for(var o in t)Ia(e,o,{get:t[o],enumerable:!0})},Us=(e,t,o,r)=>{if(t&&typeof t=="object"||typeof t=="function")for(let i of uy(t))!py.call(e,i)&&i!==o&&Ia(e,i,{get:()=>t[i],enumerable:!(r=fy(t,i))||r.enumerable});return e};var Qa=(e,t,o)=>(o=e!=null?cy(dy(e)):{},Us(t||!e||!e.__esModule?Ia(o,"default",{value:e,enumerable:!0}):o,e)),my=e=>Us(Ia({},"__esModule",{value:!0}),e);function vn(e){let t=[],o=[],r=[],i=[],a=[],s=[],n=e.split(`
 `);for(let f of n){let u=f.trim();if(u.length===0||u.startsWith("#"))continue;let d=u.split(/\s+/);switch(d[0]){case"v":{let v=parseFloat(d[1])||0,_=parseFloat(d[2])||0,m=parseFloat(d[3])||0;t.push([v,_,m]);break}case"vn":{let v=parseFloat(d[1])||0,_=parseFloat(d[2])||0,m=parseFloat(d[3])||0;o.push([v,_,m]);break}case"vt":{let v=parseFloat(d[1])||0,_=parseFloat(d[2])||0;r.push([v,_]);break}case"f":{let v=[];for(let _=1;_<d.length;_++){let m=d[_].split("/"),T=parseInt(m[0],10)-1,R=m[1]?parseInt(m[1],10)-1:-1,g=m[2]?parseInt(m[2],10)-1:-1;v.push({vIdx:T,vtIdx:R,vnIdx:g})}for(let _=1;_<v.length-1;_++){let m=v[0],T=v[_],R=v[_+1];l(m),l(R),l(T)}break}}}function l(f){f.vIdx>=0&&f.vIdx<t.length?i.push(...t[f.vIdx]):i.push(0,0,0),f.vnIdx>=0&&f.vnIdx<o.length?a.push(...o[f.vnIdx]):a.push(0,0,1),f.vtIdx>=0&&f.vtIdx<r.length?s.push(...r[f.vtIdx]):s.push(0,0)}let c=i.length/3;return o.length===0&&c>0&&Ky(i,a),{positions:new Float32Array(i),normals:new Float32Array(a),uvs:new Float32Array(s),vertexCount:c}}function Ky(e,t){let o=e.length/3,r=o/3,i=new Float32Array(r*3);for(let n=0;n<r;n++){let l=n*9,c=l+3,f=l+6,u=e[l],d=e[l+1],p=e[l+2],v=e[c],_=e[c+1],m=e[c+2],T=e[f],R=e[f+1],g=e[f+2],C=v-u,P=_-d,N=m-p,L=T-u,Q=R-d,$=g-p,de=P*$-N*Q,ie=N*L-C*$,ae=C*Q-P*L,ne=Math.sqrt(de*de+ie*ie+ae*ae);ne>1e-4?(de/=ne,ie/=ne,ae/=ne):(de=0,ie=0,ae=1),i[n*3]=de,i[n*3+1]=ie,i[n*3+2]=ae}let a=new Map,s=n=>Math.round(n*1e4)/1e4;for(let n=0;n<o;n++){let l=e[n*3],c=e[n*3+1],f=e[n*3+2],u=`${s(l)},${s(c)},${s(f)}`,d=Math.floor(n/3),p=i[d*3],v=i[d*3+1],_=i[d*3+2];a.has(u)||a.set(u,{nx:0,ny:0,nz:0,count:0});let m=a.get(u);m.nx+=p,m.ny+=v,m.nz+=_,m.count++}for(let n of a.values()){let l=Math.sqrt(n.nx*n.nx+n.ny*n.ny+n.nz*n.nz);l>1e-4?(n.nx/=l,n.ny/=l,n.nz/=l):(n.nx=0,n.ny=0,n.nz=1)}for(let n=0;n<o;n++){let l=e[n*3],c=e[n*3+1],f=e[n*3+2],u=`${s(l)},${s(c)},${s(f)}`,d=a.get(u);t[n*3]=d.nx,t[n*3+1]=d.ny,t[n*3+2]=d.nz}}async function Zy(e){let t=await fetch(e);if(!t.ok)throw new Error(`Failed to load OBJ: ${t.status} ${t.statusText}`);let o=await t.text();return vn(o)}function Jy(e,t,o,r,i){let a=r*i,s=e.length/3;s>a&&console.warn(`[OBJ] Mesh has ${s} vertices, but texture can only hold ${a}. Truncating.`);let n=Math.min(s,a),l=r*i,c=new Float32Array(l*4),f=new Float32Array(l*4),u=new Float32Array(l*4);for(let d=0;d<n;d++){let p=d*4,v=d*3,_=d*2;c[p]=e[v],c[p+1]=e[v+1],c[p+2]=e[v+2],c[p+3]=1,f[p]=t[v],f[p+1]=t[v+1],f[p+2]=t[v+2],f[p+3]=0,u[p]=o[_],u[p+1]=o[_+1],u[p+2]=0,u[p+3]=0}for(let d=n;d<l;d++){let p=d*4;c[p+3]=0}return{positionData:c,normalData:f,uvData:u,vertexCount:n}}function gn(e){let t=[],o=0,r=1,i=1,a=1,s=1,n=0;function l(p,v,_,m,T){for(let P=n;P<o;P++)e[P]===`
@@ -95807,19 +95807,46 @@ uniform sampler2D tex;
 uniform int volumeSize;
 uniform float heightScale;
 uniform float baseHeight;
+uniform float aspect;
+uniform float aspectInv;
 
 layout(location = 0) out vec4 fragColor;
 layout(location = 1) out vec4 geoOut;
 
+// The terrain keeps the frame's proportions inside the square footprint of the
+// volume. On a wide frame it spans the volume's width and a part of its depth,
+// on a tall frame the depth and a part of the width, and on a square frame all
+// of both. Each span is a whole, even count of columns, so the terrain is
+// centered. aspect and aspectInv are the frame's width over its height and the
+// inverse. They are computed outside the shader and the volume size is a power
+// of two, so both backends get the same counts.
+ivec2 terrainSpan() {
+    float halfSize = float(volumeSize) * 0.5;
+    return ivec2(
+        aspect < 1.0 ? max(2, 2 * int(floor(halfSize * aspect + 0.5))) : volumeSize,
+        aspectInv < 1.0 ? max(2, 2 * int(floor(halfSize * aspectInv + 0.5))) : volumeSize);
+}
+
+// The place of an XZ voxel column in the terrain, counted in columns from the
+// terrain's own corner. Volume z = 0 is toward the image's top row, so a view
+// from above along -Y, screen right on +X, shows the image as authored rather
+// than mirrored.
+ivec2 terrainColumn(ivec2 column) {
+    return ivec2(column.x, volumeSize - 1 - column.y) - (volumeSize - terrainSpan()) / 2;
+}
+
+bool inTerrain(ivec2 column) {
+    ivec2 image = terrainColumn(column);
+    return all(greaterThanEqual(image, ivec2(0))) && all(lessThan(image, terrainSpan()));
+}
+
 // Sample each image independently at the center of the XZ voxel column.
-// Volume z = 0 holds the image's top row, so a view from above along -Y,
-// screen right on +X, shows the image as authored rather than mirrored.
 ivec2 imageTexel(ivec2 column, ivec2 size) {
-    ivec2 image = ivec2(column.x, volumeSize - 1 - column.y);
-    return clamp(((image * 2 + 1) * size) / (volumeSize * 2), ivec2(0), size - 1);
+    return clamp(((terrainColumn(column) * 2 + 1) * size) / (terrainSpan() * 2), ivec2(0), size - 1);
 }
 
 float columnHeight(ivec2 column) {
+    if (!inTerrain(column)) return 0.0;
     vec3 rgb = texelFetch(heightTex, imageTexel(column, textureSize(heightTex, 0)), 0).rgb;
     float luminance = dot(rgb, vec3(0.2126, 0.7152, 0.0722));
     return floor(clamp(luminance * heightScale + baseHeight, 0.0, 1.0) * float(volumeSize) + 0.5);
@@ -95853,6 +95880,8 @@ void main() {
     volumeSize: i32,
     heightScale: f32,
     baseHeight: f32,
+    aspect: f32,
+    aspectInv: f32,
 }
 @group(0) @binding(0) var<uniform> u: Uniforms;
 @group(0) @binding(1) var heightTex: texture_2d<f32>;
@@ -95863,15 +95892,41 @@ struct FragmentOutput {
     @location(1) geoOut: vec4f,
 }
 
+// The terrain keeps the frame's proportions inside the square footprint of the
+// volume. On a wide frame it spans the volume's width and a part of its depth,
+// on a tall frame the depth and a part of the width, and on a square frame all
+// of both. Each span is a whole, even count of columns, so the terrain is
+// centered. aspect and aspectInv are the frame's width over its height and the
+// inverse. They are computed outside the shader and the volume size is a power
+// of two, so both backends get the same counts.
+fn terrainSpan() -> vec2i {
+    let halfSize = f32(u.volumeSize) * 0.5;
+    return vec2i(
+        select(u.volumeSize, max(2, 2 * i32(floor(halfSize * u.aspect + 0.5))), u.aspect < 1.0),
+        select(u.volumeSize, max(2, 2 * i32(floor(halfSize * u.aspectInv + 0.5))), u.aspectInv < 1.0));
+}
+
+// The place of an XZ voxel column in the terrain, counted in columns from the
+// terrain's own corner. Volume z = 0 is toward the image's top row, so a view
+// from above along -Y, screen right on +X, shows the image as authored rather
+// than mirrored.
+fn terrainColumn(column: vec2i) -> vec2i {
+    return vec2i(column.x, u.volumeSize - 1 - column.y) - (vec2i(u.volumeSize) - terrainSpan()) / 2;
+}
+
+fn inTerrain(column: vec2i) -> bool {
+    let image = terrainColumn(column);
+    return all(image >= vec2i(0)) && all(image < terrainSpan());
+}
+
 // Native atlases and 2D surfaces use the same logical texel coordinates on both backends.
-// Volume z = 0 holds the image's top row, so a view from above along -Y,
-// screen right on +X, shows the image as authored rather than mirrored.
+// Sample each image independently at the center of the XZ voxel column.
 fn imageTexel(column: vec2i, size: vec2i) -> vec2i {
-    let image = vec2i(column.x, u.volumeSize - 1 - column.y);
-    return clamp(((image * 2 + 1) * size) / (u.volumeSize * 2), vec2i(0), size - 1);
+    return clamp(((terrainColumn(column) * 2 + 1) * size) / (terrainSpan() * 2), vec2i(0), size - 1);
 }
 
 fn columnHeight(column: vec2i) -> f32 {
+    if (!inTerrain(column)) { return 0.0; }
     let rgb = textureLoad(heightTex, imageTexel(column, vec2i(textureDimensions(heightTex))), 0).rgb;
     let luminance = dot(rgb, vec3f(0.2126, 0.7152, 0.0722));
     return floor(clamp(luminance * u.heightScale + u.baseHeight, 0.0, 1.0) * f32(u.volumeSize) + 0.5);
@@ -95904,7 +95959,7 @@ fn main(@builtin(position) position: vec4f) -> FragmentOutput {
     out.geoOut = vec4f(normal * 0.5 + 0.5, occupied);
     return out;
 }
-`}},Pb="# heightmap3d\n\nBake a height map and a diffuse color image into a voxel volume: for each `(x, z)` column, luminance from `heightTex` sets how tall the column is filled, and `tex` supplies the RGB stored at every occupied voxel in that column. Companion generator for `renderLandscape3d`, which raymarches the resulting volume.\n\n| Parameter | Type | Default | Range | Description |\n|-----------|------|---------|-------|-------------|\n| heightTex | surface | none | - | Height source; luminance sets column height |\n| tex | surface | none | - | Color source; sampled per column and stored at every occupied voxel |\n| volumeSize | int | x64 | x16/x32/x64/x128 | Voxel grid resolution along each axis |\n| heightScale | float | 0.35 | 0-1 | Height-map luminance multiplier before it is quantized into voxel columns |\n| baseHeight | float | 0 | 0-1 | Minimum column height added before scaling, so black pixels still fill some voxels |\n\nHeight uses Rec. 709 luminance weights (0.2126 red, 0.7152 green, 0.0722 blue) applied to `heightTex`'s sampled RGB. `heightScale` and `baseHeight` combine as `clamp(luminance * heightScale + baseHeight, 0, 1) * volumeSize` voxels tall. Image x runs along volume x and the image's top row lies at z = 0, so a view from directly above (`renderLandscape3d(viewMode: perspective, rotateX: 1.571)`) shows both images as authored. Chain into `renderLandscape3d()` to view the result; see that effect's help for camera controls.\n\n## Usage\n\n```\nsearch synth3d, filter3d, render\n\nheightmap3d()\n  .render3d()\n  .write(o0)\n\nrender(o0)\n```\n";if(ea&&Object.keys(Db).length>0){ea.shaders||(ea.shaders={});for(let[e,t]of Object.entries(Db))ea.shaders[e]={...t}}ea&&Pb&&(ea.help=Pb);Mb=ea});var Cz,ta,Eb,Lb,Fb,Ub=w(()=>{Cz=class{constructor(e={}){this.state={},this.uniforms={},e.name&&(this.name=e.name),e.namespace&&(this.namespace=e.namespace),e.func&&(this.func=e.func),e.description&&(this.description=e.description),e.tags&&(this.tags=e.tags),e.globals&&(this.globals=e.globals),e.passes&&(this.passes=e.passes),e.textures&&(this.textures=e.textures),e.textures3d&&(this.textures3d=e.textures3d),e.shaders&&(this.shaders=e.shaders),e.externalTexture&&(this.externalTexture=e.externalTexture),e.externalMesh&&(this.externalMesh=e.externalMesh),e.builtinMeshes&&(this.builtinMeshes=e.builtinMeshes),e.outputTex3d&&(this.outputTex3d=e.outputTex3d),e.outputGeo&&(this.outputGeo=e.outputGeo),e.uniformLayout&&(this.uniformLayout=e.uniformLayout),e.uniformLayouts&&(this.uniformLayouts=e.uniformLayouts),e.paramAliases&&(this.paramAliases=e.paramAliases),e.openCategories&&(this.openCategories=e.openCategories),e.defaultProgram&&(this.defaultProgram=e.defaultProgram),e.hidden&&(this.hidden=!0),e.deprecatedBy&&(this.deprecatedBy=e.deprecatedBy),e.onInit&&(this._configOnInit=e.onInit),e.onUpdate&&(this._configOnUpdate=e.onUpdate),e.onDestroy&&(this._configOnDestroy=e.onDestroy),e.asyncInit&&(this._configAsyncInit=e.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(e){return this._configOnUpdate?this._configOnUpdate.call(this,e):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(e){return this._configAsyncInit?this._configAsyncInit.call(this,e):Promise.resolve()}},ta=new Cz({name:"Noise3D",namespace:"synth3d",func:"noise3d",tags:["3d","noise"],description:"3D simplex noise volume",textures:{volumeCache:{width:{param:"volumeSize",default:64},height:{param:"volumeSize",power:2,default:4096},format:"rgba16f"},geoBuffer:{width:{param:"volumeSize",default:64},height:{param:"volumeSize",power:2,default:4096},format:"rgba16f"}},globals:{volumeSize:{type:"int",default:64,uniform:"volumeSize",choices:{x16:16,x32:32,x64:64,x128:128},randChoices:[16,32,64],ui:{label:"volume size",control:"dropdown"}},scale:{type:"float",default:3,min:0,max:100,uniform:"scale",ui:{label:"scale"}},octaves:{type:"int",default:1,min:1,max:6,define:"OCTAVES",ui:{label:"octaves"}},colorMode:{type:"int",default:0,define:"COLOR_MODE",choices:{mono:0,rgb:1},ui:{label:"color mode",control:"dropdown"}},ridges:{type:"boolean",default:!1,define:"RIDGES",ui:{label:"ridges"}},seed:{type:"int",default:0,min:0,max:100,uniform:"seed",ui:{label:"seed"}},speed:{type:"int",default:1,min:0,max:5,zero:0,uniform:"speed",ui:{label:"speed"}}},passes:[{name:"precompute",program:"precompute",drawBuffers:2,viewport:{width:{param:"volumeSize",default:64},height:{param:"volumeSize",power:2,default:4096}},inputs:{},outputs:{color:"volumeCache",geoOut:"geoBuffer"}}],outputGeo:"geoBuffer",outputTex3d:"volumeCache"}),Eb={precompute:{glsl:`#version 300 es
+`}},Pb="# heightmap3d\n\nBake a height map and a diffuse color image into a voxel volume: for each `(x, z)` column, luminance from `heightTex` sets how tall the column is filled, and `tex` supplies the RGB stored at every occupied voxel in that column. Companion generator for `renderLandscape3d`, which raymarches the resulting volume.\n\n| Parameter | Type | Default | Range | Description |\n|-----------|------|---------|-------|-------------|\n| heightTex | surface | none | - | Height source; luminance sets column height |\n| tex | surface | none | - | Color source; sampled per column and stored at every occupied voxel |\n| volumeSize | int | x64 | x16/x32/x64/x128 | Voxel grid resolution along each axis |\n| heightScale | float | 0.35 | 0-1 | Height-map luminance multiplier before it is quantized into voxel columns |\n| baseHeight | float | 0 | 0-1 | Minimum column height added before scaling, so black pixels still fill some voxels |\n\nHeight uses Rec. 709 luminance weights (0.2126 red, 0.7152 green, 0.0722 blue) applied to `heightTex`'s sampled RGB. `heightScale` and `baseHeight` combine as `clamp(luminance * heightScale + baseHeight, 0, 1) * volumeSize` voxels tall. Image x runs along volume x and the image's top row lies toward z = 0, so a view from directly above (`renderLandscape3d(viewMode: perspective, rotateX: 1.571)`) shows both images as authored. The terrain keeps the frame's proportions inside the volume's square footprint: on a wide frame it spans the volume's width and a centered part of its depth, on a tall frame the depth and a centered part of the width, and on a square frame all of both. Columns outside the terrain are empty. Chain into `renderLandscape3d()` to view the result; see that effect's help for camera controls.\n\n## Usage\n\n```\nsearch synth3d, filter3d, render\n\nheightmap3d()\n  .render3d()\n  .write(o0)\n\nrender(o0)\n```\n";if(ea&&Object.keys(Db).length>0){ea.shaders||(ea.shaders={});for(let[e,t]of Object.entries(Db))ea.shaders[e]={...t}}ea&&Pb&&(ea.help=Pb);Mb=ea});var Cz,ta,Eb,Lb,Fb,Ub=w(()=>{Cz=class{constructor(e={}){this.state={},this.uniforms={},e.name&&(this.name=e.name),e.namespace&&(this.namespace=e.namespace),e.func&&(this.func=e.func),e.description&&(this.description=e.description),e.tags&&(this.tags=e.tags),e.globals&&(this.globals=e.globals),e.passes&&(this.passes=e.passes),e.textures&&(this.textures=e.textures),e.textures3d&&(this.textures3d=e.textures3d),e.shaders&&(this.shaders=e.shaders),e.externalTexture&&(this.externalTexture=e.externalTexture),e.externalMesh&&(this.externalMesh=e.externalMesh),e.builtinMeshes&&(this.builtinMeshes=e.builtinMeshes),e.outputTex3d&&(this.outputTex3d=e.outputTex3d),e.outputGeo&&(this.outputGeo=e.outputGeo),e.uniformLayout&&(this.uniformLayout=e.uniformLayout),e.uniformLayouts&&(this.uniformLayouts=e.uniformLayouts),e.paramAliases&&(this.paramAliases=e.paramAliases),e.openCategories&&(this.openCategories=e.openCategories),e.defaultProgram&&(this.defaultProgram=e.defaultProgram),e.hidden&&(this.hidden=!0),e.deprecatedBy&&(this.deprecatedBy=e.deprecatedBy),e.onInit&&(this._configOnInit=e.onInit),e.onUpdate&&(this._configOnUpdate=e.onUpdate),e.onDestroy&&(this._configOnDestroy=e.onDestroy),e.asyncInit&&(this._configAsyncInit=e.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(e){return this._configOnUpdate?this._configOnUpdate.call(this,e):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(e){return this._configAsyncInit?this._configAsyncInit.call(this,e):Promise.resolve()}},ta=new Cz({name:"Noise3D",namespace:"synth3d",func:"noise3d",tags:["3d","noise"],description:"3D simplex noise volume",textures:{volumeCache:{width:{param:"volumeSize",default:64},height:{param:"volumeSize",power:2,default:4096},format:"rgba16f"},geoBuffer:{width:{param:"volumeSize",default:64},height:{param:"volumeSize",power:2,default:4096},format:"rgba16f"}},globals:{volumeSize:{type:"int",default:64,uniform:"volumeSize",choices:{x16:16,x32:32,x64:64,x128:128},randChoices:[16,32,64],ui:{label:"volume size",control:"dropdown"}},scale:{type:"float",default:3,min:0,max:100,uniform:"scale",ui:{label:"scale"}},octaves:{type:"int",default:1,min:1,max:6,define:"OCTAVES",ui:{label:"octaves"}},colorMode:{type:"int",default:0,define:"COLOR_MODE",choices:{mono:0,rgb:1},ui:{label:"color mode",control:"dropdown"}},ridges:{type:"boolean",default:!1,define:"RIDGES",ui:{label:"ridges"}},seed:{type:"int",default:0,min:0,max:100,uniform:"seed",ui:{label:"seed"}},speed:{type:"int",default:1,min:0,max:5,zero:0,uniform:"speed",ui:{label:"speed"}}},passes:[{name:"precompute",program:"precompute",drawBuffers:2,viewport:{width:{param:"volumeSize",default:64},height:{param:"volumeSize",power:2,default:4096}},inputs:{},outputs:{color:"volumeCache",geoOut:"geoBuffer"}}],outputGeo:"geoBuffer",outputTex3d:"volumeCache"}),Eb={precompute:{glsl:`#version 300 es
 precision highp float;
 
 // OCTAVES, COLOR_MODE, RIDGES are compile-time #defines injected by the
