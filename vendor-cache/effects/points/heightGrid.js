@@ -24,6 +24,7 @@ uniform sampler2D diffuseTex;
 uniform float gridScale;
 uniform float heightScale;
 uniform float heightOffset;
+uniform float aspectInv;
 
 layout(location = 0) out vec4 outXYZ;
 layout(location = 1) out vec4 outVel;
@@ -36,12 +37,18 @@ void main() {
     vec2 uv = (vec2(coord) + 0.5) / vec2(stateSize);
     vec3 heightColor = texture(heightTex, uv).rgb;
     float elevation = dot(heightColor, vec3(0.2126, 0.7152, 0.0722));
+    // The grid is gridScale wide, and as deep as the frame's shape makes it.
+    // Every surface has the frame's shape, so what is drawn on the grid keeps
+    // its proportions. aspectInv is the frame's height over its width. It is
+    // computed outside the shader, so both backends multiply by one value,
+    // and on a square frame it is exactly 1.
+    float gridDepth = gridScale * aspectInv;
     // XZ ground plane, Y elevation. These are world coordinates, not UVs.
     // The image's top row lies at -Z, so a view from above along -Y with
     // screen right on +X shows the image as authored, not mirrored.
     outXYZ = vec4((uv.x - 0.5) * gridScale,
         elevation * heightScale + heightOffset,
-        (0.5 - uv.y) * gridScale, 1.0);
+        (0.5 - uv.y) * gridDepth, 1.0);
     outVel = vec4(0.0, 0.0, 0.0, texelFetch(velTex, coord, 0).w);
     outRGBA = texture(diffuseTex, uv);
 }
@@ -49,6 +56,7 @@ void main() {
     gridScale: f32,
     heightScale: f32,
     heightOffset: f32,
+    aspectInv: f32,
 }
 struct Outputs {
     @location(0) outXYZ: vec4f,
@@ -73,12 +81,18 @@ fn main(@builtin(position) fragCoord: vec4f) -> Outputs {
     let imageUV = uv;
     let heightColor = textureSampleLevel(heightTex, heightSampler, imageUV, 0.0).rgb;
     let elevation = dot(heightColor, vec3f(0.2126, 0.7152, 0.0722));
+    // The grid is gridScale wide, and as deep as the frame's shape makes it.
+    // Every surface has the frame's shape, so what is drawn on the grid keeps
+    // its proportions. aspectInv is the frame's height over its width. It is
+    // computed outside the shader, so both backends multiply by one value,
+    // and on a square frame it is exactly 1.
+    let gridDepth = u.gridScale * u.aspectInv;
     // The image's top row lies at -Z, so a view from above along -Y with
     // screen right on +X shows the image as authored, not mirrored.
     return Outputs(
         vec4f((uv.x - 0.5) * u.gridScale,
             elevation * u.heightScale + u.heightOffset,
-            (0.5 - uv.y) * u.gridScale, 1.0),
+            (0.5 - uv.y) * gridDepth, 1.0),
         vec4f(0.0, 0.0, 0.0, textureLoad(velTex, coord, 0).w),
         textureSampleLevel(diffuseTex, diffuseSampler, imageUV, 0.0)
     );
@@ -108,15 +122,15 @@ fn main(@builtin(position) fragCoord: vec4f) -> @location(0) vec4f {
     let uv = fragCoord.xy / u.resolution;
     return textureSample(inputTex, inputTexSampler, uv);
 }
-`}},o=`# heightGrid
+`}},s=`# heightGrid
 
-Arrange every slot allocated by \`pointsEmit()\` in a square XZ grid and set its Y elevation from height-map luminance. Sample the diffuse surface at the same grid coordinates for each particle's RGBA color. Both surfaces update every frame, independent of the emitter's layout and attrition. The height map's top row maps to the \`-Z\` edge. From above, a view along \`-Y\` with \`+X\` to screen-right matches the source image orientation. Velocities are reset to zero; per-particle seeds are retained.
+Arrange every slot allocated by \`pointsEmit()\` in an XZ grid and set its Y elevation from height-map luminance. The grid is \`gridScale\` wide, and its depth follows the shape of the frame, which every surface shares: a square frame gives a square grid, and on a frame that is not square the surfaces keep their proportions. Sample the diffuse surface at the same grid coordinates for each particle's RGBA color. Both surfaces update every frame, independent of the emitter's layout and attrition. The height map's top row maps to the \`-Z\` edge. From above, a view along \`-Y\` with \`+X\` to screen-right matches the source image orientation. Velocities are reset to zero; per-particle seeds are retained.
 
 | Parameter | Type | Default | Range | Description |
 |-----------|------|---------|-------|-------------|
 | heightTex | surface | inputTex | - | Height source; defaults to the incoming 2D surface |
 | diffuseTex | surface | inputTex | - | Particle color and alpha source; defaults to the incoming 2D surface |
-| gridScale | float | 80 | 1-400 | Width and depth of the square grid in world units |
+| gridScale | float | 80 | 1-400 | Width of the grid in world units; the depth is this width times the frame's height over its width |
 | heightScale | float | 20 | -100-100 | Elevation for white; negative values invert the relief |
 | heightOffset | float | 0 | -100-100 | Elevation for black in world units |
 
@@ -135,4 +149,4 @@ noise()
 
 render(o0)
 \`\`\`
-`;if(t&&Object.keys(r).length>0){t.shaders||(t.shaders={});for(let[n,e]of Object.entries(r))t.shaders[n]={...e}}t&&o&&(t.help=o);var h="points/heightGrid",f="points",d="heightGrid",p=t;export{p as default,h as effectId,d as effectName,o as help,f as namespace};
+`;if(t&&Object.keys(r).length>0){t.shaders||(t.shaders={});for(let[n,e]of Object.entries(r))t.shaders[n]={...e}}t&&s&&(t.help=s);var l="points/heightGrid",d="points",p="heightGrid",f=t;export{f as default,l as effectId,p as effectName,s as help,d as namespace};

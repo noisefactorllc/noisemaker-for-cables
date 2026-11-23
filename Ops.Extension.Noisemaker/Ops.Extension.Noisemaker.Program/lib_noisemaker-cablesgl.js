@@ -3,8 +3,8 @@
  * Includes: CanvasRenderer + UIController + EffectSelect
  * Copyright (c) 2017-2026 Noise Factor LLC. https://noisefactor.io/
  * SPDX-License-Identifier: MIT
- * Build: 7f3721e9
- * Date: 2026-11-22T21:42:13.400Z
+ * Build: 75027859
+ * Date: 2026-11-22T23:43:04.633Z
  */
 var NoisemakerCablesGL=(()=>{var cy=Object.create;var Ia=Object.defineProperty;var fy=Object.getOwnPropertyDescriptor;var uy=Object.getOwnPropertyNames;var dy=Object.getPrototypeOf,py=Object.prototype.hasOwnProperty;var Za=(e=>typeof require<"u"?require:typeof Proxy<"u"?new Proxy(e,{get:(t,o)=>(typeof require<"u"?require:t)[o]}):e)(function(e){if(typeof require<"u")return require.apply(this,arguments);throw Error('Dynamic require of "'+e+'" is not supported')});var w=(e,t,o)=>()=>{if(o)throw o[0];try{return e&&(t=e(e=0)),t}catch(r){throw o=[r],r}};var Ja=(e,t)=>{for(var o in t)Ia(e,o,{get:t[o],enumerable:!0})},Us=(e,t,o,r)=>{if(t&&typeof t=="object"||typeof t=="function")for(let i of uy(t))!py.call(e,i)&&i!==o&&Ia(e,i,{get:()=>t[i],enumerable:!(r=fy(t,i))||r.enumerable});return e};var Qa=(e,t,o)=>(o=e!=null?cy(dy(e)):{},Us(t||!e||!e.__esModule?Ia(o,"default",{value:e,enumerable:!0}):o,e)),my=e=>Us(Ia({},"__esModule",{value:!0}),e);function vn(e){let t=[],o=[],r=[],i=[],a=[],s=[],n=e.split(`
 `);for(let f of n){let u=f.trim();if(u.length===0||u.startsWith("#"))continue;let d=u.split(/\s+/);switch(d[0]){case"v":{let v=parseFloat(d[1])||0,_=parseFloat(d[2])||0,m=parseFloat(d[3])||0;t.push([v,_,m]);break}case"vn":{let v=parseFloat(d[1])||0,_=parseFloat(d[2])||0,m=parseFloat(d[3])||0;o.push([v,_,m]);break}case"vt":{let v=parseFloat(d[1])||0,_=parseFloat(d[2])||0;r.push([v,_]);break}case"f":{let v=[];for(let _=1;_<d.length;_++){let m=d[_].split("/"),T=parseInt(m[0],10)-1,R=m[1]?parseInt(m[1],10)-1:-1,g=m[2]?parseInt(m[2],10)-1:-1;v.push({vIdx:T,vtIdx:R,vnIdx:g})}for(let _=1;_<v.length-1;_++){let m=v[0],T=v[_],R=v[_+1];l(m),l(R),l(T)}break}}}function l(f){f.vIdx>=0&&f.vIdx<t.length?i.push(...t[f.vIdx]):i.push(0,0,0),f.vnIdx>=0&&f.vnIdx<o.length?a.push(...o[f.vnIdx]):a.push(0,0,1),f.vtIdx>=0&&f.vtIdx<r.length?s.push(...r[f.vtIdx]):s.push(0,0)}let c=i.length/3;return o.length===0&&c>0&&Ky(i,a),{positions:new Float32Array(i),normals:new Float32Array(a),uvs:new Float32Array(s),vertexCount:c}}function Ky(e,t){let o=e.length/3,r=o/3,i=new Float32Array(r*3);for(let n=0;n<r;n++){let l=n*9,c=l+3,f=l+6,u=e[l],d=e[l+1],p=e[l+2],v=e[c],_=e[c+1],m=e[c+2],T=e[f],R=e[f+1],g=e[f+2],C=v-u,P=_-d,N=m-p,L=T-u,Q=R-d,$=g-p,de=P*$-N*Q,ie=N*L-C*$,ae=C*Q-P*L,ne=Math.sqrt(de*de+ie*ie+ae*ae);ne>1e-4?(de/=ne,ie/=ne,ae/=ne):(de=0,ie=0,ae=1),i[n*3]=de,i[n*3+1]=ie,i[n*3+2]=ae}let a=new Map,s=n=>Math.round(n*1e4)/1e4;for(let n=0;n<o;n++){let l=e[n*3],c=e[n*3+1],f=e[n*3+2],u=`${s(l)},${s(c)},${s(f)}`,d=Math.floor(n/3),p=i[d*3],v=i[d*3+1],_=i[d*3+2];a.has(u)||a.set(u,{nx:0,ny:0,nz:0,count:0});let m=a.get(u);m.nx+=p,m.ny+=v,m.nz+=_,m.count++}for(let n of a.values()){let l=Math.sqrt(n.nx*n.nx+n.ny*n.ny+n.nz*n.nz);l>1e-4?(n.nx/=l,n.ny/=l,n.nz/=l):(n.nx=0,n.ny=0,n.nz=1)}for(let n=0;n<o;n++){let l=e[n*3],c=e[n*3+1],f=e[n*3+2],u=`${s(l)},${s(c)},${s(f)}`,d=a.get(u);t[n*3]=d.nx,t[n*3+1]=d.ny,t[n*3+2]=d.nz}}async function Zy(e){let t=await fetch(e);if(!t.ok)throw new Error(`Failed to load OBJ: ${t.status} ${t.statusText}`);let o=await t.text();return vn(o)}function Jy(e,t,o,r,i){let a=r*i,s=e.length/3;s>a&&console.warn(`[OBJ] Mesh has ${s} vertices, but texture can only hold ${a}. Truncating.`);let n=Math.min(s,a),l=r*i,c=new Float32Array(l*4),f=new Float32Array(l*4),u=new Float32Array(l*4);for(let d=0;d<n;d++){let p=d*4,v=d*3,_=d*2;c[p]=e[v],c[p+1]=e[v+1],c[p+2]=e[v+2],c[p+3]=1,f[p]=t[v],f[p+1]=t[v+1],f[p+2]=t[v+2],f[p+3]=0,u[p]=o[_],u[p+1]=o[_+1],u[p+2]=0,u[p+3]=0}for(let d=n;d<l;d++){let p=d*4;c[p+3]=0}return{positionData:c,normalData:f,uvData:u,vertexCount:n}}function gn(e){let t=[],o=0,r=1,i=1,a=1,s=1,n=0;function l(p,v,_,m,T){for(let P=n;P<o;P++)e[P]===`
@@ -67787,6 +67787,7 @@ uniform sampler2D diffuseTex;
 uniform float gridScale;
 uniform float heightScale;
 uniform float heightOffset;
+uniform float aspectInv;
 
 layout(location = 0) out vec4 outXYZ;
 layout(location = 1) out vec4 outVel;
@@ -67799,12 +67800,18 @@ void main() {
     vec2 uv = (vec2(coord) + 0.5) / vec2(stateSize);
     vec3 heightColor = texture(heightTex, uv).rgb;
     float elevation = dot(heightColor, vec3(0.2126, 0.7152, 0.0722));
+    // The grid is gridScale wide, and as deep as the frame's shape makes it.
+    // Every surface has the frame's shape, so what is drawn on the grid keeps
+    // its proportions. aspectInv is the frame's height over its width. It is
+    // computed outside the shader, so both backends multiply by one value,
+    // and on a square frame it is exactly 1.
+    float gridDepth = gridScale * aspectInv;
     // XZ ground plane, Y elevation. These are world coordinates, not UVs.
     // The image's top row lies at -Z, so a view from above along -Y with
     // screen right on +X shows the image as authored, not mirrored.
     outXYZ = vec4((uv.x - 0.5) * gridScale,
         elevation * heightScale + heightOffset,
-        (0.5 - uv.y) * gridScale, 1.0);
+        (0.5 - uv.y) * gridDepth, 1.0);
     outVel = vec4(0.0, 0.0, 0.0, texelFetch(velTex, coord, 0).w);
     outRGBA = texture(diffuseTex, uv);
 }
@@ -67812,6 +67819,7 @@ void main() {
     gridScale: f32,
     heightScale: f32,
     heightOffset: f32,
+    aspectInv: f32,
 }
 struct Outputs {
     @location(0) outXYZ: vec4f,
@@ -67836,12 +67844,18 @@ fn main(@builtin(position) fragCoord: vec4f) -> Outputs {
     let imageUV = uv;
     let heightColor = textureSampleLevel(heightTex, heightSampler, imageUV, 0.0).rgb;
     let elevation = dot(heightColor, vec3f(0.2126, 0.7152, 0.0722));
+    // The grid is gridScale wide, and as deep as the frame's shape makes it.
+    // Every surface has the frame's shape, so what is drawn on the grid keeps
+    // its proportions. aspectInv is the frame's height over its width. It is
+    // computed outside the shader, so both backends multiply by one value,
+    // and on a square frame it is exactly 1.
+    let gridDepth = u.gridScale * u.aspectInv;
     // The image's top row lies at -Z, so a view from above along -Y with
     // screen right on +X shows the image as authored, not mirrored.
     return Outputs(
         vec4f((uv.x - 0.5) * u.gridScale,
             elevation * u.heightScale + u.heightOffset,
-            (0.5 - uv.y) * u.gridScale, 1.0),
+            (0.5 - uv.y) * gridDepth, 1.0),
         vec4f(0.0, 0.0, 0.0, textureLoad(velTex, coord, 0).w),
         textureSampleLevel(diffuseTex, diffuseSampler, imageUV, 0.0)
     );
@@ -67873,13 +67887,13 @@ fn main(@builtin(position) fragCoord: vec4f) -> @location(0) vec4f {
 }
 `}},W2=`# heightGrid
 
-Arrange every slot allocated by \`pointsEmit()\` in a square XZ grid and set its Y elevation from height-map luminance. Sample the diffuse surface at the same grid coordinates for each particle's RGBA color. Both surfaces update every frame, independent of the emitter's layout and attrition. The height map's top row maps to the \`-Z\` edge. From above, a view along \`-Y\` with \`+X\` to screen-right matches the source image orientation. Velocities are reset to zero; per-particle seeds are retained.
+Arrange every slot allocated by \`pointsEmit()\` in an XZ grid and set its Y elevation from height-map luminance. The grid is \`gridScale\` wide, and its depth follows the shape of the frame, which every surface shares: a square frame gives a square grid, and on a frame that is not square the surfaces keep their proportions. Sample the diffuse surface at the same grid coordinates for each particle's RGBA color. Both surfaces update every frame, independent of the emitter's layout and attrition. The height map's top row maps to the \`-Z\` edge. From above, a view along \`-Y\` with \`+X\` to screen-right matches the source image orientation. Velocities are reset to zero; per-particle seeds are retained.
 
 | Parameter | Type | Default | Range | Description |
 |-----------|------|---------|-------|-------------|
 | heightTex | surface | inputTex | - | Height source; defaults to the incoming 2D surface |
 | diffuseTex | surface | inputTex | - | Particle color and alpha source; defaults to the incoming 2D surface |
-| gridScale | float | 80 | 1-400 | Width and depth of the square grid in world units |
+| gridScale | float | 80 | 1-400 | Width of the grid in world units; the depth is this width times the frame's height over its width |
 | heightScale | float | 20 | -100-100 | Elevation for white; negative values invert the relief |
 | heightOffset | float | 0 | -100-100 | Elevation for black in world units |
 
