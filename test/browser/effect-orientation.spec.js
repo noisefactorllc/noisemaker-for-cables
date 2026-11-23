@@ -353,3 +353,112 @@ render(o0)`,
     expect(failures, 'heightGrid orientation case failures').toEqual([])
   })
 })
+
+// Ported from upstream noisemaker's shaders/tests/test_heightmap_landscape.mjs
+// at the vendored checkpoint (478f94ea): seen from directly above, the
+// heightmap3d terrain has the proportions of the frame and shows its images as
+// authored on a square, a wide and a tall frame, on either backend. The
+// background renders with bgAlpha: 0, so the terrain's opaque pixels delimit it.
+const HEIGHTMAP_FRAMES = [
+  { width: 128, height: 128, posZ: -40 },
+  { width: 256, height: 128, posZ: -40 },
+  { width: 128, height: 256, posZ: -120 },
+]
+const HEIGHTMAP_EFFECTS = ['render/renderLandscape3d', 'synth3d/heightmap3d', 'synth/solid', 'synth/testPattern']
+
+// The box of a frame's opaque pixels: the terrain, where the background is
+// transparent, or the whole frame for an opaque reference image.
+function opaqueBox(view, width, height) {
+  const box = { x0: width, x1: -1, y0: height, y1: -1 }
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      if (view[(y * width + x) * 4 + 3] === 0) continue
+      box.x0 = Math.min(box.x0, x)
+      box.x1 = Math.max(box.x1, x)
+      box.y0 = Math.min(box.y0, y)
+      box.y1 = Math.max(box.y1, y)
+    }
+  }
+  return { ...box, width: box.x1 - box.x0 + 1, height: box.y1 - box.y0 + 1 }
+}
+
+test.describe.serial('heightmap3d orientation regression', () => {
+  test('heightmap3d shows its terrain in the frame proportions on both backends', async ({ browser }, testInfo) => {
+    test.setTimeout(900_000)
+    const failures = []
+
+    for (const backend of ['webgl2', 'webgpu']) {
+      const page = await browser.newPage({ viewport: { width: 256, height: 256 } })
+      const errors = []
+      page.on('pageerror', (error) => errors.push(error.message))
+      page.on('console', (message) => {
+        if (READBACK_PERF_WARNING.test(message.text())) return
+        if (['error', 'warning'].includes(message.type())) errors.push(message.text())
+      })
+      try {
+        await page.goto('/test/browser/fixture.html')
+
+        // Each frame shape gets its own harness session: the harness holds
+        // one canvas-backed renderer with that frame's dimensions.
+        const startFrame = async (width, height) => {
+          await page.evaluate(() => window.orientationHarness.stop()).catch(() => {})
+          await page.evaluate(([backendName, size]) => window.orientationHarness.start(backendName, size), [backend, [width, height]])
+        }
+        const capture = async ({ dsl, effects = [], frames = 3 }, label) => {
+          const executed = await page.evaluate((definition) => window.orientationHarness.frame(definition), { dsl, effects, frames, media: 'uv' })
+          expect(executed, `${label}: requested backend must execute`).toBe(backend)
+          const png = await page.locator('#orientation-canvas').screenshot({ omitBackground: true })
+          return page.evaluate((bytes) => window.orientationHarness.decodePng(bytes), new Uint8Array(png))
+        }
+
+        for (const { width, height, posZ } of HEIGHTMAP_FRAMES) {
+          const label = `${backend} ${width} x ${height} heightmap3d`
+          try {
+            await startFrame(width, height)
+
+            const reference = await capture({
+              dsl: `search synth\ntestPattern(pattern: uvMap).write(o0)\nrender(o0)`,
+            }, `${label} uvMap reference`)
+            const referenceRgb = sampleCorners(reference, width, height, opaqueBox(reference, width, height))
+            expect(Math.abs(across(referenceRgb)) > 64 && Math.abs(down(referenceRgb)) > 64,
+              `${label}: the uvMap reference must vary along both axes`).toBe(true)
+
+            const view = await capture({
+              dsl: `search synth, synth3d, render
+heightmap3d(heightTex: solid(color: #ffffff), tex: testPattern(pattern: uvMap), volumeSize: x16, heightScale: 1)
+  .renderLandscape3d(viewMode: perspective, rotateX: 1.5708, posZ: ${posZ}, bgAlpha: 0, ambient: 1, diffuseIntensity: 0, specularIntensity: 0).write(o0)
+render(o0)`,
+              effects: HEIGHTMAP_EFFECTS,
+            }, label)
+            const box = opaqueBox(view, width, height)
+            expect(box.x1 >= box.x0, `${label}: the terrain must be visible`).toBe(true)
+            expect(box.x0 > 0 && box.y0 > 0 && box.x1 < width - 1 && box.y1 < height - 1,
+              `${label}: the terrain must fit inside the frame (x ${box.x0} to ${box.x1}, y ${box.y0} to ${box.y1})`).toBe(true)
+            expect(Math.abs(box.x0 + box.x1 - (width - 1)) <= 3 && Math.abs(box.y0 + box.y1 - (height - 1)) <= 3,
+              `${label}: the terrain must be centered in the frame (x ${box.x0} to ${box.x1}, y ${box.y0} to ${box.y1})`).toBe(true)
+            const rgb = sampleCorners(view, width, height, box)
+            expect(Math.sign(across(rgb)) === Math.sign(across(referenceRgb)) && Math.abs(across(rgb)) > 64,
+              `${label}: seen from above, image right must be screen right (red ${rgb.topLeft[0]} -> ${rgb.topRight[0]})`).toBe(true)
+            expect(Math.sign(down(rgb)) === Math.sign(down(referenceRgb)) && Math.abs(down(rgb)) > 64,
+              `${label}: seen from above, image top must be screen top (green ${rgb.topLeft[1]} -> ${rgb.bottomLeft[1]}, authored ${referenceRgb.topLeft[1]} -> ${referenceRgb.bottomLeft[1]})`).toBe(true)
+            expect(Math.abs(rgb.bottomLeft[0] - rgb.topLeft[0]) <= 24 && Math.abs(rgb.topRight[1] - rgb.topLeft[1]) <= 24,
+              `${label}: seen from above, the image must not be rotated`).toBe(true)
+            const shape = width / height
+            expect(Math.abs(box.width / box.height - shape),
+              `${label}: seen from above, the terrain is ${box.width} by ${box.height} pixels, and its frame is ${width} by ${height}`).toBeLessThanOrEqual(shape * 0.1)
+          } catch (error) {
+            failures.push(`${label}: ${error.message}`)
+          }
+        }
+
+        expect(errors, `${backend} console must be clean`).toEqual([])
+      } finally {
+        await page.evaluate(() => window.orientationHarness.stop()).catch(() => {})
+        await page.close()
+      }
+    }
+
+    await testInfo.attach('heightmap-orientation-failures.txt', { body: failures.join('\n') || 'none' })
+    expect(failures, 'heightmap3d orientation case failures').toEqual([])
+  })
+})
