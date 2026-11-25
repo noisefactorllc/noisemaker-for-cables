@@ -3,8 +3,8 @@
  * Includes: CanvasRenderer + UIController + EffectSelect
  * Copyright (c) 2017-2026 Noise Factor LLC. https://noisefactor.io/
  * SPDX-License-Identifier: MIT
- * Build: 478f94ea
- * Date: 2026-11-23T02:11:00.447Z
+ * Build: 084176b7 (stable subset from 478f94ea)
+ * Date: 2026-11-23T23:34:55.045Z
  */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
@@ -27,11 +27,133 @@ var __accessCheck = (obj, member, msg) => member.has(obj) || __typeError("Cannot
 var __privateGet = (obj, member, getter) => (__accessCheck(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
 var __privateAdd = (obj, member, value) => member.has(obj) ? __typeError("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
 
+// shaders/src/geometry/geometry.js
+var geometry_exports = {};
+__export(geometry_exports, {
+  Geometry: () => Geometry,
+  meshTextureSize: () => meshTextureSize
+});
+function meshTextureSize(vertexCount) {
+  if (!(vertexCount > 0)) return { texWidth: 1, texHeight: 1 };
+  const texWidth = Math.ceil(Math.sqrt(vertexCount));
+  const texHeight = Math.ceil(vertexCount / texWidth);
+  return { texWidth, texHeight };
+}
+var Geometry;
+var init_geometry = __esm({
+  "shaders/src/geometry/geometry.js"() {
+    Geometry = class {
+      /**
+       * @param {object} attrs
+       * @param {ArrayLike<number>} attrs.positions - xyz per vertex
+       * @param {ArrayLike<number>} attrs.normals - xyz per vertex
+       * @param {ArrayLike<number>} [attrs.uvs] - uv per vertex; omitted means a
+       *   zeroed uv per vertex, because deindex() reading past a missing uv array
+       *   would write undefined (NaN) into the packed uv texture.
+       * @param {ArrayLike<number>} attrs.indices
+       */
+      constructor({ positions, normals, uvs, indices }) {
+        this.positions = positions instanceof Float32Array ? positions : new Float32Array(positions);
+        this.normals = normals instanceof Float32Array ? normals : new Float32Array(normals);
+        this.uvs = uvs?.length ? uvs instanceof Float32Array ? uvs : new Float32Array(uvs) : new Float32Array(this.positions.length / 3 * 2);
+        this.indices = indices instanceof Uint32Array ? indices : new Uint32Array(indices);
+      }
+      get vertexCount() {
+        return this.positions.length / 3;
+      }
+      get triangleCount() {
+        return this.indices.length / 3;
+      }
+      /**
+       * Expand indexed attributes into flat triangle-soup arrays.
+       * The backends draw meshes with drawArrays, so the GPU-side data is always
+       * de-indexed.
+       * @returns {{
+       *   positions: Float32Array,  // xyz per vertex
+       *   normals: Float32Array,    // xyz per vertex
+       *   uvs: Float32Array,        // uv per vertex
+       *   vertexCount: number
+       * }}
+       */
+      deindex() {
+        const { positions, normals, uvs, indices } = this;
+        const vertexCount = indices.length;
+        const expandedPos = new Float32Array(vertexCount * 3);
+        const expandedNorm = new Float32Array(vertexCount * 3);
+        const expandedUv = new Float32Array(vertexCount * 2);
+        for (let i = 0; i < vertexCount; i++) {
+          const idx = indices[i];
+          expandedPos[i * 3] = positions[idx * 3];
+          expandedPos[i * 3 + 1] = positions[idx * 3 + 1];
+          expandedPos[i * 3 + 2] = positions[idx * 3 + 2];
+          expandedNorm[i * 3] = normals[idx * 3];
+          expandedNorm[i * 3 + 1] = normals[idx * 3 + 1];
+          expandedNorm[i * 3 + 2] = normals[idx * 3 + 2];
+          expandedUv[i * 2] = uvs[idx * 2];
+          expandedUv[i * 2 + 1] = uvs[idx * 2 + 1];
+        }
+        return {
+          positions: expandedPos,
+          normals: expandedNorm,
+          uvs: expandedUv,
+          vertexCount
+        };
+      }
+      /**
+       * Pack this geometry into texture-sized arrays for GPU upload.
+       * Mesh textures store vertex data in a 2D grid where each texel is one
+       * vertex; texels past the vertex count are left zeroed and their position w
+       * marks them invalid.
+       *
+       * @param {number} texWidth - Mesh texture width (e.g., 256)
+       * @param {number} texHeight - Mesh texture height (e.g., 256)
+       * @returns {{
+       *   positionData: Float32Array,  // RGBA32F: xyz, w=1 for valid vertex
+       *   normalData: Float32Array,    // RGBA16F: xyz, w=0
+       *   uvData: Float32Array,        // RGBA16F: uv, zw=0
+       *   vertexCount: number
+       * }}
+       */
+      toPackedTextures(texWidth, texHeight) {
+        const { positions, normals, uvs, vertexCount } = this.deindex();
+        const pixelCount = texWidth * texHeight;
+        if (vertexCount > pixelCount) {
+          console.warn(`[Geometry] Mesh has ${vertexCount} vertices, but texture can only hold ${pixelCount}. Truncating.`);
+        }
+        const usedVertices = Math.min(vertexCount, pixelCount);
+        const positionData = new Float32Array(pixelCount * 4);
+        const normalData = new Float32Array(pixelCount * 4);
+        const uvData = new Float32Array(pixelCount * 4);
+        for (let i = 0; i < usedVertices; i++) {
+          const pi = i * 4;
+          const vi3 = i * 3;
+          const vi2 = i * 2;
+          positionData[pi] = positions[vi3];
+          positionData[pi + 1] = positions[vi3 + 1];
+          positionData[pi + 2] = positions[vi3 + 2];
+          positionData[pi + 3] = 1;
+          normalData[pi] = normals[vi3];
+          normalData[pi + 1] = normals[vi3 + 1];
+          normalData[pi + 2] = normals[vi3 + 2];
+          uvData[pi] = uvs[vi2];
+          uvData[pi + 1] = uvs[vi2 + 1];
+        }
+        return {
+          positionData,
+          normalData,
+          uvData,
+          vertexCount: usedVertices
+        };
+      }
+    };
+  }
+});
+
+
 // shaders/src/runtime/obj-parser.js
 var obj_parser_exports = {};
 __export(obj_parser_exports, {
   loadOBJ: () => loadOBJ,
-  packMeshDataForTextures: () => packMeshDataForTextures,
   parseOBJ: () => parseOBJ
 });
 function parseOBJ(objText) {
@@ -71,10 +193,10 @@ function parseOBJ(objText) {
       case "f": {
         const faceVerts = [];
         for (let i = 1; i < parts.length; i++) {
-          const indices = parts[i].split("/");
-          const vIdx = parseInt(indices[0], 10) - 1;
-          const vtIdx = indices[1] ? parseInt(indices[1], 10) - 1 : -1;
-          const vnIdx = indices[2] ? parseInt(indices[2], 10) - 1 : -1;
+          const indices2 = parts[i].split("/");
+          const vIdx = parseInt(indices2[0], 10) - 1;
+          const vtIdx = indices2[1] ? parseInt(indices2[1], 10) - 1 : -1;
+          const vnIdx = indices2[2] ? parseInt(indices2[2], 10) - 1 : -1;
           faceVerts.push({ vIdx, vtIdx, vnIdx });
         }
         for (let i = 1; i < faceVerts.length - 1; i++) {
@@ -110,12 +232,14 @@ function parseOBJ(objText) {
   if (rawNormals.length === 0 && vertexCount > 0) {
     computeFaceNormals(positions, normals);
   }
-  return {
+  const indices = new Uint32Array(vertexCount);
+  for (let i = 0; i < vertexCount; i++) indices[i] = i;
+  return new Geometry({
     positions: new Float32Array(positions),
     normals: new Float32Array(normals),
     uvs: new Float32Array(uvs),
-    vertexCount
-  };
+    indices
+  });
 }
 function computeFaceNormals(positions, normals) {
   const vertexCount = positions.length / 3;
@@ -198,47 +322,9 @@ async function loadOBJ(url) {
   const text = await response.text();
   return parseOBJ(text);
 }
-function packMeshDataForTextures(positions, normals, uvs, texWidth, texHeight) {
-  const maxVertices = texWidth * texHeight;
-  const vertexCount = positions.length / 3;
-  if (vertexCount > maxVertices) {
-    console.warn(`[OBJ] Mesh has ${vertexCount} vertices, but texture can only hold ${maxVertices}. Truncating.`);
-  }
-  const usedVertices = Math.min(vertexCount, maxVertices);
-  const pixelCount = texWidth * texHeight;
-  const positionData = new Float32Array(pixelCount * 4);
-  const normalData = new Float32Array(pixelCount * 4);
-  const uvData = new Float32Array(pixelCount * 4);
-  for (let i = 0; i < usedVertices; i++) {
-    const pi = i * 4;
-    const vi3 = i * 3;
-    const vi2 = i * 2;
-    positionData[pi] = positions[vi3];
-    positionData[pi + 1] = positions[vi3 + 1];
-    positionData[pi + 2] = positions[vi3 + 2];
-    positionData[pi + 3] = 1;
-    normalData[pi] = normals[vi3];
-    normalData[pi + 1] = normals[vi3 + 1];
-    normalData[pi + 2] = normals[vi3 + 2];
-    normalData[pi + 3] = 0;
-    uvData[pi] = uvs[vi2];
-    uvData[pi + 1] = uvs[vi2 + 1];
-    uvData[pi + 2] = 0;
-    uvData[pi + 3] = 0;
-  }
-  for (let i = usedVertices; i < pixelCount; i++) {
-    const pi = i * 4;
-    positionData[pi + 3] = 0;
-  }
-  return {
-    positionData,
-    normalData,
-    uvData,
-    vertexCount: usedVertices
-  };
-}
 var init_obj_parser = __esm({
   "shaders/src/runtime/obj-parser.js"() {
+    init_geometry();
   }
 });
 
@@ -266,6 +352,7 @@ var diagnostics = {
   S006: { stage: "semantic", severity: "error", message: "Starter chain missing write() call" },
   S007: { stage: "semantic", severity: "warning", message: "Deprecated parameter alias" },
   S008: { stage: "semantic", severity: "warning", message: "Deprecated effect" },
+  S009: { stage: "semantic", severity: "warning", message: "Too many positional arguments" },
   R001: { stage: "runtime", severity: "error", message: "Runtime error" }
 };
 var diagnostics_default = diagnostics;
@@ -985,6 +1072,9 @@ function parse(tokens, options = {}) {
       comments.push(advance().lexeme);
     }
     return comments;
+  }
+  function skipComments() {
+    while (peek()?.type === "COMMENT") advance();
   }
   const exprStartTokens = /* @__PURE__ */ new Set([
     "PLUS",
@@ -1745,8 +1835,10 @@ function parse(tokens, options = {}) {
     let keyword = false;
     let positional = false;
     const allowMixed = nameToken.lexeme === "midi" || nameToken.lexeme === "audio";
+    skipComments();
     if (peek().type !== "RPAREN") {
       while (true) {
+        skipComments();
         if (peek().type === "IDENT" && tokens[current + 1]?.type === "COLON") {
           if (positional && !allowMixed) {
             const t = peek();
@@ -1762,13 +1854,15 @@ function parse(tokens, options = {}) {
           positional = true;
           args.push(parseArg());
         }
+        skipComments();
         if (peek().type !== "COMMA") break;
         advance();
+        skipComments();
         if (peek().type === "RPAREN") break;
       }
     }
     expect("RPAREN", "Expect ')'");
-    const call = { type: "Call", name: nameToken.lexeme, args };
+    const call = { type: "Call", name: nameToken.lexeme, args, loc: { line: nameToken.line, col: nameToken.col } };
     if (keyword) call.kwargs = kwargs;
     if (nameToken.lexeme === "from") {
       return transformFromInvocation(call, nameToken);
@@ -1818,6 +1912,9 @@ function parse(tokens, options = {}) {
     }
     return call;
   }
+  function locOf2(token) {
+    return { line: token.line, col: token.col };
+  }
   function parseArg() {
     return parseAdditive();
   }
@@ -1828,7 +1925,7 @@ function parse(tokens, options = {}) {
       const right = parseMultiplicative();
       const l = toNumber(node);
       const r = toNumber(right);
-      node = { type: "Number", value: op === "PLUS" ? l + r : l - r };
+      node = { type: "Number", value: op === "PLUS" ? l + r : l - r, loc: node.loc };
     }
     return node;
   }
@@ -1839,7 +1936,7 @@ function parse(tokens, options = {}) {
       const right = parseUnary();
       const l = toNumber(node);
       const r = toNumber(right);
-      node = { type: "Number", value: op === "STAR" ? l * r : l / r };
+      node = { type: "Number", value: op === "STAR" ? l * r : l / r, loc: node.loc };
     }
     return node;
   }
@@ -1851,7 +1948,7 @@ function parse(tokens, options = {}) {
     if (peek().type === "MINUS") {
       advance();
       const val = parseUnary();
-      return { type: "Number", value: -toNumber(val) };
+      return { type: "Number", value: -toNumber(val), loc: val.loc };
     }
     return parsePrimary();
   }
@@ -1860,10 +1957,10 @@ function parse(tokens, options = {}) {
     switch (token.type) {
       case "NUMBER":
         advance();
-        return { type: "Number", value: parseFloat(token.lexeme) };
+        return { type: "Number", value: parseFloat(token.lexeme), loc: locOf2(token) };
       case "STRING":
         advance();
-        return { type: "String", value: token.lexeme };
+        return { type: "String", value: token.lexeme, loc: locOf2(token) };
       case "HEX": {
         advance();
         const hex = token.lexeme.slice(1);
@@ -1882,7 +1979,7 @@ function parse(tokens, options = {}) {
           b = parseInt(hex.slice(4, 6), 16);
           a = parseInt(hex.slice(6, 8), 16) / 255;
         }
-        return { type: "Color", value: [r / 255, g / 255, b / 255, a] };
+        return { type: "Color", value: [r / 255, g / 255, b / 255, a], loc: locOf2(token) };
       }
       case "LBRACKET": {
         const startLine = token.line;
@@ -1890,11 +1987,16 @@ function parse(tokens, options = {}) {
         const bracketPosition = token.position;
         advance();
         const elements = [];
+        skipComments();
         if (peek().type !== "RBRACKET") {
           elements.push(parseArg());
+          skipComments();
           while (peek().type === "COMMA") {
             advance();
+            skipComments();
+            if (peek().type === "RBRACKET") break;
             elements.push(parseArg());
+            skipComments();
           }
         }
         if (peek().type !== "RBRACKET") {
@@ -1921,16 +2023,16 @@ function parse(tokens, options = {}) {
         return { type: "Func", src: token.lexeme };
       case "TRUE":
         advance();
-        return { type: "Boolean", value: true };
+        return { type: "Boolean", value: true, loc: locOf2(token) };
       case "FALSE":
         advance();
-        return { type: "Boolean", value: false };
+        return { type: "Boolean", value: false, loc: locOf2(token) };
       case "IDENT": {
         if (token.lexeme === "Math" && tokens[current + 1]?.type === "DOT" && tokens[current + 2]?.type === "IDENT" && tokens[current + 2].lexeme === "PI") {
           advance();
           advance();
           advance();
-          return { type: "Number", value: Math.PI };
+          return { type: "Number", value: Math.PI, loc: locOf2(token) };
         }
         if (tokens[current + 1]?.type === "LPAREN" || hasCallAfterDot(current)) {
           const chain = parseChain("expression");
@@ -2008,6 +2110,7 @@ function parse(tokens, options = {}) {
   function parseKwarg(obj) {
     const key = expect("IDENT", "Expected identifier").lexeme;
     expect("COLON", "Expect ':'");
+    skipComments();
     if (!exprStartTokens.has(peek().type)) {
       const t = peek();
       throw parserError("P001", `Expected expression after '=' at line ${t.line} col ${t.col}`, t);
@@ -2580,6 +2683,8 @@ function validate(ast) {
           for (const [k, v] of Object.entries(call.kwargs)) mergedKw[k] = v;
         }
         const merged = { type: "Call", name: val.name, args: mergedArgs };
+        const loc = call.loc ?? val.loc;
+        if (loc) merged.loc = loc;
         if (mergedKw) merged.kwargs = mergedKw;
         if (call.namespace) {
           merged.namespace = { ...call.namespace };
@@ -2663,6 +2768,7 @@ function validate(ast) {
       const mapped = node.chain.map((c) => {
         const mappedArgs = c.args.map((a) => substitute(a, resolving));
         let mappedCall = { type: "Call", name: c.name, args: mappedArgs };
+      if (c.loc) mappedCall.loc = c.loc;
         if (c.kwargs) {
           const kw = {};
           for (const [k, v] of Object.entries(c.kwargs)) kw[k] = substitute(v, resolving);
@@ -2675,6 +2781,7 @@ function validate(ast) {
     if (node.type === "Call") {
       const mappedArgs = node.args.map((a) => substitute(a, resolving));
       let mappedCall = { type: "Call", name: node.name, args: mappedArgs };
+      if (node.loc) mappedCall.loc = node.loc;
       if (node.kwargs) {
         const kw = {};
         for (const [k, v] of Object.entries(node.kwargs)) kw[k] = substitute(v, resolving);
@@ -3878,6 +3985,10 @@ function validate(ast) {
             }
           }
         }
+        if (call.args.length > specArgs.length) {
+          const extra = call.args[specArgs.length];
+          pushDiag("S009", extra || call, `Too many positional arguments for ${call.name}(): '${call.name}' takes ${specArgs.length}`);
+        }
         const hook = typeof call.name === "string" ? validatorHooks[call.name] : null;
         if (typeof hook === "function") {
           const starterInfo = getStarterInfo(original);
@@ -4037,6 +4148,101 @@ function formatOscillator(osc) {
     parts.push(`seed: ${formatNumberText(osc.seed)}`);
   }
   return `osc(${parts.join(", ")})`;
+}
+function formatArrayAst(node) {
+  if (node === null || node === void 0) return "null";
+  if (typeof node._varRef === "string") return node._varRef;
+  switch (node.type) {
+    case "Call": {
+      const positionals = node.args ?? [];
+      const keywords = Object.entries(node.kwargs ?? {});
+      const parts = positionals.map((arg) => formatArrayAst(arg));
+      for (const [key, value] of keywords) {
+        parts.push(`${key}: ${formatArrayAst(value)}`);
+      }
+      return `${node.name}(${parts.join(", ")})`;
+    }
+    case "Chain":
+      return (node.chain ?? []).map((el) => formatArrayAst(el)).join(".");
+    case "ArrayLiteral":
+      return `[${(node.elements ?? []).map(formatArrayAst).join(", ")}]`;
+    case "Oscillator": {
+      const parts = [];
+      if (node.oscType !== void 0) parts.push(`type: ${formatArrayAst(node.oscType)}`);
+      for (const key of ["min", "max", "speed", "offset", "seed"]) {
+        if (node[key] !== void 0) parts.push(`${key}: ${formatArrayAst(node[key])}`);
+      }
+      return `osc(${parts.join(", ")})`;
+    }
+    case "Audio": {
+      const parts = [];
+      for (const key of ["band", "min", "max", "channel", "name", "id"]) {
+        if (node[key] !== void 0) parts.push(`${key}: ${formatArrayAst(node[key])}`);
+      }
+      return `audio(${parts.join(", ")})`;
+    }
+    case "Midi": {
+      const parts = [];
+      for (const key of ["channel", "mode", "min", "max", "sensitivity", "cc", "nrpn", "zone", "members", "name", "id"]) {
+        if (node[key] !== void 0) parts.push(`${key}: ${formatArrayAst(node[key])}`);
+      }
+      return `midi(${parts.join(", ")})`;
+    }
+    case "Member":
+      return (node.path ?? []).join(".");
+    case "Ident":
+      return node.name;
+    case "OutputRef":
+    case "VolRef":
+    case "GeoRef":
+    case "SourceRef":
+    case "MeshRef":
+    case "RgbaRef":
+    case "VelRef":
+    case "XyzRef":
+      return node.name;
+    case "String":
+      return `"${node.value}"`;
+    case "Boolean":
+      return node.value ? "true" : "false";
+    case "Number":
+      return formatNumber(node.value);
+    case "Color":
+      return formatColorLiteral(node.value);
+    default:
+      throw new Error(`unparse: no scene emitter for AST node type '${node.type}'`);
+  }
+}
+function formatNumber(value) {
+  if (!Number.isFinite(value)) return "0";
+  const shortest = Number.isInteger(value) ? value : parseFloat(value.toPrecision(10));
+  return toPlainDecimal(shortest);
+}
+function toPlainDecimal(value) {
+  const text = String(value);
+  if (!/[eE]/.test(text)) return text;
+  const negative = text.startsWith("-");
+  const [mantissa, exponentText] = (negative ? text.slice(1) : text).split(/[eE]/);
+  const exponent = Number(exponentText);
+  const [intPart, fracPart = ""] = mantissa.split(".");
+  const digits = intPart + fracPart;
+  const point = intPart.length + exponent;
+  let out;
+  if (point <= 0) {
+    out = `0.${"0".repeat(-point)}${digits}`;
+  } else if (point >= digits.length) {
+    out = digits + "0".repeat(point - digits.length);
+  } else {
+    out = `${digits.slice(0, point)}.${digits.slice(point)}`;
+  }
+  if (out.includes(".")) out = out.replace(/0+$/, "").replace(/\.$/, "");
+  return negative ? `-${out}` : out;
+}
+function formatColorLiteral(components) {
+  const hex = (v) => Math.max(0, Math.min(255, Math.round(v * 255))).toString(16).padStart(2, "0");
+  const [r, g, b, a = 1] = components;
+  const base = `#${hex(r)}${hex(g)}${hex(b)}`;
+  return a >= 1 ? base : `${base}${hex(a)}`;
 }
 function formatMidi(midi) {
   if (midi.channel && typeof midi.channel === "object" || midi.zone && typeof midi.zone === "object") return formatLetExpr(midi);
@@ -4553,6 +4759,8 @@ function formatLetExpr(expr, options = {}) {
       return expr.name;
     case "Member":
       return expr.path.join(".");
+    case "ArrayLiteral":
+      return formatArrayAst(expr);
     case "Oscillator": {
       let typeStr = "oscKind.sine";
       if (expr.oscType?.type === "Member" && expr.oscType.path) {
@@ -5062,6 +5270,9 @@ function deepClone2(obj, clones = /* @__PURE__ */ new WeakMap()) {
   }
   return cloned;
 }
+function isBuiltinOp(op) {
+  return typeof op === "string" && op.startsWith("_");
+}
 function findStepByIndex(compiled, stepIndex) {
   if (!compiled?.plans) return null;
   for (let planIndex = 0; planIndex < compiled.plans.length; planIndex++) {
@@ -5301,6 +5512,12 @@ function replaceEffect(compiled, stepIndex, newEffectName, newArgs = {}, options
   }
   const { planIndex, chainIndex, step } = location;
   const oldEffectName = step.op;
+  if (isBuiltinOp(oldEffectName)) {
+    return {
+      success: false,
+      error: `Cannot replace builtin '${oldEffectName}': it is a structural chain node, not an effect.`
+    };
+  }
   const currentIsStarter = checkIsStarter(step.op, searchOrder);
   const isStarterPosition = chainIndex === 0 || currentIsStarter && (step.from === null || step.from === void 0);
   const newIsStarter = checkIsStarter(newEffectName, searchOrder);
@@ -5395,18 +5612,19 @@ function listSteps(compiled, options = {}) {
     if (!plan?.chain) continue;
     for (let chainIndex = 0; chainIndex < plan.chain.length; chainIndex++) {
       const step = plan.chain[chainIndex];
-      if (step.builtin) continue;
       const isStarter = checkIsStarter(step.op, searchOrder);
+      const builtin = isBuiltinOp(step.op);
       const isStarterPosition = chainIndex === 0 || isStarter && (step.from === null || step.from === void 0);
       steps.push({
         stepIndex: step.temp,
         planIndex,
         chainIndex,
         effectName: step.op,
+        kind: builtin ? "builtin" : "effect",
         isStarter,
         isStarterPosition,
-        canReplaceWithStarter: isStarterPosition,
-        canReplaceWithNonStarter: !isStarterPosition,
+        canReplaceWithStarter: !builtin && isStarterPosition,
+        canReplaceWithNonStarter: !builtin && !isStarterPosition,
         args: step.args || {}
       });
     }
@@ -5423,6 +5641,12 @@ function getCompatibleReplacements(compiled, stepIndex, options = {}) {
     return { success: false, error: `Step with index ${stepIndex} not found` };
   }
   const { chainIndex, step } = location;
+  if (isBuiltinOp(step.op)) {
+    return {
+      success: false,
+      error: `Cannot replace builtin '${step.op}': it is a structural chain node, not an effect.`
+    };
+  }
   const currentIsStarter = checkIsStarter(step.op, searchOrder);
   const isStarterPosition = chainIndex === 0 || currentIsStarter && (step.from === null || step.from === void 0);
   const oldInstance = getEffectInstance(step.op);
@@ -6727,8 +6951,50 @@ function expand(compilationResult, options = {}) {
 }
 
 // shaders/src/runtime/resources.js
+var PIPELINE_COLOR_INPUTS = ["inputTex", "inputColor"];
+var NODE_OUTPUT_PATTERN = /^node_\d+_out$/;
+function collectWrittenTextures(passes) {
+  const written = /* @__PURE__ */ new Set();
+  for (const pass of passes) {
+    if (!pass.outputs) continue;
+    for (const texId of Object.values(pass.outputs)) {
+      if (typeof texId === "string") written.add(texId);
+    }
+  }
+  return written;
+}
+function findUpstreamChainTexture(passes, index, nodeId2) {
+  const ownOutput = `${nodeId2}_out`;
+  for (let i = index - 1; i >= 0; i--) {
+    const outputs = passes[i].outputs;
+    if (!outputs) continue;
+    for (const texId of Object.values(outputs)) {
+      if (typeof texId !== "string") continue;
+      if (texId === ownOutput) continue;
+      if (NODE_OUTPUT_PATTERN.test(texId)) return texId;
+    }
+  }
+  return null;
+}
+function buildInputAliases(passes) {
+  const aliases = /* @__PURE__ */ new Map();
+  const written = collectWrittenTextures(passes);
+  for (let i = 0; i < passes.length; i++) {
+    const pass = passes[i];
+    if (!pass.inputs || !pass.nodeId) continue;
+    for (const texId of Object.values(pass.inputs)) {
+      if (typeof texId !== "string") continue;
+      if (written.has(texId) || aliases.has(texId)) continue;
+      if (!PIPELINE_COLOR_INPUTS.some((name) => texId === `${pass.nodeId}_${name}`)) continue;
+      const upstream = findUpstreamChainTexture(passes, i, pass.nodeId);
+      if (upstream) aliases.set(texId, upstream);
+    }
+  }
+  return aliases;
+}
 function analyzeLiveness(passes) {
   const lifetime = /* @__PURE__ */ new Map();
+  const aliases = buildInputAliases(passes);
   const touch = (texId, index) => {
     if (!texId) return;
     if (texId.startsWith("global_")) return;
@@ -6742,7 +7008,7 @@ function analyzeLiveness(passes) {
   };
   passes.forEach((pass, index) => {
     if (pass.inputs) {
-      Object.values(pass.inputs).forEach((tex) => touch(tex, index));
+      Object.values(pass.inputs).forEach((tex) => touch(aliases.get(tex) ?? tex, index));
     }
     if (pass.outputs) {
       Object.values(pass.outputs).forEach((tex) => touch(tex, index));
@@ -6752,6 +7018,7 @@ function analyzeLiveness(passes) {
 }
 function allocateResources(passes) {
   const lifetime = analyzeLiveness(passes);
+  const aliases = buildInputAliases(passes);
   const allocations = /* @__PURE__ */ new Map();
   const freeList = [];
   let physicalCount = 0;
@@ -6772,7 +7039,7 @@ function allocateResources(passes) {
       });
     }
     if (pass.inputs) {
-      new Set(Object.values(pass.inputs)).forEach((texId) => {
+      new Set(Object.values(pass.inputs).map((inputId) => aliases.get(inputId) ?? inputId)).forEach((texId) => {
         if (texId.startsWith("global_")) return;
         const l = lifetime.get(texId);
         if (l && l.end === i) {
@@ -6911,6 +7178,8 @@ var Backend = class {
    * @param {object} options
    */
   destroy(options = {}) {
+  }
+  async waitForIdle() {
   }
 };
 
@@ -7880,11 +8149,13 @@ var WebGL2Backend = class _WebGL2Backend extends Backend {
       if (existing.width !== width || existing.height !== height) {
         gl.bindRenderbuffer(gl.RENDERBUFFER, existing.buffer);
         gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT24, width, height);
+        gl.bindRenderbuffer(gl.RENDERBUFFER, null);
         existing.width = width;
         existing.height = height;
       }
       return;
     }
+    const previousFramebuffer = gl.getParameter(gl.FRAMEBUFFER_BINDING);
     const depthBuffer = gl.createRenderbuffer();
     gl.bindRenderbuffer(gl.RENDERBUFFER, depthBuffer);
     gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT24, width, height);
@@ -7894,7 +8165,7 @@ var WebGL2Backend = class _WebGL2Backend extends Backend {
     if (status !== gl.FRAMEBUFFER_COMPLETE) {
       console.warn(`[ensureDepthBuffer] FBO incomplete after adding depth: ${status}`);
     }
-    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, previousFramebuffer);
     gl.bindRenderbuffer(gl.RENDERBUFFER, null);
     this.depthBuffers.set(fbo, { buffer: depthBuffer, width, height });
   }
@@ -8179,7 +8450,18 @@ var WebGL2Backend = class _WebGL2Backend extends Backend {
     const out = new Uint8Array(width * height * 4);
     if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) === gl.FRAMEBUFFER_COMPLETE) {
       const isFloat = glFormat && (glFormat.type === gl.HALF_FLOAT || glFormat.type === gl.FLOAT);
-      if (isFloat) {
+      if (glFormat?.format === gl.RED) {
+        const pixels = width * height;
+        const buf = isFloat ? new Float32Array(pixels) : new Uint8Array(pixels);
+        gl.readPixels(0, 0, width, height, gl.RED, isFloat ? gl.FLOAT : gl.UNSIGNED_BYTE, buf);
+        for (let i = 0; i < pixels; i++) {
+          const v = isFloat ? Math.max(0, Math.min(255, Math.round(buf[i] * 255))) : buf[i];
+          out[i * 4] = v;
+          out[i * 4 + 1] = v;
+          out[i * 4 + 2] = v;
+          out[i * 4 + 3] = 255;
+        }
+      } else if (isFloat) {
         const buf = new Float32Array(width * height * 4);
         gl.readPixels(0, 0, width, height, gl.RGBA, gl.FLOAT, buf);
         for (let i = 0; i < out.length; i++) {
@@ -8207,6 +8489,7 @@ var WebGL2Backend = class _WebGL2Backend extends Backend {
     }
     const fbo = this.fbos.get(id);
     if (fbo) {
+      this.releaseDepthBuffer(fbo);
       gl.deleteFramebuffer(fbo);
       this.fbos.delete(id);
     }
@@ -8217,7 +8500,9 @@ var WebGL2Backend = class _WebGL2Backend extends Backend {
       }
     }
     for (const mrtId of mrtToDelete) {
-      gl.deleteFramebuffer(this.fbos.get(mrtId));
+      const mrtFbo = this.fbos.get(mrtId);
+      this.releaseDepthBuffer(mrtFbo);
+      gl.deleteFramebuffer(mrtFbo);
       this.fbos.delete(mrtId);
     }
   }
@@ -9215,6 +9500,33 @@ var WebGL2Backend = class _WebGL2Backend extends Backend {
       return false;
     }
   }
+  releaseDepthBuffer(fbo) {
+    if (!fbo) return;
+    const depth = this.depthBuffers.get(fbo);
+    if (!depth) return;
+    this.gl.deleteRenderbuffer(depth.buffer);
+    this.depthBuffers.delete(fbo);
+  }
+  async waitForIdle() {
+    const gl = this.gl;
+    if (!gl) return;
+    const sync = gl.fenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE, 0);
+    if (!sync) {
+      gl.finish();
+      return;
+    }
+    gl.flush();
+    try {
+      for (; ; ) {
+        const status = gl.clientWaitSync(sync, 0, 0);
+        if (status === gl.ALREADY_SIGNALED || status === gl.CONDITION_SATISFIED) return;
+        if (status === gl.WAIT_FAILED) return;
+        await new Promise((resolve) => setTimeout(resolve, 1));
+      }
+    } finally {
+      gl.deleteSync(sync);
+    }
+  }
 };
 
 // shaders/src/runtime/backends/webgpu-frame-export.js
@@ -9623,6 +9935,29 @@ var WebGPUFrameExportAdapter = class {
   }
 };
 
+var DEPTH_TEXTURE_CACHE_LIMIT = 4;
+function stripWgslComments(source) {
+  return source.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/\/\/[^\n]*/g, "");
+}
+function extractWgslStructBody(source, name) {
+  if (!source || !name) return null;
+  const cleaned = stripWgslComments(source);
+  const decl = new RegExp(`\\bstruct\\s+${name}\\s*\\{`);
+  const match = decl.exec(cleaned);
+  if (!match) return null;
+  const start = match.index + match[0].length;
+  let depth = 1;
+  for (let i = start; i < cleaned.length; i++) {
+    const c = cleaned[i];
+    if (c === "{") depth++;
+    else if (c === "}") {
+      depth--;
+      if (depth === 0) return cleaned.slice(start, i);
+    }
+  }
+  return null;
+}
+
 // shaders/src/runtime/backends/webgpu.js
 function mipLevelCount2(width, height) {
   const maxDim = Math.max(1, Math.floor(width), Math.floor(height));
@@ -9706,8 +10041,7 @@ var WebGPUBackend = class _WebGPUBackend extends Backend {
     this.commandEncoder = null;
     this.defaultVertexModule = null;
     this.canvasFormat = typeof navigator !== "undefined" && navigator.gpu?.getPreferredCanvasFormat ? navigator.gpu.getPreferredCanvasFormat() : null;
-    this.depthTexture = null;
-    this.depthTextureSize = { width: 0, height: 0 };
+    this.depthTextures = /* @__PURE__ */ new Map();
     this.uniformBufferPool = [];
     this.activeUniformBuffers = [];
     this._mergedUniforms = {};
@@ -10741,10 +11075,8 @@ var WebGPUBackend = class _WebGPUBackend extends Backend {
     let bindingMatch;
     while ((bindingMatch = bindingRegex.exec(source)) !== null) {
       const structName = bindingMatch[1];
-      const structRegex = new RegExp(`struct\\s+${structName}\\s*\\{([^}]+)\\}`, "g");
-      const structMatch = structRegex.exec(source);
-      if (!structMatch) continue;
-      const body = structMatch[1];
+      const body = extractWgslStructBody(source, structName);
+      if (body === null) continue;
       const size = this.computeWgslStructSize(body);
       if (size > largestSize) largestSize = size;
     }
@@ -11439,18 +11771,27 @@ var WebGPUBackend = class _WebGPUBackend extends Backend {
    * @returns {GPUTexture} - Depth texture for mesh rendering
    */
   getDepthTexture(width, height) {
-    if (!this.depthTexture || this.depthTextureSize.width !== width || this.depthTextureSize.height !== height) {
-      if (this.depthTexture) {
-        this.depthTexture.destroy();
-      }
-      this.depthTexture = this.device.createTexture({
-        size: { width, height, depthOrArrayLayers: 1 },
-        format: "depth24plus",
-        usage: GPUTextureUsage.RENDER_ATTACHMENT
-      });
-      this.depthTextureSize = { width, height };
+    if (!this.depthTextures) this.depthTextures = /* @__PURE__ */ new Map();
+    const key = `${width}x${height}`;
+    let depthTexture = this.depthTextures.get(key);
+    if (depthTexture) {
+      this.depthTextures.delete(key);
+      this.depthTextures.set(key, depthTexture);
+      return depthTexture;
     }
-    return this.depthTexture;
+    depthTexture = this.device.createTexture({
+      size: { width, height, depthOrArrayLayers: 1 },
+      format: "depth24plus",
+      usage: GPUTextureUsage.RENDER_ATTACHMENT
+    });
+    this.depthTextures.set(key, depthTexture);
+    while (this.depthTextures.size > DEPTH_TEXTURE_CACHE_LIMIT) {
+      const oldestKey = this.depthTextures.keys().next().value;
+      const evicted = this.depthTextures.get(oldestKey);
+      this.depthTextures.delete(oldestKey);
+      this.retireDepthTexture(evicted);
+    }
+    return depthTexture;
   }
   /**
    * Get or create a render pipeline for 3D mesh rendering with depth test and back-face culling.
@@ -12569,10 +12910,15 @@ var WebGPUBackend = class _WebGPUBackend extends Backend {
       }
       this.textures.clear();
     }
-    if (this.depthTexture) {
-      this.depthTexture.destroy();
-      this.depthTexture = null;
-      this.depthTextureSize = { width: 0, height: 0 };
+    if (this.depthTextures) {
+      for (const depthTexture of this.depthTextures.values()) {
+        depthTexture.destroy();
+      }
+      this.depthTextures.clear();
+    }
+    if (this._retiredDepthTextures) {
+      for (const retired of this._retiredDepthTextures) retired.destroy();
+      this._retiredDepthTextures.length = 0;
     }
     this.programs.clear();
     this.pipelines.clear();
@@ -12892,6 +13238,10 @@ var WebGPUBackend = class _WebGPUBackend extends Backend {
       bytesPerPixel = 8;
     } else if (gpuFormat === "rgba32float") {
       bytesPerPixel = 16;
+    } else if (gpuFormat === "r32float") {
+      bytesPerPixel = 4;
+    } else if (gpuFormat === "r16float") {
+      bytesPerPixel = 2;
     }
     const bytesPerRow = Math.ceil(width * bytesPerPixel / 256) * 256;
     const bufferSize = bytesPerRow * height;
@@ -12936,6 +13286,24 @@ var WebGPUBackend = class _WebGPUBackend extends Backend {
           }
         }
       }
+    } else if (gpuFormat === "r32float" || gpuFormat === "r16float") {
+      const isHalf = gpuFormat === "r16float";
+      const bytesPerElement = isHalf ? 2 : 4;
+      const srcData = isHalf ? new Uint16Array(mappedRange) : new Float32Array(mappedRange);
+      const elementsPerRow = bytesPerRow / bytesPerElement;
+      for (let row = 0; row < height; row++) {
+        const srcRowOffset = row * elementsPerRow;
+        for (let col = 0; col < width; col++) {
+          const raw = srcData[srcRowOffset + col];
+          const f32 = isHalf ? float16ToFloat32(raw) : raw;
+          const v = Math.max(0, Math.min(255, Math.round(f32 * 255)));
+          const dstPixel = (row * width + col) * 4;
+          data[dstPixel] = v;
+          data[dstPixel + 1] = v;
+          data[dstPixel + 2] = v;
+          data[dstPixel + 3] = 255;
+        }
+      }
     } else {
       const srcData = new Uint8Array(mappedRange);
       for (let row = 0; row < height; row++) {
@@ -12958,6 +13326,23 @@ var WebGPUBackend = class _WebGPUBackend extends Backend {
     } catch {
       return false;
     }
+  }
+  retireDepthTexture(texture) {
+    if (!texture) return;
+    if (!this._retiredDepthTextures) this._retiredDepthTextures = [];
+    this._retiredDepthTextures.push(texture);
+    this.device.queue.onSubmittedWorkDone().then(() => {
+      const pending = this._retiredDepthTextures;
+      if (!pending) return;
+      const index = pending.indexOf(texture);
+      if (index === -1) return;
+      pending.splice(index, 1);
+      texture.destroy();
+    });
+  }
+  async waitForIdle() {
+    if (!this.queue) return;
+    await this.queue.onSubmittedWorkDone();
   }
 };
 
@@ -13338,6 +13723,17 @@ function preflightEffect(definition, capabilities, shaders) {
   };
 }
 
+function reverseRows(image) {
+  const { width, height, data } = image;
+  const rowBytes = width * 4;
+  const row = new Uint8Array(rowBytes);
+  for (let top = 0, bottom = (height - 1) * rowBytes; top < bottom; top += rowBytes, bottom -= rowBytes) {
+    row.set(data.subarray(top, top + rowBytes));
+    data.copyWithin(top, bottom, bottom + rowBytes);
+    data.set(row, bottom);
+  }
+  return image;
+}
 // shaders/src/runtime/pipeline.js
 var TAU2 = Math.PI * 2;
 function oscSine(t) {
@@ -15005,28 +15401,32 @@ var Pipeline = class {
     const prevW = this.width, prevH = this.height;
     if (this.width !== size || this.height !== size) this.resize(size, size);
     if (!this._cubeFaces) this._cubeFaces = new Array(6);
-    for (let face = 0; face < 6; face++) {
-      if (yieldBetweenFaces) {
-        await new Promise((resolve) => {
-          let settled = false;
-          const finish = () => {
-            if (settled) return;
-            settled = true;
-            resolve();
-          };
-          if (typeof requestAnimationFrame === "function") requestAnimationFrame(finish);
-          setTimeout(finish, 120);
-        });
+    try {
+      for (let face = 0; face < 6; face++) {
+        if (yieldBetweenFaces) {
+          await new Promise((resolve) => {
+            let settled = false;
+            const finish = () => {
+              if (settled) return;
+              settled = true;
+              resolve();
+            };
+            if (typeof requestAnimationFrame === "function") requestAnimationFrame(finish);
+            setTimeout(finish, 120);
+          });
+        }
+        this.setUniform("cubeBasis", CUBE_FACE_BASES[face]);
+        this.render(time);
+        const surface = this.surfaces.get(outputSurface);
+        if (!surface) {
+          throw new Error(`renderCubemap: output surface "${outputSurface}" not found \u2014 the composition must write its cubemap-renderer result to it (e.g. .renderCubemapSurface().write(${outputSurface}))`);
+        }
+        const pixels = await this.backend.readPixels(surface.read);
+        this._cubeFaces[face] = this.backend.getName() === "WebGPU" ? reverseRows(pixels) : pixels;
       }
-      this.setUniform("cubeBasis", CUBE_FACE_BASES[face]);
-      this.render(time);
-      const surface = this.surfaces.get(outputSurface);
-      if (!surface) {
-        throw new Error(`renderCubemap: output surface "${outputSurface}" not found \u2014 the composition must write its cubemap-renderer result to it (e.g. .renderCubemapSurface().write(${outputSurface}))`);
-      }
-      this._cubeFaces[face] = await this.backend.readPixels(surface.read);
+    } finally {
+      if (prevW !== size || prevH !== size) this.resize(prevW, prevH);
     }
-    if (prevW !== size || prevH !== size) this.resize(prevW, prevH);
     return this._cubeFaces;
   }
   /**
@@ -19324,16 +19724,10 @@ var CanvasRenderer = class {
   // Mesh Loading (for meshLoader effect OBJ import)
   // =========================================================================
   /** @private Pack mesh data, cache it, and upload to backend */
-  _packCacheAndUploadMesh(meshId, meshData, packMeshDataForTextures2) {
+  _packCacheAndUploadMesh(meshId, geometry) {
     const texWidth = 256;
     const texHeight = 256;
-    const packed = packMeshDataForTextures2(
-      meshData.positions,
-      meshData.normals,
-      meshData.uvs,
-      texWidth,
-      texHeight
-    );
+    const packed = geometry.toPackedTextures(texWidth, texHeight);
     this._meshCache.set(meshId, {
       positionData: packed.positionData,
       normalData: packed.normalData,
@@ -19364,9 +19758,9 @@ var CanvasRenderer = class {
       return { success: false, vertexCount: 0, error: "Pipeline not ready" };
     }
     try {
-      const { loadOBJ: loadOBJ2, packMeshDataForTextures: packMeshDataForTextures2 } = await Promise.resolve().then(() => (init_obj_parser(), obj_parser_exports));
-      const meshData = await loadOBJ2(url);
-      const result = this._packCacheAndUploadMesh(meshId, meshData, packMeshDataForTextures2);
+      const { loadOBJ: loadOBJ2 } = await Promise.resolve().then(() => (init_obj_parser(), obj_parser_exports));
+      const geometry = await loadOBJ2(url);
+      const result = this._packCacheAndUploadMesh(meshId, geometry);
       return { success: true, vertexCount: result.vertexCount };
     } catch (err) {
       console.error("[Canvas] Failed to load OBJ:", err);
@@ -19385,9 +19779,9 @@ var CanvasRenderer = class {
       return { success: false, vertexCount: 0, error: "Pipeline not ready" };
     }
     try {
-      const { parseOBJ: parseOBJ2, packMeshDataForTextures: packMeshDataForTextures2 } = await Promise.resolve().then(() => (init_obj_parser(), obj_parser_exports));
-      const meshData = parseOBJ2(objText);
-      const result = this._packCacheAndUploadMesh(meshId, meshData, packMeshDataForTextures2);
+      const { parseOBJ: parseOBJ2 } = await Promise.resolve().then(() => (init_obj_parser(), obj_parser_exports));
+      const geometry = parseOBJ2(objText);
+      const result = this._packCacheAndUploadMesh(meshId, geometry);
       return { success: true, vertexCount: result.vertexCount };
     } catch (err) {
       console.error("[Canvas] Failed to parse OBJ:", err);

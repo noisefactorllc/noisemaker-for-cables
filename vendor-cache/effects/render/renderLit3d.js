@@ -3,7 +3,7 @@ var t=class{constructor(e={}){this.state={},this.uniforms={},e.name&&(this.name=
 
 noise3d()
 .renderLit3d(specularIntensity: 2, shininess: 64)
-.write(o0)`,passes:[{name:"render",program:"renderLit3d",drawBuffers:2,inputs:{volumeCache:"inputTex3d",analyticalGeo:"inputGeo"},outputs:{color:"outputTex",geoOut:"screenGeoBuffer"}}],outputGeo:"screenGeoBuffer",outputTex3d:"inputTex3d"});var i={renderLit3d:{glsl:`/*
+.write(o0)`,passes:[{name:"render",program:"renderLit3d",drawBuffers:2,inputs:{volumeCache:"inputTex3d"},outputs:{color:"outputTex",geoOut:"screenGeoBuffer"}}],outputGeo:"screenGeoBuffer",outputTex3d:"inputTex3d"});var i={renderLit3d:{glsl:`/*
  * Universal 3D volume renderer with advanced lighting (GLSL)
  * 
  * Raymarches through a 3D volume texture to find isosurfaces,

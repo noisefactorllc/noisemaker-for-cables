@@ -424,14 +424,15 @@ let mesh = mesh99`)
   )
 })
 
-test('mutation introspection excludes builtin pipeline steps', async () => {
+test('mutation introspection identifies structural pipeline steps without making them editable', async () => {
   const core = await createReferenceCompiler()
   const { compile, listSteps, replaceEffect, getCompatibleReplacements } = core
 
   const compiled = compile('search synth, filter\nnoise(10).bloom(0.5).write(o0)')
   const steps = listSteps(compiled)
 
-  assert.equal(steps.length, 2, 'Should have 2 editable effect steps')
+  assert.equal(steps.length, 3)
+  assert.equal(steps.filter(step => step.kind === 'effect').length, 2)
   assert.equal(steps[0].effectName, 'synth.noise')
   assert.equal(steps[0].stepIndex, 0)
   assert.equal(steps[1].effectName, 'filter.bloom')
@@ -439,6 +440,12 @@ test('mutation introspection excludes builtin pipeline steps', async () => {
 
   const builtinStep = compiled.plans[0].chain.find((step) => step.builtin)
   assert.ok(builtinStep, 'Compiled plan should contain a builtin blit/write step')
+  assert.deepEqual(steps[2], {
+    stepIndex: builtinStep.temp, planIndex: 0, chainIndex: 2,
+    effectName: '_write', kind: 'builtin', isStarter: false, isStarterPosition: false,
+    canReplaceWithStarter: false, canReplaceWithNonStarter: false,
+    args: builtinStep.args,
+  })
 
   const replaceResult = replaceEffect(compiled, builtinStep.temp, 'blur')
   assert.equal(replaceResult.success, false)
@@ -467,10 +474,10 @@ test('diagnostic locations preserve source columns', async () => {
   const customLocResult = validate(ast)
   assert.deepEqual(customLocResult.diagnostics[0].location, { line: 2, column: 9 })
 
-  const unlocatedResult = compile('search synth\n  missing().write(o0)')
-  const missingDiag = unlocatedResult.diagnostics.find((d) => d.identifier === 'missing')
+  const locatedResult = compile('search synth\n  missing().write(o0)')
+  const missingDiag = locatedResult.diagnostics.find((d) => d.identifier === 'missing')
   assert.equal(missingDiag.code, 'S001')
-  assert.equal(Object.hasOwn(missingDiag, 'location'), false)
+  assert.deepEqual(missingDiag.location, { line: 2, column: 3 })
 })
 
 test('structured DSL lexer diagnostics attach diagnostic metadata to thrown SyntaxError', async () => {
@@ -730,7 +737,7 @@ test('valid automation invocations retain AST defaults and keys', async () => {
       },
       {
         type: 'Midi',
-        channel: { type: 'Number', value: 1 },
+        channel: { type: 'Number', value: 1, loc: { line: 2, col: 29 } },
         mode: { type: 'Member', path: ['midiMode', 'velocity'] },
         min: { type: 'Number', value: 0 },
         max: { type: 'Number', value: 1 },
@@ -1181,7 +1188,7 @@ test('valid subchains preserve permissive arguments, defaults, body and compiled
       type: 'Subchain',
       name,
       id,
-      body: [{ type: 'Call', name: 'diagFilter', args: [] }],
+      body: [{ type: 'Call', name: 'diagFilter', args: [], loc: { line: 2, col: 24 + args.length } }],
       loc: { line: 2, col: 10 },
     })
     const result = compile(source)
@@ -1387,7 +1394,10 @@ test('number coercion diagnostics represent unavailable locations explicitly and
   registerOp('synth.diagProbe', { name: 'diagProbe', args: [] })
   registerStarterOps(['synth.diagProbe'])
 
-  for (const source of ['search synth\nlet x = 1 + o0', 'search synth\nlet x = diagProbe() + 1']) {
+  for (const [source, location] of [
+    ['search synth\nlet x = 1 + o0', null],
+    ['search synth\nlet x = diagProbe() + 1', { line: 2, column: 9 }],
+  ]) {
     for (const entryPoint of [(src) => parse(lex(src)), compile]) {
       assert.throws(
         () => entryPoint(source),
@@ -1399,7 +1409,7 @@ test('number coercion diagnostics represent unavailable locations explicitly and
             stage: 'parser',
             severity: 'error',
             message: 'Expected number',
-            location: null,
+            location,
             span: null,
           })
           return true
@@ -1441,6 +1451,7 @@ test('valid call forms retain from override namespaces and mixed automation argu
     type: 'Call',
     name: 'probe',
     args: [],
+    loc: { line: 2, col: 21 },
     namespace: {
       name: 'synth',
       path: ['synth'],
