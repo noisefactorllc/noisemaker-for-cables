@@ -20,7 +20,7 @@ on:
   schedule:
     - cron: '41 7 * * 1'
   push:
-    branches: [main]
+    branches: [main, 2.x]
     paths:
       - "export-kit/**"
       - ".github/workflows/export-kit.yml"
