@@ -11,6 +11,9 @@ import { chromium } from 'playwright'
 // WebGL2 to SwANGLE/Vulkan for the run, matching upstream noisemaker's
 // shader-test browser.
 function webgpuLaunchOptions() {
+  if (process.platform === 'darwin') {
+    return { args: ['--enable-unsafe-webgpu', '--use-angle=metal'], env: { ...process.env } }
+  }
   const args = [
     '--enable-unsafe-webgpu',
     '--enable-features=Vulkan',
