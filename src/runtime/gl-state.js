@@ -276,7 +276,7 @@ function captureIndexedBindings(gl, {
   return bindings
 }
 
-function captureDrawBuffers(gl) {
+function captureDrawBuffers(gl, drawFramebuffer) {
   if (
     typeof gl.drawBuffers !== 'function' ||
     !hasEnum(gl, 'DRAW_BUFFER0') ||
@@ -285,7 +285,8 @@ function captureDrawBuffers(gl) {
   const maximum = queryOptional(gl, 'MAX_DRAW_BUFFERS')
   if (!maximum.supported || !Number.isFinite(maximum.value)) return undefined
   const values = []
-  for (let index = 0; index < Math.max(0, Math.floor(maximum.value)); index += 1) {
+  const count = drawFramebuffer === null ? 1 : Math.max(0, Math.floor(maximum.value))
+  for (let index = 0; index < count; index += 1) {
     try {
       values.push(gl.getParameter(gl.DRAW_BUFFER0 + index))
     } catch {
@@ -333,7 +334,7 @@ export function captureGLState(gl, options = {}) {
   return {
     activeTexture: activeTexture.value,
     bindings,
-    drawBuffers: captureDrawBuffers(gl),
+    drawBuffers: captureDrawBuffers(gl, bindings.drawFramebuffer),
     enables,
     parameters,
     pixelStore,

@@ -139,13 +139,17 @@ test('draw-buffer capture trims trailing NONE slots and restore replays the auth
   assert.equal(gl.NONE, 0)
   assert.equal(gl.BACK, 0x0405)
 
-  // A fresh context's default framebuffer draws from BACK and every other
-  // DRAW_BUFFERi slot is NONE; capture keeps only the authored slot.
+  // A fresh context's default framebuffer draws from BACK; capture keeps
+  // only the slot that the default framebuffer accepts.
   const neutral = captureGLState(gl, {})
   assert.deepEqual(neutral.drawBuffers, [gl.BACK])
 
+  gl.drawBuffers([gl.NONE])
+  assert.deepEqual(captureGLState(gl, {}).drawBuffers, [gl.NONE])
+
   // A single-attachment host framebuffer: the trailing NONE slot is trimmed
   // from the snapshot instead of being replayed as an authored draw buffer.
+  gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, { id: 'host-framebuffer' })
   gl.drawBuffers([gl.COLOR_ATTACHMENT0])
   const snapshot = captureGLState(gl, {})
   assert.deepEqual(snapshot.drawBuffers, [gl.COLOR_ATTACHMENT0])
@@ -165,6 +169,16 @@ test('draw-buffer capture trims trailing NONE slots and restore replays the auth
   restoreGLState(gl, authored)
   assert.equal(gl.getParameter(gl.DRAW_BUFFER0), gl.COLOR_ATTACHMENT0)
   assert.equal(gl.getParameter(gl.DRAW_BUFFER0 + 1), gl.COLOR_ATTACHMENT1)
+})
+
+test('the default framebuffer restores only its single draw buffer when the driver repeats BACK', () => {
+  const gl = createFakeWebGL2({ maxTextureUnits: 2 })
+  const getParameter = gl.getParameter.bind(gl)
+  gl.getParameter = parameter => parameter >= gl.DRAW_BUFFER0 && parameter < gl.DRAW_BUFFER0 + 2
+    ? gl.BACK
+    : getParameter(parameter)
+  const snapshot = captureGLState(gl, {})
+  assert.deepEqual(snapshot.drawBuffers, [gl.BACK])
 })
 
 test('prepareNoisemakerGLState establishes a canonical guest baseline inside an exact host guard', () => {
