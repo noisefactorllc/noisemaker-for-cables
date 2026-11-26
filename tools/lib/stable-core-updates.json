@@ -1,0 +1,278 @@
+[
+  {
+    "module": "/**",
+    "before": " * Build: 084176b7 (stable subset from 478f94ea)\n * Date: 2026-11-23T23:34:55.045Z\n",
+    "after": " * Build: 5596e69f (stable subset from 478f94ea)\n * Date: 2026-11-26T20:11:55.013Z\n",
+    "count": 1
+  },
+  {
+    "module": "src/runtime/effect.js",
+    "before": "    if (config.externalMesh) this.externalMesh = config.externalMesh;\n    if (config.builtinMeshes) this.builtinMeshes = config.builtinMeshes;\n    if (config.outputTex3d) this.outputTex3d = config.outputTex3d;\n    if (config.outputGeo) this.outputGeo = config.outputGeo;\n    if (config.uniformLayout) this.uniformLayout = config.uniformLayout;\n    if (config.uniformLayouts) this.uniformLayouts = config.uniformLayouts;\n",
+    "after": "    if (config.externalMesh) this.externalMesh = config.externalMesh;\n    if (config.builtinMeshes) this.builtinMeshes = config.builtinMeshes;\n    if (config.outputTex) this.outputTex = config.outputTex;\n    if (config.outputTex3d) this.outputTex3d = config.outputTex3d;\n    if (config.outputGeo) this.outputGeo = config.outputGeo;\n    if (config.outputXyz) this.outputXyz = config.outputXyz;\n    if (config.outputVel) this.outputVel = config.outputVel;\n    if (config.outputRgba) this.outputRgba = config.outputRgba;\n    if (config.uniformLayout) this.uniformLayout = config.uniformLayout;\n    if (config.uniformLayouts) this.uniformLayouts = config.uniformLayouts;\n",
+    "count": 1
+  },
+  {
+    "module": "src/runtime/backends/webgl2.js",
+    "before": "          count = uniformValue;\n        }\n      } else if (count === \"auto\" || count === \"input\") {\n        let refTex = null;\n        if (effectivePass.inputs) {\n",
+    "after": "          count = uniformValue;\n        }\n      }\n      if (count === \"auto\" || count === \"screen\" || count === \"input\") {\n        let refTex = null;\n        if (effectivePass.inputs) {\n",
+    "count": 1
+  },
+  {
+    "module": "src/runtime/backends/webgl2.js",
+    "before": "      }\n    }\n    if (pass.outputs) {\n      renderPass.outputs = {};\n      for (const [key, texId] of Object.entries(pass.outputs)) {\n",
+    "after": "      }\n    }\n    if (pass.outputs && Object.keys(pass.outputs).length > 0) {\n      renderPass.outputs = {};\n      for (const [key, texId] of Object.entries(pass.outputs)) {\n",
+    "count": 1
+  },
+  {
+    "module": "src/runtime/backends/webgl2.js",
+    "before": "      \"one-minus-dst-alpha\": gl.ONE_MINUS_DST_ALPHA\n    };\n    return factors[factor] || gl.ONE;\n  }\n  getName() {\n",
+    "after": "      \"one-minus-dst-alpha\": gl.ONE_MINUS_DST_ALPHA\n    };\n    return factors[factor] ?? gl.ONE;\n  }\n  getName() {\n",
+    "count": 1
+  },
+  {
+    "module": "src/runtime/backends/webgpu.js",
+    "before": "      const [srcFactor, dstFactor] = blend;\n      const toFactor = (factor) => {\n        if (typeof factor === \"string\") return factor.toLowerCase().replace(/_/g, \"-\");\n        return null;\n      };\n",
+    "after": "      const [srcFactor, dstFactor] = blend;\n      const toFactor = (factor) => {\n        if (typeof factor === \"string\") {\n          const normalized = factor.toLowerCase().replace(/_/g, \"-\");\n          switch (normalized) {\n            case \"src-color\":\n              return \"src\";\n            case \"dst-color\":\n              return \"dst\";\n            case \"one-minus-src-color\":\n              return \"one-minus-src\";\n            case \"one-minus-dst-color\":\n              return \"one-minus-dst\";\n            default:\n              return normalized;\n          }\n        }\n        return null;\n      };\n",
+    "count": 1
+  },
+  {
+    "module": "src/runtime/backends/webgpu.js",
+    "before": "      }\n    }\n    if (count === \"auto\" || count === \"input\" || count <= 0) {\n      let refTex = null;\n      if (pass.inputs) {\n",
+    "after": "      }\n    }\n    if (count === \"auto\" || count === \"screen\" || count === \"input\" || count <= 0) {\n      let refTex = null;\n      if (pass.inputs) {\n",
+    "count": 1
+  },
+  {
+    "module": "src/runtime/pipeline.js",
+    "before": "    this.frameIndex = 0;\n    this.lastTime = 0;\n    this.surfaces = /* @__PURE__ */ new Map();\n    this._mipTargets = [];\n",
+    "after": "    this.frameIndex = 0;\n    this.lastTime = 0;\n    this._hasTimeReference = false;\n    this.surfaces = /* @__PURE__ */ new Map();\n    this._mipTargets = [];\n",
+    "count": 1
+  },
+  {
+    "module": "src/runtime/pipeline.js",
+    "before": "        if (storageId && storageId !== texId) continue;\n        const existingTex = this.backend.textures?.get?.(texId);\n        if (existingTex && existingTex.width === width && existingTex.height === height && existingTex.format === spec.format) {\n          if (!spec.is3D || existingTex.depth === this.resolveDimension(spec.depth, width, uniforms)) {\n            continue;\n",
+    "after": "        if (storageId && storageId !== texId) continue;\n        const existingTex = this.backend.textures?.get?.(texId);\n        if (existingTex && existingTex.width === width && existingTex.height === height && existingTex.format === spec.format && this.textureUsageCovers(existingTex, spec.usage)) {\n          if (!spec.is3D || existingTex.depth === this.resolveDimension(spec.depth, width, uniforms)) {\n            continue;\n",
+    "count": 1
+  },
+  {
+    "module": "src/runtime/pipeline.js",
+    "before": "    this.applyTextureAliases();\n    this.refreshMipTargets();\n  }\n  /**\n",
+    "after": "    this.applyTextureAliases();\n    this.refreshMipTargets();\n  }\n  /**\n   * Whether a backend texture was created with every usage a spec asks for.\n   * WebGPU records its usage flags; a backend that records none (WebGL2)\n   * covers any usage.\n   * @param {object} texture - Backend texture record\n   * @param {string[]} [usage] - Spec usage names\n   * @returns {boolean}\n   */\n  textureUsageCovers(texture, usage) {\n    if (!Array.isArray(usage) || typeof texture.usage !== \"number\" || typeof this.backend.resolveUsage !== \"function\") return true;\n    const needed = this.backend.resolveUsage(usage);\n    return (texture.usage & needed) === needed;\n  }\n  /**\n",
+    "count": 1
+  },
+  {
+    "module": "src/runtime/pipeline.js",
+    "before": "  syncTime(time) {\n    this.lastTime = time;\n  }\n  /**\n",
+    "after": "  syncTime(time) {\n    this.lastTime = time;\n    this._hasTimeReference = true;\n  }\n  /**\n",
+    "count": 1
+  },
+  {
+    "module": "src/runtime/pipeline.js",
+    "before": "      return;\n    }\n    let deltaTime = this.lastTime > 0 ? time - this.lastTime : 0;\n    if (deltaTime < 0) {\n      deltaTime = 1 / 60 / 10;\n    }\n    this.lastTime = time;\n    this.updateGlobalUniforms(time, deltaTime);\n    this._invokeUpdateHooks(time, deltaTime);\n",
+    "after": "      return;\n    }\n    let deltaTime = this._hasTimeReference ? time - this.lastTime : 0;\n    if (deltaTime < 0) deltaTime += 1;\n    this.syncTime(time);\n    this.updateGlobalUniforms(time, deltaTime);\n    this._invokeUpdateHooks(time, deltaTime);\n",
+    "count": 1
+  },
+  {
+    "module": "src/lang/parser.js",
+    "before": "        throw parserError(\"P005\", `write() requires an explicit surface reference (e.g., o0, o1, xyz0, vel0, rgba0, mesh0, none) at line ${peek().line} col ${peek().col}`, peek());\n      }\n      expect(\"RPAREN\", \"Expect ')'\");\n      return {\n        type: \"Write\",\n        surface,\n        loc: { line: tokenLine, col: tokenCol }\n      };\n    } else if (tokenType === \"WRITE3D\") {\n      advance();\n",
+    "after": "        throw parserError(\"P005\", `write() requires an explicit surface reference (e.g., o0, o1, xyz0, vel0, rgba0, mesh0, none) at line ${peek().line} col ${peek().col}`, peek());\n      }\n      const id = parseWriteId();\n      expect(\"RPAREN\", \"Expect ')'\");\n      const node = {\n        type: \"Write\",\n        surface,\n        loc: { line: tokenLine, col: tokenCol }\n      };\n      if (id !== void 0) node._id = id;\n      return node;\n    } else if (tokenType === \"WRITE3D\") {\n      advance();\n",
+    "count": 1
+  },
+  {
+    "module": "src/lang/parser.js",
+    "before": "        throw parserError(\"P005\", `Expected geo reference in write3d() at line ${peek().line} col ${peek().col}`, peek());\n      }\n      expect(\"RPAREN\", \"Expect ')'\");\n      return {\n        type: \"Write3D\",\n        tex3d,\n",
+    "after": "        throw parserError(\"P005\", `Expected geo reference in write3d() at line ${peek().line} col ${peek().col}`, peek());\n      }\n      const id = parseWriteId();\n      expect(\"RPAREN\", \"Expect ')'\");\n      const node = {\n        type: \"Write3D\",\n        tex3d,\n",
+    "count": 1
+  },
+  {
+    "module": "src/lang/parser.js",
+    "before": "        loc: { line: tokenLine, col: tokenCol }\n      };\n    }\n    throw parserError(\"P005\", `Expected write or write3d at line ${tokenLine} col ${tokenCol}`, { line: tokenLine, col: tokenCol });\n  }\n  const SUBCHAIN_KEYS = [\"name\", \"id\"];\n",
+    "after": "        loc: { line: tokenLine, col: tokenCol }\n      };\n      if (id !== void 0) node._id = id;\n      return node;\n    }\n    throw parserError(\"P005\", `Expected write or write3d at line ${tokenLine} col ${tokenCol}`, { line: tokenLine, col: tokenCol });\n  }\n  function parseWriteId() {\n    const key = tokens[current + 1];\n    if (peek().type !== \"COMMA\" || key?.type !== \"IDENT\" || key.lexeme !== \"_id\" || tokens[current + 2]?.type !== \"COLON\") {\n      return void 0;\n    }\n    advance();\n    const kwargs = {};\n    parseKwarg(kwargs);\n    return kwargs._id;\n  }\n  const SUBCHAIN_KEYS = [\"name\", \"id\"];\n",
+    "count": 1
+  },
+  {
+    "module": "src/lang/parser.js",
+    "before": "        node._skip = true;\n      }\n      return node;\n    }\n",
+    "after": "        node._skip = true;\n      }\n      if (kwargs._id !== void 0) node._id = kwargs._id;\n      return node;\n    }\n",
+    "count": 2
+  },
+  {
+    "module": "src/lang/validator.js",
+    "before": "  const render = ast.render ? ast.render.name : null;\n  let tempIndex = 0;\n  const programSearchOrder = ast.namespace?.searchOrder;\n  if (!programSearchOrder || programSearchOrder.length === 0) {\n",
+    "after": "  const render = ast.render ? ast.render.name : null;\n  let tempIndex = 0;\n  const ELEMENT_ID = /^[A-Za-z][A-Za-z0-9_]*$/;\n  function keepElementId(idNode, args) {\n    if (idNode?.type === \"String\" && idNode._varRef === void 0 && ELEMENT_ID.test(idNode.value)) {\n      args._id = idNode.value;\n    }\n  }\n  const programSearchOrder = ast.namespace?.searchOrder;\n  if (!programSearchOrder || programSearchOrder.length === 0) {\n",
+    "count": 1
+  },
+  {
+    "module": "src/lang/validator.js",
+    "before": "  function resolveCall(call) {",
+    "after": "  function isWrittenMixed(call) {\n    if (call.positionalsByIndex) return false;\n    return !!(call.args && call.args.length > 0 && call.kwargs && Object.keys(call.kwargs).length > 0);\n  }\n  function resolveCall(call) {",
+    "count": 1
+  },
+  {
+    "module": "src/lang/validator.js",
+    "before": "        const merged = { type: \"Call\", name: val.name, args: mergedArgs };\n",
+    "after": "        const merged = { type: \"Call\", name: val.name, args: mergedArgs };\n        if (mergedKw && mergedArgs.length > 0 && !isWrittenMixed(val) && !isWrittenMixed(call)) {\n          const hasBoundKeyword = Object.keys(val.kwargs || {}).some((key) => key !== \"_skip\" && key !== \"_id\");\n          merged.positionalsByIndex = {\n            colorSplatLimit: hasBoundKeyword ? val.positionalsByIndex?.colorSplatLimit ?? val.args.length : mergedArgs.length\n          };\n        }\n",
+    "count": 1
+  },
+  {
+    "module": "src/lang/validator.js",
+    "before": "    if (node.type === \"Chain\") {\n      const mapped = node.chain.map((c) => {\n        const mappedArgs = c.args.map((a) => substitute(a, resolving));\n        let mappedCall = { type: \"Call\", name: c.name, args: mappedArgs };\n      if (c.loc) mappedCall.loc = c.loc;\n        if (c.kwargs) {\n          const kw = {};\n          for (const [k, v] of Object.entries(c.kwargs)) kw[k] = substitute(v, resolving);\n          mappedCall.kwargs = kw;\n        }\n        return resolveCall(mappedCall);\n      });\n      return { type: \"Chain\", chain: mapped };\n    }\n",
+    "after": "    if (node.type === \"Chain\") {\n      return { type: \"Chain\", chain: node.chain.map((entry) => substitute(entry, resolving)) };\n    }\n",
+    "count": 1
+  },
+  {
+    "module": "src/lang/validator.js",
+    "before": "      let mappedCall = { type: \"Call\", name: node.name, args: mappedArgs };\n      if (node.loc) mappedCall.loc = node.loc;\n",
+    "after": "      let mappedCall = { type: \"Call\", name: node.name, args: mappedArgs };\n      if (node.loc) mappedCall.loc = node.loc;\n      if (node.positionalsByIndex) mappedCall.positionalsByIndex = node.positionalsByIndex;\n",
+    "count": 1
+  },
+  {
+    "module": "src/lang/validator.js",
+    "before": "            stepArgs._skip = true;\n          }\n          const step2 = {\n            op: \"_read\",\n",
+    "after": "            stepArgs._skip = true;\n          }\n          keepElementId(original._id, stepArgs);\n          const step2 = {\n            op: \"_read\",\n",
+    "count": 1
+  },
+  {
+    "module": "src/lang/validator.js",
+    "before": "            stepArgs._skip = true;\n          }\n          const step2 = {\n            op: \"_read3d\",\n",
+    "after": "            stepArgs._skip = true;\n          }\n          keepElementId(original._id, stepArgs);\n          const step2 = {\n            op: \"_read3d\",\n",
+    "count": 1
+  },
+  {
+    "module": "src/lang/validator.js",
+    "before": "          }\n          const idx2 = tempIndex++;\n          const step2 = {\n            op: \"_write\",\n            args: { tex: surface },\n            from: current,\n            temp: idx2,\n",
+    "after": "          }\n          const idx2 = tempIndex++;\n          const writeArgs = { tex: surface };\n          keepElementId(original._id, writeArgs);\n          const step2 = {\n            op: \"_write\",\n            args: writeArgs,\n            from: current,\n            temp: idx2,\n",
+    "count": 1
+  },
+  {
+    "module": "src/lang/validator.js",
+    "before": "          }\n          const idx2 = tempIndex++;\n          const step2 = {\n            op: \"_write3d\",\n            args: { tex3d, geo },\n            from: current,\n            temp: idx2,\n",
+    "after": "          }\n          const idx2 = tempIndex++;\n          const write3dArgs = { tex3d, geo };\n          keepElementId(original._id, write3dArgs);\n          const step2 = {\n            op: \"_write3d\",\n            args: write3dArgs,\n            from: current,\n            temp: idx2,\n",
+    "count": 1
+  },
+  {
+    "module": "src/lang/validator.js",
+    "before": "        const specArgs = spec.args || [];\n        for (let i = 0; i < specArgs.length; i++) {\n          const def = specArgs[i];\n          let node = kw && kw[def.name] !== void 0 ? kw[def.name] : call.args[i];\n          node = substitute(node);\n          const argKey = def.name;\n          if (!kw && node && node.type === \"Color\" && def.type !== \"color\" && def.name === \"r\" && specArgs[i + 1]?.name === \"g\" && specArgs[i + 2]?.name === \"b\") {\n            const [r, g, b] = node.value;\n            args[argKey] = r;\n            const defG = specArgs[i + 1];\n            args[defG.name] = g;\n            const defB = specArgs[i + 2];\n            args[defB.name] = b;\n            i += 2;\n            continue;\n          }\n          if (kw && kw[def.name] !== void 0) seen.add(def.name);\n",
+    "after": "        const specArgs = spec.args || [];\n        let posCursor = 0;\n        const byIndex = !kw || !!call.positionalsByIndex;\n        const colorSplatLimit = call.positionalsByIndex?.colorSplatLimit ?? Infinity;\n        let splatValues = null;\n        for (let i = 0; i < specArgs.length; i++) {\n          const def = specArgs[i];\n          if (byIndex) posCursor = i;\n          const fromKeyword = kw && kw[def.name] !== void 0;\n          if (posCursor < colorSplatLimit && def.type !== \"color\" && def.name === \"r\" && specArgs[i + 1]?.name === \"g\" && specArgs[i + 2]?.name === \"b\") {\n            const positional = substitute(call.args[posCursor]);\n            if (positional && positional.type === \"Color\") {\n              posCursor++;\n              const [r, g, b] = positional.value;\n              splatValues = {\n                [def.name]: r,\n                [specArgs[i + 1].name]: g,\n                [specArgs[i + 2].name]: b\n              };\n            }\n          }\n          if (!fromKeyword && splatValues && splatValues[def.name] !== void 0) {\n            args[def.name] = splatValues[def.name];\n            continue;\n          }\n          let node;\n          if (fromKeyword) {\n            node = kw[def.name];\n          } else if (posCursor < call.args.length) {\n            node = call.args[posCursor];\n            posCursor++;\n          }\n          node = substitute(node);\n          const argKey = def.name;\n          if (kw && kw[def.name] !== void 0) seen.add(def.name);\n          if (node?.type === \"Chain\" && node.chain.some((entry) => entry.type !== \"Call\")) {\n            pushDiag(\"S001\", node.chain[0], `Chain for argument '${def.name}' in ${call.name}() may contain only effect calls`);\n            args[argKey] = null;\n            continue;\n          }\n",
+    "count": 1
+  },
+  {
+    "module": "src/lang/validator.js",
+    "before": "            args[argKey] = value;\n          }\n        }\n        if (kw && kw._skip !== void 0) {\n",
+    "after": "            args[argKey] = value;\n          }\n        }\n        if (kw && kw._id !== void 0) {\n          keepElementId(kw._id, args);\n          seen.add(\"_id\");\n        }\n        if (kw && kw._skip !== void 0) {\n",
+    "count": 1
+  },
+  {
+    "module": "src/lang/unparser.js",
+    "before": "    if (value.type === \"Read\") {\n      const surfaceName = value.surface?.name || value.surface;\n      return `read(${surfaceName})`;\n    }\n    if (value.type === \"Read3D\") {\n      const tex3dName = value.tex3d?.name || value.tex3d;\n      if (value.geo) {\n        const geoName = value.geo?.name || value.geo;\n        return `read3d(${tex3dName}, ${geoName})`;\n      } else {\n        return `read3d(${tex3dName})`;\n      }\n    }\n",
+    "after": "    if (value.type === \"Read\") {\n      const surfaceName = value.surface?.name || value.surface;\n      const id = elementIdValue(value._id);\n      return id !== void 0 ? `read(_id: ${formatStringLiteral(id)}, surface: ${surfaceName})` : `read(${surfaceName})`;\n    }\n    if (value.type === \"Read3D\") {\n      const tex3dName = value.tex3d?.name || value.tex3d;\n      const id = elementIdValue(value._id);\n      const idPart = id !== void 0 ? `_id: ${formatStringLiteral(id)}, ` : \"\";\n      if (value.geo) {\n        const geoName = value.geo?.name || value.geo;\n        return id !== void 0 ? `read3d(${idPart}tex3d: ${tex3dName}, geo: ${geoName})` : `read3d(${tex3dName}, ${geoName})`;\n      } else {\n        return id !== void 0 ? `read3d(${idPart}tex3d: ${tex3dName})` : `read3d(${tex3dName})`;\n      }\n    }\n",
+    "count": 1
+  },
+  {
+    "module": "src/lang/unparser.js",
+    "before": "  return String(value);\n}\nfunction unparseCall(call, options = {}) {\n  const name = call.name;\n",
+    "after": "  return String(value);\n}\nfunction builtinIdPart(step, override) {\n  const id = override && Object.hasOwn(override, \"_id\") ? override._id : step.args?._id;\n  return typeof id === \"string\" ? `_id: ${formatStringLiteral(id)}` : null;\n}\nfunction elementIdValue(value) {\n  if (typeof value === \"string\") return value;\n  if (value && typeof value === \"object\" && value.type === \"String\" && typeof value.value === \"string\") return value.value;\n  return void 0;\n}\nfunction unparseCall(call, options = {}) {\n  const name = call.name;\n",
+    "count": 1
+  },
+  {
+    "module": "src/lang/unparser.js",
+    "before": "  const parentIndent = \" \".repeat(Math.max(0, baseIndent));\n  const childIndent = \" \".repeat(Math.max(0, baseIndent + 2));\n  if (call.kwargs && Object.keys(call.kwargs).length > 0) {\n    for (const [key, value] of Object.entries(call.kwargs)) {\n      if (key === \"_skip\" && value === false) continue;\n      const spec = specs[key] || null;\n",
+    "after": "  const parentIndent = \" \".repeat(Math.max(0, baseIndent));\n  const childIndent = \" \".repeat(Math.max(0, baseIndent + 2));\n  const formatArgument = (value, spec, sourceForm) => {\n    if (options.letArguments && value?.type) {\n      if (value.type === \"Color\") return formatColorLiteral(value.value);\n      return formatLetExpr(value, options);\n    }\n    return formatValue(value, spec, options, sourceForm);\n  };\n  const elementId = elementIdValue(call.kwargs?._id);\n  if (elementId !== void 0) {\n    parts.push(`_id: ${formatStringLiteral(elementId)}`);\n  }\n  if (call.kwargs && Object.keys(call.kwargs).length > 0) {\n    for (const [key, value] of Object.entries(call.kwargs)) {\n      if (key === \"_id\" && (elementId !== void 0 || value === null || value === void 0)) continue;\n      if (key === \"_skip\" && value === false) continue;\n      const spec = specs[key] || null;\n",
+    "count": 1
+  },
+  {
+    "module": "src/lang/unparser.js",
+    "before": "      const sourceForm = call.argSources?.[key];\n      if (defaultSpec && defaultSpec.default !== void 0) {\n        const formattedValue = formatValue(value, spec, options, sourceForm);\n        const formattedDefault = formatValue(defaultSpec.default, spec, options);\n        const isExplicitNone = spec?.type === \"surface\" && formattedValue === \"none\" && formattedDefault !== \"none\";\n",
+    "after": "      const sourceForm = call.argSources?.[key];\n      if (defaultSpec && defaultSpec.default !== void 0) {\n        const formattedValue = formatArgument(value, spec, sourceForm);\n        const formattedDefault = formatValue(defaultSpec.default, spec, options);\n        const isExplicitNone = spec?.type === \"surface\" && formattedValue === \"none\" && formattedDefault !== \"none\";\n",
+    "count": 1
+  },
+  {
+    "module": "src/lang/unparser.js",
+    "before": "        }\n      }\n      parts.push(`${key}: ${formatValue(value, spec, options, sourceForm)}`);\n    }\n  }\n  if (call.args && call.args.length > 0) {\n    for (const arg of call.args) {\n      parts.push(formatValue(arg, null, options));\n    }\n  }\n",
+    "after": "        }\n      }\n      parts.push(`${key}: ${formatArgument(value, spec, sourceForm)}`);\n    }\n  }\n  if (call.args && call.args.length > 0) {\n    for (const arg of call.args) {\n      parts.push(formatArgument(arg, null));\n    }\n  }\n",
+    "count": 1
+  },
+  {
+    "module": "src/lang/unparser.js",
+    "before": "  const parts = chain.map((call, idx) => unparseCall(call, { ...options, indent: idx === 0 ? 0 : 2 }));\n  return parts.join(\"\\n  .\");\n}\nfunction formatLetExpr(expr, options = {}) {\n",
+    "after": "  const parts = chain.map((call, idx) => unparseCall(call, { ...options, indent: idx === 0 ? 0 : 2 }));\n  return parts.join(\"\\n  .\");\n}\nfunction formatLetBinding(expr, options) {\n  const calls = expr?.type === \"Chain\" ? expr.chain : [expr];\n  const isExpression = (arg) => arg?.type === \"Call\" || arg?.type === \"Chain\" || arg?.type === \"Ident\";\n  const hasExpression = calls.some((call) => call?.type === \"Call\" && (call.args?.some(isExpression) || Object.values(call.kwargs || {}).some(isExpression)));\n  return formatLetExpr(expr, hasExpression ? { ...options, letArguments: true } : options);\n}\nfunction formatLetExpr(expr, options = {}) {\n",
+    "count": 1
+  },
+  {
+    "module": "src/lang/unparser.js",
+    "before": "    text = value ? `return ${formatLetExpr(value, options)}` : \"return\";\n  } else if (plan.type === \"VarAssign\") {\n    text = `let ${plan.name} = ${formatLetExpr(plan.expr, options)}`;\n  } else {\n    return null;\n",
+    "after": "    text = value ? `return ${formatLetExpr(value, options)}` : \"return\";\n  } else if (plan.type === \"VarAssign\") {\n    text = `let ${plan.name} = ${formatLetBinding(plan.expr, options)}`;\n  } else {\n    return null;\n",
+    "count": 1
+  },
+  {
+    "module": "src/lang/unparser.js",
+    "before": "        }\n      }\n      const exprStr = formatLetExpr(v.expr, options);\n      lines.push(`let ${v.name} = ${exprStr}`);\n    }\n",
+    "after": "        }\n      }\n      const exprStr = formatLetBinding(v.expr, options);\n      lines.push(`let ${v.name} = ${exprStr}`);\n    }\n",
+    "count": 1
+  },
+  {
+    "module": "src/lang/unparser.js",
+    "before": "        const hasOverride = overrides[globalStepIndex]?._skip !== void 0;\n        const isSkipped = hasOverride ? overrides[globalStepIndex]._skip === true : step.args?._skip === true;\n        let readCode;\n        if (isSkipped) {\n          readCode = `read(surface: ${texName}, _skip: true)`;\n        } else {\n          readCode = `read(${texName})`;\n",
+    "after": "        const hasOverride = overrides[globalStepIndex]?._skip !== void 0;\n        const isSkipped = hasOverride ? overrides[globalStepIndex]._skip === true : step.args?._skip === true;\n        const idPart = builtinIdPart(step, overrides[globalStepIndex]);\n        let readCode;\n        if (isSkipped || idPart) {\n          readCode = `read(${idPart ? `${idPart}, ` : \"\"}surface: ${texName}${isSkipped ? \", _skip: true\" : \"\"})`;\n        } else {\n          readCode = `read(${texName})`;\n",
+    "count": 1
+  },
+  {
+    "module": "src/lang/unparser.js",
+    "before": "        const hasOverride = overrides[globalStepIndex]?._skip !== void 0;\n        const isSkipped = hasOverride ? overrides[globalStepIndex]._skip === true : step.args?._skip === true;\n        let read3dCode;\n        if (isSkipped) {\n          read3dCode = `read3d(tex3d: ${tex3d}, geo: ${geo}, _skip: true)`;\n        } else {\n          read3dCode = `read3d(${tex3d}, ${geo})`;\n",
+    "after": "        const hasOverride = overrides[globalStepIndex]?._skip !== void 0;\n        const isSkipped = hasOverride ? overrides[globalStepIndex]._skip === true : step.args?._skip === true;\n        const idPart = builtinIdPart(step, overrides[globalStepIndex]);\n        let read3dCode;\n        if (isSkipped || idPart) {\n          read3dCode = `read3d(${idPart ? `${idPart}, ` : \"\"}tex3d: ${tex3d}, geo: ${geo}${isSkipped ? \", _skip: true\" : \"\"})`;\n        } else {\n          read3dCode = `read3d(${tex3d}, ${geo})`;\n",
+    "count": 1
+  },
+  {
+    "module": "src/lang/unparser.js",
+    "before": "      if (step.builtin && step.op === \"_write\") {\n        const texName = step.args?.tex?.name || step.args?.tex;\n        currentChain.push(makeChainElement(`write(${texName})`));\n        globalStepIndex++;\n        continue;\n",
+    "after": "      if (step.builtin && step.op === \"_write\") {\n        const texName = step.args?.tex?.name || step.args?.tex;\n        const idPart = builtinIdPart(step, overrides[globalStepIndex]);\n        currentChain.push(makeChainElement(`write(${texName}${idPart ? `, ${idPart}` : \"\"})`));\n        globalStepIndex++;\n        continue;\n",
+    "count": 1
+  },
+  {
+    "module": "src/lang/unparser.js",
+    "before": "        const tex3dName = step.args?.tex3d?.name || step.args?.tex3d;\n        const geoName = step.args?.geo?.name || step.args?.geo;\n        currentChain.push(makeChainElement(`write3d(${tex3dName}, ${geoName})`));\n        globalStepIndex++;\n        continue;\n",
+    "after": "        const tex3dName = step.args?.tex3d?.name || step.args?.tex3d;\n        const geoName = step.args?.geo?.name || step.args?.geo;\n        const idPart = builtinIdPart(step, overrides[globalStepIndex]);\n        currentChain.push(makeChainElement(`write3d(${tex3dName}, ${geoName}${idPart ? `, ${idPart}` : \"\"})`));\n        globalStepIndex++;\n        continue;\n",
+    "count": 1
+  },
+  {
+    "module": "src/runtime/expander.js",
+    "before": "        for (const [argName, arg] of Object.entries(step.args)) {\n          const isObjectArg = arg !== null && typeof arg === \"object\";\n          if (isTextureArg(arg)) {\n            continue;\n",
+    "after": "        for (const [argName, arg] of Object.entries(step.args)) {\n          const isObjectArg = arg !== null && typeof arg === \"object\";\n          if (argName === \"_id\") continue;\n          if (isTextureArg(arg)) {\n            continue;\n",
+    "count": 1
+  },
+  {
+    "module": "src/runtime/expander.js",
+    "before": "          workgroups: passDef.workgroups,\n          storageBuffers: passDef.storageBuffers,\n          storageTextures: passDef.storageTextures,\n          // Pass labels and per-pass execution controls are\n          // copied verbatim. `name`/`type` stay queryable metadata\n",
+    "after": "          workgroups: passDef.workgroups,\n          storageBuffers: passDef.storageBuffers,\n          storageTextures: passDef.storageTextures ? {} : void 0,\n          // Pass labels and per-pass execution controls are\n          // copied verbatim. `name`/`type` stay queryable metadata\n",
+    "count": 1
+  },
+  {
+    "module": "src/runtime/expander.js",
+    "before": "          for (const [argName, arg] of Object.entries(step.args)) {\n            const isObjectArg = arg !== null && typeof arg === \"object\";\n            if (isTextureArg(arg)) {\n              continue;\n",
+    "after": "          for (const [argName, arg] of Object.entries(step.args)) {\n            const isObjectArg = arg !== null && typeof arg === \"object\";\n            if (argName === \"_id\") continue;\n            if (isTextureArg(arg)) {\n              continue;\n",
+    "count": 1
+  },
+  {
+    "module": "src/runtime/expander.js",
+    "before": "            }\n          }\n        }\n        if (passDef.outputs) {\n",
+    "after": "            }\n          }\n        }\n        if (passDef.storageTextures) {\n          for (const [binding, texRef] of Object.entries(passDef.storageTextures)) {\n            if (texRef === \"outputTex\") {\n              const isLastStep = step === plan.chain[plan.chain.length - 1];\n              const isLastPass = i === effectPasses.length - 1;\n              const nextStep = plan.chain[plan.chain.indexOf(step) + 1];\n              const inlineWrite = isLastPass && nextStep?.builtin && nextStep.op === \"_write\" ? nextStep.args?.tex : null;\n              if (inlineWrite && inlineWrite.name !== \"none\") {\n                const prefix = inlineWrite.kind === \"feedback\" ? \"feedback\" : \"global\";\n                pass.storageTextures[binding] = `${prefix}_${inlineWrite.name}`;\n                lastWrittenSurface = inlineWrite.name;\n              } else if (isLastStep && isLastPass && plan.write) {\n                const outName = typeof plan.write === \"object\" ? plan.write.name : plan.write;\n                const outKind = plan.write.kind || \"output\";\n                const prefix = outKind === \"feedback\" ? \"feedback\" : \"global\";\n                pass.storageTextures[binding] = `${prefix}_${outName}`;\n                lastWrittenSurface = outName;\n              } else {\n                pass.storageTextures[binding] = `${nodeId}_out`;\n              }\n              textureMap.set(`${nodeId}_out`, pass.storageTextures[binding]);\n            } else if (texRef.startsWith(\"global_\")) {\n              pass.storageTextures[binding] = scopeChainTex(texRef);\n            } else {\n              pass.storageTextures[binding] = `${nodeId}_${texRef}`;\n              const storageSpec = textureSpecs[pass.storageTextures[binding]];\n              if (storageSpec) {\n                storageSpec.usage = [.../* @__PURE__ */ new Set([\n                  ...storageSpec.usage || [\"render\", \"sample\", \"copySrc\", \"copyDst\"],\n                  \"storage\"\n                ])];\n              }\n            }\n          }\n          if (!passDef.outputs) delete pass.outputs;\n        }\n        if (passDef.outputs) {\n",
+    "count": 1
+  },
+  {
+    "module": "src/runtime/compiler.js",
+    "before": "      // copyExternalImageToTexture can write into it without Dawn rejecting\n      // with \"Destination texture needs to have CopyDst usage\".\n      usage: [\"render\", \"sample\", \"copySrc\", \"copyDst\"]\n    };\n    if (effectSpec.is3D) {\n",
+    "after": "      // copyExternalImageToTexture can write into it without Dawn rejecting\n      // with \"Destination texture needs to have CopyDst usage\".\n      usage: effectSpec.usage || [\"render\", \"sample\", \"copySrc\", \"copyDst\"]\n    };\n    if (effectSpec.is3D) {\n",
+    "count": 1
+  },
+  {
+    "module": "src/runtime/compiler.js",
+    "before": "        });\n      }\n    }\n  }\n",
+    "after": "        });\n      }\n    }\n  }\n  for (const pass of passes) {\n    if (!pass.storageTextures) continue;\n    for (const texId of Object.values(pass.storageTextures)) {\n      if (typeof texId !== \"string\" || texId.startsWith(\"global_\")) continue;\n      const spec = textures.get(texId);\n      if (spec) {\n        if (!spec.usage.includes(\"storage\")) spec.usage = [...spec.usage, \"storage\"];\n        continue;\n      }\n      textures.set(texId, {\n        width: \"screen\",\n        height: \"screen\",\n        format: \"rgba16f\",\n        usage: [\"render\", \"sample\", \"storage\", \"copySrc\", \"copyDst\"]\n      });\n    }\n  }\n",
+    "count": 1
+  },
+  {
+    "module": "src/renderer/canvas.js",
+    "before": "    }\n    if (definition.paramAliases !== void 0) fail(\"paramAliases is no longer supported\");\n    if (getEffect(`user.${func}`) || getEffect(`user/${func}`)) fail(`user.${func} is already registered`);\n    const instance = new Effect({ ...definition, func, namespace: \"user\" });\n",
+    "after": "    }\n    if (definition.paramAliases !== void 0) fail(\"paramAliases is no longer supported\");\n    for (const field of [\"outputTex\", \"outputXyz\", \"outputVel\", \"outputRgba\"]) {\n      if (definition[field] !== void 0 && !hasSource(definition[field])) fail(`${field} must be a nonempty texture name`);\n    }\n    if (getEffect(`user.${func}`) || getEffect(`user/${func}`)) fail(`user.${func} is already registered`);\n    const instance = new Effect({ ...definition, func, namespace: \"user\" });\n",
+    "count": 1
+  }
+]

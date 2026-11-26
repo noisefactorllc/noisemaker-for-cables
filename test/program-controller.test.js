@@ -703,6 +703,43 @@ test('render jobs serialize normalized times, clear stale presentation, and publ
   )
 })
 
+test('controller seeds pipeline time only from a frame that actually rendered', async () => {
+  installTestDomShim()
+  const { Pipeline } = await import('../vendor-cache/noisemaker-shaders-core.esm.js')
+  const deltas = []
+  class ClockPipeline extends Pipeline {
+    constructor(graph, backend) {
+      super({ ...graph, passes: [] }, backend)
+      backend.dsl = graph.dsl
+      backend.beginFrame = () => {}
+      backend.endFrame = () => {}
+    }
+    resize(width, height) {
+      this.width = this.backend.width = width
+      this.height = this.backend.height = height
+    }
+    render(time) {
+      super.render(time)
+      deltas.push(this.globalUniforms.deltaTime)
+      this.backend.presentedTextureId = `clock:${time}`
+    }
+    dispose() { this.backend.destroy() }
+  }
+  const harness = createHarness({ PipelineClass: ClockPipeline })
+  try {
+    await harness.controller.setProgram('first clock')
+    await harness.controller.setProgram('replacement before first frame')
+    assert.equal((await harness.controller.render(0.75)).rendered, true)
+    assert.deepEqual(deltas, [0])
+    assert.equal((await harness.controller.render(0)).rendered, true)
+    await harness.controller.setProgram('replacement after real zero')
+    assert.equal((await harness.controller.render(0.125)).rendered, true)
+    assert.deepEqual(deltas, [0, 0.25, 0.125])
+  } finally {
+    await harness.controller.dispose()
+  }
+})
+
 test('media replacement and disconnect rebind without deleting any host texture', async () => {
   const harness = createHarness()
   const first = { height: 4, id: 'input-a', tex: {}, width: 4 }
@@ -1435,6 +1472,54 @@ test('a blended pass whose output format the graph does not record still require
         harness.events.some((event) => event.startsWith('gpu:shader-compile:')),
         false,
       )
+    })
+  }
+})
+
+test('storage-only render targets retain the controller capability checks', async (t) => {
+  for (const outputs of [undefined, {}]) {
+    await t.test(`attachment limits with ${outputs ? 'empty' : 'absent'} render outputs`, async () => {
+      const dsl = 'storage attachment limit'
+      const harness = createHarness({
+        deviceMaxDrawBuffers: 8,
+        graphOptionsByDsl: new Map([[dsl, {
+          pass: {
+            outputs,
+            storageTextures: { a: 'a', b: 'b', c: 'c', d: 'd', e: 'e' },
+          },
+        }]]),
+      })
+      try {
+        const state = await harness.controller.setProgram(dsl)
+        assert.equal(state.ready, false)
+        assert.equal(state.error.code, 'ERR_CAPABILITY')
+        assert.equal(state.error.capability, 'maxColorAttachments')
+        assert.equal(state.error.required, 5)
+        assert.equal(harness.events.some(event => event.startsWith('gpu:shader-compile:')), false)
+      } finally {
+        await harness.controller.dispose()
+      }
+    })
+  }
+  for (const format of ['rgba8unorm', 'rgba16f', 'rgba32float']) {
+    await t.test(`blended storage format ${format}`, async () => {
+      const dsl = 'storage blend'
+      const harness = createHarness({
+        backendCapabilities: { floatBlend: false },
+        graphOptionsByDsl: new Map([[dsl, {
+          pass: { blend: true, storageTextures: { outputBuffer: 'trail' } },
+          textures: new Map([['trail', { format }]]),
+        }]]),
+        missingExtension: 'EXT_float_blend',
+      })
+      try {
+        const state = await harness.controller.setProgram(dsl)
+        assert.equal(state.ready, format !== 'rgba32float')
+        if (format === 'rgba32float') assert.equal(state.error.capability, 'floatBlend')
+        else assert.equal(state.error, null)
+      } finally {
+        await harness.controller.dispose()
+      }
     })
   }
 })

@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto'
+import { readFileSync } from 'node:fs'
 
 // The release also contains experimental features. Derive this port from the
 // previous stable core by carrying only shared, stable source changes.
@@ -7,9 +8,13 @@ export const coreSources = Object.freeze({
     url: 'https://shaders.noisedeck.app/1.0.357/noisemaker-shaders-core.esm.js',
     sha256: '670d0c5bdfa20acb5e4709597b3145819fa76f58de46c174dc7f8cd21d0da4db',
   },
-  release: {
+  baseline: {
     url: 'https://shaders.noisedeck.app/1.5.0/noisemaker-shaders-core.esm.js',
     sha256: '6596d11a2b54de9c80bbc21826d4797d3499d79715e5fafb1edb4597f73e20e7',
+  },
+  release: {
+    url: 'https://shaders.noisedeck.app/1.5.17/noisemaker-shaders-core.esm.js',
+    sha256: 'c7206401ddd1eecb9b750b075f2ad5aa49c1ec268df33fa6fd7733b080094ceb',
   },
 })
 
@@ -56,8 +61,8 @@ function transplantMethods(base, release, names) {
   return base
 }
 
-export function deriveStableCore(base, release) {
-  for (const [name, bytes] of [['base', base], ['release', release]]) {
+function deriveBaselineCore(base, release) {
+  for (const [name, bytes] of [['base', base], ['baseline', release]]) {
     if (createHash('sha256').update(bytes).digest('hex') !== coreSources[name].sha256) {
       throw Error(`Stable core ${name} digest mismatch`)
     }
@@ -150,4 +155,20 @@ export function deriveStableCore(base, release) {
   base = replaceOnce(base, ' * Build: 478f94ea', ' * Build: 084176b7 (stable subset from 478f94ea)')
   base = replaceOnce(base, ' * Date: 2026-11-23T02:11:00.447Z', ' * Date: 2026-11-23T23:34:55.045Z')
   return base
+}
+
+export function deriveStableCore(base, baseline, release) {
+  if (createHash('sha256').update(release).digest('hex') !== coreSources.release.sha256) {
+    throw Error('Stable core release digest mismatch')
+  }
+  let stable = deriveBaselineCore(base, baseline)
+  const updates = JSON.parse(readFileSync(new URL('./stable-core-updates.json', import.meta.url), 'utf8'))
+  for (const { module, before, after, count } of updates) {
+    if (typeof before !== 'string' || before.length === 0 || typeof after !== 'string' ||
+        !Number.isSafeInteger(count) || count < 1 || stable.split(before).length - 1 !== count) {
+      throw Error(`Stable core update anchor differs: ${module}`)
+    }
+    stable = stable.replaceAll(before, () => after)
+  }
+  return stable
 }

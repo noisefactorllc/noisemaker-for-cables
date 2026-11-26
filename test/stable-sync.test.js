@@ -205,3 +205,129 @@ test('experimental syntax and renderer interfaces remain absent', () => {
     assert.equal(member in core.CanvasRenderer.prototype, false, member)
   }
 })
+
+test('stable element ids survive compile and unparse without becoming uniforms', () => {
+  const source = 'search synth; solid(_id: "base").write(o1, _id: "stored"); read(surface: o1, _id: "input").write(o0, _id: "out")'
+  const compiled = core.compile(source)
+  assert.deepEqual(compiled.diagnostics, [])
+  const ids = result => result.plans.flatMap(plan => plan.chain || []).map(step => step.args?._id)
+  assert.deepEqual(ids(compiled), ['base', 'stored', 'input', 'out'])
+  const text = core.unparse(compiled)
+  assert.deepEqual(ids(core.compile(text)), ids(compiled))
+  const graph = core.compileGraph(source)
+  for (const pass of graph.passes) assert.equal(Object.hasOwn(pass.uniforms || {}, '_id'), false)
+})
+
+test('let bindings preserve nested effect arguments and sibling values', () => {
+  const source = 'search synth, mixer; let layer = blendMode(tex: solid(color: #336699), mix: 0.25); noise().layer().write(o0)'
+  const compiled = core.compile(source)
+  assert.deepEqual(compiled.diagnostics.filter(d => d.severity === 'error'), [])
+  const text = core.unparse(compiled)
+  assert.ok(text.includes('solid('), text)
+  assert.ok(text.includes('0.25'), text)
+  const again = core.compile(text)
+  assert.deepEqual(again.diagnostics.filter(d => d.severity === 'error'), [])
+  assert.equal(core.unparse(again), text)
+})
+
+test('let-bound RGB colors retain their components under keyword overrides', () => {
+  core.registerOp('filter.rgbprobe', { name: 'rgbprobe', args: ['r', 'g', 'b'].map(name => ({ name, type: 'float', default: 0 })) })
+  const color = [0x80 / 255, 0x40 / 255, 0x20 / 255]
+  for (const [call, expected] of [
+    ['t()', color], ['t(_skip: false)', color], ['t(_id: "color")', color],
+    ['t(g: 0.25)', [color[0], 0.25, color[2]]],
+  ]) {
+    const compiled = core.compile(`search synth, filter; let t = rgbprobe(#804020); solid().${call}.write(o0)`)
+    assert.deepEqual(compiled.diagnostics, [])
+    const args = compiled.plans[0].chain.find(step => step.op === 'filter.rgbprobe').args
+    assert.deepEqual([args.r, args.g, args.b], expected, call)
+  }
+})
+
+test('a read chain supplied as an effect argument reports a diagnostic', () => {
+  const compiled = core.compile('search synth, mixer, filter; solid().blendMode(tex: read(o1).invert()).write(o0)')
+  const errors = compiled.diagnostics.filter(d => d.severity === 'error')
+  assert.equal(errors.length, 1)
+  assert.match(errors[0].message, /Chain for argument 'tex'.*only effect calls/)
+})
+
+test('configuration effects retain their handed-on texture names', () => {
+  for (const field of ['outputTex', 'outputXyz', 'outputVel', 'outputRgba']) {
+    const effect = new core.Effect({ name: 'handoff', func: 'handoff', [field]: 'stateTex' })
+    assert.equal(effect[field], 'stateTex', field)
+  }
+})
+
+test('storage-only passes scope and allocate their targets for following effects', () => {
+  for (const target of ['outputTex', 'work']) {
+    const name = target === 'work' ? 'storedNamed' : 'storedDirect'
+    core.registerOp(`user.${name}`, { name, args: [] })
+    core.registerStarterOps([`user.${name}`])
+    core.registerEffect(`user.${name}`, new core.Effect({
+      name, func: name,
+      ...(target === 'work' ? { textures: { work: { width: 8, height: 8, format: 'rgba8unorm' } }, outputTex: 'work' } : {}),
+      passes: [{ name: 'fill', program: 'fill', type: 'compute', storageTextures: { outputBuffer: target } }],
+    }))
+    const graph = core.compileGraph(`search user, filter; ${name}().invert().write(o0)`)
+    const expected = target === 'work' ? 'node_0_work' : 'node_0_out'
+    assert.equal(graph.passes[0].storageTextures.outputBuffer, expected)
+    assert.equal(Object.hasOwn(graph.passes[0], 'outputs'), false)
+    assert.ok(graph.textures.get(expected)?.usage.includes('storage'), expected)
+  }
+})
+
+test('a reused WebGPU texture must cover every required usage', () => {
+  const pipeline = Object.create(core.Pipeline.prototype)
+  pipeline.backend = { resolveUsage: names => names.reduce((bits, name) => bits | ({ sample: 1, storage: 2 }[name]), 0) }
+  assert.equal(pipeline.textureUsageCovers({ usage: 1 }, ['sample', 'storage']), false)
+  assert.equal(pipeline.textureUsageCovers({ usage: 3 }, ['sample', 'storage']), true)
+  assert.equal(pipeline.textureUsageCovers({}, ['sample', 'storage']), true)
+})
+
+test('blend factors preserve zero and normalize color factors for WebGPU', () => {
+  const gl = Object.create(core.WebGL2Backend.prototype)
+  gl.gl = { ZERO: 0, ONE: 1 }
+  assert.equal(gl.resolveBlendFactor('zero'), 0)
+  const gpu = Object.create(core.WebGPUBackend.prototype)
+  for (const [input, expected] of [['SRC_COLOR', 'src'], ['DST_COLOR', 'dst'], ['ONE_MINUS_SRC_COLOR', 'one-minus-src'], ['ONE_MINUS_DST_COLOR', 'one-minus-dst']]) {
+    const blend = gpu.resolveBlendState([input, 'ZERO'])
+    assert.equal(blend.color.srcFactor, expected)
+    assert.equal(blend.color.dstFactor, 'zero')
+  }
+})
+
+test('screen triangle counts resolve from input dimensions or a positive override', () => {
+  const gpu = Object.create(core.WebGPUBackend.prototype)
+  gpu.textures = new Map([['mesh0_positions', { width: 8, height: 4 }]])
+  const pass = { count: 'screen', inputs: { meshPositions: 'mesh0_positions' } }
+  assert.equal(gpu.resolveMeshVertexCount(pass, {}), 32)
+  assert.equal(gpu.resolveMeshVertexCount({ ...pass, countUniform: 'vertices', uniforms: { vertices: 0 } }, {}), 32)
+  assert.equal(gpu.resolveMeshVertexCount({ ...pass, countUniform: 'vertices', uniforms: { vertices: 6 } }, {}), 6)
+  assert.equal(gpu.resolveMeshVertexCount({ count: 'screen' }, {}), 3)
+})
+
+test('pipeline frame deltas stay regular at zero and across loop boundaries', async () => {
+  class MockBackend extends core.Backend {
+    async init() {}
+    createTexture(id, spec) { this.textures.set(id, { id, ...spec }); return this.textures.get(id) }
+    destroyTexture(id) { this.textures.delete(id) }
+    async compileProgram(id) { this.programs.set(id, {}); return this.programs.get(id) }
+    executePass() {}
+    beginFrame() {}
+    endFrame() {}
+    resize() {}
+    getName() { return 'Mock' }
+  }
+  const pipeline = new core.Pipeline({ passes: [], textures: new Map() }, new MockBackend(null))
+  await pipeline.init(8, 8)
+  try {
+    for (let frame = 0; frame <= 12; frame++) {
+      pipeline.render((frame % 6) / 6)
+      const expected = frame === 0 ? 0 : 1 / 6
+      assert.ok(Math.abs(pipeline.globalUniforms.deltaTime - expected) < 1e-12,
+        `frame ${frame}: ${pipeline.globalUniforms.deltaTime}`)
+    }
+  } finally {
+    pipeline.dispose()
+  }
+})

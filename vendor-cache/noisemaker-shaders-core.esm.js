@@ -3,8 +3,8 @@
  * Includes: CanvasRenderer + UIController + EffectSelect
  * Copyright (c) 2017-2026 Noise Factor LLC. https://noisefactor.io/
  * SPDX-License-Identifier: MIT
- * Build: 084176b7 (stable subset from 478f94ea)
- * Date: 2026-11-23T23:34:55.045Z
+ * Build: 5596e69f (stable subset from 478f94ea)
+ * Date: 2026-11-26T20:11:55.013Z
  */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
@@ -1691,12 +1691,15 @@ function parse(tokens, options = {}) {
       } else {
         throw parserError("P005", `write() requires an explicit surface reference (e.g., o0, o1, xyz0, vel0, rgba0, mesh0, none) at line ${peek().line} col ${peek().col}`, peek());
       }
+      const id = parseWriteId();
       expect("RPAREN", "Expect ')'");
-      return {
+      const node = {
         type: "Write",
         surface,
         loc: { line: tokenLine, col: tokenCol }
       };
+      if (id !== void 0) node._id = id;
+      return node;
     } else if (tokenType === "WRITE3D") {
       advance();
       expect("LPAREN", "Expect '('");
@@ -1715,15 +1718,28 @@ function parse(tokens, options = {}) {
       } else {
         throw parserError("P005", `Expected geo reference in write3d() at line ${peek().line} col ${peek().col}`, peek());
       }
+      const id = parseWriteId();
       expect("RPAREN", "Expect ')'");
-      return {
+      const node = {
         type: "Write3D",
         tex3d,
         geo,
         loc: { line: tokenLine, col: tokenCol }
       };
+      if (id !== void 0) node._id = id;
+      return node;
     }
     throw parserError("P005", `Expected write or write3d at line ${tokenLine} col ${tokenCol}`, { line: tokenLine, col: tokenCol });
+  }
+  function parseWriteId() {
+    const key = tokens[current + 1];
+    if (peek().type !== "COMMA" || key?.type !== "IDENT" || key.lexeme !== "_id" || tokens[current + 2]?.type !== "COLON") {
+      return void 0;
+    }
+    advance();
+    const kwargs = {};
+    parseKwarg(kwargs);
+    return kwargs._id;
   }
   const SUBCHAIN_KEYS = ["name", "id"];
   function parseSubchainCall() {
@@ -1893,6 +1909,7 @@ function parse(tokens, options = {}) {
       if (kwargs._skip?.type === "Boolean" && kwargs._skip.value === true) {
         node._skip = true;
       }
+      if (kwargs._id !== void 0) node._id = kwargs._id;
       return node;
     }
     if (nameToken.lexeme === "read3d") {
@@ -1908,6 +1925,7 @@ function parse(tokens, options = {}) {
       if (kwargs._skip?.type === "Boolean" && kwargs._skip.value === true) {
         node._skip = true;
       }
+      if (kwargs._id !== void 0) node._id = kwargs._id;
       return node;
     }
     return call;
@@ -2620,6 +2638,12 @@ function validate(ast) {
   const plans = [];
   const render = ast.render ? ast.render.name : null;
   let tempIndex = 0;
+  const ELEMENT_ID = /^[A-Za-z][A-Za-z0-9_]*$/;
+  function keepElementId(idNode, args) {
+    if (idNode?.type === "String" && idNode._varRef === void 0 && ELEMENT_ID.test(idNode.value)) {
+      args._id = idNode.value;
+    }
+  }
   const programSearchOrder = ast.namespace?.searchOrder;
   if (!programSearchOrder || programSearchOrder.length === 0) {
     throw new Error("Missing required 'search' directive. Every program must start with 'search <namespace>, ...' to specify namespace search order.");
@@ -2665,6 +2689,10 @@ function validate(ast) {
     }
     return false;
   }
+  function isWrittenMixed(call) {
+    if (call.positionalsByIndex) return false;
+    return !!(call.args && call.args.length > 0 && call.kwargs && Object.keys(call.kwargs).length > 0);
+  }
   function resolveCall(call) {
     if (symbols.has(call.name)) {
       const val = symbols.get(call.name);
@@ -2683,6 +2711,12 @@ function validate(ast) {
           for (const [k, v] of Object.entries(call.kwargs)) mergedKw[k] = v;
         }
         const merged = { type: "Call", name: val.name, args: mergedArgs };
+        if (mergedKw && mergedArgs.length > 0 && !isWrittenMixed(val) && !isWrittenMixed(call)) {
+          const hasBoundKeyword = Object.keys(val.kwargs || {}).some((key) => key !== "_skip" && key !== "_id");
+          merged.positionalsByIndex = {
+            colorSplatLimit: hasBoundKeyword ? val.positionalsByIndex?.colorSplatLimit ?? val.args.length : mergedArgs.length
+          };
+        }
         const loc = call.loc ?? val.loc;
         if (loc) merged.loc = loc;
         if (mergedKw) merged.kwargs = mergedKw;
@@ -2765,23 +2799,13 @@ function validate(ast) {
       return mapped;
     }
     if (node.type === "Chain") {
-      const mapped = node.chain.map((c) => {
-        const mappedArgs = c.args.map((a) => substitute(a, resolving));
-        let mappedCall = { type: "Call", name: c.name, args: mappedArgs };
-      if (c.loc) mappedCall.loc = c.loc;
-        if (c.kwargs) {
-          const kw = {};
-          for (const [k, v] of Object.entries(c.kwargs)) kw[k] = substitute(v, resolving);
-          mappedCall.kwargs = kw;
-        }
-        return resolveCall(mappedCall);
-      });
-      return { type: "Chain", chain: mapped };
+      return { type: "Chain", chain: node.chain.map((entry) => substitute(entry, resolving)) };
     }
     if (node.type === "Call") {
       const mappedArgs = node.args.map((a) => substitute(a, resolving));
       let mappedCall = { type: "Call", name: node.name, args: mappedArgs };
       if (node.loc) mappedCall.loc = node.loc;
+      if (node.positionalsByIndex) mappedCall.positionalsByIndex = node.positionalsByIndex;
       if (node.kwargs) {
         const kw = {};
         for (const [k, v] of Object.entries(node.kwargs)) kw[k] = substitute(v, resolving);
@@ -3319,6 +3343,7 @@ function validate(ast) {
           if (original._skip === true) {
             stepArgs._skip = true;
           }
+          keepElementId(original._id, stepArgs);
           const step2 = {
             op: "_read",
             args: stepArgs,
@@ -3355,6 +3380,7 @@ function validate(ast) {
           if (original._skip === true) {
             stepArgs._skip = true;
           }
+          keepElementId(original._id, stepArgs);
           const step2 = {
             op: "_read3d",
             args: stepArgs,
@@ -3380,9 +3406,11 @@ function validate(ast) {
             continue;
           }
           const idx2 = tempIndex++;
+          const writeArgs = { tex: surface };
+          keepElementId(original._id, writeArgs);
           const step2 = {
             op: "_write",
-            args: { tex: surface },
+            args: writeArgs,
             from: current,
             temp: idx2,
             builtin: true
@@ -3412,9 +3440,11 @@ function validate(ast) {
             continue;
           }
           const idx2 = tempIndex++;
+          const write3dArgs = { tex3d, geo };
+          keepElementId(original._id, write3dArgs);
           const step2 = {
             op: "_write3d",
-            args: { tex3d, geo },
+            args: write3dArgs,
             from: current,
             temp: idx2,
             builtin: true
@@ -3542,22 +3572,45 @@ function validate(ast) {
         }
         const seen = /* @__PURE__ */ new Set();
         const specArgs = spec.args || [];
+        let posCursor = 0;
+        const byIndex = !kw || !!call.positionalsByIndex;
+        const colorSplatLimit = call.positionalsByIndex?.colorSplatLimit ?? Infinity;
+        let splatValues = null;
         for (let i = 0; i < specArgs.length; i++) {
           const def = specArgs[i];
-          let node = kw && kw[def.name] !== void 0 ? kw[def.name] : call.args[i];
-          node = substitute(node);
-          const argKey = def.name;
-          if (!kw && node && node.type === "Color" && def.type !== "color" && def.name === "r" && specArgs[i + 1]?.name === "g" && specArgs[i + 2]?.name === "b") {
-            const [r, g, b] = node.value;
-            args[argKey] = r;
-            const defG = specArgs[i + 1];
-            args[defG.name] = g;
-            const defB = specArgs[i + 2];
-            args[defB.name] = b;
-            i += 2;
+          if (byIndex) posCursor = i;
+          const fromKeyword = kw && kw[def.name] !== void 0;
+          if (posCursor < colorSplatLimit && def.type !== "color" && def.name === "r" && specArgs[i + 1]?.name === "g" && specArgs[i + 2]?.name === "b") {
+            const positional = substitute(call.args[posCursor]);
+            if (positional && positional.type === "Color") {
+              posCursor++;
+              const [r, g, b] = positional.value;
+              splatValues = {
+                [def.name]: r,
+                [specArgs[i + 1].name]: g,
+                [specArgs[i + 2].name]: b
+              };
+            }
+          }
+          if (!fromKeyword && splatValues && splatValues[def.name] !== void 0) {
+            args[def.name] = splatValues[def.name];
             continue;
           }
+          let node;
+          if (fromKeyword) {
+            node = kw[def.name];
+          } else if (posCursor < call.args.length) {
+            node = call.args[posCursor];
+            posCursor++;
+          }
+          node = substitute(node);
+          const argKey = def.name;
           if (kw && kw[def.name] !== void 0) seen.add(def.name);
+          if (node?.type === "Chain" && node.chain.some((entry) => entry.type !== "Call")) {
+            pushDiag("S001", node.chain[0], `Chain for argument '${def.name}' in ${call.name}() may contain only effect calls`);
+            args[argKey] = null;
+            continue;
+          }
           if (node && node.type === "ArrayLiteral") {
             const value = [];
             for (const el of node.elements) {
@@ -3968,6 +4021,10 @@ function validate(ast) {
             }
             args[argKey] = value;
           }
+        }
+        if (kw && kw._id !== void 0) {
+          keepElementId(kw._id, args);
+          seen.add("_id");
         }
         if (kw && kw._skip !== void 0) {
           const skipNode = kw._skip;
@@ -4645,15 +4702,18 @@ function formatValue(value, spec, options = {}, sourceForm) {
     }
     if (value.type === "Read") {
       const surfaceName = value.surface?.name || value.surface;
-      return `read(${surfaceName})`;
+      const id = elementIdValue(value._id);
+      return id !== void 0 ? `read(_id: ${formatStringLiteral(id)}, surface: ${surfaceName})` : `read(${surfaceName})`;
     }
     if (value.type === "Read3D") {
       const tex3dName = value.tex3d?.name || value.tex3d;
+      const id = elementIdValue(value._id);
+      const idPart = id !== void 0 ? `_id: ${formatStringLiteral(id)}, ` : "";
       if (value.geo) {
         const geoName = value.geo?.name || value.geo;
-        return `read3d(${tex3dName}, ${geoName})`;
+        return id !== void 0 ? `read3d(${idPart}tex3d: ${tex3dName}, geo: ${geoName})` : `read3d(${tex3dName}, ${geoName})`;
       } else {
-        return `read3d(${tex3dName})`;
+        return id !== void 0 ? `read3d(${idPart}tex3d: ${tex3dName})` : `read3d(${tex3dName})`;
       }
     }
     if (value.type === "OutputRef") {
@@ -4702,6 +4762,15 @@ function formatValue(value, spec, options = {}, sourceForm) {
   }
   return String(value);
 }
+function builtinIdPart(step, override) {
+  const id = override && Object.hasOwn(override, "_id") ? override._id : step.args?._id;
+  return typeof id === "string" ? `_id: ${formatStringLiteral(id)}` : null;
+}
+function elementIdValue(value) {
+  if (typeof value === "string") return value;
+  if (value && typeof value === "object" && value.type === "String" && typeof value.value === "string") return value.value;
+  return void 0;
+}
 function unparseCall(call, options = {}) {
   const name = call.name;
   const parts = [];
@@ -4710,26 +4779,38 @@ function unparseCall(call, options = {}) {
   const baseIndent = Number.isFinite(options.indent) ? options.indent : 0;
   const parentIndent = " ".repeat(Math.max(0, baseIndent));
   const childIndent = " ".repeat(Math.max(0, baseIndent + 2));
+  const formatArgument = (value, spec, sourceForm) => {
+    if (options.letArguments && value?.type) {
+      if (value.type === "Color") return formatColorLiteral(value.value);
+      return formatLetExpr(value, options);
+    }
+    return formatValue(value, spec, options, sourceForm);
+  };
+  const elementId = elementIdValue(call.kwargs?._id);
+  if (elementId !== void 0) {
+    parts.push(`_id: ${formatStringLiteral(elementId)}`);
+  }
   if (call.kwargs && Object.keys(call.kwargs).length > 0) {
     for (const [key, value] of Object.entries(call.kwargs)) {
+      if (key === "_id" && (elementId !== void 0 || value === null || value === void 0)) continue;
       if (key === "_skip" && value === false) continue;
       const spec = specs[key] || null;
       const defaultSpec = spec || options.schemaSpecs?.[key] || null;
       const sourceForm = call.argSources?.[key];
       if (defaultSpec && defaultSpec.default !== void 0) {
-        const formattedValue = formatValue(value, spec, options, sourceForm);
+        const formattedValue = formatArgument(value, spec, sourceForm);
         const formattedDefault = formatValue(defaultSpec.default, spec, options);
         const isExplicitNone = spec?.type === "surface" && formattedValue === "none" && formattedDefault !== "none";
         if (formattedValue === formattedDefault && !isExplicitNone) {
           continue;
         }
       }
-      parts.push(`${key}: ${formatValue(value, spec, options, sourceForm)}`);
+      parts.push(`${key}: ${formatArgument(value, spec, sourceForm)}`);
     }
   }
   if (call.args && call.args.length > 0) {
     for (const arg of call.args) {
-      parts.push(formatValue(arg, null, options));
+      parts.push(formatArgument(arg, null));
     }
   }
   const hasKwargs = call.kwargs && Object.keys(call.kwargs).length > 0 && parts.length > 0;
@@ -4743,6 +4824,12 @@ ${parentIndent})`;
 function unparseChain(chain, options = {}) {
   const parts = chain.map((call, idx) => unparseCall(call, { ...options, indent: idx === 0 ? 0 : 2 }));
   return parts.join("\n  .");
+}
+function formatLetBinding(expr, options) {
+  const calls = expr?.type === "Chain" ? expr.chain : [expr];
+  const isExpression = (arg) => arg?.type === "Call" || arg?.type === "Chain" || arg?.type === "Ident";
+  const hasExpression = calls.some((call) => call?.type === "Call" && (call.args?.some(isExpression) || Object.values(call.kwargs || {}).some(isExpression)));
+  return formatLetExpr(expr, hasExpression ? { ...options, letArguments: true } : options);
 }
 function formatLetExpr(expr, options = {}) {
   if (!expr) return "null";
@@ -4885,7 +4972,7 @@ ${block(plan.else || [], source?.else)}}`;
     const value = source ? source.value : plan.value;
     text = value ? `return ${formatLetExpr(value, options)}` : "return";
   } else if (plan.type === "VarAssign") {
-    text = `let ${plan.name} = ${formatLetExpr(plan.expr, options)}`;
+    text = `let ${plan.name} = ${formatLetBinding(plan.expr, options)}`;
   } else {
     return null;
   }
@@ -4926,7 +5013,7 @@ function unparse(compiled, overrides = {}, options = {}) {
           lines.push(c);
         }
       }
-      const exprStr = formatLetExpr(v.expr, options);
+      const exprStr = formatLetBinding(v.expr, options);
       lines.push(`let ${v.name} = ${exprStr}`);
     }
     if (at < plans.length || plans.length === 0) lines.push("");
@@ -5055,9 +5142,10 @@ function unparse(compiled, overrides = {}, options = {}) {
         const texName = step.args?.tex?.name || step.args?.tex;
         const hasOverride = overrides[globalStepIndex]?._skip !== void 0;
         const isSkipped = hasOverride ? overrides[globalStepIndex]._skip === true : step.args?._skip === true;
+        const idPart = builtinIdPart(step, overrides[globalStepIndex]);
         let readCode;
-        if (isSkipped) {
-          readCode = `read(surface: ${texName}, _skip: true)`;
+        if (isSkipped || idPart) {
+          readCode = `read(${idPart ? `${idPart}, ` : ""}surface: ${texName}${isSkipped ? ", _skip: true" : ""})`;
         } else {
           readCode = `read(${texName})`;
         }
@@ -5074,9 +5162,10 @@ function unparse(compiled, overrides = {}, options = {}) {
         const geo = step.args?.geo?.name || step.args?.geo;
         const hasOverride = overrides[globalStepIndex]?._skip !== void 0;
         const isSkipped = hasOverride ? overrides[globalStepIndex]._skip === true : step.args?._skip === true;
+        const idPart = builtinIdPart(step, overrides[globalStepIndex]);
         let read3dCode;
-        if (isSkipped) {
-          read3dCode = `read3d(tex3d: ${tex3d}, geo: ${geo}, _skip: true)`;
+        if (isSkipped || idPart) {
+          read3dCode = `read3d(${idPart ? `${idPart}, ` : ""}tex3d: ${tex3d}, geo: ${geo}${isSkipped ? ", _skip: true" : ""})`;
         } else {
           read3dCode = `read3d(${tex3d}, ${geo})`;
         }
@@ -5086,14 +5175,16 @@ function unparse(compiled, overrides = {}, options = {}) {
       }
       if (step.builtin && step.op === "_write") {
         const texName = step.args?.tex?.name || step.args?.tex;
-        currentChain.push(makeChainElement(`write(${texName})`));
+        const idPart = builtinIdPart(step, overrides[globalStepIndex]);
+        currentChain.push(makeChainElement(`write(${texName}${idPart ? `, ${idPart}` : ""})`));
         globalStepIndex++;
         continue;
       }
       if (step.builtin && step.op === "_write3d") {
         const tex3dName = step.args?.tex3d?.name || step.args?.tex3d;
         const geoName = step.args?.geo?.name || step.args?.geo;
-        currentChain.push(makeChainElement(`write3d(${tex3dName}, ${geoName})`));
+        const idPart = builtinIdPart(step, overrides[globalStepIndex]);
+        currentChain.push(makeChainElement(`write3d(${tex3dName}, ${geoName}${idPart ? `, ${idPart}` : ""})`));
         globalStepIndex++;
         continue;
       }
@@ -5805,8 +5896,12 @@ var Effect = class {
     if (config.externalTexture) this.externalTexture = config.externalTexture;
     if (config.externalMesh) this.externalMesh = config.externalMesh;
     if (config.builtinMeshes) this.builtinMeshes = config.builtinMeshes;
+    if (config.outputTex) this.outputTex = config.outputTex;
     if (config.outputTex3d) this.outputTex3d = config.outputTex3d;
     if (config.outputGeo) this.outputGeo = config.outputGeo;
+    if (config.outputXyz) this.outputXyz = config.outputXyz;
+    if (config.outputVel) this.outputVel = config.outputVel;
+    if (config.outputRgba) this.outputRgba = config.outputRgba;
     if (config.uniformLayout) this.uniformLayout = config.uniformLayout;
     if (config.uniformLayouts) this.uniformLayouts = config.uniformLayouts;
     if (config.paramAliases) this.paramAliases = config.paramAliases;
@@ -6444,6 +6539,7 @@ function expand(compilationResult, options = {}) {
       if (step.args) {
         for (const [argName, arg] of Object.entries(step.args)) {
           const isObjectArg = arg !== null && typeof arg === "object";
+          if (argName === "_id") continue;
           if (isTextureArg(arg)) {
             continue;
           }
@@ -6505,7 +6601,7 @@ function expand(compilationResult, options = {}) {
           conditions: passDef.conditions,
           workgroups: passDef.workgroups,
           storageBuffers: passDef.storageBuffers,
-          storageTextures: passDef.storageTextures,
+          storageTextures: passDef.storageTextures ? {} : void 0,
           // Pass labels and per-pass execution controls are
           // copied verbatim. `name`/`type` stay queryable metadata
           // (backend shader-kind dispatch remains source-derived);
@@ -6568,6 +6664,7 @@ function expand(compilationResult, options = {}) {
         if (step.args) {
           for (const [argName, arg] of Object.entries(step.args)) {
             const isObjectArg = arg !== null && typeof arg === "object";
+            if (argName === "_id") continue;
             if (isTextureArg(arg)) {
               continue;
             }
@@ -6723,6 +6820,42 @@ function expand(compilationResult, options = {}) {
               pass.inputs[uniformName] = `${nodeId}_${texRef}`;
             }
           }
+        }
+        if (passDef.storageTextures) {
+          for (const [binding, texRef] of Object.entries(passDef.storageTextures)) {
+            if (texRef === "outputTex") {
+              const isLastStep = step === plan.chain[plan.chain.length - 1];
+              const isLastPass = i === effectPasses.length - 1;
+              const nextStep = plan.chain[plan.chain.indexOf(step) + 1];
+              const inlineWrite = isLastPass && nextStep?.builtin && nextStep.op === "_write" ? nextStep.args?.tex : null;
+              if (inlineWrite && inlineWrite.name !== "none") {
+                const prefix = inlineWrite.kind === "feedback" ? "feedback" : "global";
+                pass.storageTextures[binding] = `${prefix}_${inlineWrite.name}`;
+                lastWrittenSurface = inlineWrite.name;
+              } else if (isLastStep && isLastPass && plan.write) {
+                const outName = typeof plan.write === "object" ? plan.write.name : plan.write;
+                const outKind = plan.write.kind || "output";
+                const prefix = outKind === "feedback" ? "feedback" : "global";
+                pass.storageTextures[binding] = `${prefix}_${outName}`;
+                lastWrittenSurface = outName;
+              } else {
+                pass.storageTextures[binding] = `${nodeId}_out`;
+              }
+              textureMap.set(`${nodeId}_out`, pass.storageTextures[binding]);
+            } else if (texRef.startsWith("global_")) {
+              pass.storageTextures[binding] = scopeChainTex(texRef);
+            } else {
+              pass.storageTextures[binding] = `${nodeId}_${texRef}`;
+              const storageSpec = textureSpecs[pass.storageTextures[binding]];
+              if (storageSpec) {
+                storageSpec.usage = [.../* @__PURE__ */ new Set([
+                  ...storageSpec.usage || ["render", "sample", "copySrc", "copyDst"],
+                  "storage"
+                ])];
+              }
+            }
+          }
+          if (!passDef.outputs) delete pass.outputs;
         }
         if (passDef.outputs) {
           for (const [attachment, texRef] of Object.entries(passDef.outputs)) {
@@ -8987,7 +9120,8 @@ var WebGL2Backend = class _WebGL2Backend extends Backend {
         if (typeof uniformValue === "number" && uniformValue > 0) {
           count = uniformValue;
         }
-      } else if (count === "auto" || count === "input") {
+      }
+      if (count === "auto" || count === "screen" || count === "input") {
         let refTex = null;
         if (effectivePass.inputs) {
           const meshInputId = effectivePass.inputs.meshPositions || effectivePass.inputs.inputTex;
@@ -9064,7 +9198,7 @@ var WebGL2Backend = class _WebGL2Backend extends Backend {
         renderPass.outputs[key] = texId;
       }
     }
-    if (pass.outputs) {
+    if (pass.outputs && Object.keys(pass.outputs).length > 0) {
       renderPass.outputs = {};
       for (const [key, texId] of Object.entries(pass.outputs)) {
         const normalizedKey = key === "outputBuffer" ? "color" : key;
@@ -9486,7 +9620,7 @@ var WebGL2Backend = class _WebGL2Backend extends Backend {
       "dst-alpha": gl.DST_ALPHA,
       "one-minus-dst-alpha": gl.ONE_MINUS_DST_ALPHA
     };
-    return factors[factor] || gl.ONE;
+    return factors[factor] ?? gl.ONE;
   }
   getName() {
     return "WebGL2";
@@ -11868,7 +12002,21 @@ var WebGPUBackend = class _WebGPUBackend extends Backend {
     if (Array.isArray(blend)) {
       const [srcFactor, dstFactor] = blend;
       const toFactor = (factor) => {
-        if (typeof factor === "string") return factor.toLowerCase().replace(/_/g, "-");
+        if (typeof factor === "string") {
+          const normalized = factor.toLowerCase().replace(/_/g, "-");
+          switch (normalized) {
+            case "src-color":
+              return "src";
+            case "dst-color":
+              return "dst";
+            case "one-minus-src-color":
+              return "one-minus-src";
+            case "one-minus-dst-color":
+              return "one-minus-dst";
+            default:
+              return normalized;
+          }
+        }
         return null;
       };
       const resolvedSrc = toFactor(srcFactor) || defaultBlend.color.srcFactor;
@@ -11935,7 +12083,7 @@ var WebGPUBackend = class _WebGPUBackend extends Backend {
         return count;
       }
     }
-    if (count === "auto" || count === "input" || count <= 0) {
+    if (count === "auto" || count === "screen" || count === "input" || count <= 0) {
       let refTex = null;
       if (pass.inputs) {
         const meshInputId = pass.inputs.meshPositions || pass.inputs.inputTex;
@@ -14259,6 +14407,7 @@ var Pipeline = class {
     this._warnedDimensionFallbacks = /* @__PURE__ */ new Set();
     this.frameIndex = 0;
     this.lastTime = 0;
+    this._hasTimeReference = false;
     this.surfaces = /* @__PURE__ */ new Map();
     this._mipTargets = [];
     this.globalUniforms = {};
@@ -15157,7 +15306,7 @@ var Pipeline = class {
         const storageId = this._textureAliases.get(texId);
         if (storageId && storageId !== texId) continue;
         const existingTex = this.backend.textures?.get?.(texId);
-        if (existingTex && existingTex.width === width && existingTex.height === height && existingTex.format === spec.format) {
+        if (existingTex && existingTex.width === width && existingTex.height === height && existingTex.format === spec.format && this.textureUsageCovers(existingTex, spec.usage)) {
           if (!spec.is3D || existingTex.depth === this.resolveDimension(spec.depth, width, uniforms)) {
             continue;
           }
@@ -15182,6 +15331,19 @@ var Pipeline = class {
     }
     this.applyTextureAliases();
     this.refreshMipTargets();
+  }
+  /**
+   * Whether a backend texture was created with every usage a spec asks for.
+   * WebGPU records its usage flags; a backend that records none (WebGL2)
+   * covers any usage.
+   * @param {object} texture - Backend texture record
+   * @param {string[]} [usage] - Spec usage names
+   * @returns {boolean}
+   */
+  textureUsageCovers(texture, usage) {
+    if (!Array.isArray(usage) || typeof texture.usage !== "number" || typeof this.backend.resolveUsage !== "function") return true;
+    const needed = this.backend.resolveUsage(usage);
+    return (texture.usage & needed) === needed;
   }
   /**
    * Build the pooling plan consumed from the analyzer's physical allocation
@@ -15656,6 +15818,7 @@ var Pipeline = class {
    */
   syncTime(time) {
     this.lastTime = time;
+    this._hasTimeReference = true;
   }
   /**
    * Execute a single frame.
@@ -15666,11 +15829,9 @@ var Pipeline = class {
     if (this.isCompiling) {
       return;
     }
-    let deltaTime = this.lastTime > 0 ? time - this.lastTime : 0;
-    if (deltaTime < 0) {
-      deltaTime = 1 / 60 / 10;
-    }
-    this.lastTime = time;
+    let deltaTime = this._hasTimeReference ? time - this.lastTime : 0;
+    if (deltaTime < 0) deltaTime += 1;
+    this.syncTime(time);
     this.updateGlobalUniforms(time, deltaTime);
     this._invokeUpdateHooks(time, deltaTime);
     this.frameReadTextures.clear();
@@ -17761,7 +17922,7 @@ function extractTextureSpecs(passes, options, textureSpecs = {}) {
       // via copyTextureToTexture, and so updateTextureFromSource /
       // copyExternalImageToTexture can write into it without Dawn rejecting
       // with "Destination texture needs to have CopyDst usage".
-      usage: ["render", "sample", "copySrc", "copyDst"]
+      usage: effectSpec.usage || ["render", "sample", "copySrc", "copyDst"]
     };
     if (effectSpec.is3D) {
       spec.depth = effectSpec.depth || effectSpec.width || 64;
@@ -17792,6 +17953,23 @@ function extractTextureSpecs(passes, options, textureSpecs = {}) {
           usage: ["render", "sample", "copySrc", "copyDst"]
         });
       }
+    }
+  }
+  for (const pass of passes) {
+    if (!pass.storageTextures) continue;
+    for (const texId of Object.values(pass.storageTextures)) {
+      if (typeof texId !== "string" || texId.startsWith("global_")) continue;
+      const spec = textures.get(texId);
+      if (spec) {
+        if (!spec.usage.includes("storage")) spec.usage = [...spec.usage, "storage"];
+        continue;
+      }
+      textures.set(texId, {
+        width: "screen",
+        height: "screen",
+        format: "rgba16f",
+        usage: ["render", "sample", "storage", "copySrc", "copyDst"]
+      });
     }
   }
   return textures;
@@ -19365,6 +19543,9 @@ var CanvasRenderer = class {
       }
     }
     if (definition.paramAliases !== void 0) fail("paramAliases is no longer supported");
+    for (const field of ["outputTex", "outputXyz", "outputVel", "outputRgba"]) {
+      if (definition[field] !== void 0 && !hasSource(definition[field])) fail(`${field} must be a nonempty texture name`);
+    }
     if (getEffect(`user.${func}`) || getEffect(`user/${func}`)) fail(`user.${func} is already registered`);
     const instance = new Effect({ ...definition, func, namespace: "user" });
     instance.shaders = shaders;

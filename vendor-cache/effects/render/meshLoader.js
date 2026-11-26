@@ -1,9 +1,9 @@
 /* render/meshLoader */
-var l=Object.defineProperty;var u=(t,e,r)=>e in t?l(t,e,{enumerable:!0,configurable:!0,writable:!0,value:r}):t[e]=r;var s=(t,e,r)=>u(t,typeof e!="symbol"?e+"":e,r);var o=class{constructor(e={}){this.state={},this.uniforms={},e.name&&(this.name=e.name),e.namespace&&(this.namespace=e.namespace),e.func&&(this.func=e.func),e.description&&(this.description=e.description),e.tags&&(this.tags=e.tags),e.globals&&(this.globals=e.globals),e.passes&&(this.passes=e.passes),e.textures&&(this.textures=e.textures),e.textures3d&&(this.textures3d=e.textures3d),e.shaders&&(this.shaders=e.shaders),e.externalTexture&&(this.externalTexture=e.externalTexture),e.externalMesh&&(this.externalMesh=e.externalMesh),e.builtinMeshes&&(this.builtinMeshes=e.builtinMeshes),e.outputTex3d&&(this.outputTex3d=e.outputTex3d),e.outputGeo&&(this.outputGeo=e.outputGeo),e.uniformLayout&&(this.uniformLayout=e.uniformLayout),e.uniformLayouts&&(this.uniformLayouts=e.uniformLayouts),e.paramAliases&&(this.paramAliases=e.paramAliases),e.openCategories&&(this.openCategories=e.openCategories),e.defaultProgram&&(this.defaultProgram=e.defaultProgram),e.hidden&&(this.hidden=!0),e.deprecatedBy&&(this.deprecatedBy=e.deprecatedBy),e.onInit&&(this._configOnInit=e.onInit),e.onUpdate&&(this._configOnUpdate=e.onUpdate),e.onDestroy&&(this._configOnDestroy=e.onDestroy),e.asyncInit&&(this._configAsyncInit=e.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(e){return this._configOnUpdate?this._configOnUpdate.call(this,e):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(e){return this._configAsyncInit?this._configAsyncInit.call(this,e):Promise.resolve()}};var n=class extends o{constructor(){super(...arguments);s(this,"name","Mesh Loader");s(this,"namespace","render");s(this,"func","meshLoader");s(this,"tags",["mesh","geometry","3d"]);s(this,"description","Load mesh data from OBJ files into GPU textures.");s(this,"externalMesh","mesh0");s(this,"builtinMeshes",{sphere:"share/meshes/sphere.obj",cube:"share/meshes/cube.obj",torus:"share/meshes/torus.obj",cylinder:"share/meshes/cylinder.obj",cone:"share/meshes/cone.obj",capsule:"share/meshes/capsule.obj",icosphere:"share/meshes/icosphere.obj"});s(this,"textures",{});s(this,"globals",{});s(this,"defaultProgram",`search render
+var l=Object.defineProperty;var u=(n,e,o)=>e in n?l(n,e,{enumerable:!0,configurable:!0,writable:!0,value:o}):n[e]=o;var s=(n,e,o)=>u(n,typeof e!="symbol"?e+"":e,o);var r=class{constructor(e={}){this.state={},this.uniforms={},e.name&&(this.name=e.name),e.namespace&&(this.namespace=e.namespace),e.func&&(this.func=e.func),e.description&&(this.description=e.description),e.tags&&(this.tags=e.tags),e.globals&&(this.globals=e.globals),e.passes&&(this.passes=e.passes),e.textures&&(this.textures=e.textures),e.textures3d&&(this.textures3d=e.textures3d),e.shaders&&(this.shaders=e.shaders),e.externalTexture&&(this.externalTexture=e.externalTexture),e.externalMesh&&(this.externalMesh=e.externalMesh),e.builtinMeshes&&(this.builtinMeshes=e.builtinMeshes),e.outputTex&&(this.outputTex=e.outputTex),e.outputTex3d&&(this.outputTex3d=e.outputTex3d),e.outputGeo&&(this.outputGeo=e.outputGeo),e.outputXyz&&(this.outputXyz=e.outputXyz),e.outputVel&&(this.outputVel=e.outputVel),e.outputRgba&&(this.outputRgba=e.outputRgba),e.uniformLayout&&(this.uniformLayout=e.uniformLayout),e.uniformLayouts&&(this.uniformLayouts=e.uniformLayouts),e.paramAliases&&(this.paramAliases=e.paramAliases),e.openCategories&&(this.openCategories=e.openCategories),e.defaultProgram&&(this.defaultProgram=e.defaultProgram),e.hidden&&(this.hidden=!0),e.deprecatedBy&&(this.deprecatedBy=e.deprecatedBy),e.onInit&&(this._configOnInit=e.onInit),e.onUpdate&&(this._configOnUpdate=e.onUpdate),e.onDestroy&&(this._configOnDestroy=e.onDestroy),e.asyncInit&&(this._configAsyncInit=e.asyncInit)}onInit(){this._configOnInit&&this._configOnInit.call(this)}onUpdate(e){return this._configOnUpdate?this._configOnUpdate.call(this,e):{}}onDestroy(){this._configOnDestroy&&this._configOnDestroy.call(this)}asyncInit(e){return this._configAsyncInit?this._configAsyncInit.call(this,e):Promise.resolve()}};var t=class extends r{constructor(){super(...arguments);s(this,"name","Mesh Loader");s(this,"namespace","render");s(this,"func","meshLoader");s(this,"tags",["mesh","geometry","3d"]);s(this,"description","Load mesh data from OBJ files into GPU textures.");s(this,"externalMesh","mesh0");s(this,"builtinMeshes",{sphere:"share/meshes/sphere.obj",cube:"share/meshes/cube.obj",torus:"share/meshes/torus.obj",cylinder:"share/meshes/cylinder.obj",cone:"share/meshes/cone.obj",capsule:"share/meshes/capsule.obj",icosphere:"share/meshes/icosphere.obj"});s(this,"textures",{});s(this,"globals",{});s(this,"defaultProgram",`search render
 
 meshLoader()
 .meshRender()
-.write(o0)`);s(this,"passes",[{name:"preview",program:"preview",inputs:{positionsTex:"global_mesh0_positions",normalsTex:"global_mesh0_normals"},outputs:{fragColor:"outputTex"}}])}};var i={preview:{glsl:`#version 300 es
+.write(o0)`);s(this,"passes",[{name:"preview",program:"preview",inputs:{positionsTex:"global_mesh0_positions",normalsTex:"global_mesh0_normals"},outputs:{fragColor:"outputTex"}}])}};var a={preview:{glsl:`#version 300 es
 precision highp float;
 
 // Preview mesh data as a visualization
@@ -62,14 +62,18 @@ struct Uniforms {
 
 @fragment
 fn main(@builtin(position) position: vec4<f32>) -> @location(0) vec4<f32> {
-    let uv = (position.xy + u.tileOffset) / u.fullResolution;
+    let fullRes = select(u.resolution, u.fullResolution, u.fullResolution.x > 0.0);
+    let globalUV = (position.xy + u.tileOffset) / fullRes;
+    let positionsUV = position.xy / vec2<f32>(textureDimensions(positionsTex));
+    let normalsUV = position.xy / vec2<f32>(textureDimensions(normalsTex));
     
-    // Sample mesh textures using UV coordinates
-    let pos = textureSample(positionsTex, positionsSampler, uv);
-    let normal = textureSample(normalsTex, normalsSampler, uv);
+    // Match WebGL2's preview sampling: address the packed mesh textures by
+    // their own dimensions rather than scaling them across the output frame.
+    let pos = textureSample(positionsTex, positionsSampler, positionsUV);
+    let normal = textureSample(normalsTex, normalsSampler, normalsUV);
     
     var color: vec3<f32>;
-    if (uv.x < 0.5) {
+    if (globalUV.x < 0.5) {
         // Position visualization
         color = pos.xyz * 0.5 + 0.5;
     } else {
@@ -79,9 +83,9 @@ fn main(@builtin(position) position: vec4<f32>) -> @location(0) vec4<f32> {
     
     return vec4<f32>(color, 1.0);
 }
-`}},a=`# Mesh Loader
+`}},i=`# Mesh Loader
 
-Load mesh data into mesh surface textures for GPU rendering. Includes built-in procedural shapes and supports custom OBJ file upload.
+An optional marker and preview stage for mesh rendering. It marks the pipeline as one that uses the \`mesh0\` mesh, and it shows a preview of that mesh data. The mesh data itself comes from the host, which uploads it into the mesh surface textures. Includes built-in procedural shapes and supports custom OBJ file upload in the demo UI.
 
 ## Usage
 
@@ -89,7 +93,15 @@ Load mesh data into mesh surface textures for GPU rendering. Includes built-in p
 meshLoader().meshRender().write(o0)
 \`\`\`
 
-The demo UI shows a shape dropdown and file picker when meshLoader is in the pipeline.
+The demo UI shows a shape dropdown and file picker when meshLoader is in the pipeline, and it uploads the selected mesh to \`mesh0\`.
+
+## Role in the Pipeline
+
+\`meshRender()\` draws the mesh from the mesh surface textures. It does not read the output of meshLoader. So meshLoader is optional when the host uploads the mesh with the JavaScript API below, and a chain without it renders the same mesh.
+
+## Preview Output
+
+The output of meshLoader shows the loaded mesh data as colors: vertex positions in the left half and normals in the right half. This output is a preview, and it is visible only when meshLoader is the last stage, for example \`meshLoader().write(o0)\`.
 
 ## Built-in Shapes
 
@@ -136,4 +148,4 @@ meshLoader()
 
 render(o0)
 \`\`\`
-`;if(n&&Object.keys(i).length>0){n.shaders||(n.shaders={});for(let[t,e]of Object.entries(i))n.shaders[t]={...e}}n&&a&&(n.help=a);var x="render/meshLoader",v="render",y="meshLoader",g=n;export{g as default,x as effectId,y as effectName,a as help,v as namespace};
+`;if(t&&Object.keys(a).length>0){t.shaders||(t.shaders={});for(let[n,e]of Object.entries(a))t.shaders[n]={...e}}t&&i&&(t.help=i);var x="render/meshLoader",v="render",y="meshLoader",b=t;export{b as default,x as effectId,y as effectName,i as help,v as namespace};

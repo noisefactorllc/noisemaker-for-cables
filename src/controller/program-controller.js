@@ -100,11 +100,17 @@ function textureFormat(graph, textureId) {
   return typeof spec?.format === 'string' ? spec.format : undefined
 }
 
+function renderOutputs(pass) {
+  return Object.keys(pass?.outputs ?? {}).length > 0
+    ? pass.outputs
+    : pass?.storageTextures ?? {}
+}
+
 // A blended pass needs float blending when one of its outputs is a 32-bit float
 // texture, or when the graph does not record an output's format.
 function passNeedsFloatBlend(graph, pass) {
   if (!pass?.blend) return false
-  const outputs = Object.values(pass.outputs ?? {})
+  const outputs = Object.values(renderOutputs(pass))
   if (outputs.length === 0) return true
   return outputs.some((textureId) => {
     const format = textureFormat(graph, textureId)
@@ -118,7 +124,7 @@ function graphCapabilityRequirements(graph) {
   let maxUniformBlockBytes = 0
   let needsFloatBlend = false
   for (const pass of graph?.passes ?? []) {
-    const outputCount = Object.keys(pass?.outputs ?? {}).length
+    const outputCount = Object.keys(renderOutputs(pass)).length
     const declaredDrawBuffers = Number(pass?.drawBuffers)
     maxDrawBuffers = Math.max(
       maxDrawBuffers,
@@ -362,7 +368,7 @@ export function createProgramController({
   let disposalPromise = null
   let gpuTail = Promise.resolve()
   let lastGoodDsl = null
-  let lastNormalizedTime = 0
+  let lastNormalizedTime = null
   let outputCopier = null
   let recoveryRequired = false
   let renderTail = Promise.resolve()
@@ -631,7 +637,7 @@ export function createProgramController({
           pipeline: candidate.pipeline,
           texture: currentInputTexture,
         })
-        candidate.pipeline.syncTime(lastNormalizedTime)
+        if (lastNormalizedTime !== null) candidate.pipeline.syncTime(lastNormalizedTime)
       },
       () => isCurrentCandidate(candidate),
     )
