@@ -135,7 +135,7 @@ test('update writes deterministic metadata and bytes for the complete manifest',
       'noisemaker-shaders-core.esm.js',
     ]
 
-    assert.match(generatedAt, /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/)
+    assert.equal(generatedAt, undefined)
     assert.equal(stableLock.schemaVersion, 1)
     assert.equal(stableLock.sourceBaseUrl, options.sourceBaseUrl)
     assert.equal(stableLock.effectCount, 2)

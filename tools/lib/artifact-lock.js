@@ -396,7 +396,6 @@ export async function updateArtifactLock(options) {
   const lock = {
     schemaVersion: LOCK_SCHEMA_VERSION,
     sourceBaseUrl,
-    generatedAt: new Date().toISOString(),
     effectCount: effectIds.length,
     artifacts,
   }
