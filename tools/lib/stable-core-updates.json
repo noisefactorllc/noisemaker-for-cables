@@ -2,7 +2,7 @@
   {
     "module": "/**",
     "before": " * Build: 084176b7 (stable subset from 478f94ea)\n * Date: 2026-11-23T23:34:55.045Z\n",
-    "after": " * Build: 5596e69f (stable subset from 478f94ea)\n * Date: 2026-11-26T20:11:55.013Z\n",
+    "after": " * Build: 688794ac (stable subset from 478f94ea)\n * Date: 2026-11-27T15:01:52.210Z\n",
     "count": 1
   },
   {
@@ -273,6 +273,12 @@
     "module": "src/renderer/canvas.js",
     "before": "    }\n    if (definition.paramAliases !== void 0) fail(\"paramAliases is no longer supported\");\n    if (getEffect(`user.${func}`) || getEffect(`user/${func}`)) fail(`user.${func} is already registered`);\n    const instance = new Effect({ ...definition, func, namespace: \"user\" });\n",
     "after": "    }\n    if (definition.paramAliases !== void 0) fail(\"paramAliases is no longer supported\");\n    for (const field of [\"outputTex\", \"outputXyz\", \"outputVel\", \"outputRgba\"]) {\n      if (definition[field] !== void 0 && !hasSource(definition[field])) fail(`${field} must be a nonempty texture name`);\n    }\n    if (getEffect(`user.${func}`) || getEffect(`user/${func}`)) fail(`user.${func} is already registered`);\n    const instance = new Effect({ ...definition, func, namespace: \"user\" });\n",
+    "count": 1
+  },
+  {
+    "module": "src/lang/validator.js",
+    "before": "} else if (node && node.type === \"Call\" && node.args?.length === (node.name === \"vec2\" ? 2 : 4) && (def.type === \"vec2\" && node.name === \"vec2\" || def.type === \"color\" && node.name === \"vec4\" && Array.isArray(def.default) && def.default.length === 4)) {",
+    "after": "} else if (node && node.type === \"Call\" && node.args?.length === (node.name === \"vec2\" ? 2 : node.name === \"vec3\" ? 3 : 4) && (def.type === \"vec2\" && node.name === \"vec2\" || def.type === \"color\" && !node.kwargs && (node.name === \"vec3\" || node.name === \"vec4\"))) {",
     "count": 1
   }
 ]

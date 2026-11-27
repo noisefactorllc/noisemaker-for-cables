@@ -3,8 +3,8 @@
  * Includes: CanvasRenderer + UIController + EffectSelect
  * Copyright (c) 2017-2026 Noise Factor LLC. https://noisefactor.io/
  * SPDX-License-Identifier: MIT
- * Build: 5596e69f (stable subset from 478f94ea)
- * Date: 2026-11-26T20:11:55.013Z
+ * Build: 688794ac (stable subset from 478f94ea)
+ * Date: 2026-11-27T15:01:52.210Z
  */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
@@ -3677,7 +3677,7 @@ function validate(ast) {
               }
             }
             args[argKey] = surf;
-          } else if (node && node.type === "Call" && node.args?.length === (node.name === "vec2" ? 2 : 4) && (def.type === "vec2" && node.name === "vec2" || def.type === "color" && node.name === "vec4" && Array.isArray(def.default) && def.default.length === 4)) {
+          } else if (node && node.type === "Call" && node.args?.length === (node.name === "vec2" ? 2 : node.name === "vec3" ? 3 : 4) && (def.type === "vec2" && node.name === "vec2" || def.type === "color" && !node.kwargs && (node.name === "vec3" || node.name === "vec4"))) {
             args[argKey] = node.args.map((arg) => {
               if (arg.type === "Number") return arg.value;
               pushDiag("S002", arg, `Argument out of range for '${def.name}' in ${call.name}()`);

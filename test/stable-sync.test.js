@@ -206,6 +206,22 @@ test('experimental syntax and renderer interfaces remain absent', () => {
   }
 })
 
+test('color constructors keep the supplied components', () => {
+  for (const [call, expected] of [
+    ['solid(color: vec3(0.3, 0.2, 0.25))', [0.3, 0.2, 0.25]],
+    ['solid(color: vec4(0.3, 0.2, 0.25, 0.4))', [0.3, 0.2, 0.25, 0.4]],
+  ]) {
+    const compiled = core.compile(`search synth; ${call}.write(o0)`)
+    assert.deepEqual(compiled.diagnostics.filter(d => d.severity === 'error'), [])
+    const args = compiled.plans[0].chain[0].args
+    assert.deepEqual(args.color, expected, call)
+  }
+  for (const call of ['solid(color: vec3(0.3, 0.2, 0.25, 9))', 'solid(color: vec4(0.3, 0.2, 0.25, 0.4, 9))']) {
+    const compiled = core.compile(`search synth; ${call}.write(o0)`)
+    assert.ok(compiled.diagnostics.some(d => d.code === 'S002'), call)
+  }
+})
+
 test('stable element ids survive compile and unparse without becoming uniforms', () => {
   const source = 'search synth; solid(_id: "base").write(o1, _id: "stored"); read(surface: o1, _id: "input").write(o0, _id: "out")'
   const compiled = core.compile(source)
