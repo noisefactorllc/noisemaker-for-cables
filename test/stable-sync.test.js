@@ -322,6 +322,13 @@ test('screen triangle counts resolve from input dimensions or a positive overrid
   assert.equal(gpu.resolveMeshVertexCount({ count: 'screen' }, {}), 3)
 })
 
+test('filter/text declares no own id field', async () => {
+  const { default: Text } = await import('../vendor-cache/effects/filter/text.js')
+  const text = new Text()
+  assert.equal(Object.hasOwn(text, 'id'), false, 'filter/text must have no own id field')
+  assert.equal(text.func, 'text')
+})
+
 test('pipeline frame deltas stay regular at zero and across loop boundaries', async () => {
   class MockBackend extends core.Backend {
     async init() {}
