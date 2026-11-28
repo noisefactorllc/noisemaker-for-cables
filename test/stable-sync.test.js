@@ -322,6 +322,18 @@ test('screen triangle counts resolve from input dimensions or a positive overrid
   assert.equal(gpu.resolveMeshVertexCount({ count: 'screen' }, {}), 3)
 })
 
+test('prototype-property names lex as identifiers, reserved words stay keywords', () => {
+  for (const name of ['toString', 'valueOf', 'constructor', 'hasOwnProperty', '__proto__']) {
+    assert.equal(core.lex(name)[0].type, 'IDENT', name)
+  }
+  assert.deepEqual(core.lex('oscKind.toString').map(token => token.type), ['IDENT', 'DOT', 'IDENT', 'EOF'])
+  const source = 'let render write write3d true false if elif else break continue return search subchain'
+  assert.deepEqual(core.lex(source).map(token => token.type), [
+    'LET', 'RENDER', 'WRITE', 'WRITE3D', 'TRUE', 'FALSE', 'IF', 'ELIF',
+    'ELSE', 'BREAK', 'CONTINUE', 'RETURN', 'SEARCH', 'SUBCHAIN', 'EOF'
+  ])
+})
+
 test('filter/text declares no own id field', async () => {
   const { default: Text } = await import('../vendor-cache/effects/filter/text.js')
   const text = new Text()

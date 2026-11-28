@@ -280,5 +280,11 @@
     "before": "} else if (node && node.type === \"Call\" && node.args?.length === (node.name === \"vec2\" ? 2 : 4) && (def.type === \"vec2\" && node.name === \"vec2\" || def.type === \"color\" && node.name === \"vec4\" && Array.isArray(def.default) && def.default.length === 4)) {",
     "after": "} else if (node && node.type === \"Call\" && node.args?.length === (node.name === \"vec2\" ? 2 : node.name === \"vec3\" ? 3 : 4) && (def.type === \"vec2\" && node.name === \"vec2\" || def.type === \"color\" && !node.kwargs && (node.name === \"vec3\" || node.name === \"vec4\"))) {",
     "count": 1
+  },
+  {
+    "module": "src/lang/lexer.js",
+    "before": "if (keywords[lexeme]) {",
+    "after": "if (Object.hasOwn(keywords, lexeme)) {",
+    "count": 1
   }
 ]

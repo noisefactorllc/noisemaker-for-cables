@@ -1270,9 +1270,9 @@
       "url": "https://shaders.noisedeck.app/1.5.26/effects/synth3d/shape3d.js"
     },
     {
-      "bytes": 984721,
+      "bytes": 984736,
       "path": "noisemaker-shaders-core.esm.js",
-      "sha256": "4bc9a5aea5845419a45641aa72c13dfce2db103b08c390fca575c4f790ab42d6",
+      "sha256": "4263944935456133ba87bc82cfdea3395cebc4577371909bab61f45a176370e4",
       "url": "https://shaders.noisedeck.app/1.5.26/noisemaker-shaders-core.esm.js"
     }
   ],
@@ -1281,7 +1281,7 @@
     "toolSha256": "6b57867e5b6d54d0b6685000ab472b38903b412ab6257ce9e61ec367ca559d30",
     "updates": {
       "path": "tools/lib/stable-core-updates.json",
-      "sha256": "0dbba59a696f2e94e6663857ba4f8740ca399842b80dc3c5f3d0bbaba58593bb"
+      "sha256": "6fdda48e6c41f7cf519759a20169df91616dc3defcd29b20d1a22a7bc5adf494"
     },
     "sources": {
       "base": {
