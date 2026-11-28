@@ -11,7 +11,7 @@ const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const options = {
   cacheRoot: resolve(projectRoot, 'vendor-cache'),
   lockPath: resolve(projectRoot, 'vendor.lock.json'),
-  sourceBaseUrl: 'https://shaders.noisedeck.app/1.5.25/',
+  sourceBaseUrl: 'https://shaders.noisedeck.app/1.5.26/',
 }
 
 async function derivationRecord() {

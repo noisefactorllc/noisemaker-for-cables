@@ -13,8 +13,8 @@ export const coreSources = Object.freeze({
     sha256: '6596d11a2b54de9c80bbc21826d4797d3499d79715e5fafb1edb4597f73e20e7',
   },
   release: {
-    url: 'https://shaders.noisedeck.app/1.5.25/noisemaker-shaders-core.esm.js',
-    sha256: '2de56deff4c531c795bafd1874fd68b820ecf681b82184e9ce1d0859e5c65ae0',
+    url: 'https://shaders.noisedeck.app/1.5.26/noisemaker-shaders-core.esm.js',
+    sha256: '9d6654e63a3a8e88d469e5c45909a369440f322441a9fc6b62e9f93490629d6d',
   },
 })
 
